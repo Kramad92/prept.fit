@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-color: #22c55e;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  .dark body,
+  html.dark body {
+    @apply bg-gray-950 text-gray-100;
+  }
+
+  /* Global dark mode overrides for common Tailwind utility patterns */
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* Backgrounds */
+  html.dark .bg-white {
+    background-color: rgb(17 24 39) !important; /* gray-900 */
+  }
+  html.dark .bg-gray-50 {
+    background-color: rgb(3 7 18) !important; /* gray-950 */
+  }
+  html.dark .bg-gray-100 {
+    background-color: rgb(31 41 55) !important; /* gray-800 */
+  }
+
+  /* Text colors */
+  html.dark .text-gray-900 {
+    color: rgb(243 244 246) !important; /* gray-100 */
+  }
+  html.dark .text-gray-800 {
+    color: rgb(229 231 235) !important; /* gray-200 */
+  }
+  html.dark .text-gray-700 {
+    color: rgb(209 213 219) !important; /* gray-300 */
+  }
+  html.dark .text-gray-600 {
+    color: rgb(156 163 175) !important; /* gray-400 */
+  }
+  html.dark .text-gray-500 {
+    color: rgb(156 163 175) !important; /* gray-400 */
+  }
+  html.dark .text-gray-400 {
+    color: rgb(107 114 128) !important; /* gray-500 */
+  }
+
+  /* Borders */
+  html.dark .border-gray-200 {
+    border-color: rgb(55 65 81) !important; /* gray-700 */
+  }
+  html.dark .border-gray-300 {
+    border-color: rgb(75 85 99) !important; /* gray-600 */
+  }
+  html.dark .border-gray-100 {
+    border-color: rgb(55 65 81) !important; /* gray-700 */
+  }
+
+  /* Hover backgrounds */
+  html.dark .hover\:bg-gray-50:hover {
+    background-color: rgb(31 41 55) !important; /* gray-800 */
+  }
+  html.dark .hover\:bg-gray-100:hover {
+    background-color: rgb(55 65 81) !important; /* gray-700 */
+  }
+  html.dark .hover\:bg-gray-200:hover {
+    background-color: rgb(75 85 99) !important; /* gray-600 */
+  }
+
+  /* Dividers / ring offsets */
+  html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgb(55 65 81) !important;
+  }
+  html.dark .ring-offset-white {
+    --tw-ring-offset-color: rgb(17 24 39) !important;
+  }
+
+  /* Subtle accent backgrounds in dark */
+  html.dark .bg-brand-50 {
+    background-color: rgb(5 46 22 / 0.5) !important; /* brand-950 at 50% */
+  }
+  html.dark .bg-blue-50 {
+    background-color: rgb(30 58 138 / 0.3) !important;
+  }
+  html.dark .bg-green-50 {
+    background-color: rgb(20 83 45 / 0.3) !important;
+  }
+  html.dark .bg-red-50 {
+    background-color: rgb(127 29 29 / 0.3) !important;
+  }
+  html.dark .bg-orange-100 {
+    background-color: rgb(124 45 18 / 0.3) !important;
+  }
+  html.dark .bg-purple-100 {
+    background-color: rgb(88 28 135 / 0.3) !important;
+  }
+
+  /* Modal / overlay backgrounds */
+  html.dark .bg-black\/50 {
+    background-color: rgb(0 0 0 / 0.7) !important;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input {
+    @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  .card {
+    @apply rounded-xl border border-gray-200 bg-white p-6 shadow-sm;
+  }
+}

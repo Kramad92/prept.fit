@@ -1,0 +1,29 @@
+"use client";
+
+import { useSession } from "next-auth/react";
+import { Dumbbell } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+export function TopBar() {
+  const { data: session } = useSession();
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white md:hidden">
+      <div className="flex h-14 items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <Dumbbell className="h-6 w-6 text-brand-600" />
+          <span className="text-lg font-bold">TrainerHub</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <NotificationBell />
+          {session?.user && (
+            <Avatar name={session.user.name} size="sm" />
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}

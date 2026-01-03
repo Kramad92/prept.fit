@@ -1,0 +1,591 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Multi-tenant: each coach is a tenant
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String   // Business name
+  slug        String   @unique // URL slug (subdomain)
+  logo        String?  // Logo URL
+  brandColor  String   @default("#22c55e")
+  timezone    String   @default("America/New_York")
+  bio         String?
+  phone       String?
+  email       String?
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users          User[]
+  clients        Client[]
+  workouts       WorkoutPlan[]
+  schedules      Schedule[]
+  availability   Availability[]
+  messages       Message[]
+  checkInTemplates CheckInTemplate[]
+  habitTemplates HabitTemplate[]
+  notifications  Notification[]
+  mealPlans      MealPlan[]
+  exerciseLibrary  ExerciseLibrary[]
+  foodLibrary      FoodLibrary[]
+
+  @@map("tenants")
+}
+
+enum UserRole {
+  COACH
+  CLIENT
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          UserRole  @default(CLIENT)
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // If role is CLIENT, linked client profile
+  clientProfile Client?
+
+  sentMessages     Message[] @relation("sender")
+  notifications    Notification[]
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  dateOfBirth DateTime?
+  gender      String?
+  notes       String?
+  goals       String?
+  status      String   @default("active") // active, paused, archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Optional link to user account (for client portal access)
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  progressPhotos ProgressPhoto[]
+  schedules      Schedule[]
+  assignedPlans  ClientWorkoutPlan[]
+  measurements   Measurement[]
+  messages       Message[]
+  checkIns       CheckIn[]
+  habits         ClientHabit[]
+  workoutLogs    WorkoutLog[]
+  assignedMealPlans ClientMealPlan[]
+  nutritionLogs  NutritionLog[]
+  clientExercises ClientExercise[]
+  clientMeals     ClientMeal[]
+
+  @@index([tenantId])
+  @@map("clients")
+}
+
+model Measurement {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  weight    Float?   // in kg or lbs based on tenant preference
+  bodyFat   Float?
+  chest     Float?
+  waist     Float?
+  hips      Float?
+  arms      Float?
+  thighs    Float?
+  notes     String?
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("measurements")
+}
+
+model ProgressPhoto {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  takenAt   DateTime @default(now())
+  category  String?  // front, back, side, custom
+  createdAt DateTime @default(now())
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("progress_photos")
+}
+
+model WorkoutPlan {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isTemplate  Boolean  @default(false) // Reusable template
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sourceTemplateId String?
+  sourceTemplate   WorkoutPlan?  @relation("templateClones", fields: [sourceTemplateId], references: [id], onDelete: SetNull)
+  clones           WorkoutPlan[] @relation("templateClones")
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  exercises   Exercise[]
+  assignedTo  ClientWorkoutPlan[]
+  workoutLogs WorkoutLog[]
+
+  @@index([tenantId])
+  @@index([sourceTemplateId])
+  @@map("workout_plans")
+}
+
+model Exercise {
+  id            String  @id @default(cuid())
+  name          String
+  sets          Int?
+  reps          String? // "12" or "8-12" or "AMRAP"
+  weight        String? // "135lbs" or "bodyweight"
+  restSeconds   Int?
+  notes         String?
+  orderIndex    Int     @default(0)
+  superset      String? // Group ID for supersets
+  videoUrl      String? // YouTube or video URL for form demo
+
+  workoutPlanId String
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+
+  logEntries    WorkoutLogEntry[]
+
+  @@index([workoutPlanId])
+  @@map("exercises")
+}
+
+model ClientWorkoutPlan {
+  id          String    @id @default(cuid())
+  customName  String?
+  notes       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  assignedAt  DateTime  @default(now())
+
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  workoutPlanId String
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+
+  clientExercises ClientExercise[]
+
+  @@index([clientId])
+  @@index([workoutPlanId])
+  @@map("client_workout_plans")
+}
+
+// Coach availability — recurring weekly slots clients can book
+model Availability {
+  id          String  @id @default(cuid())
+  dayOfWeek   Int     // 0=Sunday, 1=Monday, ..., 6=Saturday
+  startTime   String  // "09:00"
+  endTime     String  // "17:00"
+  slotMinutes Int     @default(60) // Duration of each bookable slot
+  isActive    Boolean @default(true)
+
+  tenantId    String
+  tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("availability")
+}
+
+model Schedule {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime
+  startTime String   // "09:00"
+  endTime   String   // "10:00"
+  status    String   @default("scheduled") // scheduled, completed, cancelled, no-show
+  notes     String?
+  type      String   @default("session") // session, assessment, consultation
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([date])
+  @@map("schedules")
+}
+
+// ========== IN-APP MESSAGING ==========
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false)
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  senderId  String
+  sender    User     @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt])
+  @@index([tenantId])
+  @@map("messages")
+}
+
+// ========== CHECK-INS ==========
+
+model CheckInTemplate {
+  id        String   @id @default(cuid())
+  name      String   // "Weekly Check-In"
+  questions Json     // [{ id, question, type: "text"|"rating"|"number" }]
+  frequency String   @default("weekly") // weekly, biweekly, monthly
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  checkIns  CheckIn[]
+
+  @@index([tenantId])
+  @@map("check_in_templates")
+}
+
+model CheckIn {
+  id          String   @id @default(cuid())
+  answers     Json     // [{ questionId, answer }]
+  submittedAt DateTime @default(now())
+  coachNotes  String?  // Coach can respond
+
+  templateId  String
+  template    CheckInTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([templateId])
+  @@map("check_ins")
+}
+
+// ========== HABIT TRACKING ==========
+
+model HabitTemplate {
+  id        String   @id @default(cuid())
+  name      String   // "Drink 2L Water"
+  icon      String?  // emoji or icon name
+  createdAt DateTime @default(now())
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientHabits ClientHabit[]
+
+  @@index([tenantId])
+  @@map("habit_templates")
+}
+
+model ClientHabit {
+  id        String   @id @default(cuid())
+  isActive  Boolean  @default(true)
+  assignedAt DateTime @default(now())
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  habitId   String
+  habit     HabitTemplate @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  logs      HabitLog[]
+
+  @@unique([clientId, habitId])
+  @@index([clientId])
+  @@map("client_habits")
+}
+
+model HabitLog {
+  id          String   @id @default(cuid())
+  date        DateTime // The day this was logged
+  completed   Boolean  @default(true)
+  notes       String?
+  completedAt DateTime @default(now())
+
+  clientHabitId String
+  clientHabit   ClientHabit @relation(fields: [clientHabitId], references: [id], onDelete: Cascade)
+
+  @@unique([clientHabitId, date])
+  @@index([clientHabitId])
+  @@map("habit_logs")
+}
+
+// ========== WORKOUT LOGGING ==========
+
+model WorkoutLog {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  notes       String?
+  completed   Boolean  @default(false)
+  duration    Int?     // minutes
+
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  workoutPlanId String
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+
+  entries     WorkoutLogEntry[]
+
+  @@index([clientId])
+  @@index([workoutPlanId])
+  @@map("workout_logs")
+}
+
+model WorkoutLogEntry {
+  id            String  @id @default(cuid())
+  setNumber     Int
+  repsCompleted Int?
+  weightUsed    String? // "140lbs"
+  notes         String?
+  completed     Boolean @default(true)
+
+  workoutLogId  String
+  workoutLog    WorkoutLog @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+
+  exerciseId    String
+  exercise      Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([workoutLogId])
+  @@map("workout_log_entries")
+}
+
+// ========== NOTIFICATIONS ==========
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // session_reminder, new_message, check_in_due, workout_assigned, habit_reminder
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  data      Json?    // Extra payload (link, IDs, etc.)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([tenantId])
+  @@map("notifications")
+}
+
+// ========== NUTRITION & MEAL PLANS ==========
+
+model MealPlan {
+  id          String   @id @default(cuid())
+  name        String   // "Fat Loss - 1800 cal" or "Bulking - 3000 cal"
+  description String?
+  isTemplate  Boolean  @default(false)
+  targetCalories Int?
+  targetProtein  Int?  // grams
+  targetCarbs    Int?  // grams
+  targetFat      Int?  // grams
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sourceTemplateId String?
+  sourceTemplate   MealPlan?  @relation("mealTemplateClones", fields: [sourceTemplateId], references: [id], onDelete: SetNull)
+  clones           MealPlan[] @relation("mealTemplateClones")
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  meals       Meal[]
+  assignedTo  ClientMealPlan[]
+
+  @@index([tenantId])
+  @@index([sourceTemplateId])
+  @@map("meal_plans")
+}
+
+model Meal {
+  id          String  @id @default(cuid())
+  name        String  // "Breakfast", "Lunch", "Snack 1", etc.
+  time        String? // suggested time "07:30"
+  foods       Json    // [{ name, portion, calories, protein, carbs, fat, notes }]
+  orderIndex  Int     @default(0)
+
+  mealPlanId  String
+  mealPlan    MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  @@index([mealPlanId])
+  @@map("meals")
+}
+
+model ClientMealPlan {
+  id          String    @id @default(cuid())
+  customName  String?
+  notes       String?
+  isActive    Boolean   @default(true)
+  assignedAt  DateTime  @default(now())
+
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  mealPlanId  String
+  mealPlan    MealPlan  @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  clientMeals ClientMeal[]
+
+  @@index([clientId])
+  @@index([mealPlanId])
+  @@map("client_meal_plans")
+}
+
+model NutritionLog {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  mealName  String   // "Breakfast", "Lunch", etc. or custom
+  foods     String   // free text description of what was eaten
+  calories  Int?
+  protein   Int?     // grams
+  carbs     Int?     // grams
+  fat       Int?     // grams
+  notes     String?
+  photoUrl  String?  // optional meal photo
+  createdAt DateTime @default(now())
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, date])
+  @@map("nutrition_logs")
+}
+
+// ========== EXERCISE & FOOD LIBRARIES ==========
+
+model ExerciseLibrary {
+  id            String   @id @default(cuid())
+  name          String
+  category      String?  // "Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"
+  muscleGroup   String?
+  equipment     String?  // "Barbell", "Dumbbell", "Cable", "Bodyweight", etc.
+  videoUrl      String?
+  instructions  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientExercises ClientExercise[]
+
+  @@index([tenantId])
+  @@map("exercise_library")
+}
+
+model FoodLibrary {
+  id              String   @id @default(cuid())
+  name            String
+  defaultPortion  String?
+  calories        Int?
+  protein         Int?
+  carbs           Int?
+  fat             Int?
+  category        String?  // "Protein", "Carb", "Fat", "Vegetable", "Fruit", "Dairy", etc.
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientMeals     ClientMeal[]
+
+  @@index([tenantId])
+  @@map("food_library")
+}
+
+model ClientExercise {
+  id            String   @id @default(cuid())
+  name          String
+  sets          Int?
+  reps          String?
+  weight        String?
+  restSeconds   Int?
+  notes         String?
+  videoUrl      String?
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  exerciseLibraryId String?
+  exerciseLibrary   ExerciseLibrary? @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
+
+  clientWorkoutPlanId String?
+  clientWorkoutPlan   ClientWorkoutPlan? @relation(fields: [clientWorkoutPlanId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([clientWorkoutPlanId])
+  @@map("client_exercises")
+}
+
+model ClientMeal {
+  id          String   @id @default(cuid())
+  name        String   // "Breakfast", "Lunch", etc.
+  time        String?
+  foods       Json     // [{ name, portion, calories, protein, carbs, fat }]
+  orderIndex  Int      @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  foodLibraryId String?
+  foodLibrary   FoodLibrary? @relation(fields: [foodLibraryId], references: [id], onDelete: SetNull)
+
+  clientMealPlanId String?
+  clientMealPlan   ClientMealPlan? @relation(fields: [clientMealPlanId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([clientMealPlanId])
+  @@map("client_meals")
+}

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { ExerciseInput } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -20,4 +21,17 @@ export function getInitials(name: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+export function createEmptyExercise(): ExerciseInput {
+  return {
+    tempId: Math.random().toString(36).slice(2),
+    name: "",
+    sets: "",
+    reps: "",
+    weight: "",
+    restSeconds: "",
+    notes: "",
+    videoUrl: "",
+  };
 }

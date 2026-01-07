@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const search = req.nextUrl.searchParams.get("search");
+  const category = req.nextUrl.searchParams.get("category");
 
   const exercises = await prisma.exerciseLibrary.findMany({
     where: {
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
       ...(search
         ? { name: { contains: search, mode: "insensitive" as const } }
         : {}),
+      ...(category ? { category } : {}),
     },
     orderBy: { name: "asc" },
   });

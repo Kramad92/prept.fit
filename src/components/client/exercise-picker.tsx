@@ -2,14 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus } from "lucide-react";
+import type { LibraryExercise } from "@/types";
 
-interface LibraryExercise {
-  id: string;
-  name: string;
-  category: string | null;
-  muscleGroup: string | null;
-  equipment: string | null;
-}
+const CATEGORIES = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"];
 
 interface ExercisePickerProps {
   onSelect: (exercise: { name: string; exerciseLibraryId?: string }) => void;
@@ -17,23 +12,27 @@ interface ExercisePickerProps {
 
 export function ExercisePicker({ onSelect }: ExercisePickerProps) {
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("");
   const [results, setResults] = useState<LibraryExercise[]>([]);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!query.trim()) {
+    if (!query.trim() && !category) {
       setResults([]);
       return;
     }
     const timer = setTimeout(() => {
-      fetch(`/api/exercise-library?search=${encodeURIComponent(query)}`)
+      const params = new URLSearchParams();
+      if (query.trim()) params.set("search", query.trim());
+      if (category) params.set("category", category);
+      fetch(`/api/exercise-library?${params}`)
         .then((r) => r.json())
         .then(setResults)
         .catch(() => {});
     }, 200);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, category]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -44,6 +43,8 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  const showDropdown = open && (query.trim() || category);
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -61,37 +62,73 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
           className="input pl-10"
         />
       </div>
-      {open && query.trim() && (
+
+      {/* Category chips */}
+      <div className="mt-1.5 flex flex-wrap gap-1">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => {
+              setCategory(category === cat ? "" : cat);
+              setOpen(true);
+            }}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+              category === cat
+                ? "bg-brand-600 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {showDropdown && (
         <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-56 overflow-y-auto">
+            {results.length === 0 && (
+              <p className="px-3 py-2 text-sm text-gray-400">No exercises found.</p>
+            )}
             {results.map((ex) => (
               <button
                 key={ex.id}
+                type="button"
                 onClick={() => {
                   onSelect({ name: ex.name, exerciseLibraryId: ex.id });
                   setQuery("");
+                  setCategory("");
                   setOpen(false);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50"
               >
-                <span className="font-medium text-gray-900">{ex.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900">{ex.name}</span>
+                  {ex.equipment && (
+                    <span className="text-xs text-gray-400">{ex.equipment}</span>
+                  )}
+                </div>
                 {ex.muscleGroup && (
                   <span className="text-xs text-gray-400">{ex.muscleGroup}</span>
                 )}
               </button>
             ))}
           </div>
-          <button
-            onClick={() => {
-              onSelect({ name: query.trim() });
-              setQuery("");
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
-          >
-            <Plus className="h-4 w-4" />
-            Add &quot;{query.trim()}&quot; as custom exercise
-          </button>
+          {query.trim() && (
+            <button
+              type="button"
+              onClick={() => {
+                onSelect({ name: query.trim() });
+                setQuery("");
+                setCategory("");
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
+            >
+              <Plus className="h-4 w-4" />
+              Add &quot;{query.trim()}&quot; as custom exercise
+            </button>
+          )}
         </div>
       )}
     </div>

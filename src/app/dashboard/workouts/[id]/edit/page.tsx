@@ -4,34 +4,16 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, GripVertical, Trash2 } from "lucide-react";
-
-interface ExerciseInput {
-  tempId: string;
-  name: string;
-  sets: string;
-  reps: string;
-  weight: string;
-  restSeconds: string;
-  notes: string;
-  videoUrl: string;
-}
-
-function createEmptyExercise(): ExerciseInput {
-  return {
-    tempId: Math.random().toString(36).slice(2),
-    name: "",
-    sets: "",
-    reps: "",
-    weight: "",
-    restSeconds: "",
-    notes: "",
-    videoUrl: "",
-  };
-}
+import { ExercisePicker } from "@/components/client/exercise-picker";
+import { ExerciseNameInput } from "@/components/client/exercise-name-input";
+import type { ExerciseInput } from "@/types";
+import { createEmptyExercise } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
 export default function EditWorkoutPage() {
   const params = useParams();
   const router = useRouter();
+  const { toastError } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
@@ -59,7 +41,10 @@ export default function EditWorkoutPage() {
           }))
         );
       })
-      .catch(() => router.push("/dashboard/workouts"))
+      .catch(() => {
+        toastError("Failed to load workout plan");
+        router.push("/dashboard/workouts");
+      })
       .finally(() => setLoading(false));
   }, [params.id, router]);
 
@@ -75,6 +60,12 @@ export default function EditWorkoutPage() {
     setExercises((prev) =>
       prev.map((e) => (e.tempId === tempId ? { ...e, [field]: value } : e))
     );
+  }
+
+  function addFromLibrary(ex: { name: string }) {
+    const newEx = createEmptyExercise();
+    newEx.name = ex.name;
+    setExercises((prev) => [...prev, newEx]);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,14 +89,21 @@ export default function EditWorkoutPage() {
         })),
     };
 
-    const res = await fetch(`/api/workouts/${params.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(`/api/workouts/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    if (res.ok) {
-      router.push(`/dashboard/workouts/${params.id}`);
+      if (res.ok) {
+        router.push(`/dashboard/workouts/${params.id}`);
+      } else {
+        const err = await res.json().catch(() => null);
+        toastError(err?.error || "Failed to save changes");
+      }
+    } catch {
+      toastError("Failed to save changes");
     }
     setSaving(false);
   }
@@ -173,7 +171,16 @@ export default function EditWorkoutPage() {
 
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Exercises</h2>
-          <div className="mt-3 space-y-3">
+
+          {/* Library Picker */}
+          <div className="mt-3 max-w-lg">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Add from Exercise Library
+            </label>
+            <ExercisePicker onSelect={addFromLibrary} />
+          </div>
+
+          <div className="mt-4 space-y-3">
             {exercises.map((ex, index) => (
               <div key={ex.tempId} className="card">
                 <div className="flex items-start gap-2">
@@ -183,11 +190,9 @@ export default function EditWorkoutPage() {
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
                         {index + 1}
                       </span>
-                      <input
-                        type="text"
+                      <ExerciseNameInput
                         value={ex.name}
-                        onChange={(e) => updateExercise(ex.tempId, "name", e.target.value)}
-                        placeholder="Exercise name"
+                        onChange={(v) => updateExercise(ex.tempId, "name", v)}
                         className="input flex-1"
                       />
                       <button
@@ -232,7 +237,7 @@ export default function EditWorkoutPage() {
 
           <button type="button" onClick={addExercise} className="btn-secondary mt-3 w-full">
             <Plus className="mr-2 h-4 w-4" />
-            Add Exercise
+            Add Exercise Manually
           </button>
         </div>
 

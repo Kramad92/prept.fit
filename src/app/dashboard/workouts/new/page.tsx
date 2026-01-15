@@ -4,37 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, GripVertical, Trash2 } from "lucide-react";
-
-interface ExerciseInput {
-  tempId: string;
-  name: string;
-  sets: string;
-  reps: string;
-  weight: string;
-  restSeconds: string;
-  notes: string;
-  videoUrl: string;
-}
-
-function createEmptyExercise(): ExerciseInput {
-  return {
-    tempId: Math.random().toString(36).slice(2),
-    name: "",
-    sets: "",
-    reps: "",
-    weight: "",
-    restSeconds: "",
-    notes: "",
-    videoUrl: "",
-  };
-}
+import { ExercisePicker } from "@/components/client/exercise-picker";
+import { ExerciseNameInput } from "@/components/client/exercise-name-input";
+import type { ExerciseInput } from "@/types";
+import { createEmptyExercise } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
 export default function NewWorkoutPage() {
   const router = useRouter();
+  const { toastError } = useToast();
   const [loading, setLoading] = useState(false);
-  const [exercises, setExercises] = useState<ExerciseInput[]>([
-    createEmptyExercise(),
-  ]);
+  const [exercises, setExercises] = useState<ExerciseInput[]>([]);
 
   function addExercise() {
     setExercises((prev) => [...prev, createEmptyExercise()]);
@@ -52,6 +32,12 @@ export default function NewWorkoutPage() {
     setExercises((prev) =>
       prev.map((e) => (e.tempId === tempId ? { ...e, [field]: value } : e))
     );
+  }
+
+  function addFromLibrary(ex: { name: string }) {
+    const newEx = createEmptyExercise();
+    newEx.name = ex.name;
+    setExercises((prev) => [...prev, newEx]);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -87,7 +73,12 @@ export default function NewWorkoutPage() {
       if (res.ok) {
         const plan = await res.json();
         router.push(`/dashboard/workouts/${plan.id}`);
+      } else {
+        const err = await res.json().catch(() => null);
+        toastError(err?.error || "Failed to create workout plan");
       }
+    } catch {
+      toastError("Failed to create workout plan");
     } finally {
       setLoading(false);
     }
@@ -148,7 +139,16 @@ export default function NewWorkoutPage() {
         {/* Exercises */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Exercises</h2>
-          <div className="mt-3 space-y-3">
+
+          {/* Library Picker */}
+          <div className="mt-3 max-w-lg">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Add from Exercise Library
+            </label>
+            <ExercisePicker onSelect={addFromLibrary} />
+          </div>
+
+          <div className="mt-4 space-y-3">
             {exercises.map((ex, index) => (
               <div key={ex.tempId} className="card">
                 <div className="flex items-start gap-2">
@@ -158,13 +158,9 @@ export default function NewWorkoutPage() {
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
                         {index + 1}
                       </span>
-                      <input
-                        type="text"
+                      <ExerciseNameInput
                         value={ex.name}
-                        onChange={(e) =>
-                          updateExercise(ex.tempId, "name", e.target.value)
-                        }
-                        placeholder="Exercise name"
+                        onChange={(v) => updateExercise(ex.tempId, "name", v)}
                         className="input flex-1"
                       />
                       <button
@@ -178,82 +174,28 @@ export default function NewWorkoutPage() {
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                       <div>
                         <label className="text-xs text-gray-500">Sets</label>
-                        <input
-                          type="number"
-                          value={ex.sets}
-                          onChange={(e) =>
-                            updateExercise(ex.tempId, "sets", e.target.value)
-                          }
-                          placeholder="3"
-                          className="input mt-0.5"
-                        />
+                        <input type="number" value={ex.sets} onChange={(e) => updateExercise(ex.tempId, "sets", e.target.value)} placeholder="3" className="input mt-0.5" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">Reps</label>
-                        <input
-                          type="text"
-                          value={ex.reps}
-                          onChange={(e) =>
-                            updateExercise(ex.tempId, "reps", e.target.value)
-                          }
-                          placeholder="8-12"
-                          className="input mt-0.5"
-                        />
+                        <input type="text" value={ex.reps} onChange={(e) => updateExercise(ex.tempId, "reps", e.target.value)} placeholder="8-12" className="input mt-0.5" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">Weight</label>
-                        <input
-                          type="text"
-                          value={ex.weight}
-                          onChange={(e) =>
-                            updateExercise(ex.tempId, "weight", e.target.value)
-                          }
-                          placeholder="135lbs"
-                          className="input mt-0.5"
-                        />
+                        <input type="text" value={ex.weight} onChange={(e) => updateExercise(ex.tempId, "weight", e.target.value)} placeholder="135lbs" className="input mt-0.5" />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500">
-                          Rest (sec)
-                        </label>
-                        <input
-                          type="number"
-                          value={ex.restSeconds}
-                          onChange={(e) =>
-                            updateExercise(
-                              ex.tempId,
-                              "restSeconds",
-                              e.target.value
-                            )
-                          }
-                          placeholder="60"
-                          className="input mt-0.5"
-                        />
+                        <label className="text-xs text-gray-500">Rest (sec)</label>
+                        <input type="number" value={ex.restSeconds} onChange={(e) => updateExercise(ex.tempId, "restSeconds", e.target.value)} placeholder="60" className="input mt-0.5" />
                       </div>
                     </div>
                     <div>
                       <label className="text-xs text-gray-500">Notes</label>
-                      <input
-                        type="text"
-                        value={ex.notes}
-                        onChange={(e) =>
-                          updateExercise(ex.tempId, "notes", e.target.value)
-                        }
-                        placeholder="Form cues, variations..."
-                        className="input mt-0.5"
-                      />
+                      <input type="text" value={ex.notes} onChange={(e) => updateExercise(ex.tempId, "notes", e.target.value)} placeholder="Form cues, variations..." className="input mt-0.5" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-500">Video URL (YouTube)</label>
-                      <input
-                        type="url"
-                        value={ex.videoUrl}
-                        onChange={(e) =>
-                          updateExercise(ex.tempId, "videoUrl", e.target.value)
-                        }
-                        placeholder="https://youtube.com/watch?v=..."
-                        className="input mt-0.5"
-                      />
+                      <input type="url" value={ex.videoUrl} onChange={(e) => updateExercise(ex.tempId, "videoUrl", e.target.value)} placeholder="https://youtube.com/watch?v=..." className="input mt-0.5" />
                     </div>
                   </div>
                 </div>
@@ -267,7 +209,7 @@ export default function NewWorkoutPage() {
             className="btn-secondary mt-3 w-full"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Exercise
+            Add Exercise Manually
           </button>
         </div>
 

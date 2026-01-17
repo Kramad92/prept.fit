@@ -121,9 +121,9 @@ export default function WorkoutsPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Workout Plans</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Workout Templates</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Create and manage workout plans
+            Reusable templates — assign to clients from their profile page
           </p>
         </div>
         <Link href="/dashboard/workouts/new" className="btn-primary">

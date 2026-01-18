@@ -14,30 +14,10 @@ import {
 } from "lucide-react";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { ExercisePicker } from "./exercise-picker";
-
-interface Exercise {
-  id: string;
-  name: string;
-  sets: number | null;
-  reps: string | null;
-  weight: string | null;
-  restSeconds: number | null;
-  notes: string | null;
-  orderIndex: number;
-  videoUrl: string | null;
-}
-
-interface ClientExercise {
-  id: string;
-  name: string;
-  sets: number | null;
-  reps: string | null;
-  weight: string | null;
-  restSeconds: number | null;
-  notes: string | null;
-  orderIndex: number;
-  videoUrl: string | null;
-}
+import { ExerciseNameInput } from "./exercise-name-input";
+import type { Exercise, ClientExercise, ExerciseInput } from "@/types";
+import { createEmptyExercise } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
 interface AssignedPlan {
   id: string;
@@ -56,17 +36,6 @@ interface AssignedPlan {
   clientExercises: ClientExercise[];
 }
 
-interface ExerciseInput {
-  tempId: string;
-  name: string;
-  sets: string;
-  reps: string;
-  weight: string;
-  restSeconds: string;
-  notes: string;
-  videoUrl: string;
-}
-
 interface ClientWorkoutTabProps {
   clientId: string;
   assignedPlans: AssignedPlan[];
@@ -74,6 +43,7 @@ interface ClientWorkoutTabProps {
 }
 
 export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientWorkoutTabProps) {
+  const { toastSuccess, toastError } = useToast();
   const [expanded, setExpanded] = useState<string | null>(
     assignedPlans.length > 0 ? assignedPlans[0].id : null
   );
@@ -91,26 +61,22 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   const [editExercises, setEditExercises] = useState<ExerciseInput[]>([]);
   const [editName, setEditName] = useState("");
 
-  function createEmptyExercise(): ExerciseInput {
-    return {
-      tempId: Math.random().toString(36).slice(2),
-      name: "",
-      sets: "",
-      reps: "",
-      weight: "",
-      restSeconds: "",
-      notes: "",
-      videoUrl: "",
-    };
-  }
-
   async function handleAssignTemplate(templateId: string) {
     setAssigning(true);
-    await fetch(`/api/clients/${clientId}/workouts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workoutPlanId: templateId }),
-    });
+    try {
+      const res = await fetch(`/api/clients/${clientId}/workouts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workoutPlanId: templateId }),
+      });
+      if (res.ok) {
+        toastSuccess("Template assigned");
+      } else {
+        toastError("Failed to assign template");
+      }
+    } catch {
+      toastError("Failed to assign template");
+    }
     setShowTemplatePicker(false);
     setAssigning(false);
     onRefresh();
@@ -119,30 +85,39 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   async function handleCreateCustom(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch(`/api/clients/${clientId}/workouts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: customName,
-        exercises: customExercises
-          .filter((ex) => ex.name.trim())
-          .map((ex, i) => ({
-            name: ex.name,
-            sets: ex.sets ? parseInt(ex.sets) : null,
-            reps: ex.reps || null,
-            weight: ex.weight || null,
-            restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
-            notes: ex.notes || null,
-            videoUrl: ex.videoUrl || null,
-            orderIndex: i,
-          })),
-      }),
-    });
+    try {
+      const res = await fetch(`/api/clients/${clientId}/workouts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: customName,
+          exercises: customExercises
+            .filter((ex) => ex.name.trim())
+            .map((ex, i) => ({
+              name: ex.name,
+              sets: ex.sets ? parseInt(ex.sets) : null,
+              reps: ex.reps || null,
+              weight: ex.weight || null,
+              restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
+              notes: ex.notes || null,
+              videoUrl: ex.videoUrl || null,
+              orderIndex: i,
+            })),
+        }),
+      });
+      if (res.ok) {
+        toastSuccess("Custom plan created");
+        setShowCustomForm(false);
+        setCustomName("");
+        setCustomExercises([]);
+        onRefresh();
+      } else {
+        toastError("Failed to create plan");
+      }
+    } catch {
+      toastError("Failed to create plan");
+    }
     setSaving(false);
-    setShowCustomForm(false);
-    setCustomName("");
-    setCustomExercises([]);
-    onRefresh();
   }
 
   function startEdit(plan: AssignedPlan) {
@@ -165,33 +140,47 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
 
   async function handleSaveEdit(planId: string) {
     setSaving(true);
-    await fetch(`/api/clients/${clientId}/workouts/${planId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customName: editName,
-        exercises: editExercises
-          .filter((ex) => ex.name.trim())
-          .map((ex, i) => ({
-            name: ex.name,
-            sets: ex.sets ? parseInt(ex.sets) : null,
-            reps: ex.reps || null,
-            weight: ex.weight || null,
-            restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
-            notes: ex.notes || null,
-            videoUrl: ex.videoUrl || null,
-            orderIndex: i,
-          })),
-      }),
-    });
+    try {
+      const res = await fetch(`/api/clients/${clientId}/workouts/${planId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customName: editName,
+          exercises: editExercises
+            .filter((ex) => ex.name.trim())
+            .map((ex, i) => ({
+              name: ex.name,
+              sets: ex.sets ? parseInt(ex.sets) : null,
+              reps: ex.reps || null,
+              weight: ex.weight || null,
+              restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
+              notes: ex.notes || null,
+              videoUrl: ex.videoUrl || null,
+              orderIndex: i,
+            })),
+        }),
+      });
+      if (res.ok) {
+        toastSuccess("Workout plan saved");
+        setEditingPlanId(null);
+        onRefresh();
+      } else {
+        toastError("Failed to save changes");
+      }
+    } catch {
+      toastError("Failed to save changes");
+    }
     setSaving(false);
-    setEditingPlanId(null);
-    onRefresh();
   }
 
   async function handleDelete(planId: string) {
-    await fetch(`/api/clients/${clientId}/workouts/${planId}`, { method: "DELETE" });
-    onRefresh();
+    try {
+      await fetch(`/api/clients/${clientId}/workouts/${planId}`, { method: "DELETE" });
+      toastSuccess("Plan removed");
+      onRefresh();
+    } catch {
+      toastError("Failed to remove plan");
+    }
   }
 
   function updateExercise(
@@ -223,11 +212,9 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
                 {index + 1}
               </span>
-              <input
-                type="text"
+              <ExerciseNameInput
                 value={ex.name}
-                onChange={(e) => updateExercise(exercises, setExercises, ex.tempId, "name", e.target.value)}
-                placeholder="Exercise name"
+                onChange={(v) => updateExercise(exercises, setExercises, ex.tempId, "name", v)}
                 className="input flex-1"
               />
               <button

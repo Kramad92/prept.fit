@@ -14,37 +14,8 @@ import {
 } from "lucide-react";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { FoodPicker } from "./food-picker";
-
-interface Meal {
-  id: string;
-  name: string;
-  time: string | null;
-  foods: Array<{
-    name: string;
-    portion: string;
-    calories: number | null;
-    protein: number | null;
-    carbs: number | null;
-    fat: number | null;
-  }>;
-  orderIndex: number;
-}
-
-interface ClientMeal {
-  id: string;
-  name: string;
-  time: string | null;
-  foods: Array<{
-    name: string;
-    portion: string;
-    calories: number | null;
-    protein: number | null;
-    carbs: number | null;
-    fat: number | null;
-  }>;
-  orderIndex: number;
-  notes: string | null;
-}
+import type { Meal, ClientMeal, Food } from "@/types";
+import { useToast } from "@/components/ui/toast";
 
 interface AssignedMealPlan {
   id: string;
@@ -88,6 +59,7 @@ interface ClientNutritionTabProps {
 }
 
 export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: ClientNutritionTabProps) {
+  const { toastSuccess, toastError } = useToast();
   const [expanded, setExpanded] = useState<string | null>(
     assignedMealPlans.length > 0 ? assignedMealPlans[0].id : null
   );
@@ -148,11 +120,17 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   }
 
   async function handleAssignTemplate(templateId: string) {
-    await fetch(`/api/clients/${clientId}/nutrition`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mealPlanId: templateId }),
-    });
+    try {
+      const res = await fetch(`/api/clients/${clientId}/nutrition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mealPlanId: templateId }),
+      });
+      if (res.ok) toastSuccess("Meal plan assigned");
+      else toastError("Failed to assign meal plan");
+    } catch {
+      toastError("Failed to assign meal plan");
+    }
     setShowTemplatePicker(false);
     onRefresh();
   }
@@ -160,23 +138,32 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   async function handleCreateCustom(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch(`/api/clients/${clientId}/nutrition`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: customName,
-        targetCalories: customCalories ? parseInt(customCalories) : null,
-        targetProtein: customProtein ? parseInt(customProtein) : null,
-        targetCarbs: customCarbs ? parseInt(customCarbs) : null,
-        targetFat: customFat ? parseInt(customFat) : null,
-        meals: mealsToPayload(customMeals),
-      }),
-    });
+    try {
+      const res = await fetch(`/api/clients/${clientId}/nutrition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: customName,
+          targetCalories: customCalories ? parseInt(customCalories) : null,
+          targetProtein: customProtein ? parseInt(customProtein) : null,
+          targetCarbs: customCarbs ? parseInt(customCarbs) : null,
+          targetFat: customFat ? parseInt(customFat) : null,
+          meals: mealsToPayload(customMeals),
+        }),
+      });
+      if (res.ok) {
+        toastSuccess("Custom meal plan created");
+        setShowCustomForm(false);
+        setCustomName("");
+        setCustomMeals([]);
+        onRefresh();
+      } else {
+        toastError("Failed to create meal plan");
+      }
+    } catch {
+      toastError("Failed to create meal plan");
+    }
     setSaving(false);
-    setShowCustomForm(false);
-    setCustomName("");
-    setCustomMeals([]);
-    onRefresh();
   }
 
   function startEdit(plan: AssignedMealPlan) {
@@ -185,7 +172,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           tempId: m.id,
           name: m.name,
           time: m.time || "",
-          foods: (m.foods as any[]).map((f: any) => ({
+          foods: (m.foods as Food[]).map((f: any) => ({
             name: f.name || "",
             portion: f.portion || "",
             calories: f.calories?.toString() || "",
@@ -198,7 +185,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           tempId: m.id,
           name: m.name,
           time: m.time || "",
-          foods: (m.foods as any[]).map((f: any) => ({
+          foods: (m.foods as Food[]).map((f: any) => ({
             name: f.name || "",
             portion: f.portion || "",
             calories: f.calories?.toString() || "",
@@ -219,26 +206,40 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
 
   async function handleSaveEdit(planId: string) {
     setSaving(true);
-    await fetch(`/api/clients/${clientId}/nutrition/${planId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customName: editName,
-        targetCalories: editCalories ? parseInt(editCalories) : null,
-        targetProtein: editProtein ? parseInt(editProtein) : null,
-        targetCarbs: editCarbs ? parseInt(editCarbs) : null,
-        targetFat: editFat ? parseInt(editFat) : null,
-        meals: mealsToPayload(editMeals),
-      }),
-    });
+    try {
+      const res = await fetch(`/api/clients/${clientId}/nutrition/${planId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customName: editName,
+          targetCalories: editCalories ? parseInt(editCalories) : null,
+          targetProtein: editProtein ? parseInt(editProtein) : null,
+          targetCarbs: editCarbs ? parseInt(editCarbs) : null,
+          targetFat: editFat ? parseInt(editFat) : null,
+          meals: mealsToPayload(editMeals),
+        }),
+      });
+      if (res.ok) {
+        toastSuccess("Meal plan saved");
+        setEditingPlanId(null);
+        onRefresh();
+      } else {
+        toastError("Failed to save meal plan");
+      }
+    } catch {
+      toastError("Failed to save meal plan");
+    }
     setSaving(false);
-    setEditingPlanId(null);
-    onRefresh();
   }
 
   async function handleDelete(planId: string) {
-    await fetch(`/api/clients/${clientId}/nutrition/${planId}`, { method: "DELETE" });
-    onRefresh();
+    try {
+      await fetch(`/api/clients/${clientId}/nutrition/${planId}`, { method: "DELETE" });
+      toastSuccess("Meal plan removed");
+      onRefresh();
+    } catch {
+      toastError("Failed to remove meal plan");
+    }
   }
 
   function updateFood(
@@ -515,7 +516,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                           <p className="font-medium text-gray-900">{meal.name}</p>
                           {meal.time && <span className="text-xs text-gray-400">{meal.time}</span>}
                         </div>
-                        {(meal.foods as any[]).map((food: any, fi: number) => (
+                        {(meal.foods as Food[]).map((food: any, fi: number) => (
                           <div key={fi} className="mt-1 flex justify-between text-sm">
                             <span className="text-gray-700">
                               {food.name}

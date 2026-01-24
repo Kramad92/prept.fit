@@ -14,6 +14,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import type { Food } from "@/types";
+import { useToast } from "@/components/ui/toast";
 
 interface MealPlanSummary {
   id: string;
@@ -28,19 +30,10 @@ interface MealPlanSummary {
   assignedCount: number;
 }
 
-interface FoodItem {
-  name: string;
-  portion: string;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-}
-
 interface MealRow {
   name: string;
   time: string;
-  foods: FoodItem[];
+  foods: Food[];
 }
 
 interface ClientOption {
@@ -49,6 +42,7 @@ interface ClientOption {
 }
 
 export default function NutritionPage() {
+  const { toastSuccess, toastError } = useToast();
   const [plans, setPlans] = useState<MealPlanSummary[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +80,7 @@ export default function NutritionPage() {
         setPlans(p);
         setClients(c);
       })
-      .catch(() => {})
+      .catch(() => toastError("Failed to load data"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -175,8 +169,8 @@ export default function NutritionPage() {
       data.meals.map((m: any) => ({
         name: m.name,
         time: m.time || "",
-        foods: (m.foods as any[])?.length > 0
-          ? (m.foods as any[]).map((f: any) => ({
+        foods: (m.foods as Food[])?.length > 0
+          ? (m.foods as Food[]).map((f: any) => ({
               name: f.name || "",
               portion: f.portion || "",
               calories: f.calories ?? null,
@@ -261,9 +255,9 @@ export default function NutritionPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nutrition</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Meal Plan Templates</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Create meal plans and track client nutrition
+            Reusable templates — assign to clients from their profile page
           </p>
         </div>
         <button onClick={() => { resetForm(); setShowCreate(true); }} className="btn-primary">
@@ -395,7 +389,7 @@ export default function NutritionPage() {
                           <span className="text-xs text-gray-400">{meal.time}</span>
                         )}
                       </div>
-                      {(meal.foods as any[])?.map((food: any, fi: number) => (
+                      {(meal.foods as Food[])?.map((food: any, fi: number) => (
                         <div key={fi} className="mt-1 flex justify-between text-sm text-gray-600">
                           <span>
                             {food.name}

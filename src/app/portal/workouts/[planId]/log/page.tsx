@@ -45,12 +45,16 @@ export default function WorkoutLogPage() {
           (p: any) => p.workoutPlan.id === params.planId
         );
         if (plan) {
-          setPlanName(plan.workoutPlan.name);
-          setExercises(plan.workoutPlan.exercises);
+          setPlanName(plan.customName || plan.workoutPlan.name);
+          // Use client exercises if available, else fall back to template exercises
+          const exs = plan.clientExercises?.length > 0
+            ? plan.clientExercises
+            : plan.workoutPlan.exercises;
+          setExercises(exs);
 
           // Pre-populate entries from prescribed sets
           const initialEntries: Record<string, LogEntry[]> = {};
-          for (const ex of plan.workoutPlan.exercises) {
+          for (const ex of exs) {
             const numSets = ex.sets || 1;
             initialEntries[ex.id] = Array.from({ length: numSets }, (_, i) => ({
               exerciseId: ex.id,

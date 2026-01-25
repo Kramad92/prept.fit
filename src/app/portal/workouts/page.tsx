@@ -4,20 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Dumbbell, ChevronDown, ChevronUp, Play } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-
-interface Exercise {
-  id: string;
-  name: string;
-  sets: number | null;
-  reps: string | null;
-  weight: string | null;
-  restSeconds: number | null;
-  notes: string | null;
-  orderIndex: number;
-}
+import type { Exercise } from "@/types";
 
 interface AssignedPlan {
   id: string;
+  customName: string | null;
   isActive: boolean;
   workoutPlan: {
     id: string;
@@ -25,6 +16,7 @@ interface AssignedPlan {
     description: string | null;
     exercises: Exercise[];
   };
+  clientExercises: Exercise[];
 }
 
 export default function PortalWorkoutsPage() {
@@ -72,6 +64,12 @@ export default function PortalWorkoutsPage() {
         <div className="mt-6 space-y-4">
           {plans.map((plan) => {
             const isOpen = expanded === plan.id;
+            // Use client exercises if available, else fall back to template exercises
+            const exercises = plan.clientExercises?.length > 0
+              ? plan.clientExercises
+              : plan.workoutPlan.exercises;
+            const displayName = plan.customName || plan.workoutPlan.name;
+
             return (
               <div key={plan.id} className="card">
                 <button
@@ -84,7 +82,7 @@ export default function PortalWorkoutsPage() {
                     </div>
                     <div className="text-left">
                       <h3 className="font-semibold text-gray-900">
-                        {plan.workoutPlan.name}
+                        {displayName}
                       </h3>
                       {plan.workoutPlan.description && (
                         <p className="text-sm text-gray-500">
@@ -102,7 +100,7 @@ export default function PortalWorkoutsPage() {
 
                 {isOpen && (
                   <div className="mt-4 space-y-3 border-t border-gray-100 pt-4">
-                    {plan.workoutPlan.exercises.map((ex, i) => (
+                    {exercises.map((ex, i) => (
                       <div
                         key={ex.id}
                         className="flex items-start gap-3 rounded-lg bg-gray-50 p-3"

@@ -11,25 +11,11 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { format } from "date-fns";
-
-interface Food {
-  name: string;
-  portion: string;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-}
-
-interface Meal {
-  id: string;
-  name: string;
-  time: string | null;
-  foods: Food[];
-}
+import type { Food, Meal, ClientMeal } from "@/types";
 
 interface AssignedPlan {
   id: string;
+  customName: string | null;
   isActive: boolean;
   mealPlan: {
     id: string;
@@ -41,6 +27,7 @@ interface AssignedPlan {
     targetFat: number | null;
     meals: Meal[];
   };
+  clientMeals: ClientMeal[];
 }
 
 interface NutritionLog {
@@ -200,7 +187,7 @@ export default function PortalNutritionPage() {
                           </div>
                           <div className="text-left">
                             <h3 className="font-semibold text-gray-900">
-                              {plan.mealPlan.name}
+                              {plan.customName || plan.mealPlan.name}
                             </h3>
                             {plan.mealPlan.targetCalories && (
                               <p className="text-xs text-gray-500">
@@ -241,7 +228,7 @@ export default function PortalNutritionPage() {
                             </div>
                           )}
 
-                          {plan.mealPlan.meals.map((meal) => (
+                          {(plan.clientMeals?.length > 0 ? plan.clientMeals : plan.mealPlan.meals).map((meal) => (
                             <div
                               key={meal.id}
                               className="rounded-lg bg-gray-50 p-3"

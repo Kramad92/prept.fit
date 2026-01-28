@@ -99,6 +99,7 @@ model Client {
   nutritionLogs  NutritionLog[]
   clientExercises ClientExercise[]
   clientMeals     ClientMeal[]
+  payments        Payment[]
 
   @@index([tenantId])
   @@map("clients")
@@ -588,4 +589,29 @@ model ClientMeal {
   @@index([clientId])
   @@index([clientMealPlanId])
   @@map("client_meals")
+}
+
+// ========== PAYMENT TRACKING ==========
+
+model Payment {
+  id          String   @id @default(cuid())
+  amount      Float    // Payment amount
+  currency    String   @default("USD")
+  date        DateTime @default(now()) // When payment was made
+  dueDate     DateTime? // When payment was due (for tracking overdue)
+  method      String?  // "cash", "bank_transfer", "card", "venmo", "zelle", "other"
+  status      String   @default("paid") // "paid", "pending", "overdue", "cancelled"
+  period      String?  // What period this covers, e.g. "March 2026", "Q1 2026"
+  description String?  // "Monthly coaching fee", "10-session package", etc.
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([clientId, status])
+  @@index([dueDate])
+  @@map("payments")
 }

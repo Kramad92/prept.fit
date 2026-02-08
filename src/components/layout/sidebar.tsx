@@ -7,10 +7,12 @@ import {
   Users,
   Calendar,
   Dumbbell,
+  Library,
   MessageSquare,
   ClipboardCheck,
   Sparkles,
   UtensilsCrossed,
+  DollarSign,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -23,10 +25,12 @@ const navItems = [
   { href: "/dashboard/clients", icon: Users, label: "Clients" },
   { href: "/dashboard/schedule", icon: Calendar, label: "Schedule" },
   { href: "/dashboard/workouts", icon: Dumbbell, label: "Workouts" },
+  { href: "/dashboard/exercises", icon: Library, label: "Exercise Library" },
   { href: "/dashboard/messages", icon: MessageSquare, label: "Messages" },
   { href: "/dashboard/check-ins", icon: ClipboardCheck, label: "Check-Ins" },
   { href: "/dashboard/habits", icon: Sparkles, label: "Habits" },
   { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: "Nutrition" },
+  { href: "/dashboard/billing", icon: DollarSign, label: "Billing" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
 

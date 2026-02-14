@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,10 +12,17 @@ import {
   Edit,
   UserPlus,
   Plus,
-  X,
+  UtensilsCrossed,
+  DollarSign,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ClientWorkoutTab } from "@/components/client/client-workout-tab";
+import { ClientNutritionTab } from "@/components/client/client-nutrition-tab";
+import { ClientPaymentsTab } from "@/components/client/client-payments-tab";
+import { MeasurementModal } from "@/components/client/measurement-modal";
+import { useToast } from "@/components/ui/toast";
+import type { Food } from "@/types";
 
 interface ClientDetail {
   id: string;
@@ -49,8 +56,70 @@ interface ClientDetail {
   }>;
   assignedPlans: Array<{
     id: string;
+    customName: string | null;
+    notes: string | null;
     isActive: boolean;
-    workoutPlan: { id: string; name: string };
+    startDate: string | null;
+    endDate: string | null;
+    workoutPlan: {
+      id: string;
+      name: string;
+      description: string | null;
+      sourceTemplate: { id: string; name: string } | null;
+      exercises: Array<{
+        id: string;
+        name: string;
+        sets: number | null;
+        reps: string | null;
+        weight: string | null;
+        restSeconds: number | null;
+        notes: string | null;
+        orderIndex: number;
+        videoUrl: string | null;
+      }>;
+    };
+    clientExercises: Array<{
+      id: string;
+      name: string;
+      sets: number | null;
+      reps: string | null;
+      weight: string | null;
+      restSeconds: number | null;
+      notes: string | null;
+      orderIndex: number;
+      videoUrl: string | null;
+    }>;
+  }>;
+  assignedMealPlans: Array<{
+    id: string;
+    customName: string | null;
+    notes: string | null;
+    isActive: boolean;
+    mealPlan: {
+      id: string;
+      name: string;
+      description: string | null;
+      targetCalories: number | null;
+      targetProtein: number | null;
+      targetCarbs: number | null;
+      targetFat: number | null;
+      sourceTemplate: { id: string; name: string } | null;
+      meals: Array<{
+        id: string;
+        name: string;
+        time: string | null;
+        foods: Food[];
+        orderIndex: number;
+      }>;
+    };
+    clientMeals: Array<{
+      id: string;
+      name: string;
+      time: string | null;
+      foods: Food[];
+      orderIndex: number;
+      notes: string | null;
+    }>;
   }>;
 }
 
@@ -60,17 +129,21 @@ export default function ClientDetailPage() {
   const [inviteResult, setInviteResult] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "photos" | "workouts" | "measurements"
+    "overview" | "photos" | "workouts" | "nutrition" | "payments" | "measurements"
   >("overview");
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
-  const [savingMeasurement, setSavingMeasurement] = useState(false);
+  const { toastError } = useToast();
 
-  useEffect(() => {
+  const loadClient = useCallback(() => {
     fetch(`/api/clients/${params.id}`)
       .then((r) => r.json())
       .then(setClient)
-      .catch(() => {});
-  }, [params.id]);
+      .catch(() => toastError("Failed to load client"));
+  }, [params.id, toastError]);
+
+  useEffect(() => {
+    loadClient();
+  }, [loadClient]);
 
   if (!client) {
     return (
@@ -84,6 +157,8 @@ export default function ClientDetailPage() {
     { key: "overview" as const, label: "Overview", icon: Edit },
     { key: "photos" as const, label: "Photos", icon: Camera },
     { key: "workouts" as const, label: "Workouts", icon: Dumbbell },
+    { key: "nutrition" as const, label: "Nutrition", icon: UtensilsCrossed },
+    { key: "payments" as const, label: "Payments", icon: DollarSign },
     { key: "measurements" as const, label: "Stats", icon: Ruler },
   ];
 
@@ -255,36 +330,23 @@ export default function ClientDetailPage() {
         )}
 
         {activeTab === "workouts" && (
-          <div>
-            {client.assignedPlans.length === 0 ? (
-              <div className="card flex flex-col items-center py-8 text-center">
-                <Dumbbell className="h-10 w-10 text-gray-300" />
-                <p className="mt-3 text-sm text-gray-500">
-                  No workout plans assigned.
-                </p>
-                <Link
-                  href="/dashboard/workouts"
-                  className="btn-primary mt-4"
-                >
-                  Assign a Plan
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {client.assignedPlans.map((plan) => (
-                  <Link
-                    key={plan.id}
-                    href={`/dashboard/workouts/${plan.workoutPlan.id}`}
-                    className="card flex items-center gap-3 transition-shadow hover:shadow-md"
-                  >
-                    <Dumbbell className="h-5 w-5 text-brand-600" />
-                    <span className="font-medium">{plan.workoutPlan.name}</span>
-                    {plan.isActive && <StatusBadge status="active" />}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <ClientWorkoutTab
+            clientId={client.id}
+            assignedPlans={client.assignedPlans}
+            onRefresh={loadClient}
+          />
+        )}
+
+        {activeTab === "nutrition" && (
+          <ClientNutritionTab
+            clientId={client.id}
+            assignedMealPlans={client.assignedMealPlans}
+            onRefresh={loadClient}
+          />
+        )}
+
+        {activeTab === "payments" && (
+          <ClientPaymentsTab clientId={client.id} />
         )}
 
         {activeTab === "measurements" && (
@@ -374,172 +436,12 @@ export default function ClientDetailPage() {
               </div>
             )}
 
-            {/* Add Measurement Modal */}
             {showMeasurementForm && (
-              <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-                <div className="w-full max-w-md rounded-t-2xl bg-white p-6 md:rounded-2xl">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">Add Measurement</h2>
-                    <button
-                      onClick={() => setShowMeasurementForm(false)}
-                      className="rounded-lg p-1 hover:bg-gray-100"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                  <form
-                    className="mt-4 space-y-4"
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      setSavingMeasurement(true);
-                      const fd = new FormData(e.currentTarget);
-                      const data: Record<string, string> = {};
-                      fd.forEach((v, k) => {
-                        if (v) data[k] = v as string;
-                      });
-
-                      const res = await fetch(
-                        `/api/clients/${client.id}/measurements`,
-                        {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(data),
-                        }
-                      );
-
-                      if (res.ok) {
-                        // Reload client data
-                        const updated = await fetch(
-                          `/api/clients/${client.id}`
-                        ).then((r) => r.json());
-                        setClient(updated);
-                        setShowMeasurementForm(false);
-                      }
-                      setSavingMeasurement(false);
-                    }}
-                  >
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Date
-                      </label>
-                      <input
-                        type="date"
-                        name="date"
-                        defaultValue={new Date().toISOString().split("T")[0]}
-                        className="input mt-1"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Weight (kg)
-                        </label>
-                        <input
-                          type="number"
-                          name="weight"
-                          step="0.1"
-                          className="input mt-1"
-                          placeholder="75.0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Body Fat (%)
-                        </label>
-                        <input
-                          type="number"
-                          name="bodyFat"
-                          step="0.1"
-                          className="input mt-1"
-                          placeholder="18.0"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Chest (cm)
-                        </label>
-                        <input
-                          type="number"
-                          name="chest"
-                          step="0.1"
-                          className="input mt-1"
-                          placeholder="95.0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Waist (cm)
-                        </label>
-                        <input
-                          type="number"
-                          name="waist"
-                          step="0.1"
-                          className="input mt-1"
-                          placeholder="80.0"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Hips (cm)
-                        </label>
-                        <input
-                          type="number"
-                          name="hips"
-                          step="0.1"
-                          className="input mt-1"
-                          placeholder="95.0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Arms (cm)
-                        </label>
-                        <input
-                          type="number"
-                          name="arms"
-                          step="0.1"
-                          className="input mt-1"
-                          placeholder="35.0"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Thighs (cm)
-                      </label>
-                      <input
-                        type="number"
-                        name="thighs"
-                        step="0.1"
-                        className="input mt-1"
-                        placeholder="55.0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Notes
-                      </label>
-                      <textarea
-                        name="notes"
-                        rows={2}
-                        className="input mt-1"
-                        placeholder="Any observations..."
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={savingMeasurement}
-                      className="btn-primary w-full"
-                    >
-                      {savingMeasurement ? "Saving..." : "Save Measurement"}
-                    </button>
-                  </form>
-                </div>
-              </div>
+              <MeasurementModal
+                clientId={client.id}
+                onClose={() => setShowMeasurementForm(false)}
+                onSaved={loadClient}
+              />
             )}
           </div>
         )}

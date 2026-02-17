@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, clientUpdateSchema } from "@/lib/validations";
 
 export async function GET(
   _req: NextRequest,
@@ -58,7 +59,9 @@ export async function PUT(
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, clientUpdateSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const client = await prisma.client.updateMany({
     where: { id: params.id, tenantId: session.user.tenantId },

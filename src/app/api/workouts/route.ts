@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, workoutPlanSchema } from "@/lib/validations";
 
 export async function GET() {
   const session = await getSession();
@@ -30,7 +31,9 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, workoutPlanSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const plan = await prisma.workoutPlan.create({
     data: {
@@ -40,18 +43,7 @@ export async function POST(req: NextRequest) {
       tenantId: session.user.tenantId,
       exercises: {
         create: (body.exercises || []).map(
-          (
-            ex: {
-              name: string;
-              sets: number | null;
-              reps: string | null;
-              weight: string | null;
-              restSeconds: number | null;
-              notes: string | null;
-              videoUrl: string | null;
-              orderIndex: number;
-            },
-          ) => ({
+          (ex: any, i: number) => ({
             name: ex.name,
             sets: ex.sets,
             reps: ex.reps,
@@ -59,7 +51,7 @@ export async function POST(req: NextRequest) {
             restSeconds: ex.restSeconds,
             notes: ex.notes,
             videoUrl: ex.videoUrl,
-            orderIndex: ex.orderIndex,
+            orderIndex: ex.orderIndex ?? i,
           })
         ),
       },

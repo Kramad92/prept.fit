@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, mealPlanSchema } from "@/lib/validations";
 
 export async function GET() {
   const session = await getSession();
@@ -34,7 +35,9 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, mealPlanSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const plan = await prisma.mealPlan.create({
     data: {
@@ -48,11 +51,11 @@ export async function POST(req: NextRequest) {
       tenantId: session.user.tenantId,
       meals: {
         create: (body.meals || []).map(
-          (meal: { name: string; time?: string; foods: any[]; orderIndex: number }) => ({
+          (meal: any, i: number) => ({
             name: meal.name,
             time: meal.time || null,
             foods: meal.foods || [],
-            orderIndex: meal.orderIndex,
+            orderIndex: meal.orderIndex ?? i,
           })
         ),
       },

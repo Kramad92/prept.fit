@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, mealPlanSchema } from "@/lib/validations";
 
 export async function GET(
   _req: NextRequest,
@@ -31,7 +32,15 @@ export async function PUT(
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const existing = await prisma.mealPlan.findFirst({
+    where: { id: params.id, tenantId: session.user.tenantId },
+    select: { id: true },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const parsed = await validateBody(req, mealPlanSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const plan = await prisma.$transaction(async (tx) => {
     await tx.meal.deleteMany({ where: { mealPlanId: params.id } });

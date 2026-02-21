@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, workoutPlanSchema } from "@/lib/validations";
 
 export async function GET(
   req: NextRequest,
@@ -31,7 +32,15 @@ export async function PUT(
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const existing = await prisma.workoutPlan.findFirst({
+    where: { id: params.id, tenantId: session.user.tenantId },
+    select: { id: true },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const parsed = await validateBody(req, workoutPlanSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   // Delete old exercises and create new ones in a transaction
   const plan = await prisma.$transaction(async (tx) => {
@@ -71,6 +80,12 @@ export async function DELETE(
 ) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const toDelete = await prisma.workoutPlan.findFirst({
+    where: { id: params.id, tenantId: session.user.tenantId },
+    select: { id: true },
+  });
+  if (!toDelete) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await prisma.workoutPlan.delete({
     where: { id: params.id },

@@ -1,5 +1,6 @@
 import { PortalMobileNav, PortalDesktopNav } from "@/components/layout/portal-nav";
 import { TopBar } from "@/components/layout/top-bar";
+import { BrandColorProvider } from "@/components/brand-color-provider";
 
 export default function PortalLayout({
   children,
@@ -8,6 +9,7 @@ export default function PortalLayout({
 }) {
   return (
     <div className="min-h-screen bg-gray-50">
+      <BrandColorProvider />
       <PortalDesktopNav />
       <TopBar />
       <main className="pb-20 md:pb-0 md:pl-64">

@@ -1,17 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Save, Palette, Clock, ChevronRight } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+
+interface Settings {
+  name: string | null;
+  bio: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  brandColor: string | null;
+  timezone: string | null;
+}
 
 export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const { toastSuccess, toastError } = useToast();
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data) => setSettings(data))
+      .catch(() => toastError("Failed to load settings"))
+      .finally(() => setLoading(false));
+  }, [toastError]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
-    setSaved(false);
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -31,10 +51,24 @@ export default function SettingsPage() {
         body: JSON.stringify(data),
       });
 
-      if (res.ok) setSaved(true);
+      if (res.ok) {
+        toastSuccess("Settings saved!");
+      } else {
+        toastError("Failed to save settings");
+      }
+    } catch {
+      toastError("Failed to save settings");
     } finally {
       setSaving(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+      </div>
+    );
   }
 
   return (
@@ -80,6 +114,7 @@ export default function SettingsPage() {
             <input
               type="text"
               name="name"
+              defaultValue={settings?.name || ""}
               className="input mt-1"
               placeholder="Your Fitness Business"
             />
@@ -92,6 +127,7 @@ export default function SettingsPage() {
             <textarea
               name="bio"
               rows={3}
+              defaultValue={settings?.bio || ""}
               className="input mt-1"
               placeholder="Tell clients about yourself..."
             />
@@ -105,7 +141,7 @@ export default function SettingsPage() {
               <input
                 type="color"
                 name="brandColor"
-                defaultValue="#22c55e"
+                defaultValue={settings?.brandColor || "#22c55e"}
                 className="h-10 w-14 cursor-pointer rounded border border-gray-300"
               />
               <span className="text-sm text-gray-500">
@@ -128,6 +164,7 @@ export default function SettingsPage() {
             <input
               type="email"
               name="email"
+              defaultValue={settings?.email || ""}
               className="input mt-1"
               placeholder="you@example.com"
             />
@@ -140,6 +177,7 @@ export default function SettingsPage() {
             <input
               type="tel"
               name="phone"
+              defaultValue={settings?.phone || ""}
               className="input mt-1"
               placeholder="+1 (555) 000-0000"
             />
@@ -152,6 +190,7 @@ export default function SettingsPage() {
             <input
               type="url"
               name="website"
+              defaultValue={settings?.website || ""}
               className="input mt-1"
               placeholder="https://yoursite.com"
             />
@@ -165,7 +204,11 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700">
               Timezone
             </label>
-            <select name="timezone" className="input mt-1">
+            <select
+              name="timezone"
+              defaultValue={settings?.timezone || "America/New_York"}
+              className="input mt-1"
+            >
               <option value="America/New_York">Eastern Time</option>
               <option value="America/Chicago">Central Time</option>
               <option value="America/Denver">Mountain Time</option>
@@ -182,9 +225,6 @@ export default function SettingsPage() {
             <Save className="mr-2 h-4 w-4" />
             {saving ? "Saving..." : "Save Settings"}
           </button>
-          {saved && (
-            <span className="text-sm text-green-600">Settings saved!</span>
-          )}
         </div>
       </form>
     </div>

@@ -66,28 +66,18 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
       // Compress client-side
       const compressed = await compressImage(file);
 
-      // Get presigned upload URL
+      // Upload via our API (proxied to R2 server-side, no CORS issues)
+      const formData = new FormData();
+      formData.append("file", compressed, file.name.replace(/\.[^.]+$/, ".jpg"));
+      formData.append("folder", folder);
+
       const res = await fetch("/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: "image/jpeg",
-          folder,
-        }),
+        body: formData,
       });
 
-      if (!res.ok) throw new Error("Failed to get upload URL");
-      const { uploadUrl, key } = await res.json();
-
-      // Upload directly to R2/S3
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: compressed,
-        headers: { "Content-Type": "image/jpeg" },
-      });
-
-      if (!uploadRes.ok) throw new Error("Upload failed");
+      if (!res.ok) throw new Error("Upload failed");
+      const { key } = await res.json();
 
       onUploaded(key);
     } catch (err) {

@@ -40,6 +40,21 @@ export async function getUploadUrl(
   return parsed.toString();
 }
 
+export async function uploadFile(
+  key: string,
+  body: Buffer,
+  contentType: string
+): Promise<void> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    Body: body,
+    ContentType: contentType,
+  });
+
+  await s3Client.send(command);
+}
+
 export async function deleteFile(key: string): Promise<void> {
   const command = new DeleteObjectCommand({
     Bucket: BUCKET,

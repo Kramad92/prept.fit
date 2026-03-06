@@ -86,6 +86,7 @@ export async function POST(
           clientId,
           workoutPlanId: clone.id,
           isActive: true,
+          mode: body.mode || "solo",
         },
       });
 
@@ -155,6 +156,7 @@ export async function POST(
           clientId,
           workoutPlanId: plan.id,
           isActive: true,
+          mode: body.mode || "solo",
         },
       });
 

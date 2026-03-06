@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3 } from "lucide-react";
+import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3, Plus, X } from "lucide-react";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 interface ProgressPhoto {
   id: string;
@@ -30,8 +31,11 @@ export default function PortalProgressPage() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"photos" | "stats">("photos");
+  const [showUpload, setShowUpload] = useState(false);
+  const [caption, setCaption] = useState("");
+  const [category, setCategory] = useState("");
 
-  useEffect(() => {
+  function loadData() {
     fetch("/api/portal/me")
       .then((r) => r.json())
       .then((data) => {
@@ -40,7 +44,23 @@ export default function PortalProgressPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { loadData(); }, []);
+
+  async function handlePhotoUploaded(key: string) {
+    const res = await fetch("/api/portal/photos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, caption, category: category || null }),
+    });
+    if (res.ok) {
+      setShowUpload(false);
+      setCaption("");
+      setCategory("");
+      loadData();
+    }
+  }
 
   if (loading) {
     return (
@@ -100,12 +120,50 @@ export default function PortalProgressPage() {
       <div className="mt-6">
         {tab === "photos" && (
           <>
-            {photos.length === 0 ? (
+            <div className="mb-4 flex justify-end">
+              {!showUpload && (
+                <button onClick={() => setShowUpload(true)} className="btn-primary text-sm">
+                  <Plus className="mr-1 h-4 w-4" />
+                  Upload Photo
+                </button>
+              )}
+            </div>
+
+            {showUpload && (
+              <div className="card mb-4 border-2 border-brand-200">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900">Upload Progress Photo</h4>
+                  <button onClick={() => setShowUpload(false)} className="rounded p-1 hover:bg-gray-100">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-3">
+                  <ImageUploader folder="progress" onUploaded={handlePhotoUploaded} />
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500">Category</label>
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="input mt-0.5 text-sm">
+                      <option value="">Select...</option>
+                      <option value="front">Front</option>
+                      <option value="back">Back</option>
+                      <option value="side">Side</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Caption</label>
+                    <input type="text" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Optional..." className="input mt-0.5 text-sm" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {photos.length === 0 && !showUpload ? (
               <div className="card flex flex-col items-center py-10 text-center">
                 <Camera className="h-12 w-12 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
-                  No progress photos yet. Your coach will upload photos to track
-                  your journey.
+                  No progress photos yet. Upload your first photo to start tracking!
                 </p>
               </div>
             ) : (

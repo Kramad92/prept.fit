@@ -189,6 +189,7 @@ model ClientWorkoutPlan {
   id          String    @id @default(cuid())
   customName  String?
   notes       String?
+  mode        String    @default("solo") // "solo" (client does alone) or "live" (with coach)
   startDate   DateTime?
   endDate     DateTime?
   isActive    Boolean   @default(true)

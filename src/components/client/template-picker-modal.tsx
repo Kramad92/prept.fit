@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Dumbbell, UtensilsCrossed, Search } from "lucide-react";
+import { X, Dumbbell, UtensilsCrossed, Search, User, Users } from "lucide-react";
 
 interface Template {
   id: string;
@@ -14,7 +14,7 @@ interface Template {
 
 interface TemplatePickerModalProps {
   type: "workout" | "nutrition";
-  onSelect: (templateId: string) => void;
+  onSelect: (templateId: string, mode?: string) => void;
   onClose: () => void;
 }
 
@@ -22,6 +22,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [mode, setMode] = useState<"solo" | "live">("solo");
 
   useEffect(() => {
     const url = type === "workout" ? "/api/workouts" : "/api/meal-plans";
@@ -52,6 +53,17 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
           </button>
         </div>
 
+        {type === "workout" && (
+          <div className="mt-4 flex gap-2">
+            <button onClick={() => setMode("solo")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${mode === "solo" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+              <User className="h-4 w-4" /> Solo
+            </button>
+            <button onClick={() => setMode("live")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${mode === "live" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+              <Users className="h-4 w-4" /> Live with Coach
+            </button>
+          </div>
+        )}
+
         <div className="relative mt-4">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -76,7 +88,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
             filtered.map((t) => (
               <button
                 key={t.id}
-                onClick={() => onSelect(t.id)}
+                onClick={() => onSelect(t.id, mode)}
                 className="flex w-full items-center gap-3 rounded-lg border border-gray-200 p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>

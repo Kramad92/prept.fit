@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Dumbbell, ChevronDown, ChevronUp, Play } from "lucide-react";
+import { Dumbbell, ChevronDown, ChevronUp, Play, Users } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { Exercise } from "@/types";
 
 interface AssignedPlan {
   id: string;
   customName: string | null;
+  mode: string;
   isActive: boolean;
   workoutPlan: {
     id: string;
@@ -81,9 +82,17 @@ export default function PortalWorkoutsPage() {
                       <Dumbbell className="h-5 w-5 text-brand-600" />
                     </div>
                     <div className="text-left">
-                      <h3 className="font-semibold text-gray-900">
-                        {displayName}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {displayName}
+                        </h3>
+                        {plan.mode === "live" && (
+                          <span className="inline-flex items-center gap-1 rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700">
+                            <Users className="h-3 w-3" />
+                            With Coach
+                          </span>
+                        )}
+                      </div>
                       {plan.workoutPlan.description && (
                         <p className="text-sm text-gray-500">
                           {plan.workoutPlan.description}
@@ -127,13 +136,20 @@ export default function PortalWorkoutsPage() {
                       </div>
                     ))}
 
-                    <Link
-                      href={`/portal/workouts/${plan.workoutPlan.id}/log`}
-                      className="btn-primary mt-4 w-full"
-                    >
-                      <Play className="mr-2 h-4 w-4" />
-                      Start Workout
-                    </Link>
+                    {plan.mode === "live" ? (
+                      <div className="mt-4 rounded-lg bg-purple-50 p-3 text-center text-sm text-purple-700">
+                        <Users className="mr-1.5 inline h-4 w-4" />
+                        This workout is done live with your coach
+                      </div>
+                    ) : (
+                      <Link
+                        href={`/portal/workouts/${plan.workoutPlan.id}/log`}
+                        className="btn-primary mt-4 w-full"
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        Start Workout
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>

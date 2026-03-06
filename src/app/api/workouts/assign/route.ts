@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { clientId, workoutPlanId } = await req.json();
+  const { clientId, workoutPlanId, mode } = await req.json();
 
   const original = await prisma.workoutPlan.findFirst({
     where: { id: workoutPlanId, tenantId: session.user.tenantId },
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
         clientId,
         workoutPlanId: clone.id,
         isActive: true,
+        mode: mode || "solo",
       },
     });
 

@@ -25,6 +25,7 @@ import { ClientNutritionTab } from "@/components/client/client-nutrition-tab";
 import { ClientPaymentsTab } from "@/components/client/client-payments-tab";
 import { MeasurementModal } from "@/components/client/measurement-modal";
 import { useToast } from "@/components/ui/toast";
+import { ImageUploader } from "@/components/ui/image-uploader";
 import type { Food } from "@/types";
 
 interface ClientDetail {
@@ -61,6 +62,7 @@ interface ClientDetail {
     id: string;
     customName: string | null;
     notes: string | null;
+    mode: string;
     isActive: boolean;
     startDate: string | null;
     endDate: string | null;
@@ -287,40 +289,7 @@ export default function ClientDetailPage() {
         )}
 
         {activeTab === "photos" && (
-          <div>
-            {client.progressPhotos.length === 0 ? (
-              <div className="card flex flex-col items-center py-8 text-center">
-                <Camera className="h-10 w-10 text-gray-300" />
-                <p className="mt-3 text-sm text-gray-500">
-                  No progress photos yet.
-                </p>
-                <button className="btn-primary mt-4">
-                  <Camera className="mr-2 h-4 w-4" />
-                  Upload Photo
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                {client.progressPhotos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    className="relative aspect-square overflow-hidden rounded-lg"
-                  >
-                    <img
-                      src={photo.url}
-                      alt={photo.caption || "Progress photo"}
-                      className="h-full w-full object-cover"
-                    />
-                    {photo.category && (
-                      <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
-                        {photo.category}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <PhotosTab clientId={client.id} photos={client.progressPhotos} onRefresh={loadClient} />
         )}
 
         {activeTab === "workouts" && (
@@ -440,6 +409,147 @@ export default function ClientDetailPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function PhotosTab({
+  clientId,
+  photos,
+  onRefresh,
+}: {
+  clientId: string;
+  photos: Array<{ id: string; url: string; caption: string | null; takenAt: string; category: string | null }>;
+  onRefresh: () => void;
+}) {
+  const [showUpload, setShowUpload] = useState(false);
+  const [caption, setCaption] = useState("");
+  const [category, setCategory] = useState("");
+  const [saving, setSaving] = useState(false);
+  const { toastSuccess, toastError } = useToast();
+
+  const categories = ["front", "back", "side", "other"];
+
+  async function handleUploaded(key: string) {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/clients/${clientId}/photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, caption, category: category || null }),
+      });
+      if (res.ok) {
+        toastSuccess("Photo uploaded");
+        setShowUpload(false);
+        setCaption("");
+        setCategory("");
+        onRefresh();
+      } else {
+        toastError("Failed to save photo");
+      }
+    } catch {
+      toastError("Failed to save photo");
+    }
+    setSaving(false);
+  }
+
+  async function handleDelete(photoId: string) {
+    try {
+      await fetch(`/api/clients/${clientId}/photos?photoId=${photoId}`, { method: "DELETE" });
+      toastSuccess("Photo deleted");
+      onRefresh();
+    } catch {
+      toastError("Failed to delete photo");
+    }
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700">
+          Progress Photos ({photos.length})
+        </h3>
+        {!showUpload && (
+          <button onClick={() => setShowUpload(true)} className="btn-primary text-sm">
+            <Camera className="mr-1 h-4 w-4" />
+            Upload Photo
+          </button>
+        )}
+      </div>
+
+      {showUpload && (
+        <div className="card mb-4 border-2 border-brand-200">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-gray-900">Upload Progress Photo</h4>
+            <button onClick={() => setShowUpload(false)} className="rounded p-1 hover:bg-gray-100">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-3">
+            <ImageUploader folder="progress" onUploaded={handleUploaded} />
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-500">Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="input mt-0.5 text-sm"
+              >
+                <option value="">Select...</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500">Caption</label>
+              <input
+                type="text"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="Optional..."
+                className="input mt-0.5 text-sm"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {photos.length === 0 && !showUpload ? (
+        <div className="card flex flex-col items-center py-8 text-center">
+          <Camera className="h-10 w-10 text-gray-300" />
+          <p className="mt-3 text-sm text-gray-500">No progress photos yet.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          {photos.map((photo) => (
+            <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-lg">
+              <img
+                src={photo.url}
+                alt={photo.caption || "Progress photo"}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                <p className="text-xs text-white">
+                  {new Date(photo.takenAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </p>
+                {photo.category && (
+                  <span className="text-xs capitalize text-white/70">{photo.category}</span>
+                )}
+              </div>
+              <button
+                onClick={() => handleDelete(photo.id)}
+                className="absolute right-2 top-2 hidden rounded-full bg-black/50 p-1 text-white hover:bg-red-600 group-hover:block"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

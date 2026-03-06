@@ -11,6 +11,8 @@ import {
   X,
   Check,
   FileDown,
+  User,
+  Users,
 } from "lucide-react";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { ExercisePicker } from "./exercise-picker";
@@ -23,6 +25,7 @@ interface AssignedPlan {
   id: string;
   customName: string | null;
   notes: string | null;
+  mode: string;
   isActive: boolean;
   startDate: string | null;
   endDate: string | null;
@@ -56,18 +59,19 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   const [customName, setCustomName] = useState("");
   const [customExercises, setCustomExercises] = useState<ExerciseInput[]>([]);
   const [saving, setSaving] = useState(false);
+  const [assignMode, setAssignMode] = useState<"solo" | "live">("solo");
 
   // Edit form state
   const [editExercises, setEditExercises] = useState<ExerciseInput[]>([]);
   const [editName, setEditName] = useState("");
 
-  async function handleAssignTemplate(templateId: string) {
+  async function handleAssignTemplate(templateId: string, mode?: string) {
     setAssigning(true);
     try {
       const res = await fetch(`/api/clients/${clientId}/workouts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workoutPlanId: templateId }),
+        body: JSON.stringify({ workoutPlanId: templateId, mode: mode || "solo" }),
       });
       if (res.ok) {
         toastSuccess("Template assigned");
@@ -91,6 +95,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: customName,
+          mode: assignMode,
           exercises: customExercises
             .filter((ex) => ex.name.trim())
             .map((ex, i) => ({
@@ -339,6 +344,17 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
               />
             </div>
             <div className="mt-3">
+              <label className="text-xs text-gray-500">Workout Mode</label>
+              <div className="mt-1 flex gap-2">
+                <button type="button" onClick={() => setAssignMode("solo")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${assignMode === "solo" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+                  <User className="h-4 w-4" /> Solo
+                </button>
+                <button type="button" onClick={() => setAssignMode("live")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${assignMode === "live" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+                  <Users className="h-4 w-4" /> Live with Coach
+                </button>
+              </div>
+            </div>
+            <div className="mt-3">
               {renderExerciseEditor(customExercises, setCustomExercises)}
             </div>
             <button type="submit" disabled={saving} className="btn-primary mt-4 w-full">
@@ -375,6 +391,14 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
                         <span>from: {plan.workoutPlan.sourceTemplate.name}</span>
                       )}
                       <span>{exercises.length} exercises</span>
+                      <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${
+                        plan.mode === "live"
+                          ? "bg-purple-100 text-purple-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}>
+                        {plan.mode === "live" ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                        {plan.mode === "live" ? "Live" : "Solo"}
+                      </span>
                       {!plan.isActive && (
                         <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">Inactive</span>
                       )}

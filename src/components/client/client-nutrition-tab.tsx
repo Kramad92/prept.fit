@@ -309,42 +309,34 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                   </div>
                 </div>
               ))}
-              {/* Add food row — typing in "Food" triggers search */}
-              <div className="grid grid-cols-6 gap-2">
-                <div className="col-span-2">
-                  <FoodPicker
-                    variant="inline"
-                    inputClassName="input text-xs"
-                    placeholder="Food"
-                    onSelect={(food) => {
-                      setMeals(
-                        meals.map((m, i) =>
-                          i === mi
-                            ? {
-                                ...m,
-                                foods: [
-                                  ...m.foods,
-                                  {
-                                    name: food.name,
-                                    portion: food.portion || "",
-                                    calories: food.calories?.toString() || "",
-                                    protein: food.protein?.toString() || "",
-                                    carbs: food.carbs?.toString() || "",
-                                    fat: food.fat?.toString() || "",
-                                  },
-                                ],
-                              }
-                            : m
-                        )
-                      );
-                    }}
-                  />
-                </div>
-                <input type="text" disabled className="input text-xs opacity-50" placeholder="Portion" />
-                <input type="text" disabled className="input text-xs opacity-50" placeholder="Cal" />
-                <input type="text" disabled className="input text-xs opacity-50" placeholder="P" />
-                <input type="text" disabled className="input text-xs opacity-50" placeholder="F" />
-              </div>
+              {/* Add food — typing triggers search */}
+              <FoodPicker
+                variant="inline"
+                inputClassName="input text-xs"
+                placeholder="+ Add food item..."
+                onSelect={(food) => {
+                  setMeals(
+                    meals.map((m, i) =>
+                      i === mi
+                        ? {
+                            ...m,
+                            foods: [
+                              ...m.foods,
+                              {
+                                name: food.name,
+                                portion: food.portion || "",
+                                calories: food.calories?.toString() || "",
+                                protein: food.protein?.toString() || "",
+                                carbs: food.carbs?.toString() || "",
+                                fat: food.fat?.toString() || "",
+                              },
+                            ],
+                          }
+                        : m
+                    )
+                  );
+                }}
+              />
             </div>
           </div>
         ))}

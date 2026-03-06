@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Plus, Database, Star, Save, Loader2, Check, X } from "lucide-react";
+import { Search, Plus, Database, Star, Save, Loader2 } from "lucide-react";
 
 interface LibraryFood {
   id: string;
@@ -25,17 +25,6 @@ interface USDAFood {
   source: "usda";
 }
 
-interface SelectedFood {
-  name: string;
-  basePortion: string;
-  baseGrams: number;
-  baseCalories: number | null;
-  baseProtein: number | null;
-  baseCarbs: number | null;
-  baseFat: number | null;
-  fdcId?: number;
-}
-
 export interface FoodResult {
   name: string;
   portion?: string;
@@ -49,20 +38,10 @@ interface FoodPickerProps {
   onSelect: (food: FoodResult) => void;
   /** "standalone" = search bar with icon (default). "inline" = compact input that fits in a row. */
   variant?: "standalone" | "inline";
-  /** Class name for the input element (inline variant) */
+  /** Class name for the input element */
   inputClassName?: string;
   /** Placeholder text */
   placeholder?: string;
-}
-
-function parseGrams(portion: string): number {
-  const match = portion.match(/^(\d+(?:\.\d+)?)\s*g?$/i);
-  return match ? parseFloat(match[1]) : 100;
-}
-
-function scaleNutrient(base: number | null, ratio: number): number | null {
-  if (base == null) return null;
-  return Math.round(base * ratio);
 }
 
 export function FoodPicker({
@@ -77,10 +56,7 @@ export function FoodPicker({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<SelectedFood | null>(null);
-  const [portionInput, setPortionInput] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const portionRef = useRef<HTMLInputElement>(null);
 
   const isInline = variant === "inline";
 
@@ -117,62 +93,14 @@ export function FoodPicker({
     function handleClick(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
-        setSelected(null);
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  useEffect(() => {
-    if (selected && portionRef.current) {
-      portionRef.current.focus();
-      portionRef.current.select();
-    }
-  }, [selected]);
-
-  function stageFood(food: {
-    name: string;
-    portion: string;
-    calories: number | null;
-    protein: number | null;
-    carbs: number | null;
-    fat: number | null;
-    fdcId?: number;
-  }) {
-    const baseGrams = parseGrams(food.portion);
-    setSelected({
-      name: food.name,
-      basePortion: food.portion,
-      baseGrams,
-      baseCalories: food.calories,
-      baseProtein: food.protein,
-      baseCarbs: food.carbs,
-      baseFat: food.fat,
-      fdcId: food.fdcId,
-    });
-    setPortionInput(baseGrams.toString());
-  }
-
-  function confirmSelection() {
-    if (!selected) return;
-    const grams = parseFloat(portionInput) || selected.baseGrams;
-    const ratio = grams / selected.baseGrams;
-    onSelect({
-      name: selected.name,
-      portion: `${grams}g`,
-      calories: scaleNutrient(selected.baseCalories, ratio),
-      protein: scaleNutrient(selected.baseProtein, ratio),
-      carbs: scaleNutrient(selected.baseCarbs, ratio),
-      fat: scaleNutrient(selected.baseFat, ratio),
-    });
-    setSelected(null);
-    setQuery("");
-    setOpen(false);
-  }
-
-  function selectCustomFood(name: string) {
-    onSelect({ name });
+  function selectFood(food: FoodResult) {
+    onSelect(food);
     setQuery("");
     setOpen(false);
   }
@@ -209,65 +137,6 @@ export function FoodPicker({
 
   const hasResults = libraryResults.length > 0 || usdaResults.length > 0;
 
-  // Portion staging UI
-  if (selected) {
-    const grams = parseFloat(portionInput) || selected.baseGrams;
-    const ratio = grams / selected.baseGrams;
-    const scaledCal = scaleNutrient(selected.baseCalories, ratio);
-    const scaledP = scaleNutrient(selected.baseProtein, ratio);
-    const scaledC = scaleNutrient(selected.baseCarbs, ratio);
-    const scaledF = scaleNutrient(selected.baseFat, ratio);
-
-    return (
-      <div ref={wrapperRef} className="rounded-lg border border-brand-200 bg-brand-50 p-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-gray-900">{selected.name}</p>
-          <button
-            type="button"
-            onClick={() => setSelected(null)}
-            className="rounded p-0.5 text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <p className="mt-0.5 text-xs text-gray-500">
-          Base: {selected.basePortion} = {macroLabel(selected.baseCalories, selected.baseProtein, selected.baseCarbs, selected.baseFat)}
-        </p>
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <input
-              ref={portionRef}
-              type="number"
-              value={portionInput}
-              onChange={(e) => setPortionInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  confirmSelection();
-                }
-              }}
-              className="input w-20 text-center text-sm"
-              min="1"
-            />
-            <span className="text-sm text-gray-500">g</span>
-          </div>
-          <div className="flex-1 text-xs text-gray-500">
-            {macroLabel(scaledCal, scaledP, scaledC, scaledF)}
-          </div>
-          <button
-            type="button"
-            onClick={confirmSelection}
-            className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
-          >
-            <Check className="h-3.5 w-3.5" />
-            Add
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Dropdown content (shared between variants)
   const dropdown = open && query.trim().length >= 2 && (
     <div className={`absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg ${isInline ? "left-0 min-w-[28rem]" : "w-full"}`}>
       <div className="max-h-72 overflow-y-auto">
@@ -282,7 +151,7 @@ export function FoodPicker({
                 type="button"
                 key={food.id}
                 onClick={() =>
-                  stageFood({
+                  selectFood({
                     name: food.name,
                     portion: food.defaultPortion || "100g",
                     calories: food.calories,
@@ -321,22 +190,21 @@ export function FoodPicker({
                 <button
                   type="button"
                   onClick={() =>
-                    stageFood({
+                    selectFood({
                       name: food.name,
                       portion: food.portion,
                       calories: food.calories,
                       protein: food.protein,
                       carbs: food.carbs,
                       fat: food.fat,
-                      fdcId: food.fdcId,
                     })
                   }
                   className="flex flex-1 items-center justify-between text-left text-sm"
                 >
                   <div className="min-w-0">
                     <span className="font-medium text-gray-900 line-clamp-1">
-                      {food.name.length > 50
-                        ? food.name.slice(0, 50) + "..."
+                      {food.name.length > 60
+                        ? food.name.slice(0, 60) + "..."
                         : food.name}
                     </span>
                     <span className="ml-2 text-xs text-gray-400">{food.portion}</span>
@@ -375,7 +243,7 @@ export function FoodPicker({
 
       <button
         type="button"
-        onClick={() => selectCustomFood(query.trim())}
+        onClick={() => selectFood({ name: query.trim() })}
         className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
       >
         <Plus className="h-4 w-4" />
@@ -402,7 +270,7 @@ export function FoodPicker({
           className={inputClassName || (isInline ? "input text-xs" : "input pl-10")}
         />
         {loading && (
-          <Loader2 className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400 ${isInline ? "right-2 h-3 w-3" : "right-3"}`} />
+          <Loader2 className={`absolute top-1/2 -translate-y-1/2 animate-spin text-gray-400 ${isInline ? "right-2 h-3 w-3" : "right-3 h-4 w-4"}`} />
         )}
       </div>
       {dropdown}

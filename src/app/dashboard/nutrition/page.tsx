@@ -179,7 +179,7 @@ export default function NutritionPage() {
               carbs: f.carbs ?? null,
               fat: f.fat ?? null,
             }))
-          : [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }],
+          : [],
       }))
     );
     setShowCreate(true);
@@ -560,42 +560,34 @@ export default function NutritionPage() {
                             </div>
                           </div>
                         ))}
-                        {/* Add food row — typing in "Food item" triggers search */}
-                        <div className="grid grid-cols-6 gap-2">
-                          <div className="col-span-2">
-                            <FoodPicker
-                              variant="inline"
-                              inputClassName="input text-xs"
-                              placeholder="Food item"
-                              onSelect={(food) => {
-                                setMeals((prev) =>
-                                  prev.map((m, i) =>
-                                    i === mi
-                                      ? {
-                                          ...m,
-                                          foods: [
-                                            ...m.foods,
-                                            {
-                                              name: food.name,
-                                              portion: food.portion || "",
-                                              calories: food.calories ?? null,
-                                              protein: food.protein ?? null,
-                                              carbs: food.carbs ?? null,
-                                              fat: food.fat ?? null,
-                                            },
-                                          ],
-                                        }
-                                      : m
-                                  )
-                                );
-                              }}
-                            />
-                          </div>
-                          <input type="text" disabled className="input text-xs opacity-50" placeholder="Portion" />
-                          <input type="text" disabled className="input text-xs opacity-50" placeholder="Cal" />
-                          <input type="text" disabled className="input text-xs opacity-50" placeholder="P (g)" />
-                          <input type="text" disabled className="input text-xs opacity-50" placeholder="F (g)" />
-                        </div>
+                        {/* Add food — typing triggers search */}
+                        <FoodPicker
+                          variant="inline"
+                          inputClassName="input text-xs"
+                          placeholder="+ Add food item..."
+                          onSelect={(food) => {
+                            setMeals((prev) =>
+                              prev.map((m, i) =>
+                                i === mi
+                                  ? {
+                                      ...m,
+                                      foods: [
+                                        ...m.foods,
+                                        {
+                                          name: food.name,
+                                          portion: food.portion || "",
+                                          calories: food.calories ?? null,
+                                          protein: food.protein ?? null,
+                                          carbs: food.carbs ?? null,
+                                          fat: food.fat ?? null,
+                                        },
+                                      ],
+                                    }
+                                  : m
+                              )
+                            );
+                          }}
+                        />
                       </div>
                     </div>
                   ))}

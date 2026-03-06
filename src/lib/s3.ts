@@ -11,6 +11,8 @@ const s3Client = new S3Client({
     accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
   },
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
   ...(process.env.S3_ENDPOINT
     ? { endpoint: process.env.S3_ENDPOINT, forcePathStyle: true }
     : {}),
@@ -28,7 +30,10 @@ export async function getUploadUrl(
     ContentType: contentType,
   });
 
-  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  return getSignedUrl(s3Client, command, {
+    expiresIn: 3600,
+    unhoistableHeaders: new Set(["x-amz-checksum-crc32"]),
+  });
 }
 
 export async function deleteFile(key: string): Promise<void> {
@@ -41,6 +46,9 @@ export async function deleteFile(key: string): Promise<void> {
 }
 
 export function getFileUrl(key: string): string {
+  if (process.env.S3_PUBLIC_URL) {
+    return `${process.env.S3_PUBLIC_URL}/${key}`;
+  }
   if (process.env.S3_ENDPOINT) {
     return `${process.env.S3_ENDPOINT}/${BUCKET}/${key}`;
   }

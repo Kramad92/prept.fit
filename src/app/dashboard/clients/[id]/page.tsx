@@ -14,6 +14,9 @@ import {
   Plus,
   UtensilsCrossed,
   DollarSign,
+  Mail,
+  Key,
+  X,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -126,6 +129,7 @@ interface ClientDetail {
 export default function ClientDetailPage() {
   const params = useParams();
   const [client, setClient] = useState<ClientDetail | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteResult, setInviteResult] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   const [activeTab, setActiveTab] = useState<
@@ -193,34 +197,11 @@ export default function ClientDetailPage() {
         <div className="flex gap-2">
           {!client.userId && client.email && (
             <button
-              onClick={async () => {
-                setInviting(true);
-                try {
-                  const res = await fetch(
-                    `/api/clients/${client.id}/invite`,
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({}),
-                    }
-                  );
-                  const data = await res.json();
-                  if (res.ok) {
-                    setInviteResult(
-                      `Portal access created! Temp password: ${data.tempPassword}`
-                    );
-                  } else {
-                    setInviteResult(data.error);
-                  }
-                } finally {
-                  setInviting(false);
-                }
-              }}
-              disabled={inviting}
+              onClick={() => setShowInviteModal(true)}
               className="btn-secondary"
             >
               <UserPlus className="mr-1 h-4 w-4" />
-              {inviting ? "Inviting..." : "Invite to Portal"}
+              Invite to Portal
             </button>
           )}
           {client.userId && (
@@ -242,6 +223,19 @@ export default function ClientDetailPage() {
         <div className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
           {inviteResult}
         </div>
+      )}
+
+      {showInviteModal && (
+        <InviteModal
+          clientId={client.id}
+          clientEmail={client.email!}
+          onClose={() => setShowInviteModal(false)}
+          onResult={(msg) => {
+            setInviteResult(msg);
+            setShowInviteModal(false);
+            loadClient();
+          }}
+        />
       )}
 
       {/* Tabs */}
@@ -445,6 +439,170 @@ export default function ClientDetailPage() {
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function InviteModal({
+  clientId,
+  clientEmail,
+  onClose,
+  onResult,
+}: {
+  clientId: string;
+  clientEmail: string;
+  onClose: () => void;
+  onResult: (msg: string) => void;
+}) {
+  const [method, setMethod] = useState<"email" | "password">("email");
+  const [tempPassword, setTempPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleInvite() {
+    setError("");
+    setLoading(true);
+
+    try {
+      const body: Record<string, string> = { method };
+      if (method === "password" && tempPassword) {
+        body.password = tempPassword;
+      }
+
+      const res = await fetch(`/api/clients/${clientId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        if (data.method === "email") {
+          onResult(data.message);
+        } else {
+          onResult(`Portal access created! Temp password: ${data.tempPassword}`);
+        }
+      } else {
+        setError(data.error);
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="card w-full max-w-md">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">Invite to Portal</h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <p className="mt-2 text-sm text-gray-500">
+          Send an invite to <strong>{clientEmail}</strong> so they can access
+          their portal.
+        </p>
+
+        {error && (
+          <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-4 space-y-3">
+          <label
+            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+              method === "email"
+                ? "border-brand-500 bg-brand-50"
+                : "border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            <input
+              type="radio"
+              name="method"
+              checked={method === "email"}
+              onChange={() => setMethod("email")}
+              className="mt-0.5"
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  Send email invite
+                </span>
+                <span className="rounded bg-brand-100 px-1.5 py-0.5 text-xs font-medium text-brand-700">
+                  Recommended
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Client receives an email with a link to set their own password.
+                Link expires in 48 hours.
+              </p>
+            </div>
+          </label>
+
+          <label
+            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+              method === "password"
+                ? "border-brand-500 bg-brand-50"
+                : "border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            <input
+              type="radio"
+              name="method"
+              checked={method === "password"}
+              onChange={() => setMethod("password")}
+              className="mt-0.5"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <Key className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  Set a temporary password
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                You set a password and share it with your client manually.
+              </p>
+              {method === "password" && (
+                <input
+                  type="text"
+                  value={tempPassword}
+                  onChange={(e) => setTempPassword(e.target.value)}
+                  placeholder="Leave empty for 'changeme123'"
+                  className="input mt-2 text-sm"
+                />
+              )}
+            </div>
+          </label>
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button onClick={onClose} className="btn-secondary">
+            Cancel
+          </button>
+          <button
+            onClick={handleInvite}
+            disabled={loading}
+            className="btn-primary"
+          >
+            {loading
+              ? "Sending..."
+              : method === "email"
+                ? "Send Invite Email"
+                : "Create Access"}
+          </button>
+        </div>
       </div>
     </div>
   );

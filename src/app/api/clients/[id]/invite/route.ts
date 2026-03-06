@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { sendInviteEmail } from "@/lib/email";
 
-// Coach invites a client by creating a user account linked to their client profile
+// Coach invites a client — email invite (primary) or temp password (secondary)
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -47,26 +49,81 @@ export async function POST(
   }
 
   const body = await req.json();
-  const tempPassword = body.password || "changeme123";
-  const passwordHash = await bcrypt.hash(tempPassword, 12);
+  const method = body.method || "email"; // "email" or "password"
 
-  const user = await prisma.user.create({
+  if (method === "password") {
+    // Secondary: create account with temp password
+    const tempPassword = body.password || "changeme123";
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+    await prisma.user.create({
+      data: {
+        email: client.email,
+        name: client.name,
+        passwordHash,
+        role: "CLIENT",
+        tenantId: session.user.tenantId,
+        clientProfile: { connect: { id: client.id } },
+      },
+    });
+
+    return NextResponse.json(
+      {
+        method: "password",
+        tempPassword,
+        message: "Portal access created. Share the temporary password with your client.",
+      },
+      { status: 201 }
+    );
+  }
+
+  // Primary: send email invite
+  // Invalidate any existing tokens for this client
+  await prisma.inviteToken.updateMany({
+    where: { clientId: client.id, usedAt: null },
+    data: { expiresAt: new Date() },
+  });
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+
+  await prisma.inviteToken.create({
     data: {
-      email: client.email,
-      name: client.name,
-      passwordHash,
-      role: "CLIENT",
-      tenantId: session.user.tenantId,
-      clientProfile: { connect: { id: client.id } },
+      token,
+      clientId: client.id,
+      expiresAt,
     },
   });
 
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: session.user.tenantId },
+  });
+
+  const appUrl = process.env.NEXTAUTH_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  const inviteUrl = `${appUrl}/invite/${token}`;
+
+  try {
+    await sendInviteEmail({
+      to: client.email,
+      clientName: client.name,
+      coachName: session.user.name || "Your coach",
+      businessName: tenant?.name || "TrainerHub",
+      inviteUrl,
+    });
+  } catch (error) {
+    // Clean up the token if email fails
+    await prisma.inviteToken.deleteMany({ where: { token } });
+    return NextResponse.json(
+      { error: "Failed to send invite email. Check email configuration." },
+      { status: 500 }
+    );
+  }
+
   return NextResponse.json(
     {
-      userId: user.id,
-      email: user.email,
-      tempPassword,
-      message: "Client portal access created. Share the temporary password with your client.",
+      method: "email",
+      message: `Invite email sent to ${client.email}`,
     },
     { status: 201 }
   );

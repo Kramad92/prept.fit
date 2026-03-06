@@ -47,7 +47,7 @@ enum UserRole {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  passwordHash  String
+  passwordHash  String?
   name          String
   role          UserRole  @default(CLIENT)
   avatar        String?
@@ -100,6 +100,7 @@ model Client {
   clientExercises ClientExercise[]
   clientMeals     ClientMeal[]
   payments        Payment[]
+  inviteTokens    InviteToken[]
 
   @@index([tenantId])
   @@map("clients")
@@ -244,6 +245,23 @@ model Schedule {
   @@index([clientId])
   @@index([date])
   @@map("schedules")
+}
+
+// ========== INVITE TOKENS ==========
+
+model InviteToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([clientId])
+  @@map("invite_tokens")
 }
 
 // ========== IN-APP MESSAGING ==========

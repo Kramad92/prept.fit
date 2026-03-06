@@ -1,0 +1,52 @@
+import { Resend } from "resend";
+
+let _resend: Resend | null = null;
+
+function getResend() {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured. Add it to your environment variables.");
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
+
+const FROM_EMAIL = process.env.EMAIL_FROM || "TrainerHub <onboarding@resend.dev>";
+
+export async function sendInviteEmail({
+  to,
+  clientName,
+  coachName,
+  businessName,
+  inviteUrl,
+}: {
+  to: string;
+  clientName: string;
+  coachName: string;
+  businessName: string;
+  inviteUrl: string;
+}) {
+  await getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `${coachName} invited you to ${businessName}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <h2 style="color: #111827; margin-bottom: 8px;">You're invited!</h2>
+        <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
+          Hi ${clientName},
+        </p>
+        <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
+          <strong>${coachName}</strong> has invited you to join <strong>${businessName}</strong> on TrainerHub. You'll be able to view your workouts, meal plans, track habits, and more.
+        </p>
+        <a href="${inviteUrl}" style="display: inline-block; background-color: #22c55e; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0;">
+          Set Up Your Account
+        </a>
+        <p style="color: #9ca3af; font-size: 13px; margin-top: 24px;">
+          This link expires in 48 hours. If you didn't expect this invitation, you can ignore this email.
+        </p>
+      </div>
+    `,
+  });
+}

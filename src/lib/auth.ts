@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
           include: { tenant: true, clientProfile: true },
         });
 
-        if (!user) return null;
+        if (!user || !user.passwordHash) return null;
 
         const isValid = await bcrypt.compare(
           credentials.password,

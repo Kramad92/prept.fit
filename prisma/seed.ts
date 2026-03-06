@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Clean existing data
+  await prisma.inviteToken.deleteMany();
   await prisma.nutritionLog.deleteMany();
   await prisma.clientMealPlan.deleteMany();
   await prisma.meal.deleteMany();

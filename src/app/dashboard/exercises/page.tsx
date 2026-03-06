@@ -174,8 +174,8 @@ export default function ExerciseLibraryPage() {
             }}
             className="btn-primary"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Exercise
+            <Plus className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Add Exercise</span>
           </button>
         </div>
       </div>

@@ -66,8 +66,8 @@ export default function HabitsPage() {
           </p>
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-primary">
-          <Plus className="mr-2 h-4 w-4" />
-          New Habit
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">New Habit</span>
         </button>
       </div>
 

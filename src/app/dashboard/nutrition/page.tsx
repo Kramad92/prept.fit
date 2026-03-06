@@ -309,8 +309,8 @@ export default function NutritionPage() {
           </p>
         </div>
         <button onClick={() => { resetForm(); setShowCreate(true); }} className="btn-primary">
-          <Plus className="mr-2 h-4 w-4" />
-          New Meal Plan
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">New Meal Plan</span>
         </button>
       </div>
 
@@ -333,8 +333,8 @@ export default function NutritionPage() {
             description="Create your first meal plan to assign to clients."
             action={
               <button onClick={() => { resetForm(); setShowCreate(true); }} className="btn-primary">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Meal Plan
+                <Plus className="mr-1 h-4 w-4" />
+                Create Plan
               </button>
             }
           />
@@ -508,7 +508,7 @@ export default function NutritionPage() {
       {/* Create / Edit Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center md:p-4">
-          <div className="w-full max-w-2xl rounded-t-2xl bg-white p-6 md:rounded-2xl max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-2xl bg-white p-4 md:p-6 rounded-t-2xl md:rounded-2xl max-h-[95vh] md:max-h-[90vh] flex flex-col">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
                   {editingPlanId ? "Edit Meal Plan" : "Create Meal Plan"}
@@ -531,7 +531,7 @@ export default function NutritionPage() {
                   <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="input mt-1" placeholder="Low carb, high protein plan" />
                 </div>
 
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700">Calories</label>
                     <input type="number" value={newCalories} onChange={(e) => setNewCalories(e.target.value)} className="input mt-1" placeholder="1800" />
@@ -595,7 +595,7 @@ export default function NutritionPage() {
 
                       <div className="mt-2 space-y-1">
                         {(meal.foods.length > 0) && (
-                          <div className="grid grid-cols-6 gap-2 px-0.5">
+                          <div className="hidden md:grid grid-cols-6 gap-2 px-0.5">
                             <div className="col-span-2 text-[10px] font-medium text-gray-400">Food</div>
                             <div className="text-[10px] font-medium text-gray-400">Portion</div>
                             <div className="text-[10px] font-medium text-gray-400">Calories</div>
@@ -604,48 +604,98 @@ export default function NutritionPage() {
                           </div>
                         )}
                         {meal.foods.map((food, fi) => (
-                          <div key={fi} className="grid grid-cols-6 gap-2">
-                            <div className="col-span-2">
-                              <FoodPicker
-                                variant="inline"
-                                inputClassName="input text-xs"
-                                placeholder="Food item"
-                                initialValue={food.name}
-                                onSelect={(result) => {
-                                  setMeals((prev) =>
-                                    prev.map((m, i) =>
-                                      i === mi
-                                        ? {
-                                            ...m,
-                                            foods: m.foods.map((f, idx) =>
-                                              idx === fi
-                                                ? {
-                                                    name: result.name,
-                                                    portion: result.portion || f.portion,
-                                                    calories: result.calories ?? f.calories,
-                                                    protein: result.protein ?? f.protein,
-                                                    carbs: result.carbs ?? f.carbs,
-                                                    fat: result.fat ?? f.fat,
-                                                    unitLabel: result.unitLabel ?? f.unitLabel,
-                                                    gramsPerUnit: result.gramsPerUnit ?? f.gramsPerUnit,
-                                                  }
-                                                : f
-                                            ),
-                                          }
-                                        : m
-                                    )
-                                  );
-                                }}
-                              />
+                          <div key={fi} className="rounded-lg border border-gray-100 p-2 md:border-0 md:p-0 md:rounded-none">
+                            {/* Desktop: 6-col grid */}
+                            <div className="hidden md:grid grid-cols-6 gap-2">
+                              <div className="col-span-2">
+                                <FoodPicker
+                                  variant="inline"
+                                  inputClassName="input text-xs"
+                                  placeholder="Food item"
+                                  initialValue={food.name}
+                                  onSelect={(result) => {
+                                    setMeals((prev) =>
+                                      prev.map((m, i) =>
+                                        i === mi
+                                          ? {
+                                              ...m,
+                                              foods: m.foods.map((f, idx) =>
+                                                idx === fi
+                                                  ? {
+                                                      name: result.name,
+                                                      portion: result.portion || f.portion,
+                                                      calories: result.calories ?? f.calories,
+                                                      protein: result.protein ?? f.protein,
+                                                      carbs: result.carbs ?? f.carbs,
+                                                      fat: result.fat ?? f.fat,
+                                                      unitLabel: result.unitLabel ?? f.unitLabel,
+                                                      gramsPerUnit: result.gramsPerUnit ?? f.gramsPerUnit,
+                                                    }
+                                                  : f
+                                              ),
+                                            }
+                                          : m
+                                      )
+                                    );
+                                  }}
+                                />
+                              </div>
+                              <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
+                              <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
+                              <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P (g)" />
+                              <div className="flex gap-1">
+                                <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F (g)" />
+                                <button type="button" onClick={() => {
+                                  setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
+                                }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                              </div>
                             </div>
-                            <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
-                            <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
-                            <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P (g)" />
-                            <div className="flex gap-1">
-                              <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F (g)" />
-                              <button type="button" onClick={() => {
-                                setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
-                              }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                            {/* Mobile: stacked layout */}
+                            <div className="md:hidden space-y-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex-1">
+                                  <FoodPicker
+                                    variant="inline"
+                                    inputClassName="input text-xs"
+                                    placeholder="Food item"
+                                    initialValue={food.name}
+                                    onSelect={(result) => {
+                                      setMeals((prev) =>
+                                        prev.map((m, i) =>
+                                          i === mi
+                                            ? {
+                                                ...m,
+                                                foods: m.foods.map((f, idx) =>
+                                                  idx === fi
+                                                    ? {
+                                                        name: result.name,
+                                                        portion: result.portion || f.portion,
+                                                        calories: result.calories ?? f.calories,
+                                                        protein: result.protein ?? f.protein,
+                                                        carbs: result.carbs ?? f.carbs,
+                                                        fat: result.fat ?? f.fat,
+                                                        unitLabel: result.unitLabel ?? f.unitLabel,
+                                                        gramsPerUnit: result.gramsPerUnit ?? f.gramsPerUnit,
+                                                      }
+                                                    : f
+                                                ),
+                                              }
+                                            : m
+                                        )
+                                      );
+                                    }}
+                                  />
+                                </div>
+                                <button type="button" onClick={() => {
+                                  setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
+                                }} className="text-gray-400 hover:text-red-500 p-1"><Trash2 className="h-4 w-4" /></button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
+                                <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Calories" />
+                                <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="Protein (g)" />
+                                <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="Fat (g)" />
+                              </div>
                             </div>
                           </div>
                         ))}

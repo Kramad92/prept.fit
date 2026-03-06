@@ -51,8 +51,8 @@ export default function SchedulePage() {
           onClick={() => setShowNewForm(true)}
           className="btn-primary"
         >
-          <Plus className="mr-2 h-4 w-4" />
-          New Session
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">New Session</span>
         </button>
       </div>
 

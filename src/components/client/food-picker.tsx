@@ -145,8 +145,8 @@ export function FoodPicker({
   const hasResults = libraryResults.length > 0 || usdaResults.length > 0;
 
   const dropdown = open && query.trim().length >= 2 && (
-    <div className={`absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg ${isInline ? "left-0 min-w-[28rem]" : "w-full"}`}>
-      <div className="max-h-72 overflow-y-auto">
+    <div className={`absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg ${isInline ? "left-0 right-0 min-w-0 md:right-auto md:min-w-[28rem]" : "w-full"}`}>
+      <div className="max-h-48 overflow-y-auto md:max-h-72">
         {libraryResults.length > 0 && (
           <>
             <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
@@ -275,7 +275,11 @@ export function FoodPicker({
             setQuery(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => query.trim().length >= 2 && setOpen(true)}
+          onFocus={(e) => {
+            if (query.trim().length >= 2) setOpen(true);
+            // Scroll input into view on mobile when keyboard opens
+            setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
+          }}
           onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
           className={inputClassName || (isInline ? "input text-xs" : "input pl-10")}
         />

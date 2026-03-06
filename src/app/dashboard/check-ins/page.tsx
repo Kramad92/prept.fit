@@ -178,8 +178,8 @@ export default function CheckInsPage() {
           </p>
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-primary">
-          <Plus className="mr-2 h-4 w-4" />
-          New Template
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">New Template</span>
         </button>
       </div>
 

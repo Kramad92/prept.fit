@@ -130,8 +130,8 @@ export default function WorkoutsPage() {
           </p>
         </div>
         <Link href="/dashboard/workouts/new" className="btn-primary">
-          <Plus className="mr-2 h-4 w-4" />
-          New Plan
+          <Plus className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">New Plan</span>
         </Link>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, Loader2, X } from "lucide-react";
+import { Camera, Loader2, Upload, X } from "lucide-react";
 
 interface ImageUploaderProps {
   folder: string;
@@ -46,10 +46,11 @@ function compressImage(file: File, maxDimension = 1200, quality = 0.8): Promise<
 export function ImageUploader({ folder, onUploaded, onCancel, className }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -60,15 +61,20 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
 
     setError("");
     setPreview(URL.createObjectURL(file));
+    setSelectedFile(file);
+  }
+
+  async function handleUpload() {
+    if (!selectedFile) return;
+
     setUploading(true);
+    setError("");
 
     try {
-      // Compress client-side
-      const compressed = await compressImage(file);
+      const compressed = await compressImage(selectedFile);
 
-      // Upload via our API (proxied to R2 server-side, no CORS issues)
       const formData = new FormData();
-      formData.append("file", compressed, file.name.replace(/\.[^.]+$/, ".jpg"));
+      formData.append("file", compressed, selectedFile.name.replace(/\.[^.]+$/, ".jpg"));
       formData.append("folder", folder);
 
       const res = await fetch("/api/upload", {
@@ -82,10 +88,16 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
       onUploaded(key);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
-      setPreview(null);
     } finally {
       setUploading(false);
     }
+  }
+
+  function handleClear() {
+    setPreview(null);
+    setSelectedFile(null);
+    setError("");
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   return (
@@ -98,9 +110,9 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
               <Loader2 className="h-6 w-6 animate-spin text-white" />
             </div>
           )}
-          {!uploading && onCancel && (
+          {!uploading && (
             <button
-              onClick={() => { setPreview(null); onCancel(); }}
+              onClick={() => { handleClear(); onCancel?.(); }}
               className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
             >
               <X className="h-4 w-4" />
@@ -121,12 +133,22 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
         ref={fileRef}
         type="file"
         accept="image/*"
-        onChange={handleFile}
+        onChange={handleFileSelect}
         className="hidden"
       />
 
       {error && (
         <p className="mt-2 text-sm text-red-600">{error}</p>
+      )}
+
+      {selectedFile && !uploading && (
+        <button
+          onClick={handleUpload}
+          className="btn-primary mt-3 w-full text-sm"
+        >
+          <Upload className="mr-1.5 h-4 w-4" />
+          Upload Photo
+        </button>
       )}
     </div>
   );

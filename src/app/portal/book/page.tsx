@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { CalendarPlus, Check, Clock } from "lucide-react";
 import { formatTime } from "@/lib/utils";
+import { useT, useLocale } from "@/lib/i18n";
 
 interface Slot {
   date: string;
@@ -15,6 +16,9 @@ interface GroupedSlots {
 }
 
 export default function BookingPage() {
+  const t = useT();
+  const { locale } = useLocale();
+  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
@@ -55,7 +59,7 @@ export default function BookingPage() {
         );
       } else {
         const data = await res.json();
-        setError(data.error || "Failed to book session");
+        setError(data.error || t.portalBook.failedToBook);
       }
     } finally {
       setBooking(false);
@@ -79,9 +83,9 @@ export default function BookingPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Book a Session</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.portalBook.title}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Choose an available time slot to book your next training session
+        {t.portalBook.subtitle}
       </p>
 
       {error && (
@@ -93,7 +97,7 @@ export default function BookingPage() {
       {booked && (
         <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-700">
           <Check className="h-4 w-4" />
-          Session booked successfully! View it on your home page.
+          {t.portalBook.bookedSuccess}
         </div>
       )}
 
@@ -101,11 +105,10 @@ export default function BookingPage() {
         <div className="card mt-8 flex flex-col items-center py-10 text-center">
           <Clock className="h-12 w-12 text-gray-300" />
           <p className="mt-3 text-sm text-gray-500">
-            No available time slots in the next 2 weeks.
+            {t.portalBook.noSlotsNextWeeks}
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            Your coach may not have set their availability yet. Check back
-            later.
+            {t.portalBook.coachNotSetAvailability}
           </p>
         </div>
       ) : (
@@ -113,7 +116,7 @@ export default function BookingPage() {
           {Object.entries(grouped).map(([date, daySlots]) => (
             <div key={date}>
               <h2 className="text-sm font-semibold text-gray-700">
-                {new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+                {new Date(date + "T12:00:00").toLocaleDateString(dateLocale, {
                   weekday: "long",
                   month: "long",
                   day: "numeric",
@@ -138,7 +141,7 @@ export default function BookingPage() {
                       {isBooked ? (
                         <div className="flex items-center justify-center gap-1">
                           <Check className="h-4 w-4" />
-                          <span className="text-sm font-medium">Booked</span>
+                          <span className="text-sm font-medium">{t.portalBook.bookedLabel}</span>
                         </div>
                       ) : (
                         <>
@@ -146,7 +149,7 @@ export default function BookingPage() {
                             {formatTime(slot.startTime)}
                           </p>
                           <p className="text-xs text-gray-400">
-                            to {formatTime(slot.endTime)}
+                            {t.portalBook.to} {formatTime(slot.endTime)}
                           </p>
                         </>
                       )}

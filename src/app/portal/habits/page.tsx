@@ -5,6 +5,7 @@ import { format, subDays, startOfDay } from "date-fns";
 import { Check, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/lib/i18n";
 
 interface HabitLog {
   id: string;
@@ -19,6 +20,7 @@ interface ClientHabit {
 }
 
 export default function PortalHabitsPage() {
+  const t = useT();
   const [habits, setHabits] = useState<ClientHabit[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -97,17 +99,17 @@ export default function PortalHabitsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Daily Habits</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.portalHabits.dailyHabits}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Check off your daily habits to stay on track
+        {t.portalHabits.checkOff}
       </p>
 
       {habits.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             icon={Sparkles}
-            title="No habits assigned"
-            description="Your coach hasn't assigned any habits yet. Check back soon!"
+            title={t.portalHabits.noHabitsTitle}
+            description={t.portalHabits.noHabitsDescFull}
           />
         </div>
       ) : (
@@ -118,7 +120,7 @@ export default function PortalHabitsPage() {
               <thead>
                 <tr>
                   <th className="text-left text-sm font-medium text-gray-500 pb-3 pr-4 min-w-[140px]">
-                    Habit
+                    {t.portalHabits.habit}
                   </th>
                   {last7Days.map((d) => (
                     <th
@@ -135,7 +137,7 @@ export default function PortalHabitsPage() {
                     </th>
                   ))}
                   <th className="pb-3 text-center text-xs font-medium text-gray-400 min-w-[50px]">
-                    Streak
+                    {t.portalHabits.streak}
                   </th>
                 </tr>
               </thead>

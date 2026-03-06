@@ -2,8 +2,10 @@
 
 import { useSession } from "next-auth/react";
 import { MessageThread } from "@/components/chat/message-thread";
+import { useT } from "@/lib/i18n";
 
 export default function PortalMessagesPage() {
+  const t = useT();
   const { data: session } = useSession();
 
   if (!session?.user?.clientProfileId) {
@@ -18,9 +20,9 @@ export default function PortalMessagesPage() {
     <div className="flex flex-col" style={{ height: "calc(100vh - 8rem)" }}>
       <div className="border-b border-gray-200 pb-4">
         <h1 className="text-lg font-semibold text-gray-900">
-          Messages
+          {t.messages.title}
         </h1>
-        <p className="text-xs text-gray-500">Chat with your coach</p>
+        <p className="text-xs text-gray-500">{t.portalMessages.chatWithCoach}</p>
       </div>
 
       <MessageThread

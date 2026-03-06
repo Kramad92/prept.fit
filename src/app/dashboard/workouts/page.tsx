@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Plus, Dumbbell, Search, Zap } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageSkeleton } from "@/components/ui/skeleton";
+import { useT } from "@/lib/i18n";
 
 interface WorkoutPlan {
   id: string;
@@ -86,6 +87,7 @@ const PRESET_TEMPLATES = [
 ];
 
 export default function WorkoutsPage() {
+  const t = useT();
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [plans, setPlans] = useState<WorkoutPlan[]>([]);
@@ -124,14 +126,14 @@ export default function WorkoutsPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Workout Templates</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.workouts.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Reusable templates — assign to clients from their profile page
+            {t.workouts.subtitle}
           </p>
         </div>
         <Link href="/dashboard/workouts/new" className="btn-primary">
           <Plus className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">New Plan</span>
+          <span className="hidden md:inline">{t.workouts.newPlan}</span>
         </Link>
       </div>
 
@@ -139,7 +141,7 @@ export default function WorkoutsPage() {
       <div className="mt-6">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
           <Zap className="h-4 w-4 text-amber-500" />
-          Quick Start from Template
+          {t.workouts.quickStart}
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           {PRESET_TEMPLATES.map((preset) => (
@@ -149,7 +151,7 @@ export default function WorkoutsPage() {
               disabled={creating !== null}
               className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 disabled:opacity-50"
             >
-              {creating === preset.name ? "Creating..." : preset.name}
+              {creating === preset.name ? t.workouts.creating : preset.name}
             </button>
           ))}
         </div>
@@ -159,7 +161,7 @@ export default function WorkoutsPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Search workout plans..."
+          placeholder={t.workouts.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="input pl-10"
@@ -170,12 +172,12 @@ export default function WorkoutsPage() {
         <div className="mt-8">
           <EmptyState
             icon={Dumbbell}
-            title="No workout plans yet"
-            description="Create your first workout plan or use a quick start template above."
+            title={t.workouts.noPlans}
+            description={t.workouts.noPlansDesc}
             action={
               <Link href="/dashboard/workouts/new" className="btn-primary">
                 <Plus className="mr-2 h-4 w-4" />
-                Create Plan
+                {t.workouts.createPlan}
               </Link>
             }
           />
@@ -204,13 +206,13 @@ export default function WorkoutsPage() {
                 </div>
                 {plan.isTemplate && (
                   <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                    Template
+                    {t.workouts.template}
                   </span>
                 )}
               </div>
               <div className="mt-4 flex gap-4 text-xs text-gray-500">
-                <span>{plan.exerciseCount} exercises</span>
-                <span>{plan.assignedCount} clients</span>
+                <span>{plan.exerciseCount} {t.workouts.exercises_count}</span>
+                <span>{plan.assignedCount} {t.workouts.clients_count}</span>
               </div>
             </Link>
           ))}

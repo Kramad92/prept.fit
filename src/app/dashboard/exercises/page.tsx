@@ -13,6 +13,7 @@ import {
   Filter,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/lib/i18n";
 
 interface ExerciseItem {
   id: string;
@@ -27,7 +28,29 @@ interface ExerciseItem {
 const CATEGORIES = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"];
 const EQUIPMENT = ["Barbell", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell", "Other"];
 
+const CATEGORY_KEYS: Record<string, keyof typeof import("@/lib/i18n/bs").bs.exerciseLibrary> = {
+  Chest: "chest", Back: "back", Legs: "legs", Shoulders: "shoulders",
+  Arms: "arms", Core: "core", Cardio: "cardio",
+};
+
+const EQUIPMENT_KEYS: Record<string, keyof typeof import("@/lib/i18n/bs").bs.exerciseLibrary> = {
+  Barbell: "barbell", Dumbbell: "dumbbell", Cable: "cable", Machine: "machine",
+  Bodyweight: "bodyweight", Kettlebell: "kettlebell", Other: "other",
+};
+
 export default function ExerciseLibraryPage() {
+  const t = useT();
+
+  function tCategory(cat: string) {
+    const key = CATEGORY_KEYS[cat];
+    return key ? (t.exerciseLibrary as any)[key] : cat;
+  }
+
+  function tEquipment(eq: string) {
+    const key = EQUIPMENT_KEYS[eq];
+    return key ? (t.exerciseLibrary as any)[key] : eq;
+  }
+
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -132,7 +155,7 @@ export default function ExerciseLibraryPage() {
   // Group by category
   const grouped: Record<string, ExerciseItem[]> = {};
   for (const ex of filtered) {
-    const cat = ex.category || "Uncategorized";
+    const cat = ex.category || t.exerciseLibrary.uncategorized;
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(ex);
   }
@@ -149,22 +172,22 @@ export default function ExerciseLibraryPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Exercise Library</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.exerciseLibrary.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {exercises.length} exercises — used when building workout templates
+            {exercises.length} {t.exerciseLibrary.exerciseCount}
           </p>
         </div>
         <div className="flex gap-2">
           {exercises.length === 0 && (
             <button onClick={handleSeed} disabled={seeding} className="btn-secondary">
               <Download className="mr-2 h-4 w-4" />
-              {seeding ? "Loading..." : "Load Default Exercises"}
+              {seeding ? t.common.loading : t.exerciseLibrary.loadDefaults}
             </button>
           )}
           {exercises.length > 0 && exercises.length < 50 && (
             <button onClick={handleSeed} disabled={seeding} className="btn-secondary text-sm">
               <Download className="mr-1 h-4 w-4" />
-              {seeding ? "Adding..." : "Add Defaults"}
+              {seeding ? t.exerciseLibrary.adding : t.exerciseLibrary.addDefaults}
             </button>
           )}
           <button
@@ -175,7 +198,7 @@ export default function ExerciseLibraryPage() {
             className="btn-primary"
           >
             <Plus className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">Add Exercise</span>
+            <span className="hidden md:inline">{t.exerciseLibrary.addExercise}</span>
           </button>
         </div>
       </div>
@@ -185,7 +208,7 @@ export default function ExerciseLibraryPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search exercises..."
+            placeholder={t.exerciseLibrary.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input pl-10"
@@ -198,9 +221,9 @@ export default function ExerciseLibraryPage() {
             onChange={(e) => setFilterCategory(e.target.value)}
             className="input appearance-none pl-10 pr-8"
           >
-            <option value="">All Categories</option>
+            <option value="">{t.exerciseLibrary.allCategories}</option>
             {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>{tCategory(c)}</option>
             ))}
           </select>
         </div>
@@ -210,18 +233,18 @@ export default function ExerciseLibraryPage() {
         <div className="mt-8">
           <EmptyState
             icon={Dumbbell}
-            title="No exercises in your library"
-            description="Load default exercises to get started, or add your own."
+            title={t.exerciseLibrary.noExercises}
+            description={t.exerciseLibrary.noExercisesDesc}
             action={
               <button onClick={handleSeed} disabled={seeding} className="btn-primary">
                 <Download className="mr-2 h-4 w-4" />
-                {seeding ? "Loading..." : "Load 80+ Default Exercises"}
+                {seeding ? t.common.loading : t.exerciseLibrary.loadDefaultsCount}
               </button>
             }
           />
         </div>
       ) : filtered.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-gray-500">No exercises match your search.</p>
+        <p className="mt-8 text-center text-sm text-gray-500">{t.exerciseLibrary.noMatch}</p>
       ) : (
         <div className="mt-6 space-y-6">
           {Object.entries(grouped)
@@ -229,7 +252,7 @@ export default function ExerciseLibraryPage() {
             .map(([category, exs]) => (
               <div key={category}>
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <span className="rounded bg-brand-50 px-2 py-0.5 text-brand-700">{category}</span>
+                  <span className="rounded bg-brand-50 px-2 py-0.5 text-brand-700">{tCategory(category)}</span>
                   <span className="text-gray-400">({exs.length})</span>
                 </h3>
                 <div className="mt-2 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -270,7 +293,7 @@ export default function ExerciseLibraryPage() {
           <div className="w-full max-w-md rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">
-                {editingId ? "Edit Exercise" : "Add Exercise"}
+                {editingId ? t.exerciseLibrary.editExercise : t.exerciseLibrary.addExercise}
               </h2>
               <button
                 onClick={() => {
@@ -284,43 +307,43 @@ export default function ExerciseLibraryPage() {
             </div>
             <form onSubmit={handleSave} className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name *</label>
-                <input type="text" required value={formName} onChange={(e) => setFormName(e.target.value)} className="input mt-1" placeholder="Barbell Bench Press" />
+                <label className="block text-sm font-medium text-gray-700">{t.common.name} *</label>
+                <input type="text" required value={formName} onChange={(e) => setFormName(e.target.value)} className="input mt-1" placeholder={t.exerciseLibrary.namePlaceholder} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.category}</label>
                   <select value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="input mt-1">
-                    <option value="">Select...</option>
+                    <option value="">{t.exerciseLibrary.select}</option>
                     {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>{tCategory(c)}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Equipment</label>
+                  <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.equipment}</label>
                   <select value={formEquipment} onChange={(e) => setFormEquipment(e.target.value)} className="input mt-1">
-                    <option value="">Select...</option>
+                    <option value="">{t.exerciseLibrary.select}</option>
                     {EQUIPMENT.map((e) => (
-                      <option key={e} value={e}>{e}</option>
+                      <option key={e} value={e}>{tEquipment(e)}</option>
                     ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Muscle Group</label>
-                <input type="text" value={formMuscleGroup} onChange={(e) => setFormMuscleGroup(e.target.value)} className="input mt-1" placeholder="Pectorals" />
+                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.muscleGroup}</label>
+                <input type="text" value={formMuscleGroup} onChange={(e) => setFormMuscleGroup(e.target.value)} className="input mt-1" placeholder={t.exerciseLibrary.selectMuscle} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Video URL</label>
+                <label className="block text-sm font-medium text-gray-700">{t.workouts.videoUrl}</label>
                 <input type="url" value={formVideoUrl} onChange={(e) => setFormVideoUrl(e.target.value)} className="input mt-1" placeholder="https://youtube.com/watch?v=..." />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Instructions</label>
-                <textarea value={formInstructions} onChange={(e) => setFormInstructions(e.target.value)} rows={2} className="input mt-1" placeholder="Form cues, tips..." />
+                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.instructions}</label>
+                <textarea value={formInstructions} onChange={(e) => setFormInstructions(e.target.value)} rows={2} className="input mt-1" placeholder={t.exerciseLibrary.instructionsPlaceholder} />
               </div>
               <button type="submit" disabled={saving} className="btn-primary w-full">
-                {saving ? "Saving..." : editingId ? "Save Changes" : "Add Exercise"}
+                {saving ? t.common.saving : editingId ? t.workouts.saveChanges : t.exerciseLibrary.addExercise}
               </button>
             </form>
           </div>

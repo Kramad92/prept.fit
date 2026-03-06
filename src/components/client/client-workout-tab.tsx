@@ -20,6 +20,7 @@ import { ExerciseNameInput } from "./exercise-name-input";
 import type { Exercise, ClientExercise, ExerciseInput } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n";
 
 interface AssignedPlan {
   id: string;
@@ -47,6 +48,7 @@ interface ClientWorkoutTabProps {
 
 export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientWorkoutTabProps) {
   const { toastSuccess, toastError } = useToast();
+  const t = useT();
   const [expanded, setExpanded] = useState<string | null>(
     assignedPlans.length > 0 ? assignedPlans[0].id : null
   );
@@ -74,12 +76,12 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
         body: JSON.stringify({ workoutPlanId: templateId, mode: mode || "solo" }),
       });
       if (res.ok) {
-        toastSuccess("Template assigned");
+        toastSuccess(t.workouts.templateAssigned);
       } else {
-        toastError("Failed to assign template");
+        toastError(t.workouts.failedToAssign);
       }
     } catch {
-      toastError("Failed to assign template");
+      toastError(t.workouts.failedToAssign);
     }
     setShowTemplatePicker(false);
     setAssigning(false);
@@ -111,16 +113,16 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
         }),
       });
       if (res.ok) {
-        toastSuccess("Custom plan created");
+        toastSuccess(t.workouts.customPlanCreated);
         setShowCustomForm(false);
         setCustomName("");
         setCustomExercises([]);
         onRefresh();
       } else {
-        toastError("Failed to create plan");
+        toastError(t.workouts.failedToCreate);
       }
     } catch {
-      toastError("Failed to create plan");
+      toastError(t.workouts.failedToCreate);
     }
     setSaving(false);
   }
@@ -166,14 +168,14 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
         }),
       });
       if (res.ok) {
-        toastSuccess("Workout plan saved");
+        toastSuccess(t.workouts.workoutPlanSaved);
         setEditingPlanId(null);
         onRefresh();
       } else {
-        toastError("Failed to save changes");
+        toastError(t.workouts.failedToSave);
       }
     } catch {
-      toastError("Failed to save changes");
+      toastError(t.workouts.failedToSave);
     }
     setSaving(false);
   }
@@ -181,10 +183,10 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   async function handleDelete(planId: string) {
     try {
       await fetch(`/api/clients/${clientId}/workouts/${planId}`, { method: "DELETE" });
-      toastSuccess("Plan removed");
+      toastSuccess(t.assign.planRemoved);
       onRefresh();
     } catch {
-      toastError("Failed to remove plan");
+      toastError(t.workouts.failedToRemove);
     }
   }
 
@@ -232,24 +234,24 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
               <div>
-                <label className="text-xs text-gray-500">Sets</label>
+                <label className="text-xs text-gray-500">{t.workouts.sets}</label>
                 <input type="number" value={ex.sets} onChange={(e) => updateExercise(exercises, setExercises, ex.tempId, "sets", e.target.value)} placeholder="3" className="input mt-0.5 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Reps</label>
+                <label className="text-xs text-gray-500">{t.workouts.reps}</label>
                 <input type="text" value={ex.reps} onChange={(e) => updateExercise(exercises, setExercises, ex.tempId, "reps", e.target.value)} placeholder="8-12" className="input mt-0.5 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Weight</label>
+                <label className="text-xs text-gray-500">{t.workouts.weight}</label>
                 <input type="text" value={ex.weight} onChange={(e) => updateExercise(exercises, setExercises, ex.tempId, "weight", e.target.value)} placeholder="135lbs" className="input mt-0.5 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Rest (sec)</label>
+                <label className="text-xs text-gray-500">{t.workouts.restSec}</label>
                 <input type="number" value={ex.restSeconds} onChange={(e) => updateExercise(exercises, setExercises, ex.tempId, "restSeconds", e.target.value)} placeholder="60" className="input mt-0.5 text-sm" />
               </div>
             </div>
             <div className="mt-2">
-              <input type="text" value={ex.notes} onChange={(e) => updateExercise(exercises, setExercises, ex.tempId, "notes", e.target.value)} placeholder="Notes..." className="input text-sm" />
+              <input type="text" value={ex.notes} onChange={(e) => updateExercise(exercises, setExercises, ex.tempId, "notes", e.target.value)} placeholder={t.common.notesPlaceholder} className="input text-sm" />
             </div>
           </div>
         ))}
@@ -259,7 +261,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
           className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-brand-300 hover:text-brand-600"
         >
           <Plus className="h-4 w-4" />
-          Add Exercise Manually
+          {t.workouts.addExerciseManually}
         </button>
       </div>
     );
@@ -270,11 +272,11 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
       <div>
         <div className="card flex flex-col items-center py-8 text-center">
           <Dumbbell className="h-10 w-10 text-gray-300" />
-          <p className="mt-3 text-sm text-gray-500">No workout plans assigned.</p>
+          <p className="mt-3 text-sm text-gray-500">{t.workouts.noPlansAssigned}</p>
           <div className="mt-4 flex gap-2">
             <button onClick={() => setShowTemplatePicker(true)} className="btn-primary">
               <FileDown className="mr-2 h-4 w-4" />
-              Assign from Template
+              {t.workouts.assignFromTemplate}
             </button>
             <button
               onClick={() => {
@@ -284,7 +286,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
               className="btn-secondary"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Create Custom Plan
+              {t.workouts.createCustomPlan}
             </button>
           </div>
         </div>
@@ -303,12 +305,12 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Workout Plans ({assignedPlans.length})
+          {t.workouts.workoutPlans} ({assignedPlans.length})
         </h3>
         <div className="flex gap-2">
           <button onClick={() => setShowTemplatePicker(true)} className="btn-secondary text-sm">
             <FileDown className="mr-1 h-4 w-4" />
-            From Template
+            {t.workouts.fromTemplate}
           </button>
           <button
             onClick={() => {
@@ -318,7 +320,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
             className="btn-primary text-sm"
           >
             <Plus className="mr-1 h-4 w-4" />
-            Custom Plan
+            {t.workouts.customPlan}
           </button>
         </div>
       </div>
@@ -328,7 +330,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
         <div className="card mb-4 border-2 border-brand-200">
           <form onSubmit={handleCreateCustom}>
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900">New Custom Plan</h4>
+              <h4 className="font-semibold text-gray-900">{t.workouts.newCustomPlan}</h4>
               <button type="button" onClick={() => setShowCustomForm(false)} className="rounded p-1 hover:bg-gray-100">
                 <X className="h-4 w-4" />
               </button>
@@ -339,18 +341,18 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
                 required
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Plan name"
+                placeholder={t.workouts.planName}
                 className="input"
               />
             </div>
             <div className="mt-3">
-              <label className="text-xs text-gray-500">Workout Mode</label>
+              <label className="text-xs text-gray-500">{t.workouts.workoutMode}</label>
               <div className="mt-1 flex gap-2">
                 <button type="button" onClick={() => setAssignMode("solo")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${assignMode === "solo" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
-                  <User className="h-4 w-4" /> Solo
+                  <User className="h-4 w-4" /> {t.workouts.solo}
                 </button>
                 <button type="button" onClick={() => setAssignMode("live")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${assignMode === "live" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
-                  <Users className="h-4 w-4" /> Live with Coach
+                  <Users className="h-4 w-4" /> {t.workouts.liveWithCoach}
                 </button>
               </div>
             </div>
@@ -358,7 +360,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
               {renderExerciseEditor(customExercises, setCustomExercises)}
             </div>
             <button type="submit" disabled={saving} className="btn-primary mt-4 w-full">
-              {saving ? "Creating..." : "Create Plan"}
+              {saving ? t.workouts.creating : t.workouts.createPlan}
             </button>
           </form>
         </div>
@@ -388,19 +390,19 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
                     <h3 className="font-semibold text-gray-900">{displayName}</h3>
                     <div className="flex gap-2 text-xs text-gray-500">
                       {plan.workoutPlan.sourceTemplate && (
-                        <span>from: {plan.workoutPlan.sourceTemplate.name}</span>
+                        <span>{t.workouts.from}: {plan.workoutPlan.sourceTemplate.name}</span>
                       )}
-                      <span>{exercises.length} exercises</span>
+                      <span>{exercises.length} {t.workouts.exercises_count}</span>
                       <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${
                         plan.mode === "live"
                           ? "bg-purple-100 text-purple-700"
                           : "bg-blue-100 text-blue-700"
                       }`}>
                         {plan.mode === "live" ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                        {plan.mode === "live" ? "Live" : "Solo"}
+                        {plan.mode === "live" ? t.workouts.live : t.workouts.solo}
                       </span>
                       {!plan.isActive && (
-                        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">Inactive</span>
+                        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">{t.workouts.inactive}</span>
                       )}
                     </div>
                   </div>
@@ -417,14 +419,14 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
                   <div className="mb-3 flex gap-2">
                     <button onClick={() => startEdit(plan)} className="btn-secondary text-xs">
                       <Pencil className="mr-1 h-3 w-3" />
-                      Edit
+                      {t.common.edit}
                     </button>
                     <button
                       onClick={() => handleDelete(plan.id)}
                       className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50"
                     >
                       <Trash2 className="mr-1 inline h-3 w-3" />
-                      Remove
+                      {t.workouts.remove}
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -436,10 +438,10 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{ex.name}</p>
                           <div className="mt-1 flex flex-wrap gap-3 text-sm text-gray-500">
-                            {ex.sets && <span>{ex.sets} sets</span>}
-                            {ex.reps && <span>{ex.reps} reps</span>}
+                            {ex.sets && <span>{ex.sets} {t.workouts.setsLabel}</span>}
+                            {ex.reps && <span>{ex.reps} {t.workouts.repsLabel}</span>}
                             {ex.weight && <span>{ex.weight}</span>}
-                            {ex.restSeconds && <span>{ex.restSeconds}s rest</span>}
+                            {ex.restSeconds && <span>{ex.restSeconds}s {t.workouts.restLabel}</span>}
                           </div>
                           {ex.notes && (
                             <p className="mt-1 text-sm italic text-gray-400">{ex.notes}</p>
@@ -454,7 +456,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
               {isOpen && isEditing && (
                 <div className="mt-4 border-t border-gray-100 pt-4">
                   <div className="mb-3">
-                    <label className="text-xs text-gray-500">Plan Name</label>
+                    <label className="text-xs text-gray-500">{t.workouts.planName}</label>
                     <input
                       type="text"
                       value={editName}
@@ -470,10 +472,10 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
                       className="btn-primary text-sm"
                     >
                       <Check className="mr-1 h-4 w-4" />
-                      {saving ? "Saving..." : "Save Changes"}
+                      {saving ? t.common.saving : t.workouts.saveChanges}
                     </button>
                     <button onClick={() => setEditingPlanId(null)} className="btn-secondary text-sm">
-                      Cancel
+                      {t.common.cancel}
                     </button>
                   </div>
                 </div>

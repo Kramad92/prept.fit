@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 interface Notification {
   id: string;
@@ -17,6 +18,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT();
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -55,11 +57,11 @@ export function NotificationBell() {
   function timeAgo(date: string): string {
     const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1) return t.notifications.ago;
+    if (mins < 60) return `${mins}${t.notifications.minutesAgo} ${t.notifications.ago}`;
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    if (hours < 24) return `${hours}${t.notifications.hoursAgo} ${t.notifications.ago}`;
+    return `${Math.floor(hours / 24)}${t.notifications.daysAgo} ${t.notifications.ago}`;
   }
 
   return (
@@ -80,14 +82,14 @@ export function NotificationBell() {
         <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-gray-200 bg-white shadow-lg">
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
             <h3 className="text-sm font-semibold text-gray-900">
-              Notifications
+              {t.notifications.title}
             </h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
                 className="text-xs font-medium text-brand-600 hover:text-brand-700"
               >
-                Mark all read
+                {t.notifications.markAllRead}
               </button>
             )}
           </div>
@@ -95,7 +97,7 @@ export function NotificationBell() {
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-6 text-center text-sm text-gray-400">
-                No notifications
+                {t.notifications.noNotifications}
               </p>
             ) : (
               notifications.slice(0, 20).map((n) => (

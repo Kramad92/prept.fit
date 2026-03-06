@@ -14,7 +14,10 @@ model Tenant {
   slug        String   @unique // URL slug (subdomain)
   logo        String?  // Logo URL
   brandColor  String   @default("#22c55e")
-  timezone    String   @default("America/New_York")
+  timezone    String   @default("Europe/Sarajevo")
+  locale      String   @default("bs") // "bs" or "en"
+  units       String   @default("metric") // "metric" or "imperial"
+  currency    String   @default("BAM")
   bio         String?
   phone       String?
   email       String?

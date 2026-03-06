@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Save, Palette, Clock, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { useT, useLocale, type Locale } from "@/lib/i18n";
 
 interface Settings {
   name: string | null;
@@ -13,6 +14,9 @@ interface Settings {
   website: string | null;
   brandColor: string | null;
   timezone: string | null;
+  locale: string | null;
+  units: string | null;
+  currency: string | null;
 }
 
 export default function SettingsPage() {
@@ -20,12 +24,14 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings | null>(null);
   const { toastSuccess, toastError } = useToast();
+  const t = useT();
+  const { setLocale } = useLocale();
 
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => setSettings(data))
-      .catch(() => toastError("Failed to load settings"))
+      .catch(() => toastError(t.settings.failedToLoad))
       .finally(() => setLoading(false));
   }, [toastError]);
 
@@ -42,6 +48,9 @@ export default function SettingsPage() {
       website: formData.get("website"),
       brandColor: formData.get("brandColor"),
       timezone: formData.get("timezone"),
+      locale: formData.get("locale"),
+      units: formData.get("units"),
+      currency: formData.get("currency"),
     };
 
     try {
@@ -52,12 +61,12 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        toastSuccess("Settings saved!");
+        toastSuccess(t.settings.settingsSaved);
       } else {
-        toastError("Failed to save settings");
+        toastError(t.settings.failedToSave);
       }
     } catch {
-      toastError("Failed to save settings");
+      toastError(t.settings.failedToSave);
     } finally {
       setSaving(false);
     }
@@ -73,9 +82,9 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.settings.title}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Customize your TrainerHub profile
+        {t.settings.subtitle}
       </p>
 
       {/* Quick Links */}
@@ -89,9 +98,9 @@ export default function SettingsPage() {
               <Clock className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="font-medium text-gray-900">Availability</p>
+              <p className="font-medium text-gray-900">{t.settings.availability}</p>
               <p className="text-sm text-gray-500">
-                Set your bookable hours for clients
+                {t.settings.availabilityDesc}
               </p>
             </div>
           </div>
@@ -104,38 +113,38 @@ export default function SettingsPage() {
         <div className="card space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
             <Palette className="h-4 w-4" />
-            Branding
+            {t.settings.branding}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Business Name
+              {t.settings.businessName}
             </label>
             <input
               type="text"
               name="name"
               defaultValue={settings?.name || ""}
               className="input mt-1"
-              placeholder="Your Fitness Business"
+              placeholder={t.settings.businessNamePlaceholder}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Bio
+              {t.settings.bio}
             </label>
             <textarea
               name="bio"
               rows={3}
               defaultValue={settings?.bio || ""}
               className="input mt-1"
-              placeholder="Tell clients about yourself..."
+              placeholder={t.settings.bioPlaceholder}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Brand Color
+              {t.settings.brandColor}
             </label>
             <div className="mt-1 flex items-center gap-3">
               <input
@@ -145,7 +154,7 @@ export default function SettingsPage() {
                 className="h-10 w-14 cursor-pointer rounded border border-gray-300"
               />
               <span className="text-sm text-gray-500">
-                Used for buttons, accents, and links
+                {t.settings.brandColorDesc}
               </span>
             </div>
           </div>
@@ -154,25 +163,25 @@ export default function SettingsPage() {
         {/* Contact */}
         <div className="card space-y-4">
           <h3 className="text-sm font-semibold text-gray-900">
-            Contact Information
+            {t.settings.contactInfo}
           </h3>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              {t.common.email}
             </label>
             <input
               type="email"
               name="email"
               defaultValue={settings?.email || ""}
               className="input mt-1"
-              placeholder="you@example.com"
+              placeholder="vas@email.com"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Phone
+              {t.common.phone}
             </label>
             <input
               type="tel"
@@ -185,7 +194,7 @@ export default function SettingsPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Website
+              {t.settings.website}
             </label>
             <input
               type="url"
@@ -197,25 +206,76 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Timezone */}
+        {/* Preferences */}
         <div className="card space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900">Preferences</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t.settings.preferences}</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Timezone
+              {t.settings.timezone}
             </label>
             <select
               name="timezone"
-              defaultValue={settings?.timezone || "America/New_York"}
+              defaultValue={settings?.timezone || "Europe/Sarajevo"}
               className="input mt-1"
             >
-              <option value="America/New_York">Eastern Time</option>
-              <option value="America/Chicago">Central Time</option>
-              <option value="America/Denver">Mountain Time</option>
-              <option value="America/Los_Angeles">Pacific Time</option>
-              <option value="Europe/London">London</option>
-              <option value="Europe/Paris">Central European</option>
-              <option value="Australia/Sydney">Sydney</option>
+              <option value="America/New_York">{t.settings.easternTime}</option>
+              <option value="America/Chicago">{t.settings.centralTime}</option>
+              <option value="America/Denver">{t.settings.mountainTime}</option>
+              <option value="America/Los_Angeles">{t.settings.pacificTime}</option>
+              <option value="Europe/London">{t.settings.london}</option>
+              <option value="Europe/Paris">{t.settings.centralEuropean}</option>
+              <option value="Europe/Sarajevo">{t.settings.sarajevo}</option>
+              <option value="Australia/Sydney">{t.settings.sydney}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Jezik / Language
+            </label>
+            <select
+              name="locale"
+              defaultValue={settings?.locale || "bs"}
+              className="input mt-1"
+              onChange={(e) => {
+                const newLocale = e.target.value as Locale;
+                setLocale(newLocale);
+                fetch("/api/settings", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ locale: newLocale }),
+                });
+              }}
+            >
+              <option value="bs">Bosanski</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t.settings.units}
+            </label>
+            <select
+              name="units"
+              defaultValue={settings?.units || "metric"}
+              className="input mt-1"
+            >
+              <option value="metric">{t.settings.metric}</option>
+              <option value="imperial">{t.settings.imperial}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t.settings.currency}
+            </label>
+            <select
+              name="currency"
+              defaultValue={settings?.currency || "BAM"}
+              className="input mt-1"
+            >
+              <option value="BAM">BAM (KM)</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
             </select>
           </div>
         </div>
@@ -223,7 +283,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3">
           <button type="submit" disabled={saving} className="btn-primary">
             <Save className="mr-2 h-4 w-4" />
-            {saving ? "Saving..." : "Save Settings"}
+            {saving ? t.common.saving : t.settings.saveSettings}
           </button>
         </div>
       </form>

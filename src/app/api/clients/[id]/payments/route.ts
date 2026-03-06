@@ -39,10 +39,15 @@ export async function POST(
   if ("error" in parsed) return parsed.error;
   const body = parsed.data;
 
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: session.user.tenantId },
+    select: { currency: true },
+  });
+
   const payment = await prisma.payment.create({
     data: {
       amount: parseFloat(String(body.amount)),
-      currency: body.currency || "USD",
+      currency: body.currency || tenant?.currency || "BAM",
       date: body.date ? new Date(body.date) : new Date(),
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       method: body.method || null,

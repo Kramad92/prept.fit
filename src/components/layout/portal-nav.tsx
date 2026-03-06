@@ -20,24 +20,26 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const navItems = [
-  { href: "/portal", icon: Home, label: "Home" },
-  { href: "/portal/workouts", icon: Dumbbell, label: "Workouts" },
-  { href: "/portal/progress", icon: Camera, label: "Progress" },
-  { href: "/portal/book", icon: CalendarPlus, label: "Book" },
-  { href: "/portal/messages", icon: MessageSquare, label: "Messages" },
-  { href: "/portal/check-ins", icon: ClipboardCheck, label: "Check-Ins" },
-  { href: "/portal/habits", icon: Sparkles, label: "Habits" },
-  { href: "/portal/nutrition", icon: UtensilsCrossed, label: "Nutrition" },
-  { href: "/portal/progress/charts", icon: TrendingUp, label: "Charts" },
-];
-
-const primaryNav = navItems.slice(0, 4); // Home, Workouts, Progress, Book
-const moreNav = navItems.slice(4);       // Messages, Check-Ins, Habits, Nutrition, Charts
+import { useT } from "@/lib/i18n";
 
 export function PortalMobileNav() {
   const pathname = usePathname();
+  const t = useT();
+
+  const navItems = [
+    { href: "/portal", icon: Home, label: t.nav.home },
+    { href: "/portal/workouts", icon: Dumbbell, label: t.nav.workouts },
+    { href: "/portal/progress", icon: Camera, label: t.nav.progress },
+    { href: "/portal/book", icon: CalendarPlus, label: t.nav.book },
+    { href: "/portal/messages", icon: MessageSquare, label: t.nav.messages },
+    { href: "/portal/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
+    { href: "/portal/habits", icon: Sparkles, label: t.nav.habits },
+    { href: "/portal/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+    { href: "/portal/progress/charts", icon: TrendingUp, label: t.nav.charts },
+  ];
+
+  const primaryNav = navItems.slice(0, 4);
+  const moreNav = navItems.slice(4);
   const [showMore, setShowMore] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +71,7 @@ export function PortalMobileNav() {
           <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 animate-in rounded-t-2xl border-t border-gray-200 bg-white px-2 py-3">
             <div className="mb-2 flex items-center justify-between px-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                More
+                {t.common.more}
               </span>
               <button
                 onClick={() => setShowMore(false)}
@@ -137,7 +139,7 @@ export function PortalMobileNav() {
               )}
             >
               <MoreHorizontal className="h-5 w-5" />
-              <span>More</span>
+              <span>{t.common.more}</span>
             </button>
           </div>
         </nav>
@@ -148,13 +150,26 @@ export function PortalMobileNav() {
 
 export function PortalDesktopNav() {
   const pathname = usePathname();
+  const t = useT();
+
+  const navItems = [
+    { href: "/portal", icon: Home, label: t.nav.home },
+    { href: "/portal/workouts", icon: Dumbbell, label: t.nav.workouts },
+    { href: "/portal/progress", icon: Camera, label: t.nav.progress },
+    { href: "/portal/book", icon: CalendarPlus, label: t.nav.book },
+    { href: "/portal/messages", icon: MessageSquare, label: t.nav.messages },
+    { href: "/portal/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
+    { href: "/portal/habits", icon: Sparkles, label: t.nav.habits },
+    { href: "/portal/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+    { href: "/portal/progress/charts", icon: TrendingUp, label: t.nav.charts },
+  ];
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
       <div className="flex flex-1 flex-col border-r border-gray-200 bg-white">
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
           <Dumbbell className="h-7 w-7 text-brand-600" />
-          <span className="text-xl font-bold text-gray-900">My Portal</span>
+          <span className="text-xl font-bold text-gray-900">{t.nav.myPortal}</span>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -181,7 +196,7 @@ export function PortalDesktopNav() {
 
         <div className="border-t border-gray-200 p-3">
           <div className="flex items-center justify-between px-3 py-1">
-            <span className="text-xs text-gray-400">Theme</span>
+            <span className="text-xs text-gray-400">{t.common.theme}</span>
             <ThemeToggle />
           </div>
           <button
@@ -189,7 +204,7 @@ export function PortalDesktopNav() {
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
             <LogOut className="h-5 w-5" />
-            Sign out
+            {t.common.signOut}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus } from "lucide-react";
 import type { LibraryExercise } from "@/types";
+import { useT } from "@/lib/i18n";
 
 const CATEGORIES = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"];
 
@@ -10,7 +11,13 @@ interface ExercisePickerProps {
   onSelect: (exercise: { name: string; exerciseLibraryId?: string }) => void;
 }
 
+const CATEGORY_KEYS: Record<string, string> = {
+  Chest: "chest", Back: "back", Legs: "legs", Shoulders: "shoulders",
+  Arms: "arms", Core: "core", Cardio: "cardio",
+};
+
 export function ExercisePicker({ onSelect }: ExercisePickerProps) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [results, setResults] = useState<LibraryExercise[]>([]);
@@ -52,7 +59,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Search exercises..."
+          placeholder={t.exerciseLibrary.searchPlaceholder}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -79,7 +86,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            {cat}
+            {(t.exerciseLibrary as any)[CATEGORY_KEYS[cat]] || cat}
           </button>
         ))}
       </div>
@@ -88,7 +95,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
         <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
           <div className="max-h-56 overflow-y-auto">
             {results.length === 0 && (
-              <p className="px-3 py-2 text-sm text-gray-400">No exercises found.</p>
+              <p className="px-3 py-2 text-sm text-gray-400">{t.exerciseLibrary.noExercisesFound}</p>
             )}
             {results.map((ex) => (
               <button
@@ -126,7 +133,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
               className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
             >
               <Plus className="h-4 w-4" />
-              Add &quot;{query.trim()}&quot; as custom exercise
+              {t.exerciseLibrary.addAsCustom}: &quot;{query.trim()}&quot;
             </button>
           )}
         </div>

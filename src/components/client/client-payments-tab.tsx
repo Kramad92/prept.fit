@@ -13,22 +13,25 @@ import {
 } from "lucide-react";
 import type { Payment } from "@/types";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/utils";
 
 interface ClientPaymentsTabProps {
   clientId: string;
 }
 
-const METHODS = [
-  { value: "cash", label: "Cash" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "card", label: "Card" },
-  { value: "venmo", label: "Venmo" },
-  { value: "zelle", label: "Zelle" },
-  { value: "other", label: "Other" },
-];
-
 export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
   const { toastSuccess, toastError } = useToast();
+  const t = useT();
+
+  const METHODS = [
+    { value: "cash", label: t.billing.cash },
+    { value: "bank_transfer", label: t.billing.bankTransfer },
+    { value: "card", label: t.billing.card },
+    { value: "venmo", label: t.billing.venmo },
+    { value: "zelle", label: t.billing.zelle },
+    { value: "other", label: t.billing.other },
+  ];
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -53,7 +56,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
         setLoading(false);
       })
       .catch(() => {
-        toastError("Failed to load payments");
+        toastError(t.billing.failedToLoad);
         setLoading(false);
       });
   }
@@ -112,16 +115,16 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        toastSuccess(editingId ? "Payment updated" : "Payment recorded");
+        toastSuccess(editingId ? t.billing.paymentUpdated : t.billing.paymentRecorded);
         setShowForm(false);
         resetForm();
         loadPayments();
       } else {
         const err = await res.json().catch(() => null);
-        toastError(err?.error || "Failed to save payment");
+        toastError(err?.error || t.billing.failedToSave);
       }
     } catch {
-      toastError("Failed to save payment");
+      toastError(t.billing.failedToSave);
     } finally {
       setSaving(false);
     }
@@ -132,10 +135,10 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
       await fetch(`/api/clients/${clientId}/payments/${paymentId}`, {
         method: "DELETE",
       });
-      toastSuccess("Payment deleted");
+      toastSuccess(t.billing.paymentDeleted);
       loadPayments();
     } catch {
-      toastError("Failed to delete payment");
+      toastError(t.billing.failedToDelete);
     }
   }
 
@@ -166,9 +169,9 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
             <CheckCircle2 className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <p className="text-xs text-gray-500">Collected</p>
+            <p className="text-xs text-gray-500">{t.billing.collected}</p>
             <p className="text-lg font-bold text-gray-900">
-              ${totalPaid.toFixed(2)}
+              {formatCurrency(totalPaid)}
             </p>
           </div>
         </div>
@@ -177,9 +180,9 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
             <Clock className="h-5 w-5 text-yellow-600" />
           </div>
           <div>
-            <p className="text-xs text-gray-500">Pending</p>
+            <p className="text-xs text-gray-500">{t.billing.pending}</p>
             <p className="text-lg font-bold text-gray-900">
-              ${totalPending.toFixed(2)}
+              {formatCurrency(totalPending)}
             </p>
           </div>
         </div>
@@ -188,9 +191,9 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
             <AlertTriangle className="h-5 w-5 text-red-600" />
           </div>
           <div>
-            <p className="text-xs text-gray-500">Overdue</p>
+            <p className="text-xs text-gray-500">{t.billing.overdue}</p>
             <p className="text-lg font-bold text-red-600">
-              ${totalOverdue.toFixed(2)}
+              {formatCurrency(totalOverdue)}
             </p>
           </div>
         </div>
@@ -199,7 +202,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
       {/* Actions */}
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Payment History ({payments.length})
+          {t.billing.paymentHistory} ({payments.length})
         </h3>
         <button
           onClick={() => {
@@ -209,7 +212,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
           className="btn-primary text-sm"
         >
           <Plus className="mr-1 h-4 w-4" />
-          Record Payment
+          {t.billing.recordPayment}
         </button>
       </div>
 
@@ -219,7 +222,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
           <form onSubmit={handleSubmit}>
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-gray-900">
-                {editingId ? "Edit Payment" : "Record Payment"}
+                {editingId ? t.billing.editPayment : t.billing.recordPayment}
               </h4>
               <button
                 type="button"
@@ -236,7 +239,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
             <div className="mt-3 grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Amount *
+                  {t.billing.amount} *
                 </label>
                 <input
                   type="number"
@@ -244,28 +247,28 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                   required
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="150.00"
+                  placeholder={t.billing.amountPlaceholder}
                   className="input mt-1"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Status
+                  {t.common.status}
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   className="input mt-1"
                 >
-                  <option value="paid">Paid</option>
-                  <option value="pending">Pending</option>
-                  <option value="overdue">Overdue</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="paid">{t.billing.paid}</option>
+                  <option value="pending">{t.billing.pending}</option>
+                  <option value="overdue">{t.billing.overdue}</option>
+                  <option value="cancelled">{t.billing.cancelled}</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Payment Date
+                  {t.billing.paymentDate}
                 </label>
                 <input
                   type="date"
@@ -276,7 +279,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Due Date
+                  {t.billing.dueDate}
                 </label>
                 <input
                   type="date"
@@ -287,14 +290,14 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Method
+                  {t.billing.method}
                 </label>
                 <select
                   value={method}
                   onChange={(e) => setMethod(e.target.value)}
                   className="input mt-1"
                 >
-                  <option value="">Select method...</option>
+                  <option value="">{t.billing.selectMethod}</option>
                   {METHODS.map((m) => (
                     <option key={m.value} value={m.value}>
                       {m.label}
@@ -304,38 +307,38 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Period
+                  {t.billing.period}
                 </label>
                 <input
                   type="text"
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  placeholder="March 2026"
+                  placeholder={t.billing.periodPlaceholder}
                   className="input mt-1"
                 />
               </div>
             </div>
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700">
-                Description
+                {t.common.description}
               </label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Monthly coaching fee"
+                placeholder={t.billing.descriptionPlaceholder}
                 className="input mt-1"
               />
             </div>
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700">
-                Notes
+                {t.common.notes}
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                placeholder="Any additional notes..."
+                placeholder={t.billing.notesPlaceholder}
                 className="input mt-1"
               />
             </div>
@@ -345,10 +348,10 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
               className="btn-primary mt-4 w-full"
             >
               {saving
-                ? "Saving..."
+                ? t.common.saving
                 : editingId
-                  ? "Update Payment"
-                  : "Record Payment"}
+                  ? t.billing.updatePayment
+                  : t.billing.recordPayment}
             </button>
           </form>
         </div>
@@ -358,7 +361,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
       {payments.length === 0 ? (
         <div className="card flex flex-col items-center py-8 text-center">
           <DollarSign className="h-10 w-10 text-gray-300" />
-          <p className="mt-3 text-sm text-gray-500">No payments recorded yet.</p>
+          <p className="mt-3 text-sm text-gray-500">{t.billing.noPayments}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -394,7 +397,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-gray-900">
-                      ${p.amount.toFixed(2)}
+                      {formatCurrency(p.amount, (p as any).currency || "BAM")}
                     </p>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -407,17 +410,17 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                               : "bg-yellow-100 text-yellow-700"
                       }`}
                     >
-                      {p.status}
+                      {t.statuses[p.status as keyof typeof t.statuses] || p.status}
                     </span>
                     {p.method && (
                       <span className="text-xs text-gray-400">
-                        via {p.method.replace("_", " ")}
+                        {t.common.via} {METHODS.find(m => m.value === p.method)?.label || p.method.replace("_", " ")}
                       </span>
                     )}
                   </div>
                   <div className="flex gap-2 text-xs text-gray-500">
                     <span>
-                      {new Date(p.date).toLocaleDateString("en-US", {
+                      {new Date(p.date).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
                         year: "numeric",

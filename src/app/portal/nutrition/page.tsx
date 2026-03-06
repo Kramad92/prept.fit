@@ -12,6 +12,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { FoodPicker } from "@/components/client/food-picker";
 import { format } from "date-fns";
+import { useT } from "@/lib/i18n";
 import type { Food, Meal, ClientMeal } from "@/types";
 
 interface AssignedPlan {
@@ -44,6 +45,7 @@ interface NutritionLog {
 }
 
 export default function PortalNutritionPage() {
+  const t = useT();
   const [plans, setPlans] = useState<AssignedPlan[]>([]);
   const [logs, setLogs] = useState<NutritionLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,21 +132,21 @@ export default function PortalNutritionPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nutrition</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.portalNutrition.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Your meal plans and food log
+            {t.portalNutrition.mealPlansAndLog}
           </p>
         </div>
         <button onClick={() => setShowLog(true)} className="btn-primary">
           <Plus className="mr-2 h-4 w-4" />
-          Log Meal
+          {t.portalNutrition.logMeal}
         </button>
       </div>
 
       {saved && (
         <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-700">
           <Check className="h-4 w-4" />
-          Meal logged!
+          {t.portalNutrition.mealLogged}
         </div>
       )}
 
@@ -158,7 +160,7 @@ export default function PortalNutritionPage() {
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
-          Meal Plans
+          {t.portalNutrition.mealPlans}
         </button>
         <button
           onClick={() => setTab("log")}
@@ -168,7 +170,7 @@ export default function PortalNutritionPage() {
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
-          Food Log
+          {t.portalNutrition.foodLog}
         </button>
       </div>
 
@@ -178,8 +180,8 @@ export default function PortalNutritionPage() {
             {plans.length === 0 ? (
               <EmptyState
                 icon={UtensilsCrossed}
-                title="No meal plans assigned"
-                description="Your coach hasn't assigned any meal plans yet."
+                title={t.portalNutrition.noMealPlans}
+                description={t.portalNutrition.noMealPlansDesc}
               />
             ) : (
               <div className="space-y-4">
@@ -201,7 +203,7 @@ export default function PortalNutritionPage() {
                             </h3>
                             {plan.mealPlan.targetCalories && (
                               <p className="text-xs text-gray-500">
-                                {plan.mealPlan.targetCalories} cal target
+                                {plan.mealPlan.targetCalories} {t.portalNutrition.calTarget}
                               </p>
                             )}
                           </div>
@@ -222,17 +224,17 @@ export default function PortalNutritionPage() {
                               </span>
                               {plan.mealPlan.targetProtein && (
                                 <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700">
-                                  Protein: {plan.mealPlan.targetProtein}g
+                                  {t.nutrition.protein}: {plan.mealPlan.targetProtein}g
                                 </span>
                               )}
                               {plan.mealPlan.targetCarbs && (
                                 <span className="rounded bg-green-50 px-2 py-0.5 text-green-700">
-                                  Carbs: {plan.mealPlan.targetCarbs}g
+                                  {t.nutrition.carbs}: {plan.mealPlan.targetCarbs}g
                                 </span>
                               )}
                               {plan.mealPlan.targetFat && (
                                 <span className="rounded bg-yellow-50 px-2 py-0.5 text-yellow-700">
-                                  Fat: {plan.mealPlan.targetFat}g
+                                  {t.nutrition.fat}: {plan.mealPlan.targetFat}g
                                 </span>
                               )}
                             </div>
@@ -291,12 +293,12 @@ export default function PortalNutritionPage() {
             {Object.keys(logsByDate).length === 0 ? (
               <EmptyState
                 icon={UtensilsCrossed}
-                title="No meals logged"
-                description="Start logging what you eat to track your nutrition."
+                title={t.portalNutrition.noMealsLogged}
+                description={t.portalNutrition.startLogging}
                 action={
                   <button onClick={() => setShowLog(true)} className="btn-primary">
                     <Plus className="mr-2 h-4 w-4" />
-                    Log Meal
+                    {t.portalNutrition.logMeal}
                   </button>
                 }
               />
@@ -318,7 +320,7 @@ export default function PortalNutritionPage() {
                         </h3>
                         {totalCal > 0 && (
                           <span className="text-xs text-gray-400">
-                            {totalCal} cal total
+                            {totalCal} {t.portalNutrition.calTotal}
                           </span>
                         )}
                       </div>
@@ -360,7 +362,7 @@ export default function PortalNutritionPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
           <div className="w-full max-w-md rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Log Meal</h2>
+              <h2 className="text-lg font-semibold">{t.portalNutrition.logMeal}</h2>
               <button
                 onClick={() => setShowLog(false)}
                 className="rounded-lg p-1 hover:bg-gray-100"
@@ -371,20 +373,20 @@ export default function PortalNutritionPage() {
             <form onSubmit={handleLogMeal} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Meal *
+                  {t.portalNutrition.meal} *
                 </label>
                 <select name="mealName" required className="input mt-1">
-                  <option value="Breakfast">Breakfast</option>
-                  <option value="Snack">Morning Snack</option>
-                  <option value="Lunch">Lunch</option>
-                  <option value="Afternoon Snack">Afternoon Snack</option>
-                  <option value="Dinner">Dinner</option>
-                  <option value="Evening Snack">Evening Snack</option>
+                  <option value="Breakfast">{t.nutrition.breakfast}</option>
+                  <option value="Snack">{t.portalNutrition.morningSnack}</option>
+                  <option value="Lunch">{t.nutrition.lunch}</option>
+                  <option value="Afternoon Snack">{t.portalNutrition.afternoonSnack}</option>
+                  <option value="Dinner">{t.nutrition.dinner}</option>
+                  <option value="Evening Snack">{t.portalNutrition.eveningSnack}</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Search foods
+                  {t.portalNutrition.searchFoods}
                 </label>
                 <div className="mt-1">
                   <FoodPicker
@@ -416,19 +418,19 @@ export default function PortalNutritionPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Additional foods (manual)
+                  {t.portalNutrition.additionalFoods}
                 </label>
                 <textarea
                   name="foods"
                   rows={2}
                   className="input mt-1"
-                  placeholder="2 eggs, 1 slice toast..."
+                  placeholder={t.portalNutrition.additionalFoodsPlaceholder}
                 />
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700">
-                    Cal
+                    {t.portalNutrition.cal}
                   </label>
                   <input
                     type="number"
@@ -439,7 +441,7 @@ export default function PortalNutritionPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700">
-                    Protein
+                    {t.nutrition.protein}
                   </label>
                   <input
                     type="number"
@@ -450,7 +452,7 @@ export default function PortalNutritionPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700">
-                    Carbs
+                    {t.nutrition.carbs}
                   </label>
                   <input
                     type="number"
@@ -461,7 +463,7 @@ export default function PortalNutritionPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700">
-                    Fat
+                    {t.nutrition.fat}
                   </label>
                   <input
                     type="number"
@@ -473,13 +475,13 @@ export default function PortalNutritionPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Notes
+                  {t.common.notes}
                 </label>
                 <input
                   type="text"
                   name="notes"
                   className="input mt-1"
-                  placeholder="Felt great, followed meal plan"
+                  placeholder={t.portalNutrition.notesPlaceholder}
                 />
               </div>
               <button
@@ -487,7 +489,7 @@ export default function PortalNutritionPage() {
                 disabled={saving}
                 className="btn-primary w-full"
               >
-                {saving ? "Saving..." : "Log Meal"}
+                {saving ? t.common.saving : t.portalNutrition.logMeal}
               </button>
             </form>
           </div>

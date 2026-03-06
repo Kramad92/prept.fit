@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const t = useT();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function RegisterPage() {
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t.auth.passwordsDoNotMatch);
       setLoading(false);
       return;
     }
@@ -40,7 +42,7 @@ export default function RegisterPage() {
         router.push("/login?registered=true");
       } else {
         const data = await res.json();
-        setError(data.error || "Registration failed");
+        setError(data.error || t.auth.registrationFailed);
       }
     } finally {
       setLoading(false);
@@ -55,10 +57,10 @@ export default function RegisterPage() {
             <Dumbbell className="h-8 w-8 text-white" />
           </div>
           <h1 className="mt-4 text-2xl font-bold text-gray-900">
-            Create your account
+            {t.auth.createAccountTitle}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Start managing your clients with TrainerHub
+            {t.auth.startManaging}
           </p>
         </div>
 
@@ -71,20 +73,20 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Your Name *
+              {t.auth.yourName} *
             </label>
             <input
               type="text"
               name="name"
               required
               className="input mt-1"
-              placeholder="Jane Smith"
+              placeholder="Ime Prezime"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Business Name *
+              {t.auth.businessName} *
             </label>
             <input
               type="text"
@@ -97,7 +99,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email *
+              {t.auth.email} *
             </label>
             <input
               type="email"
@@ -105,13 +107,13 @@ export default function RegisterPage() {
               required
               autoComplete="email"
               className="input mt-1"
-              placeholder="you@example.com"
+              placeholder="vas@email.com"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Password *
+              {t.auth.password} *
             </label>
             <input
               type="password"
@@ -120,13 +122,13 @@ export default function RegisterPage() {
               minLength={8}
               autoComplete="new-password"
               className="input mt-1"
-              placeholder="Min 8 characters"
+              placeholder={t.auth.minChars}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Confirm Password *
+              {t.auth.confirmPassword} *
             </label>
             <input
               type="password"
@@ -134,7 +136,7 @@ export default function RegisterPage() {
               required
               autoComplete="new-password"
               className="input mt-1"
-              placeholder="Re-enter your password"
+              placeholder={t.auth.reenterPassword}
             />
           </div>
 
@@ -143,17 +145,17 @@ export default function RegisterPage() {
             disabled={loading}
             className="btn-primary w-full"
           >
-            {loading ? "Creating account..." : "Create Account"}
+            {loading ? t.auth.creatingAccount : t.auth.createAccount}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          Already have an account?{" "}
+          {t.auth.alreadyHaveAccount}{" "}
           <a
             href="/login"
             className="font-medium text-brand-600 hover:text-brand-700"
           >
-            Sign in
+            {t.common.signIn}
           </a>
         </p>
       </div>

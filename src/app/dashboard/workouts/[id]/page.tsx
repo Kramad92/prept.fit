@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useT } from "@/lib/i18n";
 
 interface Exercise {
   id: string;
@@ -51,6 +52,7 @@ interface ClientOption {
 }
 
 export default function WorkoutDetailPage() {
+  const t = useT();
   const params = useParams();
   const router = useRouter();
   const [plan, setPlan] = useState<WorkoutPlan | null>(null);
@@ -133,7 +135,7 @@ export default function WorkoutDetailPage() {
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Workouts
+        {t.workouts.backToWorkouts}
       </Link>
 
       <div className="mt-4">
@@ -141,7 +143,7 @@ export default function WorkoutDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900">{plan.name}</h1>
           {plan.isTemplate && (
             <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-              Template
+              {t.workouts.template}
             </span>
           )}
         </div>
@@ -154,25 +156,25 @@ export default function WorkoutDetailPage() {
             onClick={handleDuplicate}
             disabled={duplicating}
             className="btn-secondary text-sm"
-            title="Duplicate this plan"
+            title={t.workouts.duplicate}
           >
             <Copy className="mr-1.5 h-4 w-4" />
-            <span className="hidden sm:inline">{duplicating ? "Duplicating..." : "Duplicate"}</span>
-            <span className="sm:hidden">{duplicating ? "..." : "Copy"}</span>
+            <span className="hidden sm:inline">{duplicating ? t.workouts.duplicating : t.workouts.duplicate}</span>
+            <span className="sm:hidden">{duplicating ? "..." : t.workouts.copy}</span>
           </button>
           <Link
             href={`/dashboard/workouts/${plan.id}/edit`}
             className="btn-secondary text-sm"
           >
             <Pencil className="mr-1.5 h-4 w-4" />
-            Edit
+            {t.common.edit}
           </Link>
           <button
             onClick={() => setShowAssign(true)}
             className="btn-primary text-sm"
           >
             <UserPlus className="mr-1.5 h-4 w-4" />
-            Assign
+            {t.workouts.assign}
           </button>
         </div>
       </div>
@@ -180,7 +182,7 @@ export default function WorkoutDetailPage() {
       {/* Exercises */}
       <div className="mt-8">
         <h2 className="text-lg font-semibold text-gray-900">
-          Exercises ({plan.exercises.length})
+          {t.workouts.exercises} ({plan.exercises.length})
         </h2>
         <div className="mt-4 space-y-3">
           {plan.exercises.map((ex, i) => (
@@ -192,10 +194,10 @@ export default function WorkoutDetailPage() {
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">{ex.name}</p>
                   <div className="mt-1 flex flex-wrap gap-3 text-sm text-gray-500">
-                    {ex.sets && <span>{ex.sets} sets</span>}
-                    {ex.reps && <span>{ex.reps} reps</span>}
+                    {ex.sets && <span>{ex.sets} {t.workouts.setsLabel}</span>}
+                    {ex.reps && <span>{ex.reps} {t.workouts.repsLabel}</span>}
                     {ex.weight && <span>{ex.weight}</span>}
-                    {ex.restSeconds && <span>{ex.restSeconds}s rest</span>}
+                    {ex.restSeconds && <span>{ex.restSeconds}s {t.workouts.restLabel}</span>}
                   </div>
                   {ex.notes && (
                     <p className="mt-1 text-sm italic text-gray-400">
@@ -221,7 +223,7 @@ export default function WorkoutDetailPage() {
                           className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
                         >
                           <Play className="h-3.5 w-3.5" />
-                          Watch Demo
+                          {t.workouts.watchDemo}
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       )}
@@ -238,14 +240,14 @@ export default function WorkoutDetailPage() {
       <div className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
-            Assigned Clients ({plan.assignedTo.length})
+            {t.workouts.assignedClients} ({plan.assignedTo.length})
           </h2>
           {availableClients.length > 0 && (
             <button
               onClick={() => setShowAssign(true)}
               className="text-sm font-medium text-brand-600 hover:text-brand-700"
             >
-              + Assign client
+              {t.workouts.assignClient}
             </button>
           )}
         </div>
@@ -253,7 +255,7 @@ export default function WorkoutDetailPage() {
           <div className="card mt-4 flex flex-col items-center py-8 text-center">
             <Users className="h-10 w-10 text-gray-300" />
             <p className="mt-3 text-sm text-gray-500">
-              This plan hasn&apos;t been assigned to any clients yet.
+              {t.workouts.notAssigned}
             </p>
             {availableClients.length > 0 && (
               <button
@@ -261,7 +263,7 @@ export default function WorkoutDetailPage() {
                 className="btn-primary mt-4"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
-                Assign to Client
+                {t.workouts.assignToClient}
               </button>
             )}
           </div>
@@ -291,7 +293,7 @@ export default function WorkoutDetailPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
           <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Assign to Client</h2>
+              <h2 className="text-lg font-semibold">{t.workouts.assignToClient}</h2>
               <button
                 onClick={() => setShowAssign(false)}
                 className="rounded-lg p-1 hover:bg-gray-100"
@@ -305,7 +307,7 @@ export default function WorkoutDetailPage() {
                 onChange={(e) => setAssignClientId(e.target.value)}
                 className="input"
               >
-                <option value="">Select a client...</option>
+                <option value="">{t.workouts.selectClient}</option>
                 {availableClients.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -317,7 +319,7 @@ export default function WorkoutDetailPage() {
                 disabled={!assignClientId}
                 className="btn-primary mt-3 w-full"
               >
-                Assign Plan
+                {t.workouts.assignPlan}
               </button>
             </div>
           </div>

@@ -8,10 +8,39 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatTime(time: string): string {
   const [hours, minutes] = time.split(":");
-  const h = parseInt(hours);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const hour12 = h % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
+  return `${hours}:${minutes}`;
+}
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  BAM: "KM",
+  EUR: "€",
+  USD: "$",
+  GBP: "£",
+  RSD: "RSD",
+  HRK: "kn",
+  CHF: "CHF",
+};
+
+export function getCurrencySymbol(currency: string): string {
+  return CURRENCY_SYMBOLS[currency] || currency;
+}
+
+export function formatCurrency(amount: number, currency: string = "BAM"): string {
+  const symbol = getCurrencySymbol(currency);
+  // European format: amount + symbol (e.g. "150,00 KM")
+  if (["BAM", "EUR", "RSD", "HRK", "CHF"].includes(currency)) {
+    return `${amount.toFixed(2)} ${symbol}`;
+  }
+  // US/UK format: symbol + amount (e.g. "$150.00")
+  return `${symbol}${amount.toFixed(2)}`;
+}
+
+export function getWeightUnit(units: string): string {
+  return units === "imperial" ? "lbs" : "kg";
+}
+
+export function getLengthUnit(units: string): string {
+  return units === "imperial" ? "in" : "cm";
 }
 
 export function getInitials(name: string): string {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { LibraryExercise } from "@/types";
+import { useT } from "@/lib/i18n";
 
 interface ExerciseNameInputProps {
   value: string;
@@ -13,6 +14,7 @@ interface ExerciseNameInputProps {
 }
 
 export function ExerciseNameInput({ value, onChange, placeholder, className, onKeyDown, ...rest }: ExerciseNameInputProps) {
+  const t = useT();
   const [results, setResults] = useState<LibraryExercise[]>([]);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -54,7 +56,7 @@ export function ExerciseNameInput({ value, onChange, placeholder, className, onK
           if (value.trim().length >= 2) setOpen(true);
         }}
         onKeyDown={onKeyDown}
-        placeholder={placeholder || "Exercise name"}
+        placeholder={placeholder || t.workouts.exerciseName}
         className={className || "input flex-1"}
         {...rest}
       />

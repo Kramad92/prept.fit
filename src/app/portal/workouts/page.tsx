@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Dumbbell, ChevronDown, ChevronUp, Play, Users } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/lib/i18n";
 import type { Exercise } from "@/types";
 
 interface AssignedPlan {
@@ -21,6 +22,7 @@ interface AssignedPlan {
 }
 
 export default function PortalWorkoutsPage() {
+  const t = useT();
   const [plans, setPlans] = useState<AssignedPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -48,17 +50,17 @@ export default function PortalWorkoutsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">My Workout Plans</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.portalWorkouts.title}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Your assigned training programs
+        {t.portalWorkouts.subtitle}
       </p>
 
       {plans.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             icon={Dumbbell}
-            title="No workout plans yet"
-            description="Your coach hasn't assigned any workout plans yet. Check back soon!"
+            title={t.portalWorkouts.noPlans}
+            description={t.portalWorkouts.noPlansDesc}
           />
         </div>
       ) : (
@@ -89,7 +91,7 @@ export default function PortalWorkoutsPage() {
                         {plan.mode === "live" && (
                           <span className="inline-flex items-center gap-1 rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700">
                             <Users className="h-3 w-3" />
-                            With Coach
+                            {t.portalWorkouts.withCoach}
                           </span>
                         )}
                       </div>
@@ -120,11 +122,11 @@ export default function PortalWorkoutsPage() {
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{ex.name}</p>
                           <div className="mt-1 flex flex-wrap gap-3 text-sm text-gray-500">
-                            {ex.sets && <span>{ex.sets} sets</span>}
-                            {ex.reps && <span>{ex.reps} reps</span>}
+                            {ex.sets && <span>{ex.sets} {t.portalWorkouts.sets}</span>}
+                            {ex.reps && <span>{ex.reps} {t.portalWorkouts.reps}</span>}
                             {ex.weight && <span>{ex.weight}</span>}
                             {ex.restSeconds && (
-                              <span>{ex.restSeconds}s rest</span>
+                              <span>{ex.restSeconds}s {t.portalWorkouts.rest}</span>
                             )}
                           </div>
                           {ex.notes && (
@@ -139,7 +141,7 @@ export default function PortalWorkoutsPage() {
                     {plan.mode === "live" ? (
                       <div className="mt-4 rounded-lg bg-purple-50 p-3 text-center text-sm text-purple-700">
                         <Users className="mr-1.5 inline h-4 w-4" />
-                        This workout is done live with your coach
+                        {t.portalWorkouts.liveWithCoach}
                       </div>
                     ) : (
                       <Link
@@ -147,7 +149,7 @@ export default function PortalWorkoutsPage() {
                         className="btn-primary mt-4 w-full"
                       >
                         <Play className="mr-2 h-4 w-4" />
-                        Start Workout
+                        {t.portalWorkouts.startWorkout}
                       </Link>
                     )}
                   </div>

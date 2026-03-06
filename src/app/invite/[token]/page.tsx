@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Dumbbell, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface InviteInfo {
   clientName: string;
@@ -20,6 +21,7 @@ export default function InvitePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     fetch(`/api/invite/${params.token}`)
@@ -31,7 +33,7 @@ export default function InvitePage() {
           setError(data.error);
         }
       })
-      .catch(() => setError("Something went wrong. Please try again."))
+      .catch(() => setError(t.invite.somethingWentWrong))
       .finally(() => setLoading(false));
   }, [params.token]);
 
@@ -44,12 +46,12 @@ export default function InvitePage() {
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (password.length < 8) {
-      setFormError("Password must be at least 8 characters");
+      setFormError(t.invite.passwordMinChars);
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError("Passwords do not match");
+      setFormError(t.auth.passwordsDoNotMatch);
       return;
     }
 
@@ -71,7 +73,7 @@ export default function InvitePage() {
         setFormError(data.error);
       }
     } catch {
-      setFormError("Something went wrong. Please try again.");
+      setFormError(t.invite.somethingWentWrong);
     } finally {
       setSubmitting(false);
     }
@@ -93,14 +95,14 @@ export default function InvitePage() {
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
           <h1 className="mt-4 text-xl font-bold text-gray-900">
-            Invite Link Issue
+            {t.invite.inviteLinkIssue}
           </h1>
           <p className="mt-2 text-sm text-gray-500">{error}</p>
           <a
             href="/login"
             className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700"
           >
-            Go to Sign In
+            {t.invite.backToLogin}
           </a>
         </div>
       </div>
@@ -115,10 +117,10 @@ export default function InvitePage() {
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
           <h1 className="mt-4 text-xl font-bold text-gray-900">
-            You&apos;re all set!
+            {t.invite.allSet}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            Redirecting you to sign in...
+            {t.invite.redirectingToSignIn}
           </p>
         </div>
       </div>
@@ -133,10 +135,10 @@ export default function InvitePage() {
             <Dumbbell className="h-8 w-8 text-white" />
           </div>
           <h1 className="mt-4 text-2xl font-bold text-gray-900">
-            Welcome, {info!.clientName}!
+            {t.invite.welcome}, {info!.clientName}!
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Set up your account for{" "}
+            {t.invite.setupAccountFor}{" "}
             <span className="font-medium text-gray-700">
               {info!.businessName}
             </span>
@@ -152,7 +154,7 @@ export default function InvitePage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              {t.auth.email}
             </label>
             <input
               type="email"
@@ -164,7 +166,7 @@ export default function InvitePage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Password
+              {t.auth.password}
             </label>
             <input
               type="password"
@@ -173,13 +175,13 @@ export default function InvitePage() {
               minLength={8}
               autoComplete="new-password"
               className="input mt-1"
-              placeholder="Min 8 characters"
+              placeholder={t.auth.minChars}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Confirm Password
+              {t.auth.confirmPassword}
             </label>
             <input
               type="password"
@@ -187,7 +189,7 @@ export default function InvitePage() {
               required
               autoComplete="new-password"
               className="input mt-1"
-              placeholder="Re-enter your password"
+              placeholder={t.auth.reenterPassword}
             />
           </div>
 
@@ -196,17 +198,17 @@ export default function InvitePage() {
             disabled={submitting}
             className="btn-primary w-full"
           >
-            {submitting ? "Creating account..." : "Create Account"}
+            {submitting ? t.auth.creatingAccount : t.auth.createAccount}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          Already have an account?{" "}
+          {t.auth.alreadyHaveAccount}{" "}
           <a
             href="/login"
             className="font-medium text-brand-600 hover:text-brand-700"
           >
-            Sign in
+            {t.common.signIn}
           </a>
         </p>
       </div>

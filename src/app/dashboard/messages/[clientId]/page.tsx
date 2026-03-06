@@ -6,8 +6,10 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { MessageThread } from "@/components/chat/message-thread";
+import { useT } from "@/lib/i18n";
 
 export default function ChatPage() {
+  const t = useT();
   const params = useParams();
   const { data: session } = useSession();
   const [clientName, setClientName] = useState("");
@@ -32,9 +34,9 @@ export default function ChatPage() {
         </Link>
         <div>
           <h1 className="text-lg font-semibold text-gray-900">
-            {clientName || "Loading..."}
+            {clientName || t.common.loading}
           </h1>
-          <p className="text-xs text-gray-500">Direct message</p>
+          <p className="text-xs text-gray-500">{t.messages.directMessage}</p>
         </div>
       </div>
 

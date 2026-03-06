@@ -19,23 +19,25 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/dashboard/clients", icon: Users, label: "Clients" },
-  { href: "/dashboard/schedule", icon: Calendar, label: "Schedule" },
-  { href: "/dashboard/workouts", icon: Dumbbell, label: "Workouts" },
-  { href: "/dashboard/exercises", icon: Library, label: "Exercise Library" },
-  { href: "/dashboard/messages", icon: MessageSquare, label: "Messages" },
-  { href: "/dashboard/check-ins", icon: ClipboardCheck, label: "Check-Ins" },
-  { href: "/dashboard/habits", icon: Sparkles, label: "Habits" },
-  { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: "Nutrition" },
-  { href: "/dashboard/billing", icon: DollarSign, label: "Billing" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
-];
+import { useT } from "@/lib/i18n";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const t = useT();
+
+  const navItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
+    { href: "/dashboard/clients", icon: Users, label: t.nav.clients },
+    { href: "/dashboard/schedule", icon: Calendar, label: t.nav.schedule },
+    { href: "/dashboard/workouts", icon: Dumbbell, label: t.nav.workouts },
+    { href: "/dashboard/exercises", icon: Library, label: t.nav.exerciseLibrary },
+    { href: "/dashboard/messages", icon: MessageSquare, label: t.nav.messages },
+    { href: "/dashboard/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
+    { href: "/dashboard/habits", icon: Sparkles, label: t.nav.habits },
+    { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+    { href: "/dashboard/billing", icon: DollarSign, label: t.nav.billing },
+    { href: "/dashboard/settings", icon: Settings, label: t.nav.settings },
+  ];
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
@@ -69,7 +71,7 @@ export function Sidebar() {
 
         <div className="border-t border-gray-200 p-3">
           <div className="flex items-center justify-between px-3 py-1">
-            <span className="text-xs text-gray-400">Theme</span>
+            <span className="text-xs text-gray-400">{t.common.theme}</span>
             <ThemeToggle />
           </div>
           <button
@@ -77,7 +79,7 @@ export function Sidebar() {
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
             <LogOut className="h-5 w-5" />
-            Sign out
+            {t.common.signOut}
           </button>
         </div>
       </div>

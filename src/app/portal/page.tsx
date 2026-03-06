@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Calendar, Dumbbell, Camera, CalendarPlus, Clock } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
+import { useT, useLocale } from "@/lib/i18n";
 
 interface PortalData {
   name: string;
@@ -33,6 +34,9 @@ interface PortalData {
 }
 
 export default function PortalHomePage() {
+  const t = useT();
+  const { locale } = useLocale();
+  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
   const [data, setData] = useState<PortalData | null>(null);
 
   useEffect(() => {
@@ -55,10 +59,10 @@ export default function PortalHomePage() {
       <div className="mb-6">
         <p className="text-sm text-gray-500">{data.tenant.name}</p>
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {data.name.split(" ")[0]}
+          {t.portal.welcome}, {data.name.split(" ")[0]}
         </h1>
         {data.goals && (
-          <p className="mt-1 text-sm text-gray-500">Goals: {data.goals}</p>
+          <p className="mt-1 text-sm text-gray-500">{t.portal.goals}: {data.goals}</p>
         )}
       </div>
 
@@ -69,26 +73,26 @@ export default function PortalHomePage() {
           className="card flex flex-col items-center gap-2 py-4 text-center transition-shadow hover:shadow-md"
         >
           <CalendarPlus className="h-6 w-6 text-brand-600" />
-          <span className="text-sm font-medium">Book Session</span>
+          <span className="text-sm font-medium">{t.portal.bookSession}</span>
         </Link>
         <Link
           href="/portal/workouts"
           className="card flex flex-col items-center gap-2 py-4 text-center transition-shadow hover:shadow-md"
         >
           <Dumbbell className="h-6 w-6 text-brand-600" />
-          <span className="text-sm font-medium">My Workouts</span>
+          <span className="text-sm font-medium">{t.portal.myWorkouts}</span>
         </Link>
         <Link
           href="/portal/progress"
           className="card flex flex-col items-center gap-2 py-4 text-center transition-shadow hover:shadow-md"
         >
           <Camera className="h-6 w-6 text-brand-600" />
-          <span className="text-sm font-medium">Progress</span>
+          <span className="text-sm font-medium">{t.portal.progress}</span>
         </Link>
         <div className="card flex flex-col items-center gap-2 py-4 text-center">
           <Calendar className="h-6 w-6 text-gray-400" />
           <span className="text-sm font-medium text-gray-500">
-            {data.schedules.length} upcoming
+            {data.schedules.length} {t.portal.upcoming}
           </span>
         </div>
       </div>
@@ -97,13 +101,13 @@ export default function PortalHomePage() {
       <div className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
-            Upcoming Sessions
+            {t.portal.upcomingSessions}
           </h2>
           <Link
             href="/portal/book"
             className="text-sm font-medium text-brand-600 hover:text-brand-700"
           >
-            Book new
+            {t.portal.bookASession}
           </Link>
         </div>
 
@@ -111,10 +115,10 @@ export default function PortalHomePage() {
           <div className="card mt-4 flex flex-col items-center py-8 text-center">
             <Clock className="h-10 w-10 text-gray-300" />
             <p className="mt-3 text-sm text-gray-500">
-              No upcoming sessions scheduled.
+              {t.portal.noUpcomingSessions}
             </p>
             <Link href="/portal/book" className="btn-primary mt-4">
-              Book a Session
+              {t.portal.bookASession}
             </Link>
           </div>
         ) : (
@@ -125,7 +129,7 @@ export default function PortalHomePage() {
                   <div>
                     <p className="font-medium text-gray-900">{session.title}</p>
                     <p className="mt-0.5 text-sm text-gray-500">
-                      {new Date(session.date).toLocaleDateString("en-US", {
+                      {new Date(session.date).toLocaleDateString(dateLocale, {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
@@ -145,7 +149,7 @@ export default function PortalHomePage() {
       {/* Latest Measurement */}
       {data.measurements.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900">Latest Stats</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t.portal.latestStats}</h2>
           <div className="card mt-4">
             <p className="text-xs text-gray-400">
               {new Date(data.measurements[0].date).toLocaleDateString()}
@@ -156,7 +160,7 @@ export default function PortalHomePage() {
                   <p className="text-2xl font-bold text-gray-900">
                     {data.measurements[0].weight}
                   </p>
-                  <p className="text-xs text-gray-500">Weight</p>
+                  <p className="text-xs text-gray-500">{t.measurements.weight}</p>
                 </div>
               )}
               {data.measurements[0].bodyFat && (
@@ -164,7 +168,7 @@ export default function PortalHomePage() {
                   <p className="text-2xl font-bold text-gray-900">
                     {data.measurements[0].bodyFat}%
                   </p>
-                  <p className="text-xs text-gray-500">Body Fat</p>
+                  <p className="text-xs text-gray-500">{t.measurements.bodyFat}</p>
                 </div>
               )}
             </div>

@@ -19,26 +19,28 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const primaryNav = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { href: "/dashboard/clients", icon: Users, label: "Clients" },
-  { href: "/dashboard/workouts", icon: Dumbbell, label: "Workouts" },
-  { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: "Nutrition" },
-];
-
-const moreNav = [
-  { href: "/dashboard/schedule", icon: Calendar, label: "Schedule" },
-  { href: "/dashboard/exercises", icon: Library, label: "Exercise Library" },
-  { href: "/dashboard/messages", icon: MessageSquare, label: "Messages" },
-  { href: "/dashboard/check-ins", icon: ClipboardCheck, label: "Check-Ins" },
-  { href: "/dashboard/habits", icon: Sparkles, label: "Habits" },
-  { href: "/dashboard/billing", icon: DollarSign, label: "Billing" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
-];
+import { useT } from "@/lib/i18n";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const t = useT();
+
+  const primaryNav = [
+    { href: "/dashboard", icon: LayoutDashboard, label: t.nav.home },
+    { href: "/dashboard/clients", icon: Users, label: t.nav.clients },
+    { href: "/dashboard/workouts", icon: Dumbbell, label: t.nav.workouts },
+    { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+  ];
+
+  const moreNav = [
+    { href: "/dashboard/schedule", icon: Calendar, label: t.nav.schedule },
+    { href: "/dashboard/exercises", icon: Library, label: t.nav.exerciseLibrary },
+    { href: "/dashboard/messages", icon: MessageSquare, label: t.nav.messages },
+    { href: "/dashboard/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
+    { href: "/dashboard/habits", icon: Sparkles, label: t.nav.habits },
+    { href: "/dashboard/billing", icon: DollarSign, label: t.nav.billing },
+    { href: "/dashboard/settings", icon: Settings, label: t.nav.settings },
+  ];
   const [showMore, setShowMore] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +78,7 @@ export function MobileNav() {
           <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 animate-in rounded-t-2xl border-t border-gray-200 bg-white px-2 py-3">
             <div className="mb-2 flex items-center justify-between px-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                More
+                {t.common.more}
               </span>
               <button
                 onClick={() => setShowMore(false)}
@@ -145,7 +147,7 @@ export function MobileNav() {
               )}
             >
               <MoreHorizontal className="h-5 w-5" />
-              <span>More</span>
+              <span>{t.common.more}</span>
             </button>
           </div>
         </nav>

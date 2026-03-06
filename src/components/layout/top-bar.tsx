@@ -5,9 +5,11 @@ import { Dumbbell } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useT } from "@/lib/i18n";
 
 export function TopBar() {
   const { data: session } = useSession();
+  const t = useT();
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white md:hidden">

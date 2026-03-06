@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { MessageSquare } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/lib/i18n";
 import Link from "next/link";
 
 interface ClientWithUnread {
@@ -15,6 +16,7 @@ interface ClientWithUnread {
 }
 
 export default function MessagesListPage() {
+  const t = useT();
   const [clients, setClients] = useState<ClientWithUnread[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,15 +49,15 @@ export default function MessagesListPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-      <p className="mt-1 text-sm text-gray-500">Chat with your clients</p>
+      <h1 className="text-2xl font-bold text-gray-900">{t.messages.title}</h1>
+      <p className="mt-1 text-sm text-gray-500">{t.messages.subtitle}</p>
 
       {clients.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             icon={MessageSquare}
-            title="No clients yet"
-            description="Add clients to start messaging them."
+            title={t.messages.noClients}
+            description={t.messages.noClientsDesc}
           />
         </div>
       ) : (

@@ -10,6 +10,9 @@ import {
   TrendingUp,
   Search,
 } from "lucide-react";
+import { useT, useLocale } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface PaymentWithClient {
   id: string;
@@ -37,6 +40,8 @@ interface Summary {
 }
 
 export default function BillingPage() {
+  const t = useT();
+  const { locale } = useLocale();
   const [payments, setPayments] = useState<PaymentWithClient[]>([]);
   const [summary, setSummary] = useState<Summary>({
     totalCollected: 0,
@@ -84,9 +89,9 @@ export default function BillingPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Billing & Payments</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.billing.title}</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Track client payments, outstanding balances, and payment history.
+          {t.billing.subtitle}
         </p>
       </div>
 
@@ -98,9 +103,9 @@ export default function BillingPage() {
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Collected</p>
+              <p className="text-sm text-gray-500">{t.billing.totalCollected}</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${summary.totalCollected.toFixed(2)}
+                {formatCurrency(summary.totalCollected)}
               </p>
             </div>
           </div>
@@ -111,9 +116,9 @@ export default function BillingPage() {
               <Clock className="h-6 w-6 text-yellow-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Pending</p>
+              <p className="text-sm text-gray-500">{t.billing.pending}</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${summary.totalPending.toFixed(2)}
+                {formatCurrency(summary.totalPending)}
               </p>
             </div>
           </div>
@@ -124,9 +129,9 @@ export default function BillingPage() {
               <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Overdue</p>
+              <p className="text-sm text-gray-500">{t.billing.overdue}</p>
               <p className="text-2xl font-bold text-red-600">
-                ${summary.totalOverdue.toFixed(2)}
+                {formatCurrency(summary.totalOverdue)}
               </p>
             </div>
           </div>
@@ -137,7 +142,7 @@ export default function BillingPage() {
               <TrendingUp className="h-6 w-6 text-brand-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Transactions</p>
+              <p className="text-sm text-gray-500">{t.billing.totalTransactions}</p>
               <p className="text-2xl font-bold text-gray-900">
                 {summary.totalPayments}
               </p>
@@ -152,7 +157,7 @@ export default function BillingPage() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-600" />
             <h3 className="font-semibold text-red-800">
-              {overduePayments.length} Overdue Payment{overduePayments.length > 1 ? "s" : ""}
+              {overduePayments.length} {t.billing.overduePayments}
             </h3>
           </div>
           <div className="mt-2 space-y-1">
@@ -165,7 +170,7 @@ export default function BillingPage() {
                   {p.client.name}
                 </Link>
                 <span className="font-semibold text-red-700">
-                  ${p.amount.toFixed(2)}
+                  {formatCurrency(p.amount, p.currency || "BAM")}
                   {p.period && ` · ${p.period}`}
                 </span>
               </div>
@@ -180,7 +185,7 @@ export default function BillingPage() {
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-600" />
             <h3 className="font-semibold text-yellow-800">
-              {pendingPayments.length} Pending Payment{pendingPayments.length > 1 ? "s" : ""}
+              {pendingPayments.length} {t.billing.pendingPayments}
             </h3>
           </div>
           <div className="mt-2 space-y-1">
@@ -193,10 +198,10 @@ export default function BillingPage() {
                   {p.client.name}
                 </Link>
                 <span className="font-semibold text-yellow-700">
-                  ${p.amount.toFixed(2)}
+                  {formatCurrency(p.amount, p.currency || "BAM")}
                   {p.dueDate && (
                     <span className="ml-1 text-xs text-yellow-600">
-                      due {new Date(p.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {t.billing.due} {new Date(p.dueDate).toLocaleDateString(locale === "bs" ? "bs-BA" : "en-US", { month: "short", day: "numeric" })}
                     </span>
                   )}
                 </span>
@@ -210,11 +215,11 @@ export default function BillingPage() {
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-1">
           {[
-            { value: "", label: "All" },
-            { value: "paid", label: "Paid" },
-            { value: "pending", label: "Pending" },
-            { value: "overdue", label: "Overdue" },
-            { value: "cancelled", label: "Cancelled" },
+            { value: "", label: t.billing.all },
+            { value: "paid", label: t.billing.paid },
+            { value: "pending", label: t.billing.pending },
+            { value: "overdue", label: t.billing.overdue },
+            { value: "cancelled", label: t.billing.cancelled },
           ].map((f) => (
             <button
               key={f.value}
@@ -233,7 +238,7 @@ export default function BillingPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search payments..."
+            placeholder={t.billing.searchPayments}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input pl-10"
@@ -247,8 +252,8 @@ export default function BillingPage() {
           <DollarSign className="h-12 w-12 text-gray-300" />
           <p className="mt-3 text-sm text-gray-500">
             {payments.length === 0
-              ? "No payments recorded yet. Record payments from individual client pages."
-              : "No payments match your filters."}
+              ? `${t.billing.noPayments} ${t.billing.noPaymentsFromClients}`
+              : t.billing.noMatch}
           </p>
         </div>
       ) : (
@@ -256,13 +261,13 @@ export default function BillingPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                <th className="px-4 py-3">Client</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Period</th>
-                <th className="px-4 py-3">Description</th>
+                <th className="px-4 py-3">{t.billing.client}</th>
+                <th className="px-4 py-3">{t.billing.amount}</th>
+                <th className="px-4 py-3">{t.common.date}</th>
+                <th className="px-4 py-3">{t.common.status}</th>
+                <th className="px-4 py-3">{t.billing.method}</th>
+                <th className="px-4 py-3">{t.billing.period}</th>
+                <th className="px-4 py-3">{t.common.description}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
@@ -277,32 +282,20 @@ export default function BillingPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                    ${p.amount.toFixed(2)}
+                    {formatCurrency(p.amount, p.currency || "BAM")}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
-                    {new Date(p.date).toLocaleDateString("en-US", {
+                    {new Date(p.date).toLocaleDateString(locale === "bs" ? "bs-BA" : "en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
                     })}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        p.status === "paid"
-                          ? "bg-green-100 text-green-700"
-                          : p.status === "overdue"
-                            ? "bg-red-100 text-red-700"
-                            : p.status === "cancelled"
-                              ? "bg-gray-100 text-gray-500"
-                              : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {p.status}
-                    </span>
+                    <StatusBadge status={p.status} />
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
-                    {p.method ? p.method.replace("_", " ") : "—"}
+                    {p.method ? (t.billing[p.method as keyof typeof t.billing] || p.method.replace("_", " ")) : "—"}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {p.period || "—"}

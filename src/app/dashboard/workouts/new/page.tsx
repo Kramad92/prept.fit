@@ -9,8 +9,10 @@ import { ExerciseNameInput } from "@/components/client/exercise-name-input";
 import type { ExerciseInput } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n";
 
 export default function NewWorkoutPage() {
+  const t = useT();
   const router = useRouter();
   const { toastError } = useToast();
   const [loading, setLoading] = useState(false);
@@ -87,10 +89,10 @@ export default function NewWorkoutPage() {
         router.push(`/dashboard/workouts/${plan.id}`);
       } else {
         const err = await res.json().catch(() => null);
-        toastError(err?.error || "Failed to create workout plan");
+        toastError(err?.error || t.workouts.failedToCreate);
       }
     } catch {
-      toastError("Failed to create workout plan");
+      toastError(t.workouts.failedToCreate);
     } finally {
       setLoading(false);
     }
@@ -104,10 +106,10 @@ export default function NewWorkoutPage() {
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to workouts
+          {t.workouts.backToWorkouts}
         </Link>
         <h1 className="mt-2 text-2xl font-bold text-gray-900">
-          Create Workout Plan
+          {t.workouts.createWorkoutPlan}
         </h1>
       </div>
 
@@ -115,25 +117,25 @@ export default function NewWorkoutPage() {
         <div className="card max-w-lg space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Plan Name *
+              {t.workouts.planName} *
             </label>
             <input
               type="text"
               name="name"
               required
               className="input mt-1"
-              placeholder="Upper Body Strength"
+              placeholder={t.workouts.planNamePlaceholder}
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Description
+              {t.common.description}
             </label>
             <textarea
               name="description"
               rows={2}
               className="input mt-1"
-              placeholder="Describe this workout plan..."
+              placeholder={t.workouts.descriptionPlaceholder}
             />
           </div>
           <label className="flex items-center gap-2">
@@ -143,19 +145,19 @@ export default function NewWorkoutPage() {
               className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
             />
             <span className="text-sm text-gray-700">
-              Save as reusable template
+              {t.workouts.saveAsTemplate}
             </span>
           </label>
         </div>
 
         {/* Exercises */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Exercises</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t.workouts.exercises}</h2>
 
           {/* Library Picker */}
           <div className="mt-3 max-w-lg">
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Add from Exercise Library
+              {t.workouts.addFromLibrary}
             </label>
             <ExercisePicker onSelect={addFromLibrary} />
           </div>
@@ -192,28 +194,28 @@ export default function NewWorkoutPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                       <div>
-                        <label className="text-xs text-gray-500">Sets</label>
+                        <label className="text-xs text-gray-500">{t.workouts.sets}</label>
                         <input type="number" value={ex.sets} onChange={(e) => updateExercise(ex.tempId, "sets", e.target.value)} placeholder="3" className="input mt-0.5" data-ex-sets={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-reps="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500">Reps</label>
+                        <label className="text-xs text-gray-500">{t.workouts.reps}</label>
                         <input type="text" value={ex.reps} onChange={(e) => updateExercise(ex.tempId, "reps", e.target.value)} placeholder="8-12" className="input mt-0.5" data-ex-reps={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-weight="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500">Weight</label>
+                        <label className="text-xs text-gray-500">{t.workouts.weight}</label>
                         <input type="text" value={ex.weight} onChange={(e) => updateExercise(ex.tempId, "weight", e.target.value)} placeholder="—" className="input mt-0.5" data-ex-weight={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-rest="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500">Rest (sec)</label>
+                        <label className="text-xs text-gray-500">{t.workouts.restSec}</label>
                         <input type="number" value={ex.restSeconds} onChange={(e) => updateExercise(ex.tempId, "restSeconds", e.target.value)} placeholder="60" className="input mt-0.5" data-ex-rest={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }}} />
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-gray-500">Notes</label>
-                      <input type="text" value={ex.notes} onChange={(e) => updateExercise(ex.tempId, "notes", e.target.value)} placeholder="Form cues, variations..." className="input mt-0.5" />
+                      <label className="text-xs text-gray-500">{t.common.notes}</label>
+                      <input type="text" value={ex.notes} onChange={(e) => updateExercise(ex.tempId, "notes", e.target.value)} placeholder={t.workouts.formCues} className="input mt-0.5" />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-500">Video URL (YouTube)</label>
+                      <label className="text-xs text-gray-500">{t.workouts.videoUrl}</label>
                       <input type="url" value={ex.videoUrl} onChange={(e) => updateExercise(ex.tempId, "videoUrl", e.target.value)} placeholder="https://youtube.com/watch?v=..." className="input mt-0.5" />
                     </div>
                   </div>
@@ -229,16 +231,16 @@ export default function NewWorkoutPage() {
             className="btn-secondary mt-3 w-full"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Exercise Manually
+            {t.workouts.addManually}
           </button>
         </div>
 
         <div className="flex gap-3">
           <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? "Saving..." : "Create Workout Plan"}
+            {loading ? t.common.saving : t.workouts.createWorkoutPlan}
           </button>
           <Link href="/dashboard/workouts" className="btn-secondary">
-            Cancel
+            {t.common.cancel}
           </Link>
         </div>
       </form>

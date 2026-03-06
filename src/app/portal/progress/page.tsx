@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3, Plus, X, Trash2 } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
+import { useT, useLocale } from "@/lib/i18n";
 
 interface ProgressPhoto {
   id: string;
@@ -28,6 +29,9 @@ interface Measurement {
 }
 
 export default function PortalProgressPage() {
+  const t = useT();
+  const { locale } = useLocale();
+  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,14 +100,14 @@ export default function PortalProgressPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Progress</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.portal.progress}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Track your transformation journey
+            {t.portal.trackJourney}
           </p>
         </div>
         <Link href="/portal/progress/charts" className="btn-secondary">
           <BarChart3 className="mr-1.5 h-4 w-4" />
-          Charts
+          {t.nav.charts}
         </Link>
       </div>
 
@@ -118,7 +122,7 @@ export default function PortalProgressPage() {
           }`}
         >
           <Camera className="h-4 w-4" />
-          Photos
+          {t.clients.photos}
         </button>
         <button
           onClick={() => setTab("stats")}
@@ -129,7 +133,7 @@ export default function PortalProgressPage() {
           }`}
         >
           <Ruler className="h-4 w-4" />
-          Measurements
+          {t.measurements.title}
         </button>
       </div>
 
@@ -140,7 +144,7 @@ export default function PortalProgressPage() {
               {!showUpload && (
                 <button onClick={() => setShowUpload(true)} className="btn-primary text-sm">
                   <Plus className="mr-1 h-4 w-4" />
-                  Upload Photo
+                  {t.photos.upload}
                 </button>
               )}
             </div>
@@ -148,7 +152,7 @@ export default function PortalProgressPage() {
             {showUpload && (
               <div className="card mb-4 border-2 border-brand-200">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-gray-900">Upload Progress Photo</h4>
+                  <h4 className="font-semibold text-gray-900">{t.photos.uploadProgress}</h4>
                   <button onClick={() => setShowUpload(false)} className="rounded p-1 hover:bg-gray-100">
                     <X className="h-4 w-4" />
                   </button>
@@ -158,18 +162,18 @@ export default function PortalProgressPage() {
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-gray-500">Category</label>
+                    <label className="text-xs text-gray-500">{t.photos.category}</label>
                     <select value={category} onChange={(e) => setCategory(e.target.value)} className="input mt-0.5 text-sm">
-                      <option value="">Select...</option>
-                      <option value="front">Front</option>
-                      <option value="back">Back</option>
-                      <option value="side">Side</option>
-                      <option value="other">Other</option>
+                      <option value="">{t.photos.selectCategory}</option>
+                      <option value="front">{t.photos.front}</option>
+                      <option value="back">{t.photos.back}</option>
+                      <option value="side">{t.photos.side}</option>
+                      <option value="other">{t.photos.other}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">Caption</label>
-                    <input type="text" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Optional..." className="input mt-0.5 text-sm" />
+                    <label className="text-xs text-gray-500">{t.photos.caption}</label>
+                    <input type="text" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder={t.photos.captionPlaceholder} className="input mt-0.5 text-sm" />
                   </div>
                 </div>
               </div>
@@ -179,7 +183,7 @@ export default function PortalProgressPage() {
               <div className="card flex flex-col items-center py-10 text-center">
                 <Camera className="h-12 w-12 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
-                  No progress photos yet. Upload your first photo to start tracking!
+                  {t.photos.noPhotos} {t.photos.uploadFirst}
                 </p>
               </div>
             ) : (
@@ -191,7 +195,7 @@ export default function PortalProgressPage() {
                   >
                     <img
                       src={photo.url}
-                      alt={photo.caption || "Progress photo"}
+                      alt={photo.caption || t.photos.progressPhoto}
                       onClick={() => setLightboxIndex(i)}
                       className="h-full w-full object-cover"
                     />
@@ -208,7 +212,7 @@ export default function PortalProgressPage() {
                     </button>
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                       <p className="text-xs text-white">
-                        {new Date(photo.takenAt).toLocaleDateString("en-US", {
+                        {new Date(photo.takenAt).toLocaleDateString(dateLocale, {
                           month: "short",
                           day: "numeric",
                         })}
@@ -239,8 +243,7 @@ export default function PortalProgressPage() {
               <div className="card flex flex-col items-center py-10 text-center">
                 <Ruler className="h-12 w-12 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
-                  No measurements recorded yet. Your coach will log your stats
-                  during sessions.
+                  {t.portal.noMeasurements}
                 </p>
               </div>
             ) : (
@@ -250,7 +253,7 @@ export default function PortalProgressPage() {
                   <div className="card">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-500">Current Weight</p>
+                        <p className="text-sm text-gray-500">{t.portal.currentWeight}</p>
                         <p className="text-3xl font-bold text-gray-900">
                           {measurements[0].weight}
                         </p>
@@ -278,11 +281,11 @@ export default function PortalProgressPage() {
                 )}
 
                 {/* Measurement History */}
-                <h3 className="text-sm font-semibold text-gray-700">History</h3>
+                <h3 className="text-sm font-semibold text-gray-700">{t.portal.history}</h3>
                 {measurements.map((m) => (
                   <div key={m.id} className="card">
                     <p className="text-sm font-medium text-gray-700">
-                      {new Date(m.date).toLocaleDateString("en-US", {
+                      {new Date(m.date).toLocaleDateString(dateLocale, {
                         month: "long",
                         day: "numeric",
                         year: "numeric",
@@ -291,43 +294,43 @@ export default function PortalProgressPage() {
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
                       {m.weight && (
                         <div>
-                          <span className="text-gray-400">Weight:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.weight}:</span>{" "}
                           <span className="font-medium">{m.weight}</span>
                         </div>
                       )}
                       {m.bodyFat && (
                         <div>
-                          <span className="text-gray-400">Body Fat:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.bodyFat}:</span>{" "}
                           <span className="font-medium">{m.bodyFat}%</span>
                         </div>
                       )}
                       {m.chest && (
                         <div>
-                          <span className="text-gray-400">Chest:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.chest}:</span>{" "}
                           <span className="font-medium">{m.chest}</span>
                         </div>
                       )}
                       {m.waist && (
                         <div>
-                          <span className="text-gray-400">Waist:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.waist}:</span>{" "}
                           <span className="font-medium">{m.waist}</span>
                         </div>
                       )}
                       {m.hips && (
                         <div>
-                          <span className="text-gray-400">Hips:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.hips}:</span>{" "}
                           <span className="font-medium">{m.hips}</span>
                         </div>
                       )}
                       {m.arms && (
                         <div>
-                          <span className="text-gray-400">Arms:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.arms}:</span>{" "}
                           <span className="font-medium">{m.arms}</span>
                         </div>
                       )}
                       {m.thighs && (
                         <div>
-                          <span className="text-gray-400">Thighs:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.thighs}:</span>{" "}
                           <span className="font-medium">{m.thighs}</span>
                         </div>
                       )}

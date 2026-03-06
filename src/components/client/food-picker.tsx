@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus, Database, Star, Save, Loader2 } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface LibraryFood {
   id: string;
@@ -57,6 +58,7 @@ export function FoodPicker({
   placeholder,
   initialValue,
 }: FoodPickerProps) {
+  const t = useT();
   const [query, setQuery] = useState(initialValue || "");
   const [libraryResults, setLibraryResults] = useState<LibraryFood[]>([]);
   const [usdaResults, setUsdaResults] = useState<USDAFood[]>([]);
@@ -151,7 +153,7 @@ export function FoodPicker({
           <>
             <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
               <Star className="h-3 w-3" />
-              Your Foods
+              {t.nutrition.yourFoods}
             </div>
             {libraryResults.map((food) => (
               <button
@@ -187,7 +189,7 @@ export function FoodPicker({
           <>
             <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
               <Database className="h-3 w-3" />
-              USDA Database
+              {t.nutrition.usdaDatabase}
             </div>
             {usdaResults.map((food) => (
               <div
@@ -229,7 +231,7 @@ export function FoodPicker({
                     e.preventDefault();
                     saveToLibrary(food);
                   }}
-                  title="Save to your food library"
+                  title={t.nutrition.saveToLibrary}
                   className="ml-1 flex-shrink-0 rounded p-1 text-gray-300 hover:bg-brand-50 hover:text-brand-600"
                 >
                   {saving === food.fdcId ? (
@@ -245,7 +247,7 @@ export function FoodPicker({
 
         {!loading && !hasResults && (
           <p className="px-3 py-4 text-center text-sm text-gray-400">
-            No foods found
+            {t.nutrition.noFoodsFound}
           </p>
         )}
       </div>
@@ -256,7 +258,7 @@ export function FoodPicker({
         className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
       >
         <Plus className="h-4 w-4" />
-        Add &quot;{query.trim()}&quot; as custom food
+        {t.nutrition.addAsCustomFood}: &quot;{query.trim()}&quot;
       </button>
     </div>
   );
@@ -269,7 +271,7 @@ export function FoodPicker({
         )}
         <input
           type="text"
-          placeholder={placeholder || "Search foods (e.g. chicken breast, rice)..."}
+          placeholder={placeholder || t.nutrition.searchFoodsPlaceholder}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);

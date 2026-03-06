@@ -32,6 +32,9 @@ export async function PUT(req: NextRequest) {
       website: body.website || null,
       brandColor: body.brandColor,
       timezone: body.timezone,
+      locale: body.locale,
+      units: body.units,
+      currency: body.currency,
     },
   });
 

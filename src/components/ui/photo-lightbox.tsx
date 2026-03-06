@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight, Columns2, Maximize2, Filter, Pencil, Check } from "lucide-react";
+import { useT, useLocale } from "@/lib/i18n";
 
 interface Photo {
   id: string;
@@ -27,31 +28,36 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "bg-gray-500/80 text-white",
 };
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-US", {
+function formatDate(d: string, loc: string) {
+  return new Date(d).toLocaleDateString(loc, {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-function formatShort(d: string) {
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+function formatShort(d: string, loc: string) {
+  return new Date(d).toLocaleDateString(loc, { month: "short", day: "numeric" });
 }
 
 export function CategoryChip({ category }: { category: string }) {
+  const t = useT();
+  const label = t.photos[category as keyof typeof t.photos] || category;
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
         CATEGORY_COLORS[category] || CATEGORY_COLORS.other
       }`}
     >
-      {category}
+      {label}
     </span>
   );
 }
 
 export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: PhotoLightboxProps) {
+  const t = useT();
+  const { locale } = useLocale();
+  const dateLoc = locale === "bs" ? "bs-BA" : "en-US";
   const [index, setIndex] = useState(initialIndex);
   const [compareMode, setCompareMode] = useState(false);
   const [leftId, setLeftId] = useState<string | null>(null);
@@ -156,7 +162,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
               className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-2 text-sm text-white backdrop-blur-sm hover:bg-white/25"
             >
               <Pencil className="h-4 w-4" />
-              Edit
+              {t.common.edit}
             </button>
           )}
           {photos.length >= 2 && !editing && (
@@ -165,7 +171,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
               className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-2 text-sm text-white backdrop-blur-sm hover:bg-white/25"
             >
               <Columns2 className="h-4 w-4" />
-              Compare
+              {t.photos.compare}
             </button>
           )}
           <button
@@ -196,7 +202,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
         <div className="flex max-h-[85vh] max-w-[90vw] flex-col items-center" onClick={(e) => e.stopPropagation()}>
           <img
             src={photo.url}
-            alt={photo.caption || "Progress photo"}
+            alt={photo.caption || t.photos.progressPhoto}
             className="max-h-[70vh] max-w-full rounded-lg object-contain"
           />
 
@@ -204,7 +210,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
           {editing ? (
             <div className="mt-3 w-full max-w-md space-y-3 rounded-lg bg-white/10 p-4 backdrop-blur-sm">
               <div>
-                <label className="text-xs font-medium text-white/60">Category</label>
+                <label className="text-xs font-medium text-white/60">{t.photos.category}</label>
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   <button
                     onClick={() => setEditCategory("")}
@@ -214,7 +220,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                         : "bg-white/10 text-white/60 hover:bg-white/20"
                     }`}
                   >
-                    None
+                    {t.photos.none}
                   </button>
                   {CATEGORIES.map((cat) => (
                     <button
@@ -226,18 +232,18 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                           : "bg-white/10 text-white/60 hover:bg-white/20"
                       }`}
                     >
-                      {cat}
+                      {t.photos[cat as keyof typeof t.photos] || cat}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-white/60">Caption / Notes</label>
+                <label className="text-xs font-medium text-white/60">{t.photos.captionNotes}</label>
                 <input
                   type="text"
                   value={editCaption}
                   onChange={(e) => setEditCaption(e.target.value)}
-                  placeholder="Add a note..."
+                  placeholder={t.photos.addNote}
                   className="mt-1 w-full rounded-lg border-0 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -246,7 +252,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                   onClick={() => setEditing(false)}
                   className="flex-1 rounded-lg bg-white/10 py-2 text-sm text-white hover:bg-white/20"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button
                   onClick={saveEdit}
@@ -254,14 +260,14 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
                 >
                   <Check className="h-4 w-4" />
-                  {saving ? "Saving..." : "Save"}
+                  {saving ? t.common.saving : t.common.save}
                 </button>
               </div>
             </div>
           ) : (
             <div className="mt-3 text-center">
               <div className="flex items-center justify-center gap-2">
-                <p className="text-sm text-white/80">{formatDate(photo.takenAt)}</p>
+                <p className="text-sm text-white/80">{formatDate(photo.takenAt, dateLoc)}</p>
                 {photo.category && <CategoryChip category={photo.category} />}
               </div>
               {photo.caption && (
@@ -299,8 +305,8 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-medium text-white">
             {pickingSide
-              ? `Pick ${pickingSide === "left" ? "before" : "after"} photo`
-              : "Before & After"}
+              ? (pickingSide === "left" ? t.photos.pickBefore : t.photos.pickAfter)
+              : t.photos.beforeAfter}
           </h3>
           {categories.length > 0 && (
             <div className="flex items-center gap-1">
@@ -313,7 +319,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                     : "text-white/40 hover:text-white/70"
                 }`}
               >
-                All
+                {t.billing.all}
               </button>
               {categories.map((cat) => (
                 <button
@@ -325,7 +331,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                       : "text-white/40 hover:text-white/70"
                   }`}
                 >
-                  {cat}
+                  {t.photos[cat as keyof typeof t.photos] || cat}
                 </button>
               ))}
             </div>
@@ -338,7 +344,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
             className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm text-white hover:bg-white/25"
           >
             <Maximize2 className="h-3.5 w-3.5" />
-            Single View
+            {t.photos.singleView}
           </button>
           <button onClick={onClose} className="rounded-full bg-white/15 p-1.5 text-white hover:bg-white/25">
             <X className="h-4 w-4" />
@@ -362,7 +368,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
             {leftPhoto ? (
               <img
                 src={leftPhoto.url}
-                alt="Before"
+                alt={t.photos.before}
                 onClick={() => setPickingSide("left")}
                 className={`max-h-full max-w-full cursor-pointer object-contain ${
                   pickingSide === "left" ? "ring-2 ring-brand-500 ring-offset-2 ring-offset-black" : ""
@@ -373,7 +379,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                 onClick={() => setPickingSide("left")}
                 className="text-sm text-white/40 hover:text-white/60"
               >
-                Click to select photo
+                {t.photos.clickToSelect}
               </button>
             )}
             {leftIdx < filteredPhotos.length - 1 && !pickingSide && (
@@ -386,10 +392,10 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
             )}
           </div>
           <div className="mt-2 text-center">
-            <p className="text-xs font-medium uppercase tracking-wider text-white/40">Before</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-white/40">{t.photos.before}</p>
             {leftPhoto && (
               <div className="flex items-center justify-center gap-2">
-                <p className="text-sm text-white/80">{formatDate(leftPhoto.takenAt)}</p>
+                <p className="text-sm text-white/80">{formatDate(leftPhoto.takenAt, dateLoc)}</p>
                 {leftPhoto.category && <CategoryChip category={leftPhoto.category} />}
               </div>
             )}
@@ -414,7 +420,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
             {rightPhoto ? (
               <img
                 src={rightPhoto.url}
-                alt="After"
+                alt={t.photos.after}
                 onClick={() => setPickingSide("right")}
                 className={`max-h-full max-w-full cursor-pointer object-contain ${
                   pickingSide === "right" ? "ring-2 ring-brand-500 ring-offset-2 ring-offset-black" : ""
@@ -425,7 +431,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                 onClick={() => setPickingSide("right")}
                 className="text-sm text-white/40 hover:text-white/60"
               >
-                Click to select photo
+                {t.photos.clickToSelect}
               </button>
             )}
             {rightIdx < filteredPhotos.length - 1 && !pickingSide && (
@@ -438,10 +444,10 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
             )}
           </div>
           <div className="mt-2 text-center">
-            <p className="text-xs font-medium uppercase tracking-wider text-white/40">After</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-white/40">{t.photos.after}</p>
             {rightPhoto && (
               <div className="flex items-center justify-center gap-2">
-                <p className="text-sm text-white/80">{formatDate(rightPhoto.takenAt)}</p>
+                <p className="text-sm text-white/80">{formatDate(rightPhoto.takenAt, dateLoc)}</p>
                 {rightPhoto.category && <CategoryChip category={rightPhoto.category} />}
               </div>
             )}
@@ -453,7 +459,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
       <div className="border-t border-white/10 px-4 py-3">
         {pickingSide && (
           <p className="mb-2 text-center text-xs text-white/50">
-            Tap a photo below to set it as the {pickingSide === "left" ? "before" : "after"} image
+            {pickingSide === "left" ? t.photos.tapToSetBefore : t.photos.tapToSetAfter}
           </p>
         )}
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -487,7 +493,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
               >
                 <img src={p.url} alt="" className="h-full w-full object-cover" />
                 <span className="absolute bottom-0 left-0 right-0 bg-black/70 px-1 text-[10px] text-white">
-                  {formatShort(p.takenAt)}
+                  {formatShort(p.takenAt, dateLoc)}
                 </span>
                 {(isLeft || isRight) && (
                   <span
@@ -500,7 +506,7 @@ export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: Photo
                 )}
                 {p.category && (
                   <span className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[9px] capitalize text-white/80">
-                    {p.category}
+                    {t.photos[p.category as keyof typeof t.photos] || p.category}
                   </span>
                 )}
               </button>

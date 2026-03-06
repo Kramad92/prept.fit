@@ -16,6 +16,7 @@ import { TemplatePickerModal } from "./template-picker-modal";
 import { FoodPicker } from "./food-picker";
 import type { Meal, ClientMeal, Food } from "@/types";
 import { useToast } from "@/components/ui/toast";
+import { useT } from "@/lib/i18n";
 
 interface AssignedMealPlan {
   id: string;
@@ -62,6 +63,7 @@ interface ClientNutritionTabProps {
 
 export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: ClientNutritionTabProps) {
   const { toastSuccess, toastError } = useToast();
+  const t = useT();
   const [expanded, setExpanded] = useState<string | null>(
     assignedMealPlans.length > 0 ? assignedMealPlans[0].id : null
   );
@@ -130,9 +132,9 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
 
   function defaultMeals(): MealInput[] {
     return [
-      { tempId: "b", name: "Breakfast", time: "07:30", foods: [] },
-      { tempId: "l", name: "Lunch", time: "12:30", foods: [] },
-      { tempId: "d", name: "Dinner", time: "19:00", foods: [] },
+      { tempId: "b", name: t.nutrition.breakfast, time: "07:30", foods: [] },
+      { tempId: "l", name: t.nutrition.lunch, time: "12:30", foods: [] },
+      { tempId: "d", name: t.nutrition.dinner, time: "19:00", foods: [] },
     ];
   }
 
@@ -161,10 +163,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mealPlanId: templateId }),
       });
-      if (res.ok) toastSuccess("Meal plan assigned");
-      else toastError("Failed to assign meal plan");
+      if (res.ok) toastSuccess(t.nutrition.mealPlanAssigned);
+      else toastError(t.nutrition.failedToAssign);
     } catch {
-      toastError("Failed to assign meal plan");
+      toastError(t.nutrition.failedToAssign);
     }
     setShowTemplatePicker(false);
     onRefresh();
@@ -187,16 +189,16 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         }),
       });
       if (res.ok) {
-        toastSuccess("Custom meal plan created");
+        toastSuccess(t.nutrition.customMealPlanCreated);
         setShowCustomForm(false);
         setCustomName("");
         setCustomMeals([]);
         onRefresh();
       } else {
-        toastError("Failed to create meal plan");
+        toastError(t.nutrition.failedToCreate);
       }
     } catch {
-      toastError("Failed to create meal plan");
+      toastError(t.nutrition.failedToCreate);
     }
     setSaving(false);
   }
@@ -255,14 +257,14 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         }),
       });
       if (res.ok) {
-        toastSuccess("Meal plan saved");
+        toastSuccess(t.nutrition.mealPlanSaved);
         setEditingPlanId(null);
         onRefresh();
       } else {
-        toastError("Failed to save meal plan");
+        toastError(t.nutrition.failedToSave);
       }
     } catch {
-      toastError("Failed to save meal plan");
+      toastError(t.nutrition.failedToSave);
     }
     setSaving(false);
   }
@@ -270,10 +272,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   async function handleDelete(planId: string) {
     try {
       await fetch(`/api/clients/${clientId}/nutrition/${planId}`, { method: "DELETE" });
-      toastSuccess("Meal plan removed");
+      toastSuccess(t.nutrition.mealPlanRemoved);
       onRefresh();
     } catch {
-      toastError("Failed to remove meal plan");
+      toastError(t.nutrition.failedToRemove);
     }
   }
 
@@ -352,7 +354,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                   value={meal.name}
                   onChange={(e) => setMeals(meals.map((m, i) => (i === mi ? { ...m, name: e.target.value } : m)))}
                   className="input"
-                  placeholder="Meal name (e.g., Breakfast)"
+                  placeholder={t.nutrition.mealNamePlaceholder}
                 />
               </div>
               <div className="w-24">
@@ -376,11 +378,11 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
             <div className="mt-2 space-y-1">
               {meal.foods.length > 0 && (
                 <div className="grid grid-cols-6 gap-2 px-0.5">
-                  <div className="col-span-2 text-[10px] font-medium text-gray-400">Food</div>
-                  <div className="text-[10px] font-medium text-gray-400">Portion</div>
-                  <div className="text-[10px] font-medium text-gray-400">Calories</div>
-                  <div className="text-[10px] font-medium text-gray-400">Protein</div>
-                  <div className="text-[10px] font-medium text-gray-400">Fat</div>
+                  <div className="col-span-2 text-[10px] font-medium text-gray-400">{t.nutrition.foodName}</div>
+                  <div className="text-[10px] font-medium text-gray-400">{t.nutrition.portion}</div>
+                  <div className="text-[10px] font-medium text-gray-400">{t.nutrition.calories}</div>
+                  <div className="text-[10px] font-medium text-gray-400">{t.nutrition.protein}</div>
+                  <div className="text-[10px] font-medium text-gray-400">{t.nutrition.fat}</div>
                 </div>
               )}
               {meal.foods.map((food, fi) => (
@@ -433,7 +435,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
               <FoodPicker
                 variant="inline"
                 inputClassName="input text-xs"
-                placeholder="+ Add food item..."
+                placeholder={t.nutrition.addFoodItem}
                 onSelect={(food) => {
                   setMeals(
                     meals.map((m, i) =>
@@ -468,7 +470,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-brand-300 hover:text-brand-600"
         >
           <Plus className="h-4 w-4" />
-          Add Meal
+          {t.nutrition.addMeal}
         </button>
       </div>
     );
@@ -479,11 +481,11 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
       <div>
         <div className="card flex flex-col items-center py-8 text-center">
           <UtensilsCrossed className="h-10 w-10 text-gray-300" />
-          <p className="mt-3 text-sm text-gray-500">No meal plans assigned.</p>
+          <p className="mt-3 text-sm text-gray-500">{t.nutrition.noPlansAssigned}</p>
           <div className="mt-4 flex gap-2">
             <button onClick={() => setShowTemplatePicker(true)} className="btn-primary">
               <FileDown className="mr-2 h-4 w-4" />
-              Assign from Template
+              {t.nutrition.assignFromTemplate}
             </button>
             <button
               onClick={() => {
@@ -493,7 +495,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
               className="btn-secondary"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Create Custom Plan
+              {t.nutrition.createCustomPlanBtn}
             </button>
           </div>
         </div>
@@ -508,12 +510,12 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Meal Plans ({assignedMealPlans.length})
+          {t.nutrition.mealPlans} ({assignedMealPlans.length})
         </h3>
         <div className="flex gap-2">
           <button onClick={() => setShowTemplatePicker(true)} className="btn-secondary text-sm">
             <FileDown className="mr-1 h-4 w-4" />
-            From Template
+            {t.nutrition.fromTemplate}
           </button>
           <button
             onClick={() => {
@@ -523,7 +525,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
             className="btn-primary text-sm"
           >
             <Plus className="mr-1 h-4 w-4" />
-            Custom Plan
+            {t.nutrition.customPlanLabel}
           </button>
         </div>
       </div>
@@ -533,25 +535,25 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         <div className="card mb-4 border-2 border-orange-200">
           <form onSubmit={handleCreateCustom}>
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900">New Custom Meal Plan</h4>
+              <h4 className="font-semibold text-gray-900">{t.nutrition.newCustomMealPlan}</h4>
               <button type="button" onClick={() => setShowCustomForm(false)} className="rounded p-1 hover:bg-gray-100">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="mt-3">
-              <input type="text" required value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Plan name" className="input" />
+              <input type="text" required value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder={t.nutrition.planName} className="input" />
             </div>
             <div className="mt-3 grid grid-cols-4 gap-3">
-              <div><label className="text-xs text-gray-500">Calories</label><input type="number" value={customCalories} onChange={(e) => setCustomCalories(e.target.value)} className="input mt-0.5" placeholder="1800" /></div>
-              <div><label className="text-xs text-gray-500">Protein (g)</label><input type="number" value={customProtein} onChange={(e) => setCustomProtein(e.target.value)} className="input mt-0.5" placeholder="150" /></div>
-              <div><label className="text-xs text-gray-500">Carbs (g)</label><input type="number" value={customCarbs} onChange={(e) => setCustomCarbs(e.target.value)} className="input mt-0.5" placeholder="180" /></div>
-              <div><label className="text-xs text-gray-500">Fat (g)</label><input type="number" value={customFat} onChange={(e) => setCustomFat(e.target.value)} className="input mt-0.5" placeholder="60" /></div>
+              <div><label className="text-xs text-gray-500">{t.nutrition.calories}</label><input type="number" value={customCalories} onChange={(e) => setCustomCalories(e.target.value)} className="input mt-0.5" placeholder="1800" /></div>
+              <div><label className="text-xs text-gray-500">{t.nutrition.protein} ({t.nutrition.gram})</label><input type="number" value={customProtein} onChange={(e) => setCustomProtein(e.target.value)} className="input mt-0.5" placeholder="150" /></div>
+              <div><label className="text-xs text-gray-500">{t.nutrition.carbs} ({t.nutrition.gram})</label><input type="number" value={customCarbs} onChange={(e) => setCustomCarbs(e.target.value)} className="input mt-0.5" placeholder="180" /></div>
+              <div><label className="text-xs text-gray-500">{t.nutrition.fat} ({t.nutrition.gram})</label><input type="number" value={customFat} onChange={(e) => setCustomFat(e.target.value)} className="input mt-0.5" placeholder="60" /></div>
             </div>
             <div className="mt-3">
               {renderMealEditor(customMeals, setCustomMeals)}
             </div>
             <button type="submit" disabled={saving} className="btn-primary mt-4 w-full">
-              {saving ? "Creating..." : "Create Meal Plan"}
+              {saving ? t.nutrition.creating : t.nutrition.createMealPlan}
             </button>
           </form>
         </div>
@@ -579,10 +581,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                     <h3 className="font-semibold text-gray-900">{displayName}</h3>
                     <div className="flex gap-2 text-xs text-gray-500">
                       {plan.mealPlan.sourceTemplate && (
-                        <span>from: {plan.mealPlan.sourceTemplate.name}</span>
+                        <span>{t.nutrition.from}: {plan.mealPlan.sourceTemplate.name}</span>
                       )}
-                      {plan.mealPlan.targetCalories && <span>{plan.mealPlan.targetCalories} cal</span>}
-                      <span>{meals.length} meals</span>
+                      {plan.mealPlan.targetCalories && <span>{plan.mealPlan.targetCalories} {t.nutrition.kcal}</span>}
+                      <span>{meals.length} {t.nutrition.meals_count}</span>
                     </div>
                   </div>
                 </div>
@@ -598,21 +600,21 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                   <div className="mb-3 flex gap-2">
                     <button onClick={() => startEdit(plan)} className="btn-secondary text-xs">
                       <Pencil className="mr-1 h-3 w-3" />
-                      Edit
+                      {t.common.edit}
                     </button>
                     <button
                       onClick={() => handleDelete(plan.id)}
                       className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50"
                     >
                       <Trash2 className="mr-1 inline h-3 w-3" />
-                      Remove
+                      {t.nutrition.remove}
                     </button>
                   </div>
 
                   {plan.mealPlan.targetCalories && (
                     <div className="mb-3 flex flex-wrap gap-2 text-xs">
                       <span className="rounded bg-orange-50 px-2 py-0.5 font-medium text-orange-700">
-                        {plan.mealPlan.targetCalories} cal
+                        {plan.mealPlan.targetCalories} {t.nutrition.kcal}
                       </span>
                       {plan.mealPlan.targetProtein && (
                         <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700">P: {plan.mealPlan.targetProtein}g</span>
@@ -639,7 +641,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                               {food.name}
                               {food.portion && <span className="text-gray-400"> — {food.portion}</span>}
                             </span>
-                            {food.calories && <span className="text-xs text-gray-400">{food.calories} cal</span>}
+                            {food.calories && <span className="text-xs text-gray-400">{food.calories} {t.nutrition.kcal}</span>}
                           </div>
                         ))}
                       </div>
@@ -651,22 +653,22 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
               {isOpen && isEditing && (
                 <div className="mt-4 border-t border-gray-100 pt-4">
                   <div className="mb-3">
-                    <label className="text-xs text-gray-500">Plan Name</label>
+                    <label className="text-xs text-gray-500">{t.nutrition.planName}</label>
                     <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="input mt-0.5" />
                   </div>
                   <div className="mb-3 grid grid-cols-4 gap-3">
-                    <div><label className="text-xs text-gray-500">Calories</label><input type="number" value={editCalories} onChange={(e) => setEditCalories(e.target.value)} className="input mt-0.5" /></div>
-                    <div><label className="text-xs text-gray-500">Protein</label><input type="number" value={editProtein} onChange={(e) => setEditProtein(e.target.value)} className="input mt-0.5" /></div>
-                    <div><label className="text-xs text-gray-500">Carbs</label><input type="number" value={editCarbs} onChange={(e) => setEditCarbs(e.target.value)} className="input mt-0.5" /></div>
-                    <div><label className="text-xs text-gray-500">Fat</label><input type="number" value={editFat} onChange={(e) => setEditFat(e.target.value)} className="input mt-0.5" /></div>
+                    <div><label className="text-xs text-gray-500">{t.nutrition.calories}</label><input type="number" value={editCalories} onChange={(e) => setEditCalories(e.target.value)} className="input mt-0.5" /></div>
+                    <div><label className="text-xs text-gray-500">{t.nutrition.protein}</label><input type="number" value={editProtein} onChange={(e) => setEditProtein(e.target.value)} className="input mt-0.5" /></div>
+                    <div><label className="text-xs text-gray-500">{t.nutrition.carbs}</label><input type="number" value={editCarbs} onChange={(e) => setEditCarbs(e.target.value)} className="input mt-0.5" /></div>
+                    <div><label className="text-xs text-gray-500">{t.nutrition.fat}</label><input type="number" value={editFat} onChange={(e) => setEditFat(e.target.value)} className="input mt-0.5" /></div>
                   </div>
                   {renderMealEditor(editMeals, setEditMeals)}
                   <div className="mt-4 flex gap-2">
                     <button onClick={() => handleSaveEdit(plan.id)} disabled={saving} className="btn-primary text-sm">
                       <Check className="mr-1 h-4 w-4" />
-                      {saving ? "Saving..." : "Save Changes"}
+                      {saving ? t.common.saving : t.workouts.saveChanges}
                     </button>
-                    <button onClick={() => setEditingPlanId(null)} className="btn-secondary text-sm">Cancel</button>
+                    <button onClick={() => setEditingPlanId(null)} className="btn-secondary text-sm">{t.common.cancel}</button>
                   </div>
                 </div>
               )}

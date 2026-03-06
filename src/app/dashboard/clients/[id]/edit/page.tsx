@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface ClientData {
   id: string;
@@ -17,6 +18,7 @@ interface ClientData {
 }
 
 export default function EditClientPage() {
+  const t = useT();
   const params = useParams();
   const router = useRouter();
   const [client, setClient] = useState<ClientData | null>(null);
@@ -63,7 +65,7 @@ export default function EditClientPage() {
     if (res.ok) {
       router.push(`/dashboard/clients/${params.id}`);
     } else {
-      setError("Failed to update client");
+      setError(t.errors.failedToSave);
     }
     setSaving(false);
   }
@@ -75,10 +77,10 @@ export default function EditClientPage() {
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to client
+        {t.clients.backToClients}
       </Link>
 
-      <h1 className="mt-4 text-2xl font-bold text-gray-900">Edit Client</h1>
+      <h1 className="mt-4 text-2xl font-bold text-gray-900">{t.clients.editClient}</h1>
 
       {error && (
         <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
@@ -89,7 +91,7 @@ export default function EditClientPage() {
       <form onSubmit={handleSubmit} className="card mt-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Name *
+            {t.common.name} *
           </label>
           <input
             type="text"
@@ -103,7 +105,7 @@ export default function EditClientPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              {t.common.email}
             </label>
             <input
               type="email"
@@ -114,7 +116,7 @@ export default function EditClientPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Phone
+              {t.common.phone}
             </label>
             <input
               type="tel"
@@ -128,57 +130,57 @@ export default function EditClientPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Gender
+              {t.clients.gender}
             </label>
             <select
               name="gender"
               defaultValue={client.gender || ""}
               className="input mt-1"
             >
-              <option value="">Not specified</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
+              <option value="">{t.clients.other}</option>
+              <option value="male">{t.clients.male}</option>
+              <option value="female">{t.clients.female}</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Status
+              {t.common.status}
             </label>
             <select
               name="status"
               defaultValue={client.status}
               className="input mt-1"
             >
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="inactive">Inactive</option>
+              <option value="active">{t.clients.active}</option>
+              <option value="paused">{t.clients.paused}</option>
+              <option value="inactive">{t.clients.inactive}</option>
             </select>
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Goals
+            {t.clients.goals}
           </label>
           <textarea
             name="goals"
             rows={2}
             defaultValue={client.goals || ""}
             className="input mt-1"
-            placeholder="Client goals..."
+            placeholder={t.clients.goalsPlaceholder}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Notes
+            {t.common.notes}
           </label>
           <textarea
             name="notes"
             rows={3}
             defaultValue={client.notes || ""}
             className="input mt-1"
-            placeholder="Internal notes about this client..."
+            placeholder={t.clients.notesPlaceholder}
           />
         </div>
 
@@ -188,13 +190,13 @@ export default function EditClientPage() {
             disabled={saving}
             className="btn-primary flex-1"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t.common.saving : t.clients.saveChanges}
           </button>
           <Link
             href={`/dashboard/clients/${params.id}`}
             className="btn-secondary"
           >
-            Cancel
+            {t.common.cancel}
           </Link>
         </div>
       </form>

@@ -4,11 +4,13 @@ import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Dumbbell } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const t = useT();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,7 +28,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password");
+      setError(t.auth.invalidCredentials);
     } else {
       // Redirect based on role
       const session = await getSession();
@@ -47,7 +49,7 @@ export default function LoginPage() {
           </div>
           <h1 className="mt-4 text-2xl font-bold text-gray-900">TrainerHub</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Sign in to your account
+            {t.auth.signInTitle}
           </p>
         </div>
 
@@ -60,7 +62,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              {t.auth.email}
             </label>
             <input
               type="email"
@@ -68,13 +70,13 @@ export default function LoginPage() {
               required
               autoComplete="email"
               className="input mt-1"
-              placeholder="you@example.com"
+              placeholder="vas@email.com"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Password
+              {t.auth.password}
             </label>
             <input
               type="password"
@@ -82,7 +84,7 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
               className="input mt-1"
-              placeholder="Enter your password"
+              placeholder={t.auth.enterPassword}
             />
           </div>
 
@@ -91,17 +93,17 @@ export default function LoginPage() {
             disabled={loading}
             className="btn-primary w-full"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? t.auth.signingIn : t.auth.signInButton}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          Don&apos;t have an account?{" "}
+          {t.auth.dontHaveAccount}{" "}
           <a
             href="/register"
             className="font-medium text-brand-600 hover:text-brand-700"
           >
-            Get started
+            {t.auth.getStarted}
           </a>
         </p>
       </div>

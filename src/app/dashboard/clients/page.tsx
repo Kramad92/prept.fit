@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageSkeleton } from "@/components/ui/skeleton";
+import { useT } from "@/lib/i18n";
 
 interface Client {
   id: string;
@@ -18,6 +19,7 @@ interface Client {
 }
 
 export default function ClientsPage() {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,14 +42,14 @@ export default function ClientsPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.clients.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage your client roster
+            {t.clients.manageRoster}
           </p>
         </div>
         <Link href="/dashboard/clients/new" className="btn-primary">
           <Plus className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">Add Client</span>
+          <span className="hidden md:inline">{t.clients.addClient}</span>
         </Link>
       </div>
 
@@ -56,7 +58,7 @@ export default function ClientsPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Search clients..."
+          placeholder={t.clients.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="input pl-10"
@@ -68,12 +70,12 @@ export default function ClientsPage() {
         <div className="mt-8">
           <EmptyState
             icon={Users}
-            title="No clients yet"
-            description="Add your first client to start managing their training."
+            title={t.clients.noClients}
+            description={t.clients.noClientsDesc}
             action={
               <Link href="/dashboard/clients/new" className="btn-primary">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Client
+                {t.clients.addClient}
               </Link>
             }
           />

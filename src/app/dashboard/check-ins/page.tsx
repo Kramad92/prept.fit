@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, ClipboardCheck, MessageSquare, Copy, Pencil, Trash2, X, Check } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/lib/i18n";
 
 interface CheckInTemplate {
   id: string;
@@ -23,6 +24,7 @@ interface CheckIn {
 }
 
 export default function CheckInsPage() {
+  const t = useT();
   const [templates, setTemplates] = useState<CheckInTemplate[]>([]);
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,110 +174,110 @@ export default function CheckInsPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Check-Ins</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.checkIns.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Review client check-ins and create templates
+            {t.checkIns.subtitle}
           </p>
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-primary">
           <Plus className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">New Template</span>
+          <span className="hidden md:inline">{t.checkIns.newTemplate}</span>
         </button>
       </div>
 
       {/* Templates */}
       {templates.length > 0 && (
         <div className="mt-6">
-          <h2 className="text-sm font-semibold text-gray-700">Templates</h2>
+          <h2 className="text-sm font-semibold text-gray-700">{t.checkIns.templates}</h2>
           <div className="mt-2 grid gap-3 md:grid-cols-2">
-            {templates.map((t) => (
-              <div key={t.id} className="card">
-                {editingTemplate === t.id ? (
+            {templates.map((tmpl) => (
+              <div key={tmpl.id} className="card">
+                {editingTemplate === tmpl.id ? (
                   <div className="space-y-3">
                     <input
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       className="input"
-                      placeholder="Template name"
+                      placeholder={t.checkIns.templateName}
                     />
                     <select
                       value={editFrequency}
                       onChange={(e) => setEditFrequency(e.target.value)}
                       className="input"
                     >
-                      <option value="weekly">Weekly</option>
-                      <option value="biweekly">Bi-weekly</option>
-                      <option value="monthly">Monthly</option>
+                      <option value="weekly">{t.checkIns.weekly}</option>
+                      <option value="biweekly">{t.checkIns.biweekly}</option>
+                      <option value="monthly">{t.checkIns.monthly}</option>
                     </select>
                     <textarea
                       value={editQuestions}
                       onChange={(e) => setEditQuestions(e.target.value)}
                       rows={4}
                       className="input"
-                      placeholder="One question per line"
+                      placeholder={t.checkIns.oneQuestionPerLine}
                     />
                     <div className="flex gap-2">
                       <button
-                        onClick={() => saveEdit(t.id)}
+                        onClick={() => saveEdit(tmpl.id)}
                         disabled={savingEdit}
                         className="btn-primary text-xs"
                       >
                         <Check className="mr-1 h-3 w-3" />
-                        {savingEdit ? "Saving..." : "Save"}
+                        {savingEdit ? t.common.saving : t.common.save}
                       </button>
                       <button
                         onClick={() => setEditingTemplate(null)}
                         className="btn-secondary text-xs"
                       >
-                        Cancel
+                        {t.common.cancel}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-gray-900">{t.name}</h3>
+                      <h3 className="font-medium text-gray-900">{tmpl.name}</h3>
                       <div className="flex items-center gap-1">
                         <span className="rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-600 capitalize">
-                          {t.frequency}
+                          {t.checkIns[tmpl.frequency as keyof typeof t.checkIns] || tmpl.frequency}
                         </span>
                         <button
-                          onClick={() => startEdit(t)}
+                          onClick={() => startEdit(tmpl)}
                           className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                          title="Edit"
+                          title={t.common.edit}
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDuplicate(t.id)}
-                          disabled={duplicating === t.id}
+                          onClick={() => handleDuplicate(tmpl.id)}
+                          disabled={duplicating === tmpl.id}
                           className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                          title="Duplicate"
+                          title={t.workouts.duplicate}
                         >
                           <Copy className="h-3.5 w-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(t.id)}
+                          onClick={() => handleDelete(tmpl.id)}
                           className="rounded-lg p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                          title="Delete"
+                          title={t.common.delete}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
-                      {(t.questions as any[]).length} questions
+                      {(tmpl.questions as any[]).length} {t.portalCheckIns.questions}
                     </p>
                     <div className="mt-2 space-y-0.5">
-                      {(t.questions as any[]).slice(0, 3).map((q: any, i: number) => (
+                      {(tmpl.questions as any[]).slice(0, 3).map((q: any, i: number) => (
                         <p key={i} className="text-xs text-gray-400 truncate">
                           {i + 1}. {q.question}
                         </p>
                       ))}
-                      {(t.questions as any[]).length > 3 && (
+                      {(tmpl.questions as any[]).length > 3 && (
                         <p className="text-xs text-gray-300">
-                          +{(t.questions as any[]).length - 3} more
+                          +{(tmpl.questions as any[]).length - 3} {t.checkIns.more}
                         </p>
                       )}
                     </div>
@@ -290,14 +292,14 @@ export default function CheckInsPage() {
       {/* Recent Check-Ins */}
       <div className="mt-8">
         <h2 className="text-sm font-semibold text-gray-700">
-          Recent Submissions
+          {t.checkIns.recentSubmissions}
         </h2>
         {checkIns.length === 0 ? (
           <div className="mt-4">
             <EmptyState
               icon={ClipboardCheck}
-              title="No check-ins yet"
-              description="Clients will submit check-ins once you create a template."
+              title={t.checkIns.noCheckIns}
+              description={t.checkIns.noCheckInsDesc}
             />
           </div>
         ) : (
@@ -342,7 +344,7 @@ export default function CheckInsPage() {
                   {ci.coachNotes && (
                     <div className="mt-3 rounded-lg bg-brand-50 p-3">
                       <p className="text-xs font-medium text-brand-700">
-                        Your response:
+                        {t.checkIns.yourResponse}
                       </p>
                       <p className="text-sm text-brand-900">{ci.coachNotes}</p>
                     </div>
@@ -353,7 +355,7 @@ export default function CheckInsPage() {
                       <textarea
                         value={coachNote}
                         onChange={(e) => setCoachNote(e.target.value)}
-                        placeholder="Write your feedback..."
+                        placeholder={t.checkIns.writeFeedback}
                         rows={2}
                         className="input"
                         autoFocus
@@ -363,13 +365,13 @@ export default function CheckInsPage() {
                           onClick={() => saveCoachNote(ci.id)}
                           className="btn-primary text-xs"
                         >
-                          Save
+                          {t.common.save}
                         </button>
                         <button
                           onClick={() => setRespondingTo(null)}
                           className="btn-secondary text-xs"
                         >
-                          Cancel
+                          {t.common.cancel}
                         </button>
                       </div>
                     </div>
@@ -382,7 +384,7 @@ export default function CheckInsPage() {
                       className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
-                      {ci.coachNotes ? "Edit response" : "Respond"}
+                      {ci.coachNotes ? t.checkIns.editResponse : t.checkIns.respond}
                     </button>
                   )}
                 </div>
@@ -397,7 +399,7 @@ export default function CheckInsPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
           <div className="w-full max-w-md rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">New Check-In Template</h2>
+              <h2 className="text-lg font-semibold">{t.checkIns.newCheckInTemplate}</h2>
               <button onClick={() => setShowCreate(false)} className="rounded-lg p-1 hover:bg-gray-100">
                 <X className="h-5 w-5" />
               </button>
@@ -405,48 +407,48 @@ export default function CheckInsPage() {
             <form onSubmit={createTemplate} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Template Name
+                  {t.checkIns.templateName}
                 </label>
                 <input
                   type="text"
                   name="name"
                   required
                   className="input mt-1"
-                  placeholder="Weekly Check-In"
+                  placeholder={t.checkIns.templateNamePlaceholder}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Frequency
+                  {t.checkIns.frequency}
                 </label>
                 <select name="frequency" className="input mt-1">
-                  <option value="weekly">Weekly</option>
-                  <option value="biweekly">Bi-weekly</option>
-                  <option value="monthly">Monthly</option>
+                  <option value="weekly">{t.checkIns.weekly}</option>
+                  <option value="biweekly">{t.checkIns.biweekly}</option>
+                  <option value="monthly">{t.checkIns.monthly}</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Questions (one per line)
+                  {t.checkIns.questionsPerLine}
                 </label>
                 <textarea
                   name="questions"
                   rows={5}
                   required
                   className="input mt-1"
-                  placeholder={`How are you feeling this week?\nRate your energy level (1-10)\nAny aches or pains?\nHow was your nutrition?\nAnything else to share?`}
+                  placeholder={t.checkIns.questionsPlaceholder}
                 />
               </div>
               <div className="flex gap-2">
                 <button type="submit" className="btn-primary flex-1">
-                  Create Template
+                  {t.checkIns.createTemplate}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreate(false)}
                   className="btn-secondary"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
               </div>
             </form>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/lib/i18n";
 
 interface HabitTemplate {
   id: string;
@@ -10,18 +11,19 @@ interface HabitTemplate {
   icon: string | null;
 }
 
-const PRESET_HABITS = [
-  { name: "Drink 2L water", icon: "💧" },
-  { name: "10,000 steps", icon: "🚶" },
-  { name: "8 hours sleep", icon: "😴" },
-  { name: "Eat 5 servings of vegetables", icon: "🥦" },
-  { name: "Take supplements", icon: "💊" },
-  { name: "Stretch for 10 minutes", icon: "🧘" },
-  { name: "No processed sugar", icon: "🚫" },
-  { name: "Track meals", icon: "📝" },
-];
-
 export default function HabitsPage() {
+  const t = useT();
+
+  const PRESET_HABITS = [
+    { name: t.habits.presetDrinkWater, icon: "💧" },
+    { name: t.habits.presetSteps, icon: "🚶" },
+    { name: t.habits.presetSleep, icon: "😴" },
+    { name: t.habits.presetVegetables, icon: "🥦" },
+    { name: t.habits.presetSupplements, icon: "💊" },
+    { name: t.habits.presetStretch, icon: "🧘" },
+    { name: t.habits.presetNoSugar, icon: "🚫" },
+    { name: t.habits.presetTrackMeals, icon: "📝" },
+  ];
   const [habits, setHabits] = useState<HabitTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -60,20 +62,20 @@ export default function HabitsPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Habits</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.habits.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Create habits and assign them to clients
+            {t.habits.createAndAssign}
           </p>
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-primary">
           <Plus className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">New Habit</span>
+          <span className="hidden md:inline">{t.habits.newHabit}</span>
         </button>
       </div>
 
       {/* Quick Add Presets */}
       <div className="mt-6">
-        <h2 className="text-sm font-semibold text-gray-700">Quick Add</h2>
+        <h2 className="text-sm font-semibold text-gray-700">{t.habits.quickAdd}</h2>
         <div className="mt-2 flex flex-wrap gap-2">
           {PRESET_HABITS.filter(
             (p) => !habits.some((h) => h.name === p.name)
@@ -92,13 +94,13 @@ export default function HabitsPage() {
 
       {/* Existing Habits */}
       <div className="mt-8">
-        <h2 className="text-sm font-semibold text-gray-700">Your Habits</h2>
+        <h2 className="text-sm font-semibold text-gray-700">{t.habits.yourHabits}</h2>
         {habits.length === 0 ? (
           <div className="mt-4">
             <EmptyState
               icon={Sparkles}
-              title="No habits created"
-              description="Create habits to assign to your clients for daily accountability."
+              title={t.habits.noHabitsCreated}
+              description={t.habits.noHabitsCreatedDesc}
             />
           </div>
         ) : (
@@ -120,7 +122,7 @@ export default function HabitsPage() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
           <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <h2 className="text-lg font-semibold">Create Custom Habit</h2>
+            <h2 className="text-lg font-semibold">{t.habits.createCustomHabit}</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -135,20 +137,20 @@ export default function HabitsPage() {
             >
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Habit Name
+                  {t.habits.habitName}
                 </label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   className="input mt-1"
-                  placeholder="Walk 30 minutes"
+                  placeholder={t.habits.walkMinutes}
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Icon (emoji)
+                  {t.habits.iconEmoji}
                 </label>
                 <input
                   type="text"
@@ -160,14 +162,14 @@ export default function HabitsPage() {
               </div>
               <div className="flex gap-2">
                 <button type="submit" className="btn-primary flex-1">
-                  Create
+                  {t.common.create}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreate(false)}
                   className="btn-secondary"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
               </div>
             </form>

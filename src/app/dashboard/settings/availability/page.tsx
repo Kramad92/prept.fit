@@ -4,16 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, Clock } from "lucide-react";
 import { formatTime } from "@/lib/utils";
-
-const DAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+import { useT } from "@/lib/i18n";
 
 interface AvailabilitySlot {
   id: string;
@@ -28,6 +19,17 @@ export default function AvailabilityPage() {
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const t = useT();
+
+  const DAYS = [
+    t.availability.sunday,
+    t.availability.monday,
+    t.availability.tuesday,
+    t.availability.wednesday,
+    t.availability.thursday,
+    t.availability.friday,
+    t.availability.saturday,
+  ];
 
   useEffect(() => {
     fetch("/api/availability")
@@ -97,21 +99,21 @@ export default function AvailabilityPage() {
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to settings
+        {t.availability.backToSettings}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold text-gray-900">Availability</h1>
+      <h1 className="mt-2 text-2xl font-bold text-gray-900">{t.availability.title}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Set your available hours so clients can book sessions
+        {t.availability.subtitle}
       </p>
 
       {/* Add Slot Form */}
       <form onSubmit={addSlot} className="card mt-6 max-w-lg">
         <h3 className="text-sm font-semibold text-gray-700">
-          Add Available Time
+          {t.availability.addSlot}
         </h3>
         <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
-            <label className="text-xs text-gray-500">Day</label>
+            <label className="text-xs text-gray-500">{t.common.date}</label>
             <select name="dayOfWeek" className="input mt-0.5" required>
               {DAYS.map((day, i) => (
                 <option key={i} value={i}>
@@ -121,7 +123,7 @@ export default function AvailabilityPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500">From</label>
+            <label className="text-xs text-gray-500">{t.schedule.startTime}</label>
             <input
               type="time"
               name="startTime"
@@ -131,7 +133,7 @@ export default function AvailabilityPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500">To</label>
+            <label className="text-xs text-gray-500">{t.schedule.endTime}</label>
             <input
               type="time"
               name="endTime"
@@ -141,7 +143,7 @@ export default function AvailabilityPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500">Slot Length</label>
+            <label className="text-xs text-gray-500">{t.availability.slotLength}</label>
             <select name="slotMinutes" className="input mt-0.5">
               <option value="30">30 min</option>
               <option value="45">45 min</option>
@@ -158,7 +160,7 @@ export default function AvailabilityPage() {
           className="btn-primary mt-3 w-full"
         >
           <Plus className="mr-2 h-4 w-4" />
-          {saving ? "Adding..." : "Add Slot"}
+          {saving ? t.availability.adding : t.availability.addSlot}
         </button>
       </form>
 
@@ -168,7 +170,7 @@ export default function AvailabilityPage() {
           <div className="card flex flex-col items-center py-8 text-center">
             <Clock className="h-10 w-10 text-gray-300" />
             <p className="mt-3 text-sm text-gray-500">
-              No availability set yet. Add your working hours above.
+              {t.availability.noSlotsYet}
             </p>
           </div>
         ) : (
@@ -192,7 +194,7 @@ export default function AvailabilityPage() {
                           {formatTime(slot.endTime)}
                         </span>
                         <span className="text-xs text-gray-400">
-                          ({slot.slotMinutes} min slots)
+                          ({slot.slotMinutes} {t.availability.minSlots})
                         </span>
                       </div>
                       <button

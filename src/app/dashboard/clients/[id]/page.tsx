@@ -30,6 +30,7 @@ import { useToast } from "@/components/ui/toast";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
 import type { Food } from "@/types";
+import { useT, useLocale } from "@/lib/i18n";
 
 interface ClientDetail {
   id: string;
@@ -132,6 +133,9 @@ interface ClientDetail {
 }
 
 export default function ClientDetailPage() {
+  const t = useT();
+  const { locale } = useLocale();
+  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
   const params = useParams();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -147,7 +151,7 @@ export default function ClientDetailPage() {
     fetch(`/api/clients/${params.id}`)
       .then((r) => r.json())
       .then(setClient)
-      .catch(() => toastError("Failed to load client"));
+      .catch(() => toastError(t.errors.failedToLoad));
   }, [params.id, toastError]);
 
   useEffect(() => {
@@ -163,13 +167,13 @@ export default function ClientDetailPage() {
   }
 
   const tabs = [
-    { key: "overview" as const, label: "Overview", icon: Edit },
-    { key: "photos" as const, label: "Photos", icon: Camera },
-    { key: "workouts" as const, label: "Workouts", icon: Dumbbell },
-    { key: "nutrition" as const, label: "Nutrition", icon: UtensilsCrossed },
-    { key: "habits" as const, label: "Habits", icon: Sparkles },
-    { key: "payments" as const, label: "Payments", icon: DollarSign },
-    { key: "measurements" as const, label: "Stats", icon: Ruler },
+    { key: "overview" as const, label: t.clients.overview, icon: Edit },
+    { key: "photos" as const, label: t.clients.photos, icon: Camera },
+    { key: "workouts" as const, label: t.clients.workouts, icon: Dumbbell },
+    { key: "nutrition" as const, label: t.clients.nutrition, icon: UtensilsCrossed },
+    { key: "habits" as const, label: t.clients.habits, icon: Sparkles },
+    { key: "payments" as const, label: t.clients.payments, icon: DollarSign },
+    { key: "measurements" as const, label: t.clients.stats, icon: Ruler },
   ];
 
   return (
@@ -179,7 +183,7 @@ export default function ClientDetailPage() {
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to clients
+        {t.clients.backToClients}
       </Link>
 
       {/* Client Header */}
@@ -207,12 +211,12 @@ export default function ClientDetailPage() {
               className="btn-secondary"
             >
               <UserPlus className="mr-1 h-4 w-4" />
-              Invite to Portal
+              {t.clients.inviteToPortal}
             </button>
           )}
           {client.userId && (
             <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
-              Portal Active
+              {t.clients.portalActive}
             </span>
           )}
           <Link
@@ -220,7 +224,7 @@ export default function ClientDetailPage() {
             className="btn-secondary"
           >
             <Edit className="mr-1 h-4 w-4" />
-            Edit
+            {t.common.edit}
           </Link>
         </div>
       </div>
@@ -268,7 +272,7 @@ export default function ClientDetailPage() {
           <div className="space-y-4">
             {client.notes && (
               <div className="card">
-                <h3 className="text-sm font-semibold text-gray-700">Notes</h3>
+                <h3 className="text-sm font-semibold text-gray-700">{t.common.notes}</h3>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600">
                   {client.notes}
                 </p>
@@ -276,17 +280,17 @@ export default function ClientDetailPage() {
             )}
             <div className="card">
               <h3 className="text-sm font-semibold text-gray-700">
-                Upcoming Sessions
+                {t.clients.upcomingSessions}
               </h3>
               <p className="mt-2 text-sm text-gray-500">
-                No upcoming sessions.
+                {t.clients.noUpcomingSessions}
               </p>
               <Link
                 href="/dashboard/schedule"
                 className="mt-3 inline-flex text-sm font-medium text-brand-600 hover:text-brand-700"
               >
                 <Calendar className="mr-1 h-4 w-4" />
-                Schedule a session
+                {t.clients.scheduleSession}
               </Link>
             </div>
           </div>
@@ -324,14 +328,14 @@ export default function ClientDetailPage() {
           <div>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700">
-                Measurements ({client.measurements.length})
+                {t.measurements.title} ({client.measurements.length})
               </h3>
               <button
                 onClick={() => setShowMeasurementForm(true)}
                 className="btn-primary text-sm"
               >
                 <Plus className="mr-1 h-4 w-4" />
-                Add Measurement
+                {t.measurements.addMeasurement}
               </button>
             </div>
 
@@ -339,7 +343,7 @@ export default function ClientDetailPage() {
               <div className="card mt-4 flex flex-col items-center py-8 text-center">
                 <Ruler className="h-10 w-10 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
-                  No measurements recorded yet.
+                  {t.measurements.noMeasurements}
                 </p>
               </div>
             ) : (
@@ -347,7 +351,7 @@ export default function ClientDetailPage() {
                 {client.measurements.map((m) => (
                   <div key={m.id} className="card">
                     <p className="text-sm font-medium text-gray-700">
-                      {new Date(m.date).toLocaleDateString("en-US", {
+                      {new Date(m.date).toLocaleDateString(dateLocale, {
                         month: "long",
                         day: "numeric",
                         year: "numeric",
@@ -356,43 +360,43 @@ export default function ClientDetailPage() {
                     <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm md:grid-cols-4">
                       {m.weight != null && (
                         <div>
-                          <span className="text-gray-400">Weight:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.weight}:</span>{" "}
                           <span className="font-medium">{m.weight}</span>
                         </div>
                       )}
                       {m.bodyFat != null && (
                         <div>
-                          <span className="text-gray-400">Body Fat:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.bodyFat}:</span>{" "}
                           <span className="font-medium">{m.bodyFat}%</span>
                         </div>
                       )}
                       {m.chest != null && (
                         <div>
-                          <span className="text-gray-400">Chest:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.chest}:</span>{" "}
                           <span className="font-medium">{m.chest}</span>
                         </div>
                       )}
                       {m.waist != null && (
                         <div>
-                          <span className="text-gray-400">Waist:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.waist}:</span>{" "}
                           <span className="font-medium">{m.waist}</span>
                         </div>
                       )}
                       {m.hips != null && (
                         <div>
-                          <span className="text-gray-400">Hips:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.hips}:</span>{" "}
                           <span className="font-medium">{m.hips}</span>
                         </div>
                       )}
                       {m.arms != null && (
                         <div>
-                          <span className="text-gray-400">Arms:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.arms}:</span>{" "}
                           <span className="font-medium">{m.arms}</span>
                         </div>
                       )}
                       {m.thighs != null && (
                         <div>
-                          <span className="text-gray-400">Thighs:</span>{" "}
+                          <span className="text-gray-400">{t.measurements.thighs}:</span>{" "}
                           <span className="font-medium">{m.thighs}</span>
                         </div>
                       )}
@@ -430,6 +434,9 @@ function PhotosTab({
   photos: Array<{ id: string; url: string; caption: string | null; takenAt: string; category: string | null }>;
   onRefresh: () => void;
 }) {
+  const t = useT();
+  const { locale } = useLocale();
+  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
   const [showUpload, setShowUpload] = useState(false);
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("");
@@ -448,16 +455,16 @@ function PhotosTab({
         body: JSON.stringify({ key, caption, category: category || null }),
       });
       if (res.ok) {
-        toastSuccess("Photo uploaded");
+        toastSuccess(t.photos.photoUploaded);
         setShowUpload(false);
         setCaption("");
         setCategory("");
         onRefresh();
       } else {
-        toastError("Failed to save photo");
+        toastError(t.photos.failedToSave);
       }
     } catch {
-      toastError("Failed to save photo");
+      toastError(t.photos.failedToSave);
     }
     setSaving(false);
   }
@@ -465,10 +472,10 @@ function PhotosTab({
   async function handleDelete(photoId: string) {
     try {
       await fetch(`/api/clients/${clientId}/photos?photoId=${photoId}`, { method: "DELETE" });
-      toastSuccess("Photo deleted");
+      toastSuccess(t.photos.photoDeleted);
       onRefresh();
     } catch {
-      toastError("Failed to delete photo");
+      toastError(t.photos.failedToDelete);
     }
   }
 
@@ -479,10 +486,10 @@ function PhotosTab({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ photoId, ...data }),
       });
-      toastSuccess("Photo updated");
+      toastSuccess(t.photos.photoUpdated);
       onRefresh();
     } catch {
-      toastError("Failed to update photo");
+      toastError(t.photos.failedToSave);
     }
   }
 
@@ -490,12 +497,12 @@ function PhotosTab({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Progress Photos ({photos.length})
+          {t.photos.title} ({photos.length})
         </h3>
         {!showUpload && (
           <button onClick={() => setShowUpload(true)} className="btn-primary text-sm">
             <Camera className="mr-1 h-4 w-4" />
-            Upload Photo
+            {t.photos.upload}
           </button>
         )}
       </div>
@@ -503,7 +510,7 @@ function PhotosTab({
       {showUpload && (
         <div className="card mb-4 border-2 border-brand-200">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-gray-900">Upload Progress Photo</h4>
+            <h4 className="font-semibold text-gray-900">{t.photos.uploadProgress}</h4>
             <button onClick={() => setShowUpload(false)} className="rounded p-1 hover:bg-gray-100">
               <X className="h-4 w-4" />
             </button>
@@ -515,25 +522,25 @@ function PhotosTab({
 
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-500">Category</label>
+              <label className="text-xs text-gray-500">{t.photos.category}</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="input mt-0.5 text-sm"
               >
-                <option value="">Select...</option>
+                <option value="">{t.photos.selectCategory}</option>
                 {categories.map((c) => (
-                  <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                  <option key={c} value={c}>{t.photos[c as keyof typeof t.photos]}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-500">Caption</label>
+              <label className="text-xs text-gray-500">{t.photos.caption}</label>
               <input
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Optional..."
+                placeholder={t.photos.captionPlaceholder}
                 className="input mt-0.5 text-sm"
               />
             </div>
@@ -544,7 +551,7 @@ function PhotosTab({
       {photos.length === 0 && !showUpload ? (
         <div className="card flex flex-col items-center py-8 text-center">
           <Camera className="h-10 w-10 text-gray-300" />
-          <p className="mt-3 text-sm text-gray-500">No progress photos yet.</p>
+          <p className="mt-3 text-sm text-gray-500">{t.photos.noPhotos}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -563,7 +570,7 @@ function PhotosTab({
               )}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                 <p className="text-xs text-white">
-                  {new Date(photo.takenAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  {new Date(photo.takenAt).toLocaleDateString(dateLocale, { month: "short", day: "numeric", year: "numeric" })}
                 </p>
                 {photo.caption && (
                   <p className="truncate text-xs text-white/70">{photo.caption}</p>
@@ -593,6 +600,7 @@ function PhotosTab({
 }
 
 function HabitsTab({ clientId }: { clientId: string }) {
+  const t = useT();
   const [assignedHabits, setAssignedHabits] = useState<
     Array<{
       id: string;
@@ -614,7 +622,7 @@ function HabitsTab({ clientId }: { clientId: string }) {
         setAssignedHabits(assigned);
         setAllHabits(all);
       })
-      .catch(() => toastError("Failed to load habits"))
+      .catch(() => toastError(t.errors.failedToLoad))
       .finally(() => setLoading(false));
   }
 
@@ -630,14 +638,14 @@ function HabitsTab({ clientId }: { clientId: string }) {
       body: JSON.stringify({ clientId, habitIds: [habitId] }),
     });
     if (res.ok) {
-      toastSuccess("Habit assigned");
+      toastSuccess(t.habits.habitAssigned);
       loadHabits();
     }
   }
 
   async function removeHabit(clientHabitId: string) {
     await fetch(`/api/habits/assign?id=${clientHabitId}`, { method: "DELETE" });
-    toastSuccess("Habit removed");
+    toastSuccess(t.habits.habitRemoved);
     loadHabits();
   }
 
@@ -664,12 +672,12 @@ function HabitsTab({ clientId }: { clientId: string }) {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Assigned Habits ({assignedHabits.length})
+          {t.habits.assignedHabits} ({assignedHabits.length})
         </h3>
         {!showAssign && unassigned.length > 0 && (
           <button onClick={() => setShowAssign(true)} className="btn-primary text-sm">
             <Plus className="mr-1 h-4 w-4" />
-            Assign Habit
+            {t.habits.assignHabit}
           </button>
         )}
       </div>
@@ -678,16 +686,16 @@ function HabitsTab({ clientId }: { clientId: string }) {
       {showAssign && (
         <div className="card mb-4 border-2 border-brand-200">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-gray-900">Assign Habits</h4>
+            <h4 className="font-semibold text-gray-900">{t.habits.assignHabits}</h4>
             <button onClick={() => setShowAssign(false)} className="rounded p-1 hover:bg-gray-100">
               <X className="h-4 w-4" />
             </button>
           </div>
           {unassigned.length === 0 ? (
             <p className="mt-3 text-sm text-gray-500">
-              All habits are already assigned. Create new ones on the{" "}
+              {t.habits.allAssigned}{" "}
               <a href="/dashboard/habits" className="font-medium text-brand-600 hover:underline">
-                Habits page
+                {t.habits.habitsPage}
               </a>.
             </p>
           ) : (
@@ -710,12 +718,12 @@ function HabitsTab({ clientId }: { clientId: string }) {
       {assignedHabits.length === 0 && !showAssign ? (
         <div className="card flex flex-col items-center py-8 text-center">
           <Sparkles className="h-10 w-10 text-gray-300" />
-          <p className="mt-3 text-sm text-gray-500">No habits assigned to this client yet.</p>
+          <p className="mt-3 text-sm text-gray-500">{t.habits.noHabitsAssigned}</p>
           <button
             onClick={() => setShowAssign(true)}
             className="mt-3 text-sm font-medium text-brand-600 hover:text-brand-700"
           >
-            Assign habits
+            {t.habits.assignHabits}
           </button>
         </div>
       ) : (
@@ -747,13 +755,13 @@ function HabitsTab({ clientId }: { clientId: string }) {
                         );
                       })}
                     </div>
-                    <span className="text-xs text-gray-400">{streak}/7 this week</span>
+                    <span className="text-xs text-gray-400">{streak}/7 {t.habits.thisWeek}</span>
                   </div>
                 </div>
                 <button
                   onClick={() => removeHabit(ah.id)}
                   className="rounded p-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500"
-                  title="Remove habit"
+                  title={t.habits.removeHabit}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -777,6 +785,7 @@ function InviteModal({
   onClose: () => void;
   onResult: (msg: string) => void;
 }) {
+  const t = useT();
   const [method, setMethod] = useState<"email" | "password">("email");
   const [tempPassword, setTempPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -804,13 +813,13 @@ function InviteModal({
         if (data.method === "email") {
           onResult(data.message);
         } else {
-          onResult(`Portal access created! Temp password: ${data.tempPassword}`);
+          onResult(`${t.invite.portalCreated} ${data.tempPassword}`);
         }
       } else {
         setError(data.error);
       }
     } catch {
-      setError("Something went wrong");
+      setError(t.errors.somethingWentWrong);
     } finally {
       setLoading(false);
     }
@@ -820,7 +829,7 @@ function InviteModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="card w-full max-w-md">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Invite to Portal</h2>
+          <h2 className="text-lg font-bold text-gray-900">{t.invite.title}</h2>
           <button
             onClick={onClose}
             className="rounded-lg p-1 text-gray-400 hover:text-gray-600"
@@ -830,8 +839,7 @@ function InviteModal({
         </div>
 
         <p className="mt-2 text-sm text-gray-500">
-          Send an invite to <strong>{clientEmail}</strong> so they can access
-          their portal.
+          {t.invite.sendTo} <strong>{clientEmail}</strong> {t.invite.soTheyCanAccess}
         </p>
 
         {error && (
@@ -859,15 +867,14 @@ function InviteModal({
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-900">
-                  Send email invite
+                  {t.invite.sendEmailInvite}
                 </span>
                 <span className="rounded bg-brand-100 px-1.5 py-0.5 text-xs font-medium text-brand-700">
-                  Recommended
+                  {t.invite.recommended}
                 </span>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Client receives an email with a link to set their own password.
-                Link expires in 48 hours.
+                {t.invite.emailInviteDesc}
               </p>
             </div>
           </label>
@@ -890,18 +897,18 @@ function InviteModal({
               <div className="flex items-center gap-2">
                 <Key className="h-4 w-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-900">
-                  Set a temporary password
+                  {t.invite.setTempPassword}
                 </span>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                You set a password and share it with your client manually.
+                {t.invite.tempPasswordDesc}
               </p>
               {method === "password" && (
                 <input
                   type="text"
                   value={tempPassword}
                   onChange={(e) => setTempPassword(e.target.value)}
-                  placeholder="Leave empty for 'changeme123'"
+                  placeholder={t.invite.leaveEmptyDefault}
                   className="input mt-2 text-sm"
                 />
               )}
@@ -911,7 +918,7 @@ function InviteModal({
 
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className="btn-secondary">
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             onClick={handleInvite}
@@ -919,10 +926,10 @@ function InviteModal({
             className="btn-primary"
           >
             {loading
-              ? "Sending..."
+              ? t.invite.sending
               : method === "email"
-                ? "Send Invite Email"
-                : "Create Access"}
+                ? t.invite.sendInviteEmail
+                : t.invite.createAccess}
           </button>
         </div>
       </div>

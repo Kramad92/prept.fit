@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Camera, Loader2, Upload, X } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface ImageUploaderProps {
   folder: string;
@@ -44,6 +45,7 @@ function compressImage(file: File, maxDimension = 1200, quality = 0.8): Promise<
 }
 
 export function ImageUploader({ folder, onUploaded, onCancel, className }: ImageUploaderProps) {
+  const t = useT();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -55,7 +57,7 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file");
+      setError(t.photos.pleaseSelectImage);
       return;
     }
 
@@ -82,12 +84,12 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) throw new Error(t.photos.uploadFailed);
       const { key } = await res.json();
 
       onUploaded(key);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : t.photos.uploadFailed);
     } finally {
       setUploading(false);
     }
@@ -125,7 +127,7 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
           className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-8 text-gray-400 transition-colors hover:border-brand-400 hover:text-brand-500"
         >
           <Camera className="h-8 w-8" />
-          <span className="mt-2 text-sm font-medium">Choose Photo</span>
+          <span className="mt-2 text-sm font-medium">{t.photos.choosePhoto}</span>
         </button>
       )}
 
@@ -147,7 +149,7 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
           className="btn-primary mt-3 w-full text-sm"
         >
           <Upload className="mr-1.5 h-4 w-4" />
-          Upload Photo
+          {t.photos.uploadPhoto}
         </button>
       )}
     </div>

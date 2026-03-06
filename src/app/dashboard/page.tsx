@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 interface DashboardData {
   clientCount: number;
@@ -29,6 +30,7 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
+  const t = useT();
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
@@ -39,18 +41,18 @@ export default function DashboardPage() {
   }, []);
 
   const stats = [
-    { label: "Active Clients", value: data?.clientCount ?? "—", icon: Users, href: "/dashboard/clients" },
-    { label: "This Week", value: data?.weekSessions ?? "—", icon: Calendar, href: "/dashboard/schedule" },
-    { label: "Workout Plans", value: data?.planCount ?? "—", icon: Dumbbell, href: "/dashboard/workouts" },
-    { label: "Completion Rate", value: "—", icon: TrendingUp, href: "#" },
+    { label: t.dashboard.activeClients, value: data?.clientCount ?? "—", icon: Users, href: "/dashboard/clients" },
+    { label: t.dashboard.thisWeek, value: data?.weekSessions ?? "—", icon: Calendar, href: "/dashboard/schedule" },
+    { label: t.dashboard.workoutPlans, value: data?.planCount ?? "—", icon: Dumbbell, href: "/dashboard/workouts" },
+    { label: t.dashboard.completionRate, value: "—", icon: TrendingUp, href: "#" },
   ];
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t.dashboard.title}</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Welcome back. Here&apos;s your overview.
+          {t.dashboard.welcome}
         </p>
       </div>
 
@@ -77,13 +79,13 @@ export default function DashboardPage() {
       <div className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
-            Today&apos;s Schedule
+            {t.dashboard.todaysSchedule}
           </h2>
           <Link
             href="/dashboard/schedule"
             className="text-sm font-medium text-brand-600 hover:text-brand-700"
           >
-            View all
+            {t.common.viewAll}
           </Link>
         </div>
 
@@ -92,10 +94,10 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Calendar className="h-10 w-10 text-gray-300" />
               <p className="mt-3 text-sm text-gray-500">
-                No sessions scheduled for today.
+                {t.dashboard.noSessionsToday}
               </p>
               <Link href="/dashboard/schedule" className="btn-primary mt-4">
-                Schedule a session
+                {t.dashboard.scheduleSession}
               </Link>
             </div>
           </div>
@@ -128,13 +130,13 @@ export default function DashboardPage() {
       <div className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
-            Recent Clients
+            {t.dashboard.recentClients}
           </h2>
           <Link
             href="/dashboard/clients"
             className="text-sm font-medium text-brand-600 hover:text-brand-700"
           >
-            View all
+            {t.common.viewAll}
           </Link>
         </div>
 
@@ -143,10 +145,10 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Users className="h-10 w-10 text-gray-300" />
               <p className="mt-3 text-sm text-gray-500">
-                No clients yet. Add your first client to get started.
+                {t.dashboard.noClients}
               </p>
               <Link href="/dashboard/clients/new" className="btn-primary mt-4">
-                Add client
+                {t.dashboard.addClient}
               </Link>
             </div>
           </div>

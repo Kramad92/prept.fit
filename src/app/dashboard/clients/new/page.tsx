@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 export default function NewClientPage() {
+  const t = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -47,30 +49,30 @@ export default function NewClientPage() {
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to clients
+          {t.clients.backToClients}
         </Link>
         <h1 className="mt-2 text-2xl font-bold text-gray-900">
-          Add New Client
+          {t.clients.addClient}
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="card max-w-lg space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Full Name *
+            {t.clients.clientName} *
           </label>
           <input
             type="text"
             name="name"
             required
             className="input mt-1"
-            placeholder="John Smith"
+            placeholder={t.clients.clientName}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Email
+            {t.common.email}
           </label>
           <input
             type="email"
@@ -82,7 +84,7 @@ export default function NewClientPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Phone
+            {t.common.phone}
           </label>
           <input
             type="tel"
@@ -94,46 +96,46 @@ export default function NewClientPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Gender
+            {t.clients.gender}
           </label>
           <select name="gender" className="input mt-1">
-            <option value="">Select...</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
+            <option value="">{t.photos.selectCategory}</option>
+            <option value="male">{t.clients.male}</option>
+            <option value="female">{t.clients.female}</option>
+            <option value="other">{t.clients.other}</option>
           </select>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Goals
+            {t.clients.goals}
           </label>
           <textarea
             name="goals"
             rows={3}
             className="input mt-1"
-            placeholder="Weight loss, muscle gain, marathon prep..."
+            placeholder={t.clients.goalsPlaceholder}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Notes
+            {t.common.notes}
           </label>
           <textarea
             name="notes"
             rows={3}
             className="input mt-1"
-            placeholder="Any injuries, preferences, or important info..."
+            placeholder={t.clients.notesPlaceholder}
           />
         </div>
 
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={loading} className="btn-primary flex-1">
-            {loading ? "Saving..." : "Add Client"}
+            {loading ? t.common.saving : t.clients.addClient}
           </button>
           <Link href="/dashboard/clients" className="btn-secondary">
-            Cancel
+            {t.common.cancel}
           </Link>
         </div>
       </form>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ClipboardCheck, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/lib/i18n";
 
 interface CheckInTemplate {
   id: string;
@@ -21,6 +22,7 @@ interface CheckIn {
 }
 
 export default function PortalCheckInsPage() {
+  const t = useT();
   const [templates, setTemplates] = useState<CheckInTemplate[]>([]);
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,15 +81,15 @@ export default function PortalCheckInsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Check-Ins</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t.portalCheckIns.title}</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Submit your regular check-ins for your coach
+        {t.portalCheckIns.subtitle}
       </p>
 
       {submitted && (
         <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-700">
           <Check className="h-4 w-4" />
-          Check-in submitted! Your coach will review it.
+          {t.portalCheckIns.submittedSuccess}
         </div>
       )}
 
@@ -96,8 +98,8 @@ export default function PortalCheckInsPage() {
         <div className="mt-8">
           <EmptyState
             icon={ClipboardCheck}
-            title="No check-ins available"
-            description="Your coach hasn't set up check-in forms yet."
+            title={t.portalCheckIns.noCheckIns}
+            description={t.portalCheckIns.noCheckInsDesc}
           />
         </div>
       ) : (
@@ -124,11 +126,11 @@ export default function PortalCheckInsPage() {
                         </h3>
                         <p className="text-xs text-gray-500 capitalize">
                           {template.frequency} &middot; {questions.length}{" "}
-                          questions
+                          {t.portalCheckIns.questions}
                         </p>
                       </div>
                     </div>
-                    <span className="btn-primary text-xs">Fill Out</span>
+                    <span className="btn-primary text-xs">{t.portalCheckIns.fillOut}</span>
                   </button>
 
                   {isActive && (
@@ -171,7 +173,7 @@ export default function PortalCheckInsPage() {
                                   [q.id]: e.target.value,
                                 }))
                               }
-                              placeholder="Your answer..."
+                              placeholder={t.portalCheckIns.yourAnswer}
                             />
                           )}
                         </div>
@@ -181,7 +183,7 @@ export default function PortalCheckInsPage() {
                         disabled={submitting}
                         className="btn-primary w-full"
                       >
-                        {submitting ? "Submitting..." : "Submit Check-In"}
+                        {submitting ? t.portalCheckIns.submitting : t.portalCheckIns.submit}
                       </button>
                     </div>
                   )}
@@ -195,7 +197,7 @@ export default function PortalCheckInsPage() {
       {checkIns.length > 0 && (
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-gray-900">
-            Previous Check-Ins
+            {t.portalCheckIns.previousResponses}
           </h2>
           <div className="mt-3 space-y-3">
             {checkIns.map((ci) => {
@@ -244,7 +246,7 @@ export default function PortalCheckInsPage() {
                       {ci.coachNotes && (
                         <div className="mt-2 rounded-lg bg-brand-50 p-3">
                           <p className="text-xs font-medium text-brand-700">
-                            Coach feedback:
+                            {t.portalCheckIns.coachFeedback}
                           </p>
                           <p className="text-sm text-brand-900">
                             {ci.coachNotes}

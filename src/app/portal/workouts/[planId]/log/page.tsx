@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Check, Play, Youtube } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface Exercise {
   id: string;
@@ -26,6 +27,7 @@ interface LogEntry {
 }
 
 export default function WorkoutLogPage() {
+  const t = useT();
   const params = useParams();
   const router = useRouter();
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -135,7 +137,7 @@ export default function WorkoutLogPage() {
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to workouts
+        {t.workoutLog.backToWorkouts}
       </Link>
 
       <div className="mt-4 flex items-center justify-between">
@@ -143,7 +145,7 @@ export default function WorkoutLogPage() {
           <h1 className="text-2xl font-bold text-gray-900">{planName}</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             <Play className="mr-1 inline h-3.5 w-3.5" />
-            Workout in progress
+            {t.workoutLog.inProgress}
           </p>
         </div>
       </div>
@@ -159,10 +161,10 @@ export default function WorkoutLogPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900">{ex.name}</h3>
                   <p className="text-xs text-gray-500">
-                    {ex.sets && `${ex.sets} sets`}
+                    {ex.sets && `${ex.sets} ${t.portalWorkouts.sets}`}
                     {ex.reps && ` x ${ex.reps}`}
                     {ex.weight && ` @ ${ex.weight}`}
-                    {ex.restSeconds && ` | ${ex.restSeconds}s rest`}
+                    {ex.restSeconds && ` | ${ex.restSeconds}s ${t.portalWorkouts.rest}`}
                   </p>
                 </div>
               </div>
@@ -201,9 +203,9 @@ export default function WorkoutLogPage() {
             {/* Set Logging */}
             <div className="mt-4 space-y-2">
               <div className="grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 text-xs font-medium text-gray-500">
-                <span>Set</span>
-                <span>Reps</span>
-                <span>Weight</span>
+                <span>{t.workoutLog.set}</span>
+                <span>{t.workoutLog.reps}</span>
+                <span>{t.workoutLog.weight}</span>
                 <span></span>
               </div>
               {(entries[ex.id] || []).map((entry, setIdx) => (
@@ -253,14 +255,14 @@ export default function WorkoutLogPage() {
         {/* Notes & Finish */}
         <div className="card">
           <label className="block text-sm font-medium text-gray-700">
-            Workout Notes
+            {t.workoutLog.workoutNotes}
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             className="input mt-1"
-            placeholder="How did the workout feel?"
+            placeholder={t.workoutLog.howDidItFeel}
           />
         </div>
 
@@ -269,7 +271,7 @@ export default function WorkoutLogPage() {
           disabled={saving}
           className="btn-primary w-full py-3 text-base"
         >
-          {saving ? "Saving..." : "Finish Workout"}
+          {saving ? t.common.saving : t.workoutLog.finishWorkout}
         </button>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { Calendar, CalendarEvent } from "@/components/schedule/calendar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
 import { PageSkeleton } from "@/components/ui/skeleton";
+import { useT } from "@/lib/i18n";
 
 interface ClientOption {
   id: string;
@@ -14,6 +15,7 @@ interface ClientOption {
 }
 
 export default function SchedulePage() {
+  const t = useT();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showNewForm, setShowNewForm] = useState(false);
@@ -42,9 +44,9 @@ export default function SchedulePage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.schedule.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage your training sessions
+            {t.schedule.subtitle}
           </p>
         </div>
         <button
@@ -52,7 +54,7 @@ export default function SchedulePage() {
           className="btn-primary"
         >
           <Plus className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">New Session</span>
+          <span className="hidden md:inline">{t.schedule.newSession}</span>
         </button>
       </div>
 
@@ -76,14 +78,14 @@ export default function SchedulePage() {
             <div className="mt-4 text-center">
               <Clock className="mx-auto h-8 w-8 text-gray-300" />
               <p className="mt-2 text-sm text-gray-500">
-                No sessions on this day.
+                {t.schedule.noSessionsOnDay}
               </p>
               <button
                 onClick={() => setShowNewForm(true)}
                 className="btn-primary mt-3 w-full"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Add Session
+                {t.schedule.addSession}
               </button>
             </div>
           ) : (
@@ -117,7 +119,7 @@ export default function SchedulePage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
           <div className="w-full max-w-md rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">New Session</h2>
+              <h2 className="text-lg font-semibold">{t.schedule.newSession}</h2>
               <button
                 onClick={() => setShowNewForm(false)}
                 className="rounded-lg p-1 hover:bg-gray-100"
@@ -154,19 +156,19 @@ export default function SchedulePage() {
             >
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Title *
+                  {t.schedule.sessionTitle} *
                 </label>
                 <input
                   type="text"
                   name="title"
                   required
                   className="input mt-1"
-                  placeholder="Training Session"
+                  placeholder={t.schedule.titlePlaceholder}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Date *
+                  {t.common.date} *
                 </label>
                 <input
                   type="date"
@@ -179,7 +181,7 @@ export default function SchedulePage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Start Time *
+                    {t.schedule.startTime} *
                   </label>
                   <input
                     type="time"
@@ -191,7 +193,7 @@ export default function SchedulePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    End Time *
+                    {t.schedule.endTime} *
                   </label>
                   <input
                     type="time"
@@ -204,10 +206,10 @@ export default function SchedulePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Client *
+                  {t.schedule.client} *
                 </label>
                 <select name="clientId" required className="input mt-1">
-                  <option value="">Select a client...</option>
+                  <option value="">{t.schedule.selectClient}</option>
                   {clients.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -217,27 +219,27 @@ export default function SchedulePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Type
+                  {t.schedule.type}
                 </label>
                 <select name="type" className="input mt-1">
-                  <option value="session">Training Session</option>
-                  <option value="assessment">Assessment</option>
-                  <option value="consultation">Consultation</option>
+                  <option value="session">{t.schedule.trainingSession}</option>
+                  <option value="assessment">{t.schedule.assessment}</option>
+                  <option value="consultation">{t.schedule.consultation}</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Notes
+                  {t.common.notes}
                 </label>
                 <textarea
                   name="notes"
                   rows={2}
                   className="input mt-1"
-                  placeholder="Session notes..."
+                  placeholder={t.schedule.sessionNotes}
                 />
               </div>
               <button type="submit" className="btn-primary w-full">
-                Create Session
+                {t.schedule.createSession}
               </button>
             </form>
           </div>

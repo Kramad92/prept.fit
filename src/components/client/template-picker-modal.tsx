@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Dumbbell, UtensilsCrossed, Search, User, Users } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 interface Template {
   id: string;
@@ -19,6 +20,7 @@ interface TemplatePickerModalProps {
 }
 
 export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerModalProps) {
+  const t = useT();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -33,8 +35,8 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
       .finally(() => setLoading(false));
   }, [type]);
 
-  const filtered = templates.filter((t) =>
-    t.name.toLowerCase().includes(search.toLowerCase())
+  const filtered = templates.filter((tmpl) =>
+    tmpl.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const Icon = type === "workout" ? Dumbbell : UtensilsCrossed;
@@ -46,7 +48,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
       <div className="w-full max-w-lg rounded-t-2xl bg-white p-6 md:rounded-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">
-            {type === "workout" ? "Assign Workout Template" : "Assign Meal Plan Template"}
+            {type === "workout" ? t.assign.assignWorkoutTemplate : t.assign.assignMealTemplate}
           </h2>
           <button onClick={onClose} className="rounded-lg p-1 hover:bg-gray-100">
             <X className="h-5 w-5" />
@@ -56,10 +58,10 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
         {type === "workout" && (
           <div className="mt-4 flex gap-2">
             <button onClick={() => setMode("solo")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${mode === "solo" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
-              <User className="h-4 w-4" /> Solo
+              <User className="h-4 w-4" /> {t.workouts.solo}
             </button>
             <button onClick={() => setMode("live")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${mode === "live" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
-              <Users className="h-4 w-4" /> Live with Coach
+              <Users className="h-4 w-4" /> {t.workouts.liveWithCoach}
             </button>
           </div>
         )}
@@ -68,7 +70,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search templates..."
+            placeholder={t.assign.searchTemplates}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input pl-10"
@@ -82,25 +84,25 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
             </div>
           ) : filtered.length === 0 ? (
             <p className="py-8 text-center text-sm text-gray-500">
-              No templates found.
+              {t.assign.noTemplatesFound}
             </p>
           ) : (
-            filtered.map((t) => (
+            filtered.map((tmpl) => (
               <button
-                key={t.id}
-                onClick={() => onSelect(t.id, mode)}
+                key={tmpl.id}
+                onClick={() => onSelect(tmpl.id, mode)}
                 className="flex w-full items-center gap-3 rounded-lg border border-gray-200 p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
                   <Icon className={`h-5 w-5 ${iconColor}`} />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{t.name}</p>
+                  <p className="font-medium text-gray-900">{tmpl.name}</p>
                   <div className="flex gap-3 text-xs text-gray-500">
-                    {t.description && <span className="line-clamp-1">{t.description}</span>}
-                    {t.exerciseCount != null && <span>{t.exerciseCount} exercises</span>}
-                    {t.mealCount != null && <span>{t.mealCount} meals</span>}
-                    {t.targetCalories && <span>{t.targetCalories} cal</span>}
+                    {tmpl.description && <span className="line-clamp-1">{tmpl.description}</span>}
+                    {tmpl.exerciseCount != null && <span>{tmpl.exerciseCount} {t.workouts.exercises_count}</span>}
+                    {tmpl.mealCount != null && <span>{tmpl.mealCount} {t.nutrition.meals_count}</span>}
+                    {tmpl.targetCalories && <span>{tmpl.targetCalories} {t.nutrition.kcal}</span>}
                   </div>
                 </div>
               </button>

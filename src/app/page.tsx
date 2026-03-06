@@ -1,5 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Dumbbell, Users, Calendar, Camera } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "TrainerHub - Personal Training Management Platform",
+  description:
+    "Manage clients, schedule sessions, build workout plans, and track progress — all in one place. The all-in-one platform for personal trainers and fitness coaches.",
+  openGraph: {
+    title: "TrainerHub - Your Personal Training Business, Simplified",
+    description:
+      "Manage clients, schedule sessions, build workout plans, and track progress — all in one place.",
+  },
+};
 
 export default function HomePage() {
   return (

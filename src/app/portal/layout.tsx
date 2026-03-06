@@ -1,7 +1,19 @@
+import type { Metadata } from "next";
 import { PortalMobileNav, PortalDesktopNav } from "@/components/layout/portal-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { BrandColorProvider } from "@/components/brand-color-provider";
 import { MobileInputScroll } from "@/components/mobile-input-scroll";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Client Portal",
+    template: "%s - Client Portal | TrainerHub",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function PortalLayout({
   children,

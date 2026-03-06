@@ -1,8 +1,20 @@
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { BrandColorProvider } from "@/components/brand-color-provider";
 import { MobileInputScroll } from "@/components/mobile-input-scroll";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Dashboard",
+    template: "%s - Dashboard | TrainerHub",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function DashboardLayout({
   children,

@@ -61,6 +61,10 @@ export default function NutritionPage() {
   // Create/Edit form state
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [newCalories, setNewCalories] = useState("");
+  const [newProtein, setNewProtein] = useState("");
+  const [newCarbs, setNewCarbs] = useState("");
+  const [newFat, setNewFat] = useState("");
   const [meals, setMeals] = useState<MealRow[]>([
     { name: "Breakfast", time: "07:30", foods: [] },
     { name: "Lunch", time: "12:30", foods: [] },
@@ -99,10 +103,10 @@ export default function NutritionPage() {
     const body = {
       name: newName,
       description: newDesc || null,
-      targetCalories: totals.calories || null,
-      targetProtein: totals.protein || null,
-      targetCarbs: totals.carbs || null,
-      targetFat: totals.fat || null,
+      targetCalories: newCalories ? parseInt(newCalories) : null,
+      targetProtein: newProtein ? parseInt(newProtein) : null,
+      targetCarbs: newCarbs ? parseInt(newCarbs) : null,
+      targetFat: newFat ? parseInt(newFat) : null,
       meals: meals
         .filter((m) => m.name.trim())
         .map((m, i) => ({
@@ -158,6 +162,10 @@ export default function NutritionPage() {
     setEditingPlanId(planId);
     setNewName(data.name);
     setNewDesc(data.description || "");
+    setNewCalories(data.targetCalories?.toString() || "");
+    setNewProtein(data.targetProtein?.toString() || "");
+    setNewCarbs(data.targetCarbs?.toString() || "");
+    setNewFat(data.targetFat?.toString() || "");
     setMeals(
       data.meals.map((m: any) => ({
         name: m.name,
@@ -193,6 +201,10 @@ export default function NutritionPage() {
   function resetForm() {
     setNewName("");
     setNewDesc("");
+    setNewCalories("");
+    setNewProtein("");
+    setNewCarbs("");
+    setNewFat("");
     setEditingPlanId(null);
     setMeals([
       { name: "Breakfast", time: "07:30", foods: [] },
@@ -201,9 +213,9 @@ export default function NutritionPage() {
     ]);
   }
 
-  function parseGrams(portion: string): number {
-    const match = portion.match(/(\d+(?:\.\d+)?)/);
-    return match ? parseFloat(match[1]) : 0;
+  function parseGrams(portion: string): number | null {
+    const match = portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
+    return match ? parseFloat(match[1]) : null;
   }
 
   function updateFood(mealIndex: number, foodIndex: number, field: string, value: string) {
@@ -217,7 +229,7 @@ export default function NutritionPage() {
                 if (field === "portion") {
                   const oldGrams = parseGrams(f.portion);
                   const newGrams = parseGrams(value);
-                  if (oldGrams > 0 && newGrams > 0 && oldGrams !== newGrams) {
+                  if (oldGrams && newGrams && oldGrams !== newGrams) {
                     const ratio = newGrams / oldGrams;
                     return {
                       ...f,
@@ -250,6 +262,14 @@ export default function NutritionPage() {
     }
     return { calories: cal, protein: p, carbs: c, fat: f };
   }, [meals]);
+
+  // Auto-fill macro fields from food totals
+  useEffect(() => {
+    setNewCalories(totals.calories ? totals.calories.toString() : "");
+    setNewProtein(totals.protein ? totals.protein.toString() : "");
+    setNewCarbs(totals.carbs ? totals.carbs.toString() : "");
+    setNewFat(totals.fat ? totals.fat.toString() : "");
+  }, [totals]);
 
   const filtered = plans.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -496,15 +516,24 @@ export default function NutritionPage() {
                   <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="input mt-1" placeholder="Low carb, high protein plan" />
                 </div>
 
-                {totals.calories > 0 && (
-                  <div className="flex flex-wrap gap-3 rounded-lg bg-gray-50 px-3 py-2 text-sm">
-                    <span className="font-medium text-gray-700">Daily totals:</span>
-                    <span className="rounded bg-orange-50 px-2 py-0.5 text-orange-700">{totals.calories} cal</span>
-                    <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700">P: {totals.protein}g</span>
-                    <span className="rounded bg-green-50 px-2 py-0.5 text-green-700">C: {totals.carbs}g</span>
-                    <span className="rounded bg-yellow-50 px-2 py-0.5 text-yellow-700">F: {totals.fat}g</span>
+                <div className="grid grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Calories</label>
+                    <input type="number" value={newCalories} onChange={(e) => setNewCalories(e.target.value)} className="input mt-1" placeholder="1800" />
                   </div>
-                )}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Protein (g)</label>
+                    <input type="number" value={newProtein} onChange={(e) => setNewProtein(e.target.value)} className="input mt-1" placeholder="150" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Carbs (g)</label>
+                    <input type="number" value={newCarbs} onChange={(e) => setNewCarbs(e.target.value)} className="input mt-1" placeholder="180" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Fat (g)</label>
+                    <input type="number" value={newFat} onChange={(e) => setNewFat(e.target.value)} className="input mt-1" placeholder="60" />
+                  </div>
+                </div>
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center justify-between">

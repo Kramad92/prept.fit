@@ -242,9 +242,9 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     }
   }
 
-  function parseGrams(portion: string): number {
-    const match = portion.match(/(\d+(?:\.\d+)?)/);
-    return match ? parseFloat(match[1]) : 0;
+  function parseGrams(portion: string): number | null {
+    const match = portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
+    return match ? parseFloat(match[1]) : null;
   }
 
   function updateFood(
@@ -265,7 +265,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
             if (field === "portion") {
               const oldGrams = parseGrams(f.portion);
               const newGrams = parseGrams(value);
-              if (oldGrams > 0 && newGrams > 0 && oldGrams !== newGrams) {
+              if (oldGrams && newGrams && oldGrams !== newGrams) {
                 const ratio = newGrams / oldGrams;
                 const scale = (v: string) => {
                   const n = parseInt(v);

@@ -213,9 +213,10 @@ export default function NutritionPage() {
     ]);
   }
 
-  function parseGrams(portion: string): number | null {
-    const match = portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
-    return match ? parseFloat(match[1]) : null;
+  function parsePortionQty(portion: string): { qty: number; rest: string } | null {
+    const match = portion.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+    if (!match) return null;
+    return { qty: parseFloat(match[1]), rest: match[2] };
   }
 
   function updateFood(mealIndex: number, foodIndex: number, field: string, value: string) {
@@ -227,10 +228,10 @@ export default function NutritionPage() {
               foods: m.foods.map((f, fi) => {
                 if (fi !== foodIndex) return f;
                 if (field === "portion") {
-                  const oldGrams = parseGrams(f.portion);
-                  const newGrams = parseGrams(value);
-                  if (oldGrams && newGrams && oldGrams !== newGrams) {
-                    const ratio = newGrams / oldGrams;
+                  const oldP = parsePortionQty(f.portion);
+                  const newP = parsePortionQty(value);
+                  if (oldP && newP && oldP.qty > 0 && newP.qty > 0 && oldP.qty !== newP.qty && oldP.rest === newP.rest) {
+                    const ratio = newP.qty / oldP.qty;
                     return {
                       ...f,
                       portion: value,

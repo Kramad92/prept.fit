@@ -242,9 +242,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     }
   }
 
-  function parseGrams(portion: string): number | null {
-    const match = portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
-    return match ? parseFloat(match[1]) : null;
+  function parsePortionQty(portion: string): { qty: number; rest: string } | null {
+    const match = portion.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+    if (!match) return null;
+    return { qty: parseFloat(match[1]), rest: match[2] };
   }
 
   function updateFood(
@@ -263,10 +264,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           foods: m.foods.map((f, fi) => {
             if (fi !== foodIdx) return f;
             if (field === "portion") {
-              const oldGrams = parseGrams(f.portion);
-              const newGrams = parseGrams(value);
-              if (oldGrams && newGrams && oldGrams !== newGrams) {
-                const ratio = newGrams / oldGrams;
+              const oldP = parsePortionQty(f.portion);
+              const newP = parsePortionQty(value);
+              if (oldP && newP && oldP.qty > 0 && newP.qty > 0 && oldP.qty !== newP.qty && oldP.rest === newP.rest) {
+                const ratio = newP.qty / oldP.qty;
                 const scale = (v: string) => {
                   const n = parseInt(v);
                   return isNaN(n) ? v : Math.round(n * ratio).toString();

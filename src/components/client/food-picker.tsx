@@ -223,6 +223,7 @@ export function FoodPicker({
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-gray-900">{selected.name}</p>
           <button
+            type="button"
             onClick={() => setSelected(null)}
             className="rounded p-0.5 text-gray-400 hover:text-gray-600"
           >
@@ -254,6 +255,7 @@ export function FoodPicker({
             {macroLabel(scaledCal, scaledP, scaledC, scaledF)}
           </div>
           <button
+            type="button"
             onClick={confirmSelection}
             className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
           >
@@ -267,7 +269,7 @@ export function FoodPicker({
 
   // Dropdown content (shared between variants)
   const dropdown = open && query.trim().length >= 2 && (
-    <div className={`absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg ${isInline ? "left-0 w-80" : "w-full"}`}>
+    <div className={`absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg ${isInline ? "left-0 min-w-[28rem]" : "w-full"}`}>
       <div className="max-h-72 overflow-y-auto">
         {libraryResults.length > 0 && (
           <>
@@ -277,6 +279,7 @@ export function FoodPicker({
             </div>
             {libraryResults.map((food) => (
               <button
+                type="button"
                 key={food.id}
                 onClick={() =>
                   stageFood({
@@ -316,6 +319,7 @@ export function FoodPicker({
                 className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50"
               >
                 <button
+                  type="button"
                   onClick={() =>
                     stageFood({
                       name: food.name,
@@ -342,8 +346,10 @@ export function FoodPicker({
                   </span>
                 </button>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     saveToLibrary(food);
                   }}
                   title="Save to your food library"
@@ -368,6 +374,7 @@ export function FoodPicker({
       </div>
 
       <button
+        type="button"
         onClick={() => selectCustomFood(query.trim())}
         className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
       >

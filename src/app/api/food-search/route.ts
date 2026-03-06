@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
-    const foods = (data.foods || []).map((f: USDAFood) => ({
+    const foods = (data.foods || []).filter((f: USDAFood) => f.dataType !== "Branded").map((f: USDAFood) => ({
       fdcId: f.fdcId,
       name: f.description,
       portion: f.servingSize

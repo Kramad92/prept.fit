@@ -18,6 +18,10 @@ export default function NewWorkoutPage() {
 
   function addExercise() {
     setExercises((prev) => [...prev, createEmptyExercise()]);
+    setTimeout(() => {
+      const el = document.querySelector("[data-exercise-end]");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   }
 
   function removeExercise(tempId: string) {
@@ -38,6 +42,10 @@ export default function NewWorkoutPage() {
     const newEx = createEmptyExercise();
     newEx.name = ex.name;
     setExercises((prev) => [...prev, newEx]);
+    setTimeout(() => {
+      const el = document.querySelector("[data-exercise-end]");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -203,6 +211,7 @@ export default function NewWorkoutPage() {
             ))}
           </div>
 
+          <div data-exercise-end />
           <button
             type="button"
             onClick={addExercise}

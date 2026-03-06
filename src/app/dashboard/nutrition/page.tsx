@@ -555,7 +555,13 @@ export default function NutritionPage() {
                     <h3 className="text-sm font-semibold text-gray-700">Meals</h3>
                     <button
                       type="button"
-                      onClick={() => setMeals((prev) => [...prev, { name: "", time: "", foods: [] }])}
+                      onClick={() => {
+                        setMeals((prev) => [...prev, { name: "", time: "", foods: [] }]);
+                        setTimeout(() => {
+                          const el = document.querySelector("[data-meal-end]");
+                          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }, 50);
+                      }}
                       className="text-xs font-medium text-brand-600 hover:text-brand-700"
                     >
                       + Add Meal
@@ -700,40 +706,48 @@ export default function NutritionPage() {
                           </div>
                         ))}
                         {/* Add food — typing triggers search */}
-                        <FoodPicker
-                          variant="inline"
-                          inputClassName="input text-xs"
-                          placeholder="+ Add food item..."
-                          onSelect={(food) => {
-                            setMeals((prev) =>
-                              prev.map((m, i) =>
-                                i === mi
-                                  ? {
-                                      ...m,
-                                      foods: [
-                                        ...m.foods,
-                                        {
-                                          name: food.name,
-                                          portion: food.portion || "",
-                                          calories: food.calories ?? null,
-                                          protein: food.protein ?? null,
-                                          carbs: food.carbs ?? null,
-                                          fat: food.fat ?? null,
-                                          unitLabel: food.unitLabel,
-                                          gramsPerUnit: food.gramsPerUnit,
-                                        },
-                                      ],
-                                    }
-                                  : m
-                              )
-                            );
-                          }}
-                        />
+                        <div data-add-food={mi}>
+                          <FoodPicker
+                            variant="inline"
+                            inputClassName="input text-xs"
+                            placeholder="+ Add food item..."
+                            onSelect={(food) => {
+                              setMeals((prev) =>
+                                prev.map((m, i) =>
+                                  i === mi
+                                    ? {
+                                        ...m,
+                                        foods: [
+                                          ...m.foods,
+                                          {
+                                            name: food.name,
+                                            portion: food.portion || "",
+                                            calories: food.calories ?? null,
+                                            protein: food.protein ?? null,
+                                            carbs: food.carbs ?? null,
+                                            fat: food.fat ?? null,
+                                            unitLabel: food.unitLabel,
+                                            gramsPerUnit: food.gramsPerUnit,
+                                          },
+                                        ],
+                                      }
+                                    : m
+                                )
+                              );
+                              // Scroll to show the newly added item
+                              setTimeout(() => {
+                                const el = document.querySelector(`[data-add-food="${mi}"]`);
+                                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                              }, 50);
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
+                <div data-meal-end />
                 <button type="submit" disabled={saving} className="btn-primary w-full">
                   {saving ? "Saving..." : editingPlanId ? "Save Changes" : "Create Meal Plan"}
                 </button>

@@ -50,6 +50,10 @@ export default function EditWorkoutPage() {
 
   function addExercise() {
     setExercises((prev) => [...prev, createEmptyExercise()]);
+    setTimeout(() => {
+      const el = document.querySelector("[data-exercise-end]");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   }
 
   function removeExercise(tempId: string) {
@@ -66,6 +70,10 @@ export default function EditWorkoutPage() {
     const newEx = createEmptyExercise();
     newEx.name = ex.name;
     setExercises((prev) => [...prev, newEx]);
+    setTimeout(() => {
+      const el = document.querySelector("[data-exercise-end]");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -235,6 +243,7 @@ export default function EditWorkoutPage() {
             ))}
           </div>
 
+          <div data-exercise-end />
           <button type="button" onClick={addExercise} className="btn-secondary mt-3 w-full">
             <Plus className="mr-2 h-4 w-4" />
             Add Exercise Manually

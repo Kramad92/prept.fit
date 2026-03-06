@@ -29,11 +29,17 @@ export function MobileInputScroll() {
         spacer.style.flexShrink = "0";
         scroller.appendChild(spacer);
         scrollContainer = scroller;
+        // Force layout so the spacer is accounted for before scrolling
+        scroller.scrollHeight; // eslint-disable-line @typescript-eslint/no-unused-expressions
       }
 
+      // Two-phase scroll: immediate jump to roughly right place, then smooth after keyboard settles
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "auto", block: "start" });
+      }, 50);
       setTimeout(() => {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 350);
+      }, 400);
     }
 
     function handleBlur() {

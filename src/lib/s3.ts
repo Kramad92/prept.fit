@@ -30,10 +30,14 @@ export async function getUploadUrl(
     ContentType: contentType,
   });
 
-  return getSignedUrl(s3Client, command, {
-    expiresIn: 3600,
-    unhoistableHeaders: new Set(["x-amz-checksum-crc32"]),
-  });
+  const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+  // Strip checksum params that AWS SDK v3 adds — R2 doesn't support them
+  // and they cause CORS preflight failures
+  const parsed = new URL(url);
+  parsed.searchParams.delete("x-amz-checksum-crc32");
+  parsed.searchParams.delete("x-amz-sdk-checksum-algorithm");
+  return parsed.toString();
 }
 
 export async function deleteFile(key: string): Promise<void> {

@@ -46,6 +46,8 @@ interface FoodPickerProps {
   inputClassName?: string;
   /** Placeholder text */
   placeholder?: string;
+  /** Pre-fill the input (for editing existing foods) */
+  initialValue?: string;
 }
 
 export function FoodPicker({
@@ -53,8 +55,9 @@ export function FoodPicker({
   variant = "standalone",
   inputClassName,
   placeholder,
+  initialValue,
 }: FoodPickerProps) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialValue || "");
   const [libraryResults, setLibraryResults] = useState<LibraryFood[]>([]);
   const [usdaResults, setUsdaResults] = useState<USDAFood[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,7 +68,7 @@ export function FoodPicker({
   const isInline = variant === "inline";
 
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 2) {
+    if (!query.trim() || query.trim().length < 2 || query === initialValue) {
       setLibraryResults([]);
       setUsdaResults([]);
       return;
@@ -88,7 +91,7 @@ export function FoodPicker({
         setUsdaResults(usda);
         setLoading(false);
       });
-    }, 300);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -105,7 +108,7 @@ export function FoodPicker({
 
   function selectFood(food: FoodResult) {
     onSelect(food);
-    setQuery("");
+    setQuery(initialValue !== undefined ? food.name : "");
     setOpen(false);
   }
 

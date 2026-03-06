@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
         body: JSON.stringify({
           query,
           dataType: ["Foundation", "SR Legacy", "Survey (FNDDS)"],
-          pageSize: 15,
+          pageSize: 8,
         }),
       }
     );
@@ -140,6 +140,7 @@ export async function GET(req: NextRequest) {
           body: JSON.stringify({
             fdcIds,
             format: "full",
+            nutrients: [],
           }),
         }
       );

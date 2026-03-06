@@ -244,47 +244,6 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     }
   }
 
-  function parsePortionGrams(portion: string): number | null {
-    const match = portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
-    return match ? parseFloat(match[1]) : null;
-  }
-
-  function updateFoodQty(
-    meals: MealInput[],
-    setMeals: (v: MealInput[]) => void,
-    mealIdx: number,
-    foodIdx: number,
-    qty: number
-  ) {
-    setMeals(
-      meals.map((m, mi) => {
-        if (mi !== mealIdx) return m;
-        return {
-          ...m,
-          foods: m.foods.map((f, fi) => {
-            if (fi !== foodIdx || !f.gramsPerUnit) return f;
-            const totalGrams = qty * f.gramsPerUnit;
-            const oldMatch = f.portion.match(/\((\d+)g\)/);
-            const oldGrams = oldMatch ? parseInt(oldMatch[1]) : f.gramsPerUnit;
-            const ratio = totalGrams / oldGrams;
-            const scale = (v: string) => {
-              const n = parseInt(v);
-              return isNaN(n) ? v : Math.round(n * ratio).toString();
-            };
-            return {
-              ...f,
-              portion: `${qty} ${f.unitLabel} (${Math.round(totalGrams)}g)`,
-              calories: scale(f.calories),
-              protein: scale(f.protein),
-              carbs: scale(f.carbs),
-              fat: scale(f.fat),
-            };
-          }),
-        };
-      })
-    );
-  }
-
   function updateFood(
     meals: MealInput[],
     setMeals: (v: MealInput[]) => void,
@@ -301,22 +260,43 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           foods: m.foods.map((f, fi) => {
             if (fi !== foodIdx) return f;
             if (field === "portion") {
-              const oldG = parsePortionGrams(f.portion);
-              const newG = parsePortionGrams(value);
-              if (oldG && newG && oldG !== newG) {
-                const ratio = newG / oldG;
-                const scale = (v: string) => {
-                  const n = parseInt(v);
-                  return isNaN(n) ? v : Math.round(n * ratio).toString();
-                };
-                return {
-                  ...f,
-                  portion: value,
-                  calories: scale(f.calories),
-                  protein: scale(f.protein),
-                  carbs: scale(f.carbs),
-                  fat: scale(f.fat),
-                };
+              const scale = (v: string, ratio: number) => {
+                const n = parseInt(v);
+                return isNaN(n) ? v : Math.round(n * ratio).toString();
+              };
+              // Unit-based portions: detect qty change
+              if (f.gramsPerUnit && f.unitLabel) {
+                const oldQty = parseInt(f.portion) || 1;
+                const newQty = parseInt(value) || oldQty;
+                if (newQty !== oldQty && newQty > 0) {
+                  const ratio = newQty / oldQty;
+                  const totalGrams = newQty * f.gramsPerUnit;
+                  return {
+                    ...f,
+                    portion: `${newQty} ${f.unitLabel} (${Math.round(totalGrams)}g)`,
+                    calories: scale(f.calories, ratio),
+                    protein: scale(f.protein, ratio),
+                    carbs: scale(f.carbs, ratio),
+                    fat: scale(f.fat, ratio),
+                  };
+                }
+                return { ...f, portion: value };
+              }
+              // Plain gram portions
+              const oldG = f.portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
+              const newG = value.match(/^(\d+(?:\.\d+)?)\s*g$/i);
+              if (oldG && newG) {
+                const ratio = parseFloat(newG[1]) / parseFloat(oldG[1]);
+                if (ratio > 0 && ratio !== 1) {
+                  return {
+                    ...f,
+                    portion: value,
+                    calories: scale(f.calories, ratio),
+                    protein: scale(f.protein, ratio),
+                    carbs: scale(f.carbs, ratio),
+                    fat: scale(f.fat, ratio),
+                  };
+                }
               }
               return { ...f, portion: value };
             }
@@ -370,41 +350,52 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                   <div className="text-[10px] font-medium text-gray-400">Fat</div>
                 </div>
               )}
-              {meal.foods.map((food, fi) => {
-                const qtyMatch = food.unitLabel ? food.portion.match(/^(\d+(?:\.\d+)?)/) : null;
-                const qty = qtyMatch ? parseFloat(qtyMatch[1]) : null;
-
-                return (
-                  <div key={fi} className="grid grid-cols-6 gap-2">
-                    <div className="col-span-2">
-                      <input type="text" value={food.name} onChange={(e) => updateFood(meals, setMeals, mi, fi, "name", e.target.value)} className="input text-xs" placeholder="Food" />
-                    </div>
-                    {food.unitLabel && food.gramsPerUnit ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={qty ?? 1}
-                          onChange={(e) => updateFoodQty(meals, setMeals, mi, fi, Math.max(1, parseInt(e.target.value) || 1))}
-                          className="input text-xs w-12 flex-shrink-0"
-                        />
-                        <span className="truncate text-[10px] text-gray-400">{food.unitLabel}</span>
-                      </div>
-                    ) : (
-                      <input type="text" value={food.portion} onChange={(e) => updateFood(meals, setMeals, mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
-                    )}
-                    <input type="number" value={food.calories} onChange={(e) => updateFood(meals, setMeals, mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
-                    <input type="number" value={food.protein} onChange={(e) => updateFood(meals, setMeals, mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P" />
-                    <div className="flex gap-1">
-                      <input type="number" value={food.fat} onChange={(e) => updateFood(meals, setMeals, mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F" />
-                      <button type="button" onClick={() => {
-                        setMeals(meals.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
-                      }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
-                    </div>
+              {meal.foods.map((food, fi) => (
+                <div key={fi} className="grid grid-cols-6 gap-2">
+                  <div className="col-span-2">
+                    <FoodPicker
+                      variant="inline"
+                      inputClassName="input text-xs"
+                      placeholder="Food"
+                      initialValue={food.name}
+                      onSelect={(result) => {
+                        setMeals(
+                          meals.map((m, i) =>
+                            i === mi
+                              ? {
+                                  ...m,
+                                  foods: m.foods.map((f, idx) =>
+                                    idx === fi
+                                      ? {
+                                          name: result.name,
+                                          portion: result.portion || f.portion,
+                                          calories: result.calories?.toString() || f.calories,
+                                          protein: result.protein?.toString() || f.protein,
+                                          carbs: result.carbs?.toString() || f.carbs,
+                                          fat: result.fat?.toString() || f.fat,
+                                          unitLabel: result.unitLabel ?? f.unitLabel,
+                                          gramsPerUnit: result.gramsPerUnit ?? f.gramsPerUnit,
+                                        }
+                                      : f
+                                  ),
+                                }
+                              : m
+                          )
+                        );
+                      }}
+                    />
                   </div>
-                );
-              })}
+                  <input type="text" value={food.portion} onChange={(e) => updateFood(meals, setMeals, mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
+                  <input type="number" value={food.calories} onChange={(e) => updateFood(meals, setMeals, mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
+                  <input type="number" value={food.protein} onChange={(e) => updateFood(meals, setMeals, mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P" />
+                  <div className="flex gap-1">
+                    <input type="number" value={food.fat} onChange={(e) => updateFood(meals, setMeals, mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F" />
+                    <button type="button" onClick={() => {
+                      setMeals(meals.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
+                    }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                  </div>
+                </div>
+              ))}
               {/* Add food — typing triggers search */}
               <FoodPicker
                 variant="inline"

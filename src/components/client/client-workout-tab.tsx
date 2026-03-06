@@ -279,7 +279,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
             <button
               onClick={() => {
                 setShowCustomForm(true);
-                setCustomExercises([createEmptyExercise()]);
+                setCustomExercises([]);
               }}
               className="btn-secondary"
             >
@@ -313,7 +313,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
           <button
             onClick={() => {
               setShowCustomForm(true);
-              setCustomExercises([createEmptyExercise()]);
+              setCustomExercises([]);
             }}
             className="btn-primary text-sm"
           >

@@ -136,22 +136,20 @@ export default function WorkoutDetailPage() {
         Back to Workouts
       </Link>
 
-      <div className="mt-4 flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">{plan.name}</h1>
-            {plan.isTemplate && (
-              <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                Template
-              </span>
-            )}
-          </div>
-          {plan.description && (
-            <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
+      <div className="mt-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">{plan.name}</h1>
+          {plan.isTemplate && (
+            <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+              Template
+            </span>
           )}
         </div>
+        {plan.description && (
+          <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
+        )}
 
-        <div className="flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
             onClick={handleDuplicate}
             disabled={duplicating}
@@ -159,7 +157,8 @@ export default function WorkoutDetailPage() {
             title="Duplicate this plan"
           >
             <Copy className="mr-1.5 h-4 w-4" />
-            {duplicating ? "Duplicating..." : "Duplicate"}
+            <span className="hidden sm:inline">{duplicating ? "Duplicating..." : "Duplicate"}</span>
+            <span className="sm:hidden">{duplicating ? "..." : "Copy"}</span>
           </button>
           <Link
             href={`/dashboard/workouts/${plan.id}/edit`}

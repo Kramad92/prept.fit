@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  Calendar,
-  MessageSquare,
+  Dumbbell,
+  UtensilsCrossed,
   Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/dashboard/clients", icon: Users, label: "Clients" },
-  { href: "/dashboard/schedule", icon: Calendar, label: "Schedule" },
-  { href: "/dashboard/messages", icon: MessageSquare, label: "Messages" },
+  { href: "/dashboard/workouts", icon: Dumbbell, label: "Workouts" },
+  { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: "Nutrition" },
   { href: "/dashboard/settings", icon: Menu, label: "More" },
 ];
 

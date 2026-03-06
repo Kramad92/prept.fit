@@ -30,7 +30,13 @@ const navItems = [
   { href: "/portal/progress/charts", icon: TrendingUp, label: "Charts" },
 ];
 
-const mobileNavItems = navItems.slice(0, 5); // Home, Workouts, Progress, Book, Messages
+const mobileNavItems = [
+  navItems[0], // Home
+  navItems[1], // Workouts
+  navItems[7], // Nutrition
+  navItems[2], // Progress
+  navItems[4], // Messages
+];
 
 export function PortalMobileNav() {
   const pathname = usePathname();

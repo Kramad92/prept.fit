@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   UtensilsCrossed,
   Plus,
@@ -85,6 +85,39 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   const [editCarbs, setEditCarbs] = useState("");
   const [editFat, setEditFat] = useState("");
   const [editMeals, setEditMeals] = useState<MealInput[]>([]);
+
+  // Auto-calculate totals from foods in custom form
+  function computeTotals(meals: MealInput[]) {
+    let cal = 0, p = 0, c = 0, f = 0;
+    for (const meal of meals) {
+      for (const food of meal.foods) {
+        cal += parseInt(food.calories) || 0;
+        p += parseInt(food.protein) || 0;
+        c += parseInt(food.carbs) || 0;
+        f += parseInt(food.fat) || 0;
+      }
+    }
+    return { calories: cal, protein: p, carbs: c, fat: f };
+  }
+
+  const customTotals = useMemo(() => computeTotals(customMeals), [customMeals]);
+  const editTotals = useMemo(() => computeTotals(editMeals), [editMeals]);
+
+  useEffect(() => {
+    setCustomCalories(customTotals.calories ? customTotals.calories.toString() : "");
+    setCustomProtein(customTotals.protein ? customTotals.protein.toString() : "");
+    setCustomCarbs(customTotals.carbs ? customTotals.carbs.toString() : "");
+    setCustomFat(customTotals.fat ? customTotals.fat.toString() : "");
+  }, [customTotals]);
+
+  useEffect(() => {
+    if (editingPlanId) {
+      setEditCalories(editTotals.calories ? editTotals.calories.toString() : "");
+      setEditProtein(editTotals.protein ? editTotals.protein.toString() : "");
+      setEditCarbs(editTotals.carbs ? editTotals.carbs.toString() : "");
+      setEditFat(editTotals.fat ? editTotals.fat.toString() : "");
+    }
+  }, [editTotals, editingPlanId]);
 
   function createEmptyMeal(): MealInput {
     return {

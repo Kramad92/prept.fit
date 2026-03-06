@@ -4,6 +4,9 @@ import { getSession } from "@/lib/session";
 const USDA_API_KEY = process.env.USDA_API_KEY || "";
 const USDA_BASE = "https://api.nal.usda.gov/fdc/v1";
 
+// In-memory cache for portion data (fdcId → best portion). Survives across requests in the same process.
+const portionCache = new Map<number, { label: string; gramWeight: number } | null>();
+
 interface USDANutrient {
   nutrientId: number;
   nutrientName: string;
@@ -127,32 +130,35 @@ export async function GET(req: NextRequest) {
       return NextResponse.json([]);
     }
 
-    // 2. Batch-fetch details for portion data
+    // 2. Batch-fetch details for portion data (with in-memory cache)
     const fdcIds = searchFoods.map((f) => f.fdcId);
-    let portionMap = new Map<number, { portion: USDAFoodPortion; label: string } | null>();
+    const uncachedIds = fdcIds.filter((id) => !portionCache.has(id));
 
-    try {
-      const detailRes = await fetch(
-        `${USDA_BASE}/foods?api_key=${USDA_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fdcIds,
-            format: "full",
-            nutrients: [],
-          }),
-        }
-      );
+    if (uncachedIds.length > 0) {
+      try {
+        const detailRes = await fetch(
+          `${USDA_BASE}/foods?api_key=${USDA_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fdcIds: uncachedIds,
+              format: "full",
+              nutrients: [],
+            }),
+          }
+        );
 
-      if (detailRes.ok) {
-        const details = (await detailRes.json()) as USDADetailFood[];
-        for (const d of details) {
-          portionMap.set(d.fdcId, pickBestPortion(d.foodPortions || []));
+        if (detailRes.ok) {
+          const details = (await detailRes.json()) as USDADetailFood[];
+          for (const d of details) {
+            const best = pickBestPortion(d.foodPortions || []);
+            portionCache.set(d.fdcId, best ? { label: best.label, gramWeight: best.portion.gramWeight } : null);
+          }
         }
+      } catch {
+        // If batch fetch fails, fall back to 100g portions
       }
-    } catch {
-      // If batch fetch fails, fall back to 100g portions
     }
 
     // 3. Build results with best portions
@@ -162,20 +168,20 @@ export async function GET(req: NextRequest) {
       const carbs = extractNutrient(f.foodNutrients, 1005);
       const fat = extractNutrient(f.foodNutrients, 1004);
 
-      const best = portionMap.get(f.fdcId);
+      const cached = portionCache.get(f.fdcId);
 
-      if (best) {
-        const gw = best.portion.gramWeight;
+      if (cached) {
+        const gw = cached.gramWeight;
         // Parse leading quantity from label, e.g. "1 egg" → qty=1, unit="egg"
-        const qtyMatch = best.label.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+        const qtyMatch = cached.label.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
         const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 1;
-        const unitLabel = qtyMatch ? qtyMatch[2] : best.label;
+        const unitLabel = qtyMatch ? qtyMatch[2] : cached.label;
         const gramsPerUnit = qty > 0 ? Math.round(gw / qty) : gw;
 
         return {
           fdcId: f.fdcId,
           name: f.description,
-          portion: `${best.label} (${Math.round(gw)}g)`,
+          portion: `${cached.label} (${Math.round(gw)}g)`,
           calories: scaleNutrient(cal, gw),
           protein: scaleNutrient(protein, gw),
           carbs: scaleNutrient(carbs, gw),

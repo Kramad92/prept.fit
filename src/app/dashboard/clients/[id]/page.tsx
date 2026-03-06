@@ -26,7 +26,7 @@ import { ClientPaymentsTab } from "@/components/client/client-payments-tab";
 import { MeasurementModal } from "@/components/client/measurement-modal";
 import { useToast } from "@/components/ui/toast";
 import { ImageUploader } from "@/components/ui/image-uploader";
-import { PhotoLightbox } from "@/components/ui/photo-lightbox";
+import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
 import type { Food } from "@/types";
 
 interface ClientDetail {
@@ -465,6 +465,20 @@ function PhotosTab({
     }
   }
 
+  async function handleUpdate(photoId: string, data: { caption?: string; category?: string | null }) {
+    try {
+      await fetch(`/api/clients/${clientId}/photos`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoId, ...data }),
+      });
+      toastSuccess("Photo updated");
+      onRefresh();
+    } catch {
+      toastError("Failed to update photo");
+    }
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -535,12 +549,17 @@ function PhotosTab({
                 onClick={() => setLightboxIndex(i)}
                 className="h-full w-full cursor-pointer object-cover transition-transform hover:scale-[1.02]"
               />
+              {photo.category && (
+                <div className="absolute left-2 top-2">
+                  <CategoryChip category={photo.category} />
+                </div>
+              )}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                 <p className="text-xs text-white">
                   {new Date(photo.takenAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </p>
-                {photo.category && (
-                  <span className="text-xs capitalize text-white/70">{photo.category}</span>
+                {photo.caption && (
+                  <p className="truncate text-xs text-white/70">{photo.caption}</p>
                 )}
               </div>
               <button
@@ -559,6 +578,7 @@ function PhotosTab({
           photos={photos}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
+          onUpdate={handleUpdate}
         />
       )}
     </div>

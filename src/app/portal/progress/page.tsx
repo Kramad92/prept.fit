@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3, Plus, X } from "lucide-react";
+import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3, Plus, X, Trash2 } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
-import { PhotoLightbox } from "@/components/ui/photo-lightbox";
+import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
 
 interface ProgressPhoto {
   id: string;
@@ -62,6 +62,20 @@ export default function PortalProgressPage() {
       setCategory("");
       loadData();
     }
+  }
+
+  async function handlePhotoUpdate(photoId: string, data: { caption?: string; category?: string | null }) {
+    await fetch("/api/portal/photos", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photoId, ...data }),
+    });
+    loadData();
+  }
+
+  async function handlePhotoDelete(photoId: string) {
+    await fetch(`/api/portal/photos?photoId=${photoId}`, { method: "DELETE" });
+    loadData();
   }
 
   if (loading) {
@@ -173,14 +187,25 @@ export default function PortalProgressPage() {
                 {photos.map((photo, i) => (
                   <div
                     key={photo.id}
-                    onClick={() => setLightboxIndex(i)}
-                    className="relative aspect-square cursor-pointer overflow-hidden rounded-xl transition-transform hover:scale-[1.02]"
+                    className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl transition-transform hover:scale-[1.02]"
                   >
                     <img
                       src={photo.url}
                       alt={photo.caption || "Progress photo"}
+                      onClick={() => setLightboxIndex(i)}
                       className="h-full w-full object-cover"
                     />
+                    {photo.category && (
+                      <div className="absolute left-2 top-2">
+                        <CategoryChip category={photo.category} />
+                      </div>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handlePhotoDelete(photo.id); }}
+                      className="absolute right-2 top-2 hidden rounded-full bg-black/50 p-1.5 text-white hover:bg-red-600 group-hover:block"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                       <p className="text-xs text-white">
                         {new Date(photo.takenAt).toLocaleDateString("en-US", {
@@ -188,10 +213,8 @@ export default function PortalProgressPage() {
                           day: "numeric",
                         })}
                       </p>
-                      {photo.category && (
-                        <span className="text-xs capitalize text-white/70">
-                          {photo.category}
-                        </span>
+                      {photo.caption && (
+                        <p className="truncate text-xs text-white/70">{photo.caption}</p>
                       )}
                     </div>
                   </div>
@@ -206,6 +229,7 @@ export default function PortalProgressPage() {
             photos={photos}
             initialIndex={lightboxIndex}
             onClose={() => setLightboxIndex(null)}
+            onUpdate={handlePhotoUpdate}
           />
         )}
 

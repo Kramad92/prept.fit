@@ -38,6 +38,37 @@ export async function POST(
   return NextResponse.json(photo, { status: 201 });
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { photoId, caption, category } = await req.json();
+
+  if (!photoId) {
+    return NextResponse.json({ error: "photoId required" }, { status: 400 });
+  }
+
+  const photo = await prisma.progressPhoto.updateMany({
+    where: {
+      id: photoId,
+      client: { id: params.id, tenantId: session.user.tenantId },
+    },
+    data: {
+      caption: caption ?? undefined,
+      category: category ?? undefined,
+    },
+  });
+
+  if (photo.count === 0) {
+    return NextResponse.json({ error: "Photo not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }

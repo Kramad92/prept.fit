@@ -14,6 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FoodPicker } from "@/components/client/food-picker";
 import type { Food } from "@/types";
 import { useToast } from "@/components/ui/toast";
 
@@ -546,6 +547,32 @@ export default function NutritionPage() {
                         )}
                       </div>
 
+                      <div className="mt-2">
+                        <FoodPicker
+                          onSelect={(food) => {
+                            setMeals((prev) =>
+                              prev.map((m, i) =>
+                                i === mi
+                                  ? {
+                                      ...m,
+                                      foods: [
+                                        ...m.foods,
+                                        {
+                                          name: food.name,
+                                          portion: food.portion || "",
+                                          calories: food.calories ?? null,
+                                          protein: food.protein ?? null,
+                                          carbs: food.carbs ?? null,
+                                          fat: food.fat ?? null,
+                                        },
+                                      ],
+                                    }
+                                  : m
+                              )
+                            );
+                          }}
+                        />
+                      </div>
                       <div className="mt-2 space-y-2">
                         {meal.foods.map((food, fi) => (
                           <div key={fi} className="grid grid-cols-6 gap-2">
@@ -561,7 +588,12 @@ export default function NutritionPage() {
                             <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
                             <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
                             <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P (g)" />
-                            <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F (g)" />
+                            <div className="flex gap-1">
+                              <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F (g)" />
+                              <button type="button" onClick={() => {
+                                setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
+                              }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                            </div>
                           </div>
                         ))}
                         <button
@@ -569,7 +601,7 @@ export default function NutritionPage() {
                           onClick={() => addFood(mi)}
                           className="text-xs font-medium text-brand-600 hover:text-brand-700"
                         >
-                          + Add food item
+                          + Add food manually
                         </button>
                       </div>
                     </div>

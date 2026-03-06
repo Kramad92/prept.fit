@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Plus, Database, Star, Save, Loader2 } from "lucide-react";
+import { Search, Plus, Database, Star, Save, Loader2, Check, X } from "lucide-react";
 
 interface LibraryFood {
   id: string;
@@ -25,6 +25,17 @@ interface USDAFood {
   source: "usda";
 }
 
+interface SelectedFood {
+  name: string;
+  basePortion: string;
+  baseGrams: number;
+  baseCalories: number | null;
+  baseProtein: number | null;
+  baseCarbs: number | null;
+  baseFat: number | null;
+  fdcId?: number;
+}
+
 interface FoodPickerProps {
   onSelect: (food: {
     name: string;
@@ -36,6 +47,16 @@ interface FoodPickerProps {
   }) => void;
 }
 
+function parseGrams(portion: string): number {
+  const match = portion.match(/^(\d+(?:\.\d+)?)\s*g?$/i);
+  return match ? parseFloat(match[1]) : 100;
+}
+
+function scaleNutrient(base: number | null, ratio: number): number | null {
+  if (base == null) return null;
+  return Math.round(base * ratio);
+}
+
 export function FoodPicker({ onSelect }: FoodPickerProps) {
   const [query, setQuery] = useState("");
   const [libraryResults, setLibraryResults] = useState<LibraryFood[]>([]);
@@ -43,7 +64,10 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<SelectedFood | null>(null);
+  const [portionInput, setPortionInput] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const portionRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!query.trim() || query.trim().length < 2) {
@@ -78,21 +102,62 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
     function handleClick(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setSelected(null);
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  function selectFood(food: {
+  useEffect(() => {
+    if (selected && portionRef.current) {
+      portionRef.current.focus();
+      portionRef.current.select();
+    }
+  }, [selected]);
+
+  function stageFood(food: {
     name: string;
-    portion?: string;
-    calories?: number | null;
-    protein?: number | null;
-    carbs?: number | null;
-    fat?: number | null;
+    portion: string;
+    calories: number | null;
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+    fdcId?: number;
   }) {
-    onSelect(food);
+    const baseGrams = parseGrams(food.portion);
+    setSelected({
+      name: food.name,
+      basePortion: food.portion,
+      baseGrams,
+      baseCalories: food.calories,
+      baseProtein: food.protein,
+      baseCarbs: food.carbs,
+      baseFat: food.fat,
+      fdcId: food.fdcId,
+    });
+    setPortionInput(baseGrams.toString());
+  }
+
+  function confirmSelection() {
+    if (!selected) return;
+    const grams = parseFloat(portionInput) || selected.baseGrams;
+    const ratio = grams / selected.baseGrams;
+    onSelect({
+      name: selected.name,
+      portion: `${grams}g`,
+      calories: scaleNutrient(selected.baseCalories, ratio),
+      protein: scaleNutrient(selected.baseProtein, ratio),
+      carbs: scaleNutrient(selected.baseCarbs, ratio),
+      fat: scaleNutrient(selected.baseFat, ratio),
+    });
+    setSelected(null);
+    setQuery("");
+    setOpen(false);
+  }
+
+  function selectCustomFood(name: string) {
+    onSelect({ name });
     setQuery("");
     setOpen(false);
   }
@@ -129,6 +194,62 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
 
   const hasResults = libraryResults.length > 0 || usdaResults.length > 0;
 
+  // If a food is staged for portion input, show the portion editor
+  if (selected) {
+    const grams = parseFloat(portionInput) || selected.baseGrams;
+    const ratio = grams / selected.baseGrams;
+    const scaledCal = scaleNutrient(selected.baseCalories, ratio);
+    const scaledP = scaleNutrient(selected.baseProtein, ratio);
+    const scaledC = scaleNutrient(selected.baseCarbs, ratio);
+    const scaledF = scaleNutrient(selected.baseFat, ratio);
+
+    return (
+      <div ref={wrapperRef} className="rounded-lg border border-brand-200 bg-brand-50 p-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-gray-900">{selected.name}</p>
+          <button
+            onClick={() => setSelected(null)}
+            className="rounded p-0.5 text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-0.5 text-xs text-gray-500">
+          Base: {selected.basePortion} = {macroLabel(selected.baseCalories, selected.baseProtein, selected.baseCarbs, selected.baseFat)}
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <input
+              ref={portionRef}
+              type="number"
+              value={portionInput}
+              onChange={(e) => setPortionInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmSelection();
+                }
+              }}
+              className="input w-20 text-center text-sm"
+              min="1"
+            />
+            <span className="text-sm text-gray-500">g</span>
+          </div>
+          <div className="flex-1 text-xs text-gray-500">
+            {macroLabel(scaledCal, scaledP, scaledC, scaledF)}
+          </div>
+          <button
+            onClick={confirmSelection}
+            className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
+          >
+            <Check className="h-3.5 w-3.5" />
+            Add
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={wrapperRef} className="relative">
       <div className="relative">
@@ -163,9 +284,9 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
                   <button
                     key={food.id}
                     onClick={() =>
-                      selectFood({
+                      stageFood({
                         name: food.name,
-                        portion: food.defaultPortion || undefined,
+                        portion: food.defaultPortion || "100g",
                         calories: food.calories,
                         protein: food.protein,
                         carbs: food.carbs,
@@ -202,13 +323,14 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
                   >
                     <button
                       onClick={() =>
-                        selectFood({
+                        stageFood({
                           name: food.name,
                           portion: food.portion,
                           calories: food.calories,
                           protein: food.protein,
                           carbs: food.carbs,
                           fat: food.fat,
+                          fdcId: food.fdcId,
                         })
                       }
                       className="flex flex-1 items-center justify-between text-left text-sm"
@@ -253,7 +375,7 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
 
           {/* Custom entry */}
           <button
-            onClick={() => selectFood({ name: query.trim() })}
+            onClick={() => selectCustomFood(query.trim())}
             className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
           >
             <Plus className="h-4 w-4" />

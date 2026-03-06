@@ -10,6 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FoodPicker } from "@/components/client/food-picker";
 import { format } from "date-fns";
 import type { Food, Meal, ClientMeal } from "@/types";
 
@@ -51,6 +52,7 @@ export default function PortalNutritionPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"plans" | "log">("plans");
+  const [logFoods, setLogFoods] = useState<{ name: string; portion?: string; calories?: number | null; protein?: number | null; carbs?: number | null; fat?: number | null }[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -72,13 +74,20 @@ export default function PortalNutritionPage() {
     e.preventDefault();
     setSaving(true);
     const fd = new FormData(e.currentTarget);
+    const foodNames = logFoods.map((f) => f.portion ? `${f.name} (${f.portion})` : f.name).join(", ");
+    const manualFoods = (fd.get("foods") as string) || "";
+    const allFoods = [foodNames, manualFoods].filter(Boolean).join(", ");
+    const totalCal = logFoods.reduce((s, f) => s + (f.calories || 0), 0);
+    const totalP = logFoods.reduce((s, f) => s + (f.protein || 0), 0);
+    const totalC = logFoods.reduce((s, f) => s + (f.carbs || 0), 0);
+    const totalF = logFoods.reduce((s, f) => s + (f.fat || 0), 0);
     const data = {
       mealName: fd.get("mealName"),
-      foods: fd.get("foods"),
-      calories: fd.get("calories") || null,
-      protein: fd.get("protein") || null,
-      carbs: fd.get("carbs") || null,
-      fat: fd.get("fat") || null,
+      foods: allFoods,
+      calories: (fd.get("calories") ? Number(fd.get("calories")) : 0) + totalCal || null,
+      protein: (fd.get("protein") ? Number(fd.get("protein")) : 0) + totalP || null,
+      carbs: (fd.get("carbs") ? Number(fd.get("carbs")) : 0) + totalC || null,
+      fat: (fd.get("fat") ? Number(fd.get("fat")) : 0) + totalF || null,
       notes: fd.get("notes") || null,
     };
 
@@ -91,6 +100,7 @@ export default function PortalNutritionPage() {
     if (res.ok) {
       setSaved(true);
       setShowLog(false);
+      setLogFoods([]);
       const updated = await fetch("/api/nutrition-logs?days=14").then((r) =>
         r.json()
       );
@@ -374,14 +384,45 @@ export default function PortalNutritionPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  What did you eat? *
+                  Search foods
+                </label>
+                <div className="mt-1">
+                  <FoodPicker
+                    onSelect={(food) => setLogFoods((prev) => [...prev, food])}
+                  />
+                </div>
+                {logFoods.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {logFoods.map((food, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700"
+                      >
+                        {food.name}
+                        {food.calories != null && (
+                          <span className="text-brand-400">{food.calories}cal</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setLogFoods((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="ml-0.5 text-brand-400 hover:text-brand-700"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Additional foods (manual)
                 </label>
                 <textarea
                   name="foods"
-                  required
-                  rows={3}
+                  rows={2}
                   className="input mt-1"
-                  placeholder="2 eggs, 1 slice toast, avocado..."
+                  placeholder="2 eggs, 1 slice toast..."
                 />
               </div>
               <div className="grid grid-cols-4 gap-3">

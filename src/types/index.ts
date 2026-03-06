@@ -40,6 +40,10 @@ export interface Food {
   protein: number | null;
   carbs: number | null;
   fat: number | null;
+  /** e.g. "egg", "breast", "cup" — present when portion is unit-based */
+  unitLabel?: string;
+  /** gram weight of 1 unit — used to scale macros when quantity changes */
+  gramsPerUnit?: number;
 }
 
 export interface Meal {

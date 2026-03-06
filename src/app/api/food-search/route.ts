@@ -165,6 +165,12 @@ export async function GET(req: NextRequest) {
 
       if (best) {
         const gw = best.portion.gramWeight;
+        // Parse leading quantity from label, e.g. "1 egg" → qty=1, unit="egg"
+        const qtyMatch = best.label.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+        const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 1;
+        const unitLabel = qtyMatch ? qtyMatch[2] : best.label;
+        const gramsPerUnit = qty > 0 ? Math.round(gw / qty) : gw;
+
         return {
           fdcId: f.fdcId,
           name: f.description,
@@ -174,6 +180,8 @@ export async function GET(req: NextRequest) {
           carbs: scaleNutrient(carbs, gw),
           fat: scaleNutrient(fat, gw),
           source: "usda",
+          unitLabel,
+          gramsPerUnit,
         };
       }
 

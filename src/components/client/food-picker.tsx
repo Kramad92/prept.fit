@@ -23,6 +23,8 @@ interface USDAFood {
   carbs: number | null;
   fat: number | null;
   source: "usda";
+  unitLabel?: string;
+  gramsPerUnit?: number;
 }
 
 export interface FoodResult {
@@ -32,6 +34,8 @@ export interface FoodResult {
   protein?: number | null;
   carbs?: number | null;
   fat?: number | null;
+  unitLabel?: string;
+  gramsPerUnit?: number;
 }
 
 interface FoodPickerProps {
@@ -197,6 +201,8 @@ export function FoodPicker({
                       protein: food.protein,
                       carbs: food.carbs,
                       fat: food.fat,
+                      unitLabel: food.unitLabel,
+                      gramsPerUnit: food.gramsPerUnit,
                     })
                   }
                   className="flex flex-1 items-center justify-between text-left text-sm"

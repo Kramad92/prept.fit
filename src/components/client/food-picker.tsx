@@ -267,6 +267,7 @@ export function FoodPicker({
             setOpen(true);
           }}
           onFocus={() => query.trim().length >= 2 && setOpen(true)}
+          onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
           className={inputClassName || (isInline ? "input text-xs" : "input pl-10")}
         />
         {loading && (

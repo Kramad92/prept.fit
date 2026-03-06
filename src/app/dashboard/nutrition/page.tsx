@@ -213,21 +213,57 @@ export default function NutritionPage() {
     ]);
   }
 
+  function parseGrams(portion: string): number {
+    const match = portion.match(/(\d+(?:\.\d+)?)/);
+    return match ? parseFloat(match[1]) : 0;
+  }
+
   function updateFood(mealIndex: number, foodIndex: number, field: string, value: string) {
     setMeals((prev) =>
       prev.map((m, mi) =>
         mi === mealIndex
           ? {
               ...m,
-              foods: m.foods.map((f, fi) =>
-                fi === foodIndex
-                  ? { ...f, [field]: ["calories", "protein", "carbs", "fat"].includes(field) ? (value ? parseInt(value) : null) : value }
-                  : f
-              ),
+              foods: m.foods.map((f, fi) => {
+                if (fi !== foodIndex) return f;
+                if (field === "portion") {
+                  const oldGrams = parseGrams(f.portion);
+                  const newGrams = parseGrams(value);
+                  if (oldGrams > 0 && newGrams > 0 && oldGrams !== newGrams) {
+                    const ratio = newGrams / oldGrams;
+                    return {
+                      ...f,
+                      portion: value,
+                      calories: f.calories != null ? Math.round(f.calories * ratio) : null,
+                      protein: f.protein != null ? Math.round(f.protein * ratio) : null,
+                      carbs: f.carbs != null ? Math.round(f.carbs * ratio) : null,
+                      fat: f.fat != null ? Math.round(f.fat * ratio) : null,
+                    };
+                  }
+                  return { ...f, portion: value };
+                }
+                return { ...f, [field]: ["calories", "protein", "carbs", "fat"].includes(field) ? (value ? parseInt(value) : null) : value };
+              }),
             }
           : m
       )
     );
+  }
+
+  function calculateTotals() {
+    let totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
+    for (const meal of meals) {
+      for (const food of meal.foods) {
+        totalCal += food.calories || 0;
+        totalP += food.protein || 0;
+        totalC += food.carbs || 0;
+        totalF += food.fat || 0;
+      }
+    }
+    setNewCalories(totalCal ? totalCal.toString() : "");
+    setNewProtein(totalP ? totalP.toString() : "");
+    setNewCarbs(totalC ? totalC.toString() : "");
+    setNewFat(totalF ? totalF.toString() : "");
   }
 
   const filtered = plans.filter((p) =>
@@ -475,22 +511,34 @@ export default function NutritionPage() {
                   <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="input mt-1" placeholder="Low carb, high protein plan" />
                 </div>
 
-                <div className="grid grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Calories</label>
-                    <input type="number" value={newCalories} onChange={(e) => setNewCalories(e.target.value)} className="input mt-1" placeholder="1800" />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-medium text-gray-700">Daily Targets</label>
+                    <button
+                      type="button"
+                      onClick={calculateTotals}
+                      className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                    >
+                      Calculate from foods
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Protein (g)</label>
-                    <input type="number" value={newProtein} onChange={(e) => setNewProtein(e.target.value)} className="input mt-1" placeholder="150" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Carbs (g)</label>
-                    <input type="number" value={newCarbs} onChange={(e) => setNewCarbs(e.target.value)} className="input mt-1" placeholder="180" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Fat (g)</label>
-                    <input type="number" value={newFat} onChange={(e) => setNewFat(e.target.value)} className="input mt-1" placeholder="60" />
+                  <div className="mt-1 grid grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-[10px] text-gray-400">Calories</label>
+                      <input type="number" value={newCalories} onChange={(e) => setNewCalories(e.target.value)} className="input mt-0.5" placeholder="1800" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-400">Protein (g)</label>
+                      <input type="number" value={newProtein} onChange={(e) => setNewProtein(e.target.value)} className="input mt-0.5" placeholder="150" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-400">Carbs (g)</label>
+                      <input type="number" value={newCarbs} onChange={(e) => setNewCarbs(e.target.value)} className="input mt-0.5" placeholder="180" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-400">Fat (g)</label>
+                      <input type="number" value={newFat} onChange={(e) => setNewFat(e.target.value)} className="input mt-0.5" placeholder="60" />
+                    </div>
                   </div>
                 </div>
 
@@ -537,7 +585,16 @@ export default function NutritionPage() {
                         )}
                       </div>
 
-                      <div className="mt-2 space-y-2">
+                      <div className="mt-2 space-y-1">
+                        {(meal.foods.length > 0) && (
+                          <div className="grid grid-cols-6 gap-2 px-0.5">
+                            <div className="col-span-2 text-[10px] font-medium text-gray-400">Food</div>
+                            <div className="text-[10px] font-medium text-gray-400">Portion</div>
+                            <div className="text-[10px] font-medium text-gray-400">Calories</div>
+                            <div className="text-[10px] font-medium text-gray-400">Protein</div>
+                            <div className="text-[10px] font-medium text-gray-400">Fat</div>
+                          </div>
+                        )}
                         {meal.foods.map((food, fi) => (
                           <div key={fi} className="grid grid-cols-6 gap-2">
                             <div className="col-span-2">

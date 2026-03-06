@@ -242,6 +242,11 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     }
   }
 
+  function parseGrams(portion: string): number {
+    const match = portion.match(/(\d+(?:\.\d+)?)/);
+    return match ? parseFloat(match[1]) : 0;
+  }
+
   function updateFood(
     meals: MealInput[],
     setMeals: (v: MealInput[]) => void,
@@ -251,11 +256,36 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     value: string
   ) {
     setMeals(
-      meals.map((m, mi) =>
-        mi === mealIdx
-          ? { ...m, foods: m.foods.map((f, fi) => (fi === foodIdx ? { ...f, [field]: value } : f)) }
-          : m
-      )
+      meals.map((m, mi) => {
+        if (mi !== mealIdx) return m;
+        return {
+          ...m,
+          foods: m.foods.map((f, fi) => {
+            if (fi !== foodIdx) return f;
+            if (field === "portion") {
+              const oldGrams = parseGrams(f.portion);
+              const newGrams = parseGrams(value);
+              if (oldGrams > 0 && newGrams > 0 && oldGrams !== newGrams) {
+                const ratio = newGrams / oldGrams;
+                const scale = (v: string) => {
+                  const n = parseInt(v);
+                  return isNaN(n) ? v : Math.round(n * ratio).toString();
+                };
+                return {
+                  ...f,
+                  portion: value,
+                  calories: scale(f.calories),
+                  protein: scale(f.protein),
+                  carbs: scale(f.carbs),
+                  fat: scale(f.fat),
+                };
+              }
+              return { ...f, portion: value };
+            }
+            return { ...f, [field]: value };
+          }),
+        };
+      })
     );
   }
 
@@ -292,7 +322,16 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                 </button>
               )}
             </div>
-            <div className="mt-2 space-y-2">
+            <div className="mt-2 space-y-1">
+              {meal.foods.length > 0 && (
+                <div className="grid grid-cols-6 gap-2 px-0.5">
+                  <div className="col-span-2 text-[10px] font-medium text-gray-400">Food</div>
+                  <div className="text-[10px] font-medium text-gray-400">Portion</div>
+                  <div className="text-[10px] font-medium text-gray-400">Calories</div>
+                  <div className="text-[10px] font-medium text-gray-400">Protein</div>
+                  <div className="text-[10px] font-medium text-gray-400">Fat</div>
+                </div>
+              )}
               {meal.foods.map((food, fi) => (
                 <div key={fi} className="grid grid-cols-6 gap-2">
                   <div className="col-span-2">

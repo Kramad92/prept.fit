@@ -491,9 +491,8 @@ export default function NutritionPage() {
 
       {/* Create / Edit Modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
-          <div className="flex min-h-full items-end justify-center md:items-center md:p-4">
-            <div className="w-full max-w-2xl rounded-t-2xl bg-white p-6 md:rounded-2xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="w-full max-w-2xl rounded-t-2xl bg-white p-6 md:rounded-2xl max-h-[90vh] flex flex-col">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
                   {editingPlanId ? "Edit Meal Plan" : "Create Meal Plan"}
@@ -506,7 +505,7 @@ export default function NutritionPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreate} className="mt-4 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              <form onSubmit={handleCreate} className="mt-4 space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Plan Name *</label>
                   <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)} className="input mt-1" placeholder="Fat Loss - 1800 cal" />
@@ -647,7 +646,6 @@ export default function NutritionPage() {
                   {saving ? "Saving..." : editingPlanId ? "Save Changes" : "Create Meal Plan"}
                 </button>
               </form>
-            </div>
           </div>
         </div>
       )}

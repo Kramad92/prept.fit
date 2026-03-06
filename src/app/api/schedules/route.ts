@@ -37,7 +37,9 @@ export async function GET(req: NextRequest) {
     clientName: s.client.name,
   }));
 
-  return NextResponse.json(events);
+  return NextResponse.json(events, {
+    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
+  });
 }
 
 export async function POST(req: NextRequest) {

@@ -6,6 +6,7 @@ import { Plus, Clock, X } from "lucide-react";
 import { Calendar, CalendarEvent } from "@/components/schedule/calendar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
+import { PageSkeleton } from "@/components/ui/skeleton";
 
 interface ClientOption {
   id: string;
@@ -34,6 +35,8 @@ export default function SchedulePage() {
 
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
   const dayEvents = events.filter((e) => e.date.startsWith(selectedDateStr));
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div>

@@ -40,19 +40,22 @@ export async function GET() {
       }),
     ]);
 
-  return NextResponse.json({
-    clientCount,
-    planCount,
-    weekSessions,
-    todaySessions: todaySessions.map((s) => ({
-      id: s.id,
-      title: s.title,
-      date: s.date.toISOString(),
-      startTime: s.startTime,
-      endTime: s.endTime,
-      status: s.status,
-      clientName: s.client.name,
-    })),
-    recentClients,
-  });
+  return NextResponse.json(
+    {
+      clientCount,
+      planCount,
+      weekSessions,
+      todaySessions: todaySessions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        date: s.date.toISOString(),
+        startTime: s.startTime,
+        endTime: s.endTime,
+        status: s.status,
+        clientName: s.client.name,
+      })),
+      recentClients,
+    },
+    { headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" } }
+  );
 }

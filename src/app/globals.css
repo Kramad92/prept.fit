@@ -129,3 +129,27 @@
     @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6;
   }
 }
+
+/* Fade-in animation for page content and list items */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.2s ease-out both;
+}
+
+/* Stagger children - each child fades in with slight delay */
+.stagger-in > * {
+  animation: fadeIn 0.2s ease-out both;
+}
+.stagger-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 120ms; }
+.stagger-in > *:nth-child(6) { animation-delay: 150ms; }
+.stagger-in > *:nth-child(7) { animation-delay: 180ms; }
+.stagger-in > *:nth-child(8) { animation-delay: 210ms; }
+.stagger-in > *:nth-child(n+9) { animation-delay: 240ms; }

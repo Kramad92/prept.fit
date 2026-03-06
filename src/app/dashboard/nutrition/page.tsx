@@ -340,7 +340,7 @@ export default function NutritionPage() {
           />
         </div>
       ) : (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-4 stagger-in">
           {filtered.map((plan) => (
             <div key={plan.id} className="card">
               <div className="flex items-center justify-between">

@@ -49,7 +49,9 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(client);
+  return NextResponse.json(client, {
+    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
+  });
 }
 
 export async function PUT(

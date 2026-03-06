@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Dumbbell, Search, Zap } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageSkeleton } from "@/components/ui/skeleton";
 
 interface WorkoutPlan {
   id: string;
@@ -117,6 +118,8 @@ export default function WorkoutsPage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (loading) return <PageSkeleton />;
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -178,7 +181,7 @@ export default function WorkoutsPage() {
           />
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="mt-6 grid gap-4 md:grid-cols-2 stagger-in">
           {filtered.map((plan) => (
             <Link
               key={plan.id}

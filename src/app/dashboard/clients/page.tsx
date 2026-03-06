@@ -6,6 +6,7 @@ import { Plus, Search, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageSkeleton } from "@/components/ui/skeleton";
 
 interface Client {
   id: string;
@@ -32,6 +33,8 @@ export default function ClientsPage() {
   const filtered = clients.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div>
@@ -76,7 +79,7 @@ export default function ClientsPage() {
           />
         </div>
       ) : (
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-3 stagger-in">
           {filtered.map((client) => (
             <Link
               key={client.id}

@@ -22,7 +22,9 @@ export async function GET(
 
   if (!plan) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json(plan);
+  return NextResponse.json(plan, {
+    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
+  });
 }
 
 export async function PUT(

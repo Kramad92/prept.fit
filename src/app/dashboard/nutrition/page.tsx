@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Plus,
   UtensilsCrossed,
@@ -61,10 +61,6 @@ export default function NutritionPage() {
   // Create/Edit form state
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [newCalories, setNewCalories] = useState("");
-  const [newProtein, setNewProtein] = useState("");
-  const [newCarbs, setNewCarbs] = useState("");
-  const [newFat, setNewFat] = useState("");
   const [meals, setMeals] = useState<MealRow[]>([
     { name: "Breakfast", time: "07:30", foods: [] },
     { name: "Lunch", time: "12:30", foods: [] },
@@ -103,10 +99,10 @@ export default function NutritionPage() {
     const body = {
       name: newName,
       description: newDesc || null,
-      targetCalories: newCalories || null,
-      targetProtein: newProtein || null,
-      targetCarbs: newCarbs || null,
-      targetFat: newFat || null,
+      targetCalories: totals.calories || null,
+      targetProtein: totals.protein || null,
+      targetCarbs: totals.carbs || null,
+      targetFat: totals.fat || null,
       meals: meals
         .filter((m) => m.name.trim())
         .map((m, i) => ({
@@ -162,10 +158,6 @@ export default function NutritionPage() {
     setEditingPlanId(planId);
     setNewName(data.name);
     setNewDesc(data.description || "");
-    setNewCalories(data.targetCalories?.toString() || "");
-    setNewProtein(data.targetProtein?.toString() || "");
-    setNewCarbs(data.targetCarbs?.toString() || "");
-    setNewFat(data.targetFat?.toString() || "");
     setMeals(
       data.meals.map((m: any) => ({
         name: m.name,
@@ -201,10 +193,6 @@ export default function NutritionPage() {
   function resetForm() {
     setNewName("");
     setNewDesc("");
-    setNewCalories("");
-    setNewProtein("");
-    setNewCarbs("");
-    setNewFat("");
     setEditingPlanId(null);
     setMeals([
       { name: "Breakfast", time: "07:30", foods: [] },
@@ -250,21 +238,18 @@ export default function NutritionPage() {
     );
   }
 
-  function calculateTotals() {
-    let totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
+  const totals = useMemo(() => {
+    let cal = 0, p = 0, c = 0, f = 0;
     for (const meal of meals) {
       for (const food of meal.foods) {
-        totalCal += food.calories || 0;
-        totalP += food.protein || 0;
-        totalC += food.carbs || 0;
-        totalF += food.fat || 0;
+        cal += food.calories || 0;
+        p += food.protein || 0;
+        c += food.carbs || 0;
+        f += food.fat || 0;
       }
     }
-    setNewCalories(totalCal ? totalCal.toString() : "");
-    setNewProtein(totalP ? totalP.toString() : "");
-    setNewCarbs(totalC ? totalC.toString() : "");
-    setNewFat(totalF ? totalF.toString() : "");
-  }
+    return { calories: cal, protein: p, carbs: c, fat: f };
+  }, [meals]);
 
   const filtered = plans.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -511,36 +496,15 @@ export default function NutritionPage() {
                   <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="input mt-1" placeholder="Low carb, high protein plan" />
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-medium text-gray-700">Daily Targets</label>
-                    <button
-                      type="button"
-                      onClick={calculateTotals}
-                      className="text-xs font-medium text-brand-600 hover:text-brand-700"
-                    >
-                      Calculate from foods
-                    </button>
+                {totals.calories > 0 && (
+                  <div className="flex flex-wrap gap-3 rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                    <span className="font-medium text-gray-700">Daily totals:</span>
+                    <span className="rounded bg-orange-50 px-2 py-0.5 text-orange-700">{totals.calories} cal</span>
+                    <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700">P: {totals.protein}g</span>
+                    <span className="rounded bg-green-50 px-2 py-0.5 text-green-700">C: {totals.carbs}g</span>
+                    <span className="rounded bg-yellow-50 px-2 py-0.5 text-yellow-700">F: {totals.fat}g</span>
                   </div>
-                  <div className="mt-1 grid grid-cols-4 gap-3">
-                    <div>
-                      <label className="block text-[10px] text-gray-400">Calories</label>
-                      <input type="number" value={newCalories} onChange={(e) => setNewCalories(e.target.value)} className="input mt-0.5" placeholder="1800" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-400">Protein (g)</label>
-                      <input type="number" value={newProtein} onChange={(e) => setNewProtein(e.target.value)} className="input mt-0.5" placeholder="150" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-400">Carbs (g)</label>
-                      <input type="number" value={newCarbs} onChange={(e) => setNewCarbs(e.target.value)} className="input mt-0.5" placeholder="180" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-400">Fat (g)</label>
-                      <input type="number" value={newFat} onChange={(e) => setNewFat(e.target.value)} className="input mt-0.5" placeholder="60" />
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center justify-between">

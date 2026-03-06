@@ -17,6 +17,8 @@ import {
   Mail,
   Key,
   X,
+  Sparkles,
+  Trash2,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -136,7 +138,7 @@ export default function ClientDetailPage() {
   const [inviteResult, setInviteResult] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "photos" | "workouts" | "nutrition" | "payments" | "measurements"
+    "overview" | "photos" | "workouts" | "nutrition" | "habits" | "payments" | "measurements"
   >("overview");
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
   const { toastError } = useToast();
@@ -165,6 +167,7 @@ export default function ClientDetailPage() {
     { key: "photos" as const, label: "Photos", icon: Camera },
     { key: "workouts" as const, label: "Workouts", icon: Dumbbell },
     { key: "nutrition" as const, label: "Nutrition", icon: UtensilsCrossed },
+    { key: "habits" as const, label: "Habits", icon: Sparkles },
     { key: "payments" as const, label: "Payments", icon: DollarSign },
     { key: "measurements" as const, label: "Stats", icon: Ruler },
   ];
@@ -307,6 +310,10 @@ export default function ClientDetailPage() {
             assignedMealPlans={client.assignedMealPlans}
             onRefresh={loadClient}
           />
+        )}
+
+        {activeTab === "habits" && (
+          <HabitsTab clientId={client.id} />
         )}
 
         {activeTab === "payments" && (
@@ -580,6 +587,180 @@ function PhotosTab({
           onClose={() => setLightboxIndex(null)}
           onUpdate={handleUpdate}
         />
+      )}
+    </div>
+  );
+}
+
+function HabitsTab({ clientId }: { clientId: string }) {
+  const [assignedHabits, setAssignedHabits] = useState<
+    Array<{
+      id: string;
+      habit: { id: string; name: string; icon: string | null };
+      logs: Array<{ date: string; completed: boolean }>;
+    }>
+  >([]);
+  const [allHabits, setAllHabits] = useState<Array<{ id: string; name: string; icon: string | null }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAssign, setShowAssign] = useState(false);
+  const { toastSuccess, toastError } = useToast();
+
+  function loadHabits() {
+    Promise.all([
+      fetch(`/api/habits/assign?clientId=${clientId}`).then((r) => r.json()),
+      fetch("/api/habits").then((r) => r.json()),
+    ])
+      .then(([assigned, all]) => {
+        setAssignedHabits(assigned);
+        setAllHabits(all);
+      })
+      .catch(() => toastError("Failed to load habits"))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { loadHabits(); }, [clientId]);
+
+  const assignedIds = new Set(assignedHabits.map((ah) => ah.habit.id));
+  const unassigned = allHabits.filter((h) => !assignedIds.has(h.id));
+
+  async function assignHabit(habitId: string) {
+    const res = await fetch("/api/habits/assign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId, habitIds: [habitId] }),
+    });
+    if (res.ok) {
+      toastSuccess("Habit assigned");
+      loadHabits();
+    }
+  }
+
+  async function removeHabit(clientHabitId: string) {
+    await fetch(`/api/habits/assign?id=${clientHabitId}`, { method: "DELETE" });
+    toastSuccess("Habit removed");
+    loadHabits();
+  }
+
+  // Count completions in last 7 days
+  function recentStreak(logs: Array<{ date: string; completed: boolean }>) {
+    const last7 = new Set<string>();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      last7.add(d.toISOString().split("T")[0]);
+    }
+    return logs.filter((l) => l.completed && last7.has(l.date.split("T")[0])).length;
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-700">
+          Assigned Habits ({assignedHabits.length})
+        </h3>
+        {!showAssign && unassigned.length > 0 && (
+          <button onClick={() => setShowAssign(true)} className="btn-primary text-sm">
+            <Plus className="mr-1 h-4 w-4" />
+            Assign Habit
+          </button>
+        )}
+      </div>
+
+      {/* Assign modal */}
+      {showAssign && (
+        <div className="card mb-4 border-2 border-brand-200">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-gray-900">Assign Habits</h4>
+            <button onClick={() => setShowAssign(false)} className="rounded p-1 hover:bg-gray-100">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {unassigned.length === 0 ? (
+            <p className="mt-3 text-sm text-gray-500">
+              All habits are already assigned. Create new ones on the{" "}
+              <a href="/dashboard/habits" className="font-medium text-brand-600 hover:underline">
+                Habits page
+              </a>.
+            </p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {unassigned.map((h) => (
+                <button
+                  key={h.id}
+                  onClick={() => assignHabit(h.id)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm transition-colors hover:border-brand-300 hover:bg-brand-50"
+                >
+                  <span>{h.icon || "✅"}</span>
+                  {h.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {assignedHabits.length === 0 && !showAssign ? (
+        <div className="card flex flex-col items-center py-8 text-center">
+          <Sparkles className="h-10 w-10 text-gray-300" />
+          <p className="mt-3 text-sm text-gray-500">No habits assigned to this client yet.</p>
+          <button
+            onClick={() => setShowAssign(true)}
+            className="mt-3 text-sm font-medium text-brand-600 hover:text-brand-700"
+          >
+            Assign habits
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {assignedHabits.map((ah) => {
+            const streak = recentStreak(ah.logs);
+            return (
+              <div key={ah.id} className="card flex items-center gap-3">
+                <span className="text-2xl">{ah.habit.icon || "✅"}</span>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{ah.habit.name}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 7 }).map((_, i) => {
+                        const d = new Date();
+                        d.setDate(d.getDate() - (6 - i));
+                        const dateStr = d.toISOString().split("T")[0];
+                        const done = ah.logs.some(
+                          (l) => l.completed && l.date.split("T")[0] === dateStr
+                        );
+                        return (
+                          <div
+                            key={i}
+                            className={`h-3 w-3 rounded-sm ${
+                              done ? "bg-brand-500" : "bg-gray-200"
+                            }`}
+                            title={dateStr}
+                          />
+                        );
+                      })}
+                    </div>
+                    <span className="text-xs text-gray-400">{streak}/7 this week</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeHabit(ah.id)}
+                  className="rounded p-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500"
+                  title="Remove habit"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { PortalMobileNav, PortalDesktopNav } from "@/components/layout/portal-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { BrandColorProvider } from "@/components/brand-color-provider";
+import { MobileInputScroll } from "@/components/mobile-input-scroll";
 
 export default function PortalLayout({
   children,
@@ -18,6 +19,7 @@ export default function PortalLayout({
         </div>
       </main>
       <PortalMobileNav />
+      <MobileInputScroll />
     </div>
   );
 }

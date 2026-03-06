@@ -275,10 +275,8 @@ export function FoodPicker({
             setQuery(e.target.value);
             setOpen(true);
           }}
-          onFocus={(e) => {
+          onFocus={() => {
             if (query.trim().length >= 2) setOpen(true);
-            // Scroll input into view on mobile when keyboard opens
-            setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
           }}
           onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
           className={inputClassName || (isInline ? "input text-xs" : "input pl-10")}

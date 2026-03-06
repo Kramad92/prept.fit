@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { BrandColorProvider } from "@/components/brand-color-provider";
+import { MobileInputScroll } from "@/components/mobile-input-scroll";
 
 export default function DashboardLayout({
   children,
@@ -19,6 +20,7 @@ export default function DashboardLayout({
         </div>
       </main>
       <MobileNav />
+      <MobileInputScroll />
     </div>
   );
 }

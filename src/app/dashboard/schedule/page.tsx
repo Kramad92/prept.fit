@@ -36,7 +36,7 @@ export default function SchedulePage() {
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
   const dayEvents = events.filter((e) => e.date.startsWith(selectedDateStr));
 
-  if (loading) return <PageSkeleton />;
+  if (loading) return null;
 
   return (
     <div>

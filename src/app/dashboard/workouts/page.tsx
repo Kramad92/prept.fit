@@ -118,7 +118,7 @@ export default function WorkoutsPage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <PageSkeleton />;
+  if (loading) return null;
 
   return (
     <div>

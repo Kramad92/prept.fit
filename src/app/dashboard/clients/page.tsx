@@ -34,7 +34,7 @@ export default function ClientsPage() {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <PageSkeleton />;
+  if (loading) return null;
 
   return (
     <div>

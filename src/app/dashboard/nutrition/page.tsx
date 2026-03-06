@@ -66,9 +66,9 @@ export default function NutritionPage() {
   const [newCarbs, setNewCarbs] = useState("");
   const [newFat, setNewFat] = useState("");
   const [meals, setMeals] = useState<MealRow[]>([
-    { name: "Breakfast", time: "07:30", foods: [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] },
-    { name: "Lunch", time: "12:30", foods: [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] },
-    { name: "Dinner", time: "19:00", foods: [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] },
+    { name: "Breakfast", time: "07:30", foods: [] },
+    { name: "Lunch", time: "12:30", foods: [] },
+    { name: "Dinner", time: "19:00", foods: [] },
   ]);
   const [saving, setSaving] = useState(false);
 
@@ -207,20 +207,10 @@ export default function NutritionPage() {
     setNewFat("");
     setEditingPlanId(null);
     setMeals([
-      { name: "Breakfast", time: "07:30", foods: [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] },
-      { name: "Lunch", time: "12:30", foods: [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] },
-      { name: "Dinner", time: "19:00", foods: [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] },
+      { name: "Breakfast", time: "07:30", foods: [] },
+      { name: "Lunch", time: "12:30", foods: [] },
+      { name: "Dinner", time: "19:00", foods: [] },
     ]);
-  }
-
-  function addFood(mealIndex: number) {
-    setMeals((prev) =>
-      prev.map((m, i) =>
-        i === mealIndex
-          ? { ...m, foods: [...m.foods, { name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] }
-          : m
-      )
-    );
   }
 
   function updateFood(mealIndex: number, foodIndex: number, field: string, value: string) {
@@ -509,7 +499,7 @@ export default function NutritionPage() {
                     <h3 className="text-sm font-semibold text-gray-700">Meals</h3>
                     <button
                       type="button"
-                      onClick={() => setMeals((prev) => [...prev, { name: "", time: "", foods: [{ name: "", portion: "", calories: null, protein: null, carbs: null, fat: null }] }])}
+                      onClick={() => setMeals((prev) => [...prev, { name: "", time: "", foods: [] }])}
                       className="text-xs font-medium text-brand-600 hover:text-brand-700"
                     >
                       + Add Meal
@@ -547,32 +537,6 @@ export default function NutritionPage() {
                         )}
                       </div>
 
-                      <div className="mt-2">
-                        <FoodPicker
-                          onSelect={(food) => {
-                            setMeals((prev) =>
-                              prev.map((m, i) =>
-                                i === mi
-                                  ? {
-                                      ...m,
-                                      foods: [
-                                        ...m.foods,
-                                        {
-                                          name: food.name,
-                                          portion: food.portion || "",
-                                          calories: food.calories ?? null,
-                                          protein: food.protein ?? null,
-                                          carbs: food.carbs ?? null,
-                                          fat: food.fat ?? null,
-                                        },
-                                      ],
-                                    }
-                                  : m
-                              )
-                            );
-                          }}
-                        />
-                      </div>
                       <div className="mt-2 space-y-2">
                         {meal.foods.map((food, fi) => (
                           <div key={fi} className="grid grid-cols-6 gap-2">
@@ -596,13 +560,42 @@ export default function NutritionPage() {
                             </div>
                           </div>
                         ))}
-                        <button
-                          type="button"
-                          onClick={() => addFood(mi)}
-                          className="text-xs font-medium text-brand-600 hover:text-brand-700"
-                        >
-                          + Add food manually
-                        </button>
+                        {/* Add food row — typing in "Food item" triggers search */}
+                        <div className="grid grid-cols-6 gap-2">
+                          <div className="col-span-2">
+                            <FoodPicker
+                              variant="inline"
+                              inputClassName="input text-xs"
+                              placeholder="Food item"
+                              onSelect={(food) => {
+                                setMeals((prev) =>
+                                  prev.map((m, i) =>
+                                    i === mi
+                                      ? {
+                                          ...m,
+                                          foods: [
+                                            ...m.foods,
+                                            {
+                                              name: food.name,
+                                              portion: food.portion || "",
+                                              calories: food.calories ?? null,
+                                              protein: food.protein ?? null,
+                                              carbs: food.carbs ?? null,
+                                              fat: food.fat ?? null,
+                                            },
+                                          ],
+                                        }
+                                      : m
+                                  )
+                                );
+                              }}
+                            />
+                          </div>
+                          <input type="text" disabled className="input text-xs opacity-50" placeholder="Portion" />
+                          <input type="text" disabled className="input text-xs opacity-50" placeholder="Cal" />
+                          <input type="text" disabled className="input text-xs opacity-50" placeholder="P (g)" />
+                          <input type="text" disabled className="input text-xs opacity-50" placeholder="F (g)" />
+                        </div>
                       </div>
                     </div>
                   ))}

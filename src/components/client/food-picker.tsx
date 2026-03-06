@@ -36,15 +36,23 @@ interface SelectedFood {
   fdcId?: number;
 }
 
+export interface FoodResult {
+  name: string;
+  portion?: string;
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+}
+
 interface FoodPickerProps {
-  onSelect: (food: {
-    name: string;
-    portion?: string;
-    calories?: number | null;
-    protein?: number | null;
-    carbs?: number | null;
-    fat?: number | null;
-  }) => void;
+  onSelect: (food: FoodResult) => void;
+  /** "standalone" = search bar with icon (default). "inline" = compact input that fits in a row. */
+  variant?: "standalone" | "inline";
+  /** Class name for the input element (inline variant) */
+  inputClassName?: string;
+  /** Placeholder text */
+  placeholder?: string;
 }
 
 function parseGrams(portion: string): number {
@@ -57,7 +65,12 @@ function scaleNutrient(base: number | null, ratio: number): number | null {
   return Math.round(base * ratio);
 }
 
-export function FoodPicker({ onSelect }: FoodPickerProps) {
+export function FoodPicker({
+  onSelect,
+  variant = "standalone",
+  inputClassName,
+  placeholder,
+}: FoodPickerProps) {
   const [query, setQuery] = useState("");
   const [libraryResults, setLibraryResults] = useState<LibraryFood[]>([]);
   const [usdaResults, setUsdaResults] = useState<USDAFood[]>([]);
@@ -68,6 +81,8 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
   const [portionInput, setPortionInput] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const portionRef = useRef<HTMLInputElement>(null);
+
+  const isInline = variant === "inline";
 
   useEffect(() => {
     if (!query.trim() || query.trim().length < 2) {
@@ -194,7 +209,7 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
 
   const hasResults = libraryResults.length > 0 || usdaResults.length > 0;
 
-  // If a food is staged for portion input, show the portion editor
+  // Portion staging UI
   if (selected) {
     const grams = parseFloat(portionInput) || selected.baseGrams;
     const ratio = grams / selected.baseGrams;
@@ -250,139 +265,140 @@ export function FoodPicker({ onSelect }: FoodPickerProps) {
     );
   }
 
+  // Dropdown content (shared between variants)
+  const dropdown = open && query.trim().length >= 2 && (
+    <div className={`absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg ${isInline ? "left-0 w-80" : "w-full"}`}>
+      <div className="max-h-72 overflow-y-auto">
+        {libraryResults.length > 0 && (
+          <>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+              <Star className="h-3 w-3" />
+              Your Foods
+            </div>
+            {libraryResults.map((food) => (
+              <button
+                key={food.id}
+                onClick={() =>
+                  stageFood({
+                    name: food.name,
+                    portion: food.defaultPortion || "100g",
+                    calories: food.calories,
+                    protein: food.protein,
+                    carbs: food.carbs,
+                    fat: food.fat,
+                  })
+                }
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-brand-50"
+              >
+                <div>
+                  <span className="font-medium text-gray-900">{food.name}</span>
+                  {food.defaultPortion && (
+                    <span className="ml-2 text-xs text-gray-400">{food.defaultPortion}</span>
+                  )}
+                </div>
+                <span className="text-xs text-gray-400">
+                  {macroLabel(food.calories, food.protein, food.carbs, food.fat)}
+                </span>
+              </button>
+            ))}
+          </>
+        )}
+
+        {usdaResults.length > 0 && (
+          <>
+            <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+              <Database className="h-3 w-3" />
+              USDA Database
+            </div>
+            {usdaResults.map((food) => (
+              <div
+                key={food.fdcId}
+                className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50"
+              >
+                <button
+                  onClick={() =>
+                    stageFood({
+                      name: food.name,
+                      portion: food.portion,
+                      calories: food.calories,
+                      protein: food.protein,
+                      carbs: food.carbs,
+                      fat: food.fat,
+                      fdcId: food.fdcId,
+                    })
+                  }
+                  className="flex flex-1 items-center justify-between text-left text-sm"
+                >
+                  <div className="min-w-0">
+                    <span className="font-medium text-gray-900 line-clamp-1">
+                      {food.name.length > 50
+                        ? food.name.slice(0, 50) + "..."
+                        : food.name}
+                    </span>
+                    <span className="ml-2 text-xs text-gray-400">{food.portion}</span>
+                  </div>
+                  <span className="ml-2 flex-shrink-0 text-xs text-gray-400">
+                    {macroLabel(food.calories, food.protein, food.carbs, food.fat)}
+                  </span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    saveToLibrary(food);
+                  }}
+                  title="Save to your food library"
+                  className="ml-1 flex-shrink-0 rounded p-1 text-gray-300 hover:bg-brand-50 hover:text-brand-600"
+                >
+                  {saving === food.fdcId ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+
+        {!loading && !hasResults && (
+          <p className="px-3 py-4 text-center text-sm text-gray-400">
+            No foods found
+          </p>
+        )}
+      </div>
+
+      <button
+        onClick={() => selectCustomFood(query.trim())}
+        className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
+      >
+        <Plus className="h-4 w-4" />
+        Add &quot;{query.trim()}&quot; as custom food
+      </button>
+    </div>
+  );
+
   return (
     <div ref={wrapperRef} className="relative">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        {!isInline && (
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        )}
         <input
           type="text"
-          placeholder="Search foods (e.g. chicken breast, rice)..."
+          placeholder={placeholder || "Search foods (e.g. chicken breast, rice)..."}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
-          className="input pl-10"
+          onFocus={() => query.trim().length >= 2 && setOpen(true)}
+          className={inputClassName || (isInline ? "input text-xs" : "input pl-10")}
         />
         {loading && (
-          <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+          <Loader2 className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400 ${isInline ? "right-2 h-3 w-3" : "right-3"}`} />
         )}
       </div>
-
-      {open && query.trim().length >= 2 && (
-        <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
-          <div className="max-h-72 overflow-y-auto">
-            {/* Custom library results */}
-            {libraryResults.length > 0 && (
-              <>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                  <Star className="h-3 w-3" />
-                  Your Foods
-                </div>
-                {libraryResults.map((food) => (
-                  <button
-                    key={food.id}
-                    onClick={() =>
-                      stageFood({
-                        name: food.name,
-                        portion: food.defaultPortion || "100g",
-                        calories: food.calories,
-                        protein: food.protein,
-                        carbs: food.carbs,
-                        fat: food.fat,
-                      })
-                    }
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-brand-50"
-                  >
-                    <div>
-                      <span className="font-medium text-gray-900">{food.name}</span>
-                      {food.defaultPortion && (
-                        <span className="ml-2 text-xs text-gray-400">{food.defaultPortion}</span>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-400">
-                      {macroLabel(food.calories, food.protein, food.carbs, food.fat)}
-                    </span>
-                  </button>
-                ))}
-              </>
-            )}
-
-            {/* USDA results */}
-            {usdaResults.length > 0 && (
-              <>
-                <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                  <Database className="h-3 w-3" />
-                  USDA Database
-                </div>
-                {usdaResults.map((food) => (
-                  <div
-                    key={food.fdcId}
-                    className="flex items-center gap-1 px-3 py-2 hover:bg-gray-50"
-                  >
-                    <button
-                      onClick={() =>
-                        stageFood({
-                          name: food.name,
-                          portion: food.portion,
-                          calories: food.calories,
-                          protein: food.protein,
-                          carbs: food.carbs,
-                          fat: food.fat,
-                          fdcId: food.fdcId,
-                        })
-                      }
-                      className="flex flex-1 items-center justify-between text-left text-sm"
-                    >
-                      <div className="min-w-0">
-                        <span className="font-medium text-gray-900 line-clamp-1">
-                          {food.name.length > 50
-                            ? food.name.slice(0, 50) + "..."
-                            : food.name}
-                        </span>
-                        <span className="ml-2 text-xs text-gray-400">{food.portion}</span>
-                      </div>
-                      <span className="ml-2 flex-shrink-0 text-xs text-gray-400">
-                        {macroLabel(food.calories, food.protein, food.carbs, food.fat)}
-                      </span>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        saveToLibrary(food);
-                      }}
-                      title="Save to your food library"
-                      className="ml-1 flex-shrink-0 rounded p-1 text-gray-300 hover:bg-brand-50 hover:text-brand-600"
-                    >
-                      {saving === food.fdcId ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Save className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {!loading && !hasResults && (
-              <p className="px-3 py-4 text-center text-sm text-gray-400">
-                No foods found
-              </p>
-            )}
-          </div>
-
-          {/* Custom entry */}
-          <button
-            onClick={() => selectCustomFood(query.trim())}
-            className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-brand-600 hover:bg-brand-50"
-          >
-            <Plus className="h-4 w-4" />
-            Add &quot;{query.trim()}&quot; as custom food
-          </button>
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }

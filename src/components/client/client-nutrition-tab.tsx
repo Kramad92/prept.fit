@@ -89,15 +89,15 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
       tempId: Math.random().toString(36).slice(2),
       name: "",
       time: "",
-      foods: [{ name: "", portion: "", calories: "", protein: "", carbs: "", fat: "" }],
+      foods: [],
     };
   }
 
   function defaultMeals(): MealInput[] {
     return [
-      { tempId: "b", name: "Breakfast", time: "07:30", foods: [{ name: "", portion: "", calories: "", protein: "", carbs: "", fat: "" }] },
-      { tempId: "l", name: "Lunch", time: "12:30", foods: [{ name: "", portion: "", calories: "", protein: "", carbs: "", fat: "" }] },
-      { tempId: "d", name: "Dinner", time: "19:00", foods: [{ name: "", portion: "", calories: "", protein: "", carbs: "", fat: "" }] },
+      { tempId: "b", name: "Breakfast", time: "07:30", foods: [] },
+      { tempId: "l", name: "Lunch", time: "12:30", foods: [] },
+      { tempId: "d", name: "Dinner", time: "19:00", foods: [] },
     ];
   }
 
@@ -292,32 +292,6 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                 </button>
               )}
             </div>
-            <div className="mt-2">
-              <FoodPicker
-                onSelect={(food) => {
-                  setMeals(
-                    meals.map((m, i) =>
-                      i === mi
-                        ? {
-                            ...m,
-                            foods: [
-                              ...m.foods,
-                              {
-                                name: food.name,
-                                portion: food.portion || "",
-                                calories: food.calories?.toString() || "",
-                                protein: food.protein?.toString() || "",
-                                carbs: food.carbs?.toString() || "",
-                                fat: food.fat?.toString() || "",
-                              },
-                            ],
-                          }
-                        : m
-                    )
-                  );
-                }}
-              />
-            </div>
             <div className="mt-2 space-y-2">
               {meal.foods.map((food, fi) => (
                 <div key={fi} className="grid grid-cols-6 gap-2">
@@ -335,13 +309,42 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => setMeals(meals.map((m, i) => i === mi ? { ...m, foods: [...m.foods, { name: "", portion: "", calories: "", protein: "", carbs: "", fat: "" }] } : m))}
-                className="text-xs font-medium text-brand-600 hover:text-brand-700"
-              >
-                + Add food item
-              </button>
+              {/* Add food row — typing in "Food" triggers search */}
+              <div className="grid grid-cols-6 gap-2">
+                <div className="col-span-2">
+                  <FoodPicker
+                    variant="inline"
+                    inputClassName="input text-xs"
+                    placeholder="Food"
+                    onSelect={(food) => {
+                      setMeals(
+                        meals.map((m, i) =>
+                          i === mi
+                            ? {
+                                ...m,
+                                foods: [
+                                  ...m.foods,
+                                  {
+                                    name: food.name,
+                                    portion: food.portion || "",
+                                    calories: food.calories?.toString() || "",
+                                    protein: food.protein?.toString() || "",
+                                    carbs: food.carbs?.toString() || "",
+                                    fat: food.fat?.toString() || "",
+                                  },
+                                ],
+                              }
+                            : m
+                        )
+                      );
+                    }}
+                  />
+                </div>
+                <input type="text" disabled className="input text-xs opacity-50" placeholder="Portion" />
+                <input type="text" disabled className="input text-xs opacity-50" placeholder="Cal" />
+                <input type="text" disabled className="input text-xs opacity-50" placeholder="P" />
+                <input type="text" disabled className="input text-xs opacity-50" placeholder="F" />
+              </div>
             </div>
           </div>
         ))}

@@ -41,7 +41,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const res = await fetch(
-      `${USDA_BASE}/foods/search?query=${encodeURIComponent(query)}&pageSize=15&dataType=Foundation,SR Legacy&api_key=${USDA_API_KEY}`
+      `${USDA_BASE}/foods/search?api_key=${USDA_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query,
+          dataType: ["Foundation", "SR Legacy", "Survey (FNDDS)"],
+          pageSize: 15,
+        }),
+      }
     );
 
     if (!res.ok) {
@@ -59,7 +68,6 @@ export async function GET(req: NextRequest) {
       protein: extractNutrient(f.foodNutrients, 1003),  // Protein
       carbs: extractNutrient(f.foodNutrients, 1005),    // Carbohydrate
       fat: extractNutrient(f.foodNutrients, 1004),      // Total fat
-      brand: f.brandName || null,
       source: "usda",
     }));
 

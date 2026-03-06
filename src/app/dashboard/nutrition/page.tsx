@@ -646,7 +646,7 @@ export default function NutritionPage() {
                                   }}
                                 />
                               </div>
-                              <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
+                              <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" data-food-portion={`${mi}-${fi}`} onFocus={(e) => e.target.select()} />
                               <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
                               <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P (g)" />
                               <div className="flex gap-1">
@@ -697,7 +697,7 @@ export default function NutritionPage() {
                                 }} className="text-gray-400 hover:text-red-500 p-1"><Trash2 className="h-4 w-4" /></button>
                               </div>
                               <div className="grid grid-cols-2 gap-1.5">
-                                <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
+                                <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" data-food-portion-m={`${mi}-${fi}`} onFocus={(e) => e.target.select()} />
                                 <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Calories" />
                                 <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="Protein (g)" />
                                 <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="Fat (g)" />
@@ -734,10 +734,18 @@ export default function NutritionPage() {
                                     : m
                                 )
                               );
-                              // Scroll to show the newly added item
+                              // Focus the portion field of the newly added food
                               setTimeout(() => {
-                                const el = document.querySelector(`[data-add-food="${mi}"]`);
-                                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                const newIdx = meals[mi].foods.length; // index of new food after state update
+                                const el = document.querySelector(`[data-food-portion="${mi}-${newIdx}"]`) as HTMLInputElement
+                                  || document.querySelector(`[data-food-portion-m="${mi}-${newIdx}"]`) as HTMLInputElement;
+                                if (el) {
+                                  el.scrollIntoView({ behavior: "smooth", block: "center" });
+                                  el.focus();
+                                  el.select();
+                                } else {
+                                  document.querySelector(`[data-add-food="${mi}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                }
                               }, 50);
                             }}
                           />

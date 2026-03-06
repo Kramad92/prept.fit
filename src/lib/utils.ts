@@ -27,10 +27,10 @@ export function createEmptyExercise(): ExerciseInput {
   return {
     tempId: Math.random().toString(36).slice(2),
     name: "",
-    sets: "",
-    reps: "",
+    sets: "3",
+    reps: "8-12",
     weight: "",
-    restSeconds: "",
+    restSeconds: "60",
     notes: "",
     videoUrl: "",
   };

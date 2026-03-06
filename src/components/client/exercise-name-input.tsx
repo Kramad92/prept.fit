@@ -8,9 +8,11 @@ interface ExerciseNameInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  [key: `data-${string}`]: string | undefined;
 }
 
-export function ExerciseNameInput({ value, onChange, placeholder, className }: ExerciseNameInputProps) {
+export function ExerciseNameInput({ value, onChange, placeholder, className, onKeyDown, ...rest }: ExerciseNameInputProps) {
   const [results, setResults] = useState<LibraryExercise[]>([]);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -51,8 +53,10 @@ export function ExerciseNameInput({ value, onChange, placeholder, className }: E
         onFocus={() => {
           if (value.trim().length >= 2) setOpen(true);
         }}
+        onKeyDown={onKeyDown}
         placeholder={placeholder || "Exercise name"}
         className={className || "input flex-1"}
+        {...rest}
       />
       {open && results.length > 0 && (
         <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">

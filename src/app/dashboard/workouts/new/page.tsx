@@ -17,10 +17,12 @@ export default function NewWorkoutPage() {
   const [exercises, setExercises] = useState<ExerciseInput[]>([]);
 
   function addExercise() {
-    setExercises((prev) => [...prev, createEmptyExercise()]);
+    const ex = createEmptyExercise();
+    setExercises((prev) => [...prev, ex]);
     setTimeout(() => {
-      const el = document.querySelector("[data-exercise-end]");
+      const el = document.querySelector(`[data-ex-name="${ex.tempId}"]`) as HTMLInputElement;
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus();
     }, 50);
   }
 
@@ -38,13 +40,15 @@ export default function NewWorkoutPage() {
     );
   }
 
-  function addFromLibrary(ex: { name: string }) {
+  function addFromLibrary(lib: { name: string }) {
     const newEx = createEmptyExercise();
-    newEx.name = ex.name;
+    newEx.name = lib.name;
     setExercises((prev) => [...prev, newEx]);
     setTimeout(() => {
-      const el = document.querySelector("[data-exercise-end]");
+      const el = document.querySelector(`[data-ex-sets="${newEx.tempId}"]`) as HTMLInputElement;
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus();
+      el?.select();
     }, 50);
   }
 
@@ -170,6 +174,13 @@ export default function NewWorkoutPage() {
                         value={ex.name}
                         onChange={(v) => updateExercise(ex.tempId, "name", v)}
                         className="input flex-1"
+                        data-ex-name={ex.tempId}
+                        onKeyDown={(e: React.KeyboardEvent) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            (document.querySelector(`[data-ex-sets="${ex.tempId}"]`) as HTMLInputElement)?.focus();
+                          }
+                        }}
                       />
                       <button
                         type="button"
@@ -182,19 +193,19 @@ export default function NewWorkoutPage() {
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                       <div>
                         <label className="text-xs text-gray-500">Sets</label>
-                        <input type="number" value={ex.sets} onChange={(e) => updateExercise(ex.tempId, "sets", e.target.value)} placeholder="3" className="input mt-0.5" />
+                        <input type="number" value={ex.sets} onChange={(e) => updateExercise(ex.tempId, "sets", e.target.value)} placeholder="3" className="input mt-0.5" data-ex-sets={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-reps="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">Reps</label>
-                        <input type="text" value={ex.reps} onChange={(e) => updateExercise(ex.tempId, "reps", e.target.value)} placeholder="8-12" className="input mt-0.5" />
+                        <input type="text" value={ex.reps} onChange={(e) => updateExercise(ex.tempId, "reps", e.target.value)} placeholder="8-12" className="input mt-0.5" data-ex-reps={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-weight="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">Weight</label>
-                        <input type="text" value={ex.weight} onChange={(e) => updateExercise(ex.tempId, "weight", e.target.value)} placeholder="135lbs" className="input mt-0.5" />
+                        <input type="text" value={ex.weight} onChange={(e) => updateExercise(ex.tempId, "weight", e.target.value)} placeholder="—" className="input mt-0.5" data-ex-weight={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-rest="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">Rest (sec)</label>
-                        <input type="number" value={ex.restSeconds} onChange={(e) => updateExercise(ex.tempId, "restSeconds", e.target.value)} placeholder="60" className="input mt-0.5" />
+                        <input type="number" value={ex.restSeconds} onChange={(e) => updateExercise(ex.tempId, "restSeconds", e.target.value)} placeholder="60" className="input mt-0.5" data-ex-rest={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }}} />
                       </div>
                     </div>
                     <div>

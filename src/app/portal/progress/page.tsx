@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3, Plus, X } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 
 interface ProgressPhoto {
   id: string;
@@ -34,6 +35,7 @@ export default function PortalProgressPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   function loadData() {
     fetch("/api/portal/me")
@@ -168,10 +170,11 @@ export default function PortalProgressPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                {photos.map((photo) => (
+                {photos.map((photo, i) => (
                   <div
                     key={photo.id}
-                    className="relative aspect-square overflow-hidden rounded-xl"
+                    onClick={() => setLightboxIndex(i)}
+                    className="relative aspect-square cursor-pointer overflow-hidden rounded-xl transition-transform hover:scale-[1.02]"
                   >
                     <img
                       src={photo.url}
@@ -196,6 +199,14 @@ export default function PortalProgressPage() {
               </div>
             )}
           </>
+        )}
+
+        {lightboxIndex !== null && (
+          <PhotoLightbox
+            photos={photos}
+            initialIndex={lightboxIndex}
+            onClose={() => setLightboxIndex(null)}
+          />
         )}
 
         {tab === "stats" && (

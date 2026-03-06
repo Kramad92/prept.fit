@@ -26,6 +26,7 @@ import { ClientPaymentsTab } from "@/components/client/client-payments-tab";
 import { MeasurementModal } from "@/components/client/measurement-modal";
 import { useToast } from "@/components/ui/toast";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 import type { Food } from "@/types";
 
 interface ClientDetail {
@@ -426,6 +427,7 @@ function PhotosTab({
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("");
   const [saving, setSaving] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const { toastSuccess, toastError } = useToast();
 
   const categories = ["front", "back", "side", "other"];
@@ -525,12 +527,13 @@ function PhotosTab({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {photos.map((photo) => (
+          {photos.map((photo, i) => (
             <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-lg">
               <img
                 src={photo.url}
                 alt={photo.caption || "Progress photo"}
-                className="h-full w-full object-cover"
+                onClick={() => setLightboxIndex(i)}
+                className="h-full w-full cursor-pointer object-cover transition-transform hover:scale-[1.02]"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                 <p className="text-xs text-white">
@@ -549,6 +552,14 @@ function PhotosTab({
             </div>
           ))}
         </div>
+      )}
+
+      {lightboxIndex !== null && (
+        <PhotoLightbox
+          photos={photos}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       )}
     </div>
   );

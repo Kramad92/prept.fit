@@ -11,19 +11,79 @@ interface USDANutrient {
   unitName: string;
 }
 
-interface USDAFood {
+interface USDASearchFood {
   fdcId: number;
   description: string;
   foodNutrients: USDANutrient[];
-  servingSize?: number;
-  servingSizeUnit?: string;
-  brandName?: string;
   dataType: string;
+}
+
+interface USDAFoodPortion {
+  portionDescription: string | null;
+  modifier: string | null;
+  gramWeight: number;
+  amount: number | null;
+  measureUnit: { name: string } | null;
+}
+
+interface USDADetailFood {
+  fdcId: number;
+  description: string;
+  foodPortions?: USDAFoodPortion[];
+}
+
+const PORTION_PRIORITY = [
+  "egg", "breast", "thigh", "drumstick", "wing",
+  "fillet", "patty", "link", "banana", "apple",
+  "large", "medium", "small",
+  "piece", "whole", "serving",
+  "cup", "slice",
+  "tablespoon", "teaspoon",
+  "oz", "ounce",
+];
+
+function getPortionLabel(p: USDAFoodPortion): string | null {
+  if (p.portionDescription && p.portionDescription !== "Quantity not specified") {
+    return p.portionDescription;
+  }
+  // SR Legacy uses modifier + amount instead of portionDescription
+  if (p.modifier && p.amount) {
+    return `${p.amount} ${p.modifier}`;
+  }
+  if (p.modifier) {
+    return p.modifier;
+  }
+  return null;
+}
+
+function pickBestPortion(portions: USDAFoodPortion[]): { portion: USDAFoodPortion; label: string } | null {
+  const valid: { portion: USDAFoodPortion; label: string }[] = [];
+  for (const p of portions) {
+    if (p.gramWeight <= 0) continue;
+    const label = getPortionLabel(p);
+    if (!label) continue;
+    valid.push({ portion: p, label });
+  }
+  if (!valid.length) return null;
+
+  for (const keyword of PORTION_PRIORITY) {
+    const match = valid.find(
+      (v) => v.label.toLowerCase().includes(keyword)
+    );
+    if (match) return match;
+  }
+
+  return valid[0];
 }
 
 function extractNutrient(nutrients: USDANutrient[], id: number): number | null {
   const n = nutrients.find((n) => n.nutrientId === id);
   return n ? Math.round(n.value) : null;
+}
+
+function scaleNutrient(per100g: number | null, gramWeight: number): number | null {
+  if (per100g == null) return null;
+  return Math.round((per100g * gramWeight) / 100);
 }
 
 export async function GET(req: NextRequest) {
@@ -40,7 +100,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(
+    // 1. Search for foods
+    const searchRes = await fetch(
       `${USDA_BASE}/foods/search?api_key=${USDA_API_KEY}`,
       {
         method: "POST",
@@ -53,23 +114,80 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    if (!res.ok) {
+    if (!searchRes.ok) {
       return NextResponse.json({ error: "USDA API error" }, { status: 502 });
     }
 
-    const data = await res.json();
-    const foods = (data.foods || []).filter((f: USDAFood) => f.dataType !== "Branded").map((f: USDAFood) => ({
-      fdcId: f.fdcId,
-      name: f.description,
-      portion: f.servingSize
-        ? `${f.servingSize}${f.servingSizeUnit || "g"}`
-        : "100g",
-      calories: extractNutrient(f.foodNutrients, 1008), // Energy (kcal)
-      protein: extractNutrient(f.foodNutrients, 1003),  // Protein
-      carbs: extractNutrient(f.foodNutrients, 1005),    // Carbohydrate
-      fat: extractNutrient(f.foodNutrients, 1004),      // Total fat
-      source: "usda",
-    }));
+    const searchData = await searchRes.json();
+    const searchFoods = (searchData.foods || []).filter(
+      (f: USDASearchFood) => f.dataType !== "Branded"
+    ) as USDASearchFood[];
+
+    if (searchFoods.length === 0) {
+      return NextResponse.json([]);
+    }
+
+    // 2. Batch-fetch details for portion data
+    const fdcIds = searchFoods.map((f) => f.fdcId);
+    let portionMap = new Map<number, { portion: USDAFoodPortion; label: string } | null>();
+
+    try {
+      const detailRes = await fetch(
+        `${USDA_BASE}/foods?api_key=${USDA_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fdcIds,
+            format: "full",
+          }),
+        }
+      );
+
+      if (detailRes.ok) {
+        const details = (await detailRes.json()) as USDADetailFood[];
+        for (const d of details) {
+          portionMap.set(d.fdcId, pickBestPortion(d.foodPortions || []));
+        }
+      }
+    } catch {
+      // If batch fetch fails, fall back to 100g portions
+    }
+
+    // 3. Build results with best portions
+    const foods = searchFoods.map((f) => {
+      const cal = extractNutrient(f.foodNutrients, 1008);
+      const protein = extractNutrient(f.foodNutrients, 1003);
+      const carbs = extractNutrient(f.foodNutrients, 1005);
+      const fat = extractNutrient(f.foodNutrients, 1004);
+
+      const best = portionMap.get(f.fdcId);
+
+      if (best) {
+        const gw = best.portion.gramWeight;
+        return {
+          fdcId: f.fdcId,
+          name: f.description,
+          portion: `${best.label} (${Math.round(gw)}g)`,
+          calories: scaleNutrient(cal, gw),
+          protein: scaleNutrient(protein, gw),
+          carbs: scaleNutrient(carbs, gw),
+          fat: scaleNutrient(fat, gw),
+          source: "usda",
+        };
+      }
+
+      return {
+        fdcId: f.fdcId,
+        name: f.description,
+        portion: "100g",
+        calories: cal,
+        protein,
+        carbs,
+        fat,
+        source: "usda",
+      };
+    });
 
     return NextResponse.json(foods);
   } catch {

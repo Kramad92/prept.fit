@@ -10,7 +10,15 @@ export async function GET() {
   const clients = await prisma.client.findMany({
     where: { tenantId: session.user.tenantId },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      gender: true,
+      status: true,
+      goals: true,
+      createdAt: true,
       _count: { select: { progressPhotos: true, assignedPlans: true } },
     },
   });

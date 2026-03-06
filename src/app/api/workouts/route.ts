@@ -10,7 +10,11 @@ export async function GET() {
   const plans = await prisma.workoutPlan.findMany({
     where: { tenantId: session.user.tenantId, sourceTemplateId: null },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isTemplate: true,
       _count: { select: { exercises: true, assignedTo: true } },
     },
   });

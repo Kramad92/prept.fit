@@ -83,3 +83,140 @@ export interface LibraryExercise {
   muscleGroup: string | null;
   equipment: string | null;
 }
+
+// Shared domain types used across dashboard/portal pages
+
+export interface ProgressPhoto {
+  id: string;
+  url: string;
+  caption: string | null;
+  takenAt: string;
+  category: string | null;
+}
+
+export interface Measurement {
+  id: string;
+  date: string;
+  weight: number | null;
+  bodyFat: number | null;
+  chest: number | null;
+  waist: number | null;
+  hips: number | null;
+  arms: number | null;
+  thighs: number | null;
+  notes: string | null;
+}
+
+export interface AssignedWorkoutPlan {
+  id: string;
+  customName: string | null;
+  notes: string | null;
+  mode: string;
+  isActive: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  workoutPlan: {
+    id: string;
+    name: string;
+    description: string | null;
+    sourceTemplate: { id: string; name: string } | null;
+    exercises: Exercise[];
+  };
+  clientExercises: ClientExercise[];
+}
+
+export interface AssignedMealPlan {
+  id: string;
+  customName: string | null;
+  notes: string | null;
+  isActive: boolean;
+  mealPlan: {
+    id: string;
+    name: string;
+    description: string | null;
+    targetCalories: number | null;
+    targetProtein: number | null;
+    targetCarbs: number | null;
+    targetFat: number | null;
+    sourceTemplate: { id: string; name: string } | null;
+    meals: Meal[];
+  };
+  clientMeals: ClientMeal[];
+}
+
+export interface ClientDetail {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  gender: string | null;
+  goals: string | null;
+  notes: string | null;
+  status: string;
+  userId: string | null;
+  createdAt: string;
+  progressPhotos: ProgressPhoto[];
+  measurements: Measurement[];
+  assignedPlans: AssignedWorkoutPlan[];
+  assignedMealPlans: AssignedMealPlan[];
+}
+
+export interface MealPlanSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  isTemplate: boolean;
+  targetCalories: number | null;
+  targetProtein: number | null;
+  targetCarbs: number | null;
+  targetFat: number | null;
+  mealCount: number;
+  assignedCount: number;
+}
+
+export interface FoodInput {
+  name: string;
+  portion: string;
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  unitLabel?: string;
+  gramsPerUnit?: number;
+}
+
+export interface MealInput {
+  tempId: string;
+  name: string;
+  time: string;
+  foods: FoodInput[];
+}
+
+export interface ClientOption {
+  id: string;
+  name: string;
+}
+
+export interface NutritionLog {
+  id: string;
+  date: string;
+  mealName: string;
+  foods: string;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  notes: string | null;
+}
+
+export interface AssignedHabit {
+  id: string;
+  habit: { id: string; name: string; icon: string | null };
+  logs: Array<{ date: string; completed: boolean }>;
+}
+
+export interface HabitTemplate {
+  id: string;
+  name: string;
+  icon: string | null;
+}

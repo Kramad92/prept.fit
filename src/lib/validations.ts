@@ -206,6 +206,7 @@ export const nutritionLogCreateSchema = z.object({
   carbs: numericNullable(),
   fat: numericNullable(),
   notes: z.string().max(2000).nullable().optional(),
+  clientId: z.string().min(1).optional(),
 });
 
 export const photoCreateSchema = z.object({

@@ -387,7 +387,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-gray-900">
-                      {formatCurrency(p.amount, (p as any).currency || "BAM")}
+                      {formatCurrency(p.amount, p.currency || "BAM")}
                     </p>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${

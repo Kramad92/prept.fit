@@ -275,3 +275,14 @@ export interface CoachPublicProfile {
   certificates: Certificate[];
   packages: Package[];
 }
+
+export interface CheckInQuestion {
+  id: string;
+  question: string;
+  type: string;
+}
+
+export interface CheckInAnswer {
+  questionId: string;
+  answer: string;
+}

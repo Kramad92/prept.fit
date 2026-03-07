@@ -112,6 +112,7 @@ export async function POST(
       inviteUrl,
     });
   } catch (error) {
+    console.error("[POST /api/clients/[id]/invite]", error);
     // Clean up the token if email fails
     await prisma.inviteToken.deleteMany({ where: { token } });
     return NextResponse.json(

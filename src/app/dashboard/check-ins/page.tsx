@@ -5,21 +5,22 @@ import { Plus, ClipboardCheck, MessageSquare, Copy, Pencil, Trash2, X, Check } f
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
+import type { CheckInQuestion, CheckInAnswer } from "@/types";
 
 interface CheckInTemplate {
   id: string;
   name: string;
-  questions: Array<{ id: string; question: string; type: string }>;
+  questions: CheckInQuestion[];
   frequency: string;
   isActive: boolean;
 }
 
 interface CheckIn {
   id: string;
-  answers: Array<{ questionId: string; answer: string }>;
+  answers: CheckInAnswer[];
   submittedAt: string;
   coachNotes: string | null;
-  template: { name: string; questions: Array<{ id: string; question: string; type: string }> };
+  template: { name: string; questions: CheckInQuestion[] };
   client: { name: string };
 }
 
@@ -103,7 +104,7 @@ export default function CheckInsPage() {
     setEditingTemplate(t.id);
     setEditName(t.name);
     setEditFrequency(t.frequency);
-    setEditQuestions((t.questions as any[]).map((q: any) => q.question).join("\n"));
+    setEditQuestions(t.questions.map((q) => q.question).join("\n"));
   }
 
   async function saveEdit(id: string) {
@@ -267,17 +268,17 @@ export default function CheckInsPage() {
                       </div>
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
-                      {(tmpl.questions as any[]).length} {t.portalCheckIns.questions}
+                      {tmpl.questions.length} {t.portalCheckIns.questions}
                     </p>
                     <div className="mt-2 space-y-0.5">
-                      {(tmpl.questions as any[]).slice(0, 3).map((q: any, i: number) => (
+                      {tmpl.questions.slice(0, 3).map((q, i) => (
                         <p key={i} className="text-xs text-gray-400 truncate">
                           {i + 1}. {q.question}
                         </p>
                       ))}
-                      {(tmpl.questions as any[]).length > 3 && (
+                      {tmpl.questions.length > 3 && (
                         <p className="text-xs text-gray-300">
-                          +{(tmpl.questions as any[]).length - 3} {t.checkIns.more}
+                          +{tmpl.questions.length - 3} {t.checkIns.more}
                         </p>
                       )}
                     </div>
@@ -305,9 +306,6 @@ export default function CheckInsPage() {
         ) : (
           <div className="mt-3 space-y-4">
             {checkIns.map((ci) => {
-              const questions = ci.template.questions as any[];
-              const answers = ci.answers as any[];
-
               return (
                 <div key={ci.id} className="card">
                   <div className="flex items-center justify-between">
@@ -324,9 +322,9 @@ export default function CheckInsPage() {
                   </div>
 
                   <div className="mt-3 space-y-2">
-                    {questions.map((q: any) => {
-                      const answer = answers.find(
-                        (a: any) => a.questionId === q.id
+                    {ci.template.questions.map((q) => {
+                      const answer = ci.answers.find(
+                        (a) => a.questionId === q.id
                       );
                       return (
                         <div key={q.id}>

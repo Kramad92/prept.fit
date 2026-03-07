@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -18,7 +19,7 @@ export async function POST(
   const copy = await prisma.checkInTemplate.create({
     data: {
       name: `${original.name} (Copy)`,
-      questions: original.questions as any,
+      questions: original.questions as Prisma.InputJsonValue,
       frequency: original.frequency,
       tenantId: session.user.tenantId,
     },

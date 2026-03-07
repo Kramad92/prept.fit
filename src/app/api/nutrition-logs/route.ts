@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   // Determine clientId: client logs for themselves, coach logs for a client
   const clientId =
-    session.user.role === "CLIENT" ? session.user.clientProfileId : (body as any).clientId;
+    session.user.role === "CLIENT" ? session.user.clientProfileId : body.clientId;
 
   if (!clientId) return NextResponse.json({ error: "Client ID required" }, { status: 400 });
 

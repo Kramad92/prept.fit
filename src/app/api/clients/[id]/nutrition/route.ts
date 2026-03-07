@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { deepCopyMealPlan, createCustomMealPlan } from "@/services/meal-plans";
 import { adjustMealPlanForClient } from "@/lib/ai-adjust";
+import type { Food } from "@/types";
 
 export async function GET(
   _req: NextRequest,
@@ -60,10 +62,10 @@ export async function POST(
     // AI adjustment after deep copy
     if (aiAdjust && result.mealPlan) {
       try {
-        const meals = result.mealPlan.meals.map((m: any) => ({
+        const meals = result.mealPlan.meals.map((m) => ({
           name: m.name,
           time: m.time,
-          foods: (m.foods as any[]) || [],
+          foods: (m.foods as unknown as Food[]) || [],
         }));
 
         const adjusted = await adjustMealPlanForClient(clientId, {
@@ -101,12 +103,12 @@ export async function POST(
           const am = adjusted.meals[i];
           await prisma.meal.update({
             where: { id: existingMeals[i].id },
-            data: { name: am.name, time: am.time, foods: am.foods as any },
+            data: { name: am.name, time: am.time, foods: am.foods as unknown as Prisma.InputJsonValue },
           });
           if (clientMeals[i]) {
             await prisma.clientMeal.update({
               where: { id: clientMeals[i].id },
-              data: { name: am.name, time: am.time, foods: am.foods as any },
+              data: { name: am.name, time: am.time, foods: am.foods as unknown as Prisma.InputJsonValue },
             });
           }
         }

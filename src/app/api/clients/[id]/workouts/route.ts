@@ -61,7 +61,7 @@ export async function POST(
     // AI adjustment after deep copy
     if (aiAdjust && result.workoutPlan) {
       try {
-        const exercises = result.workoutPlan.exercises.map((ex: any) => ({
+        const exercises = result.workoutPlan.exercises.map((ex) => ({
           name: ex.name,
           sets: ex.sets,
           reps: ex.reps,

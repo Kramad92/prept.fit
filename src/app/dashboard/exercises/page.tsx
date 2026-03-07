@@ -110,46 +110,9 @@ export default function ExerciseLibraryPage() {
     setSeeding(true);
     await fetch("/api/exercise-library/seed", { method: "POST" });
     loadExercises();
-    // Also sync categories & equipment from seeded exercises
-    syncOptionsFromExercises();
-    setSeeding(false);
-  }
-
-  async function syncOptionsFromExercises() {
-    const [exRes, catRes, eqRes] = await Promise.all([
-      fetch("/api/exercise-library").then((r) => r.json()),
-      fetch("/api/exercise-categories").then((r) => r.json()),
-      fetch("/api/equipment-types").then((r) => r.json()),
-    ]);
-    const existingCats = new Set((catRes as OptionItem[]).map((c) => c.name));
-    const existingEq = new Set((eqRes as OptionItem[]).map((e) => e.name));
-
-    const newCats = new Set<string>();
-    const newEq = new Set<string>();
-    for (const ex of exRes as ExerciseItem[]) {
-      if (ex.category && !existingCats.has(ex.category)) newCats.add(ex.category);
-      if (ex.equipment && !existingEq.has(ex.equipment)) newEq.add(ex.equipment);
-    }
-
-    await Promise.all([
-      ...Array.from(newCats).map((name) =>
-        fetch("/api/exercise-categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        })
-      ),
-      ...Array.from(newEq).map((name) =>
-        fetch("/api/equipment-types", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        })
-      ),
-    ]);
-
     loadCategories();
     loadEquipmentTypes();
+    setSeeding(false);
   }
 
   async function handleSave(e: React.FormEvent) {

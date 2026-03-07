@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Check, Play, Youtube } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { ExpandableNotes } from "@/components/ui/expandable-notes";
 
 interface Exercise {
   id: string;
@@ -181,7 +182,7 @@ export default function WorkoutLogPage() {
             </div>
 
             {ex.notes && (
-              <p className="mt-2 text-xs italic text-gray-400">{ex.notes}</p>
+              <ExpandableNotes notes={ex.notes} className="mt-2 text-xs italic text-gray-400" />
             )}
 
             {/* Video Embed */}

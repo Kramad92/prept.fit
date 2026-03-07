@@ -20,6 +20,7 @@ export const hr = {
     or: "ili",
     noResults: "Nema rezultata",
     theme: "Tema",
+    language: "Jezik",
     signOut: "Odjavi se",
     signIn: "Prijavi se",
     status: "Status",

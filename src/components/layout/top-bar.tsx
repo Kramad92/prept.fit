@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Search } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -19,6 +19,12 @@ export function TopBar() {
           <span className="text-lg font-bold">TrainerHub</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          >
+            <Search className="h-5 w-5" />
+          </button>
           <ThemeToggle />
           <NotificationBell />
           {session?.user && (

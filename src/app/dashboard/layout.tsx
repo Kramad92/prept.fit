@@ -3,6 +3,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { BrandColorProvider } from "@/components/brand-color-provider";
 import { MobileInputScroll } from "@/components/mobile-input-scroll";
+import { GlobalSearch } from "@/components/layout/global-search";
 
 export default function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default function DashboardLayout({
       </main>
       <MobileNav />
       <MobileInputScroll />
+      <GlobalSearch />
     </div>
   );
 }

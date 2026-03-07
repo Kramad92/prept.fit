@@ -15,6 +15,7 @@ import {
   DollarSign,
   Settings,
   LogOut,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -24,6 +25,9 @@ import { useT } from "@/lib/i18n";
 export function Sidebar() {
   const pathname = usePathname();
   const t = useT();
+  const openSearch = () => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+  };
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
@@ -45,6 +49,19 @@ export function Sidebar() {
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
           <Dumbbell className="h-7 w-7 text-brand-600" />
           <span className="text-xl font-bold text-gray-900">TrainerHub</span>
+        </div>
+
+        <div className="px-3 pt-3">
+          <button
+            onClick={openSearch}
+            className="flex w-full items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-400 transition-colors hover:border-gray-300 hover:text-gray-600"
+          >
+            <Search className="h-4 w-4" />
+            <span className="flex-1 text-left">{t.common.search}...</span>
+            <kbd className="hidden rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 lg:inline-block">
+              Ctrl K
+            </kbd>
+          </button>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">

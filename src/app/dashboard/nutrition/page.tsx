@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Plus,
@@ -59,6 +59,14 @@ function emptyForm(): FormState {
 }
 
 export default function NutritionPage() {
+  return (
+    <Suspense>
+      <NutritionContent />
+    </Suspense>
+  );
+}
+
+function NutritionContent() {
   const t = useT();
   const { toastSuccess, toastError } = useToast();
   const searchParams = useSearchParams();

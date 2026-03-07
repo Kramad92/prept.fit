@@ -49,12 +49,12 @@ export default function ExerciseLibraryPage() {
 
   function tCategory(cat: string) {
     const key = CATEGORY_KEYS[cat];
-    return key ? (t.exerciseLibrary as any)[key] : cat;
+    return key ? t.exerciseLibrary[key] : cat;
   }
 
   function tEquipment(eq: string) {
     const key = EQUIPMENT_KEYS[eq];
-    return key ? (t.exerciseLibrary as any)[key] : eq;
+    return key ? t.exerciseLibrary[key] : eq;
   }
 
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);

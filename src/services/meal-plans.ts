@@ -42,7 +42,7 @@ export async function deepCopyMealPlan(
         create: original.meals.map((meal) => ({
           name: meal.name,
           time: meal.time,
-          foods: meal.foods as any,
+          foods: meal.foods as Prisma.InputJsonValue,
           orderIndex: meal.orderIndex,
         })),
       },
@@ -63,7 +63,7 @@ export async function deepCopyMealPlan(
       data: {
         name: meal.name,
         time: meal.time,
-        foods: meal.foods as any,
+        foods: meal.foods as Prisma.InputJsonValue,
         orderIndex: meal.orderIndex,
         clientId: opts.clientId,
         clientMealPlanId: assignment.id,
@@ -91,7 +91,7 @@ export async function createCustomMealPlan(
     meals: Array<{
       name: string;
       time?: string | null;
-      foods?: any[];
+      foods?: Prisma.InputJsonValue[];
       orderIndex?: number;
     }>;
   }
@@ -131,7 +131,7 @@ export async function createCustomMealPlan(
       data: {
         name: meal.name,
         time: meal.time,
-        foods: meal.foods as any,
+        foods: meal.foods as Prisma.InputJsonValue,
         orderIndex: meal.orderIndex,
         clientId: opts.clientId,
         clientMealPlanId: assignment.id,

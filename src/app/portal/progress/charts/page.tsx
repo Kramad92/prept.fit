@@ -6,17 +6,21 @@ import { ArrowLeft, TrendingUp } from "lucide-react";
 import { ProgressChart } from "@/components/charts/progress-chart";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 
+type MeasurementKey = "weight" | "bodyFat" | "chest" | "waist" | "hips" | "arms" | "thighs";
+
+interface MeasurementData {
+  date: string;
+  weight: number | null;
+  bodyFat: number | null;
+  chest: number | null;
+  waist: number | null;
+  hips: number | null;
+  arms: number | null;
+  thighs: number | null;
+}
+
 interface ChartData {
-  measurements: Array<{
-    date: string;
-    weight: number | null;
-    bodyFat: number | null;
-    chest: number | null;
-    waist: number | null;
-    hips: number | null;
-    arms: number | null;
-    thighs: number | null;
-  }>;
+  measurements: MeasurementData[];
   workoutLogs: Array<{ week: string; count: number }>;
   totalWorkouts: number;
 }
@@ -63,7 +67,7 @@ export default function ProgressChartsPage() {
     );
   }
 
-  const metrics = [
+  const metrics: Array<{ key: MeasurementKey; label: string; color: string; unit: string }> = [
     { key: "weight", label: t.portalCharts.weight, color: "#22c55e", unit: "kg" },
     { key: "bodyFat", label: t.portalCharts.bodyFat, color: "#f59e0b", unit: "%" },
     { key: "waist", label: t.portalCharts.waist, color: "#8b5cf6", unit: "cm" },
@@ -107,7 +111,7 @@ export default function ProgressChartsPage() {
         {metrics.map((metric) => {
           const chartData = data.measurements.map((m) => ({
             date: m.date,
-            value: (m as any)[metric.key] as number | null,
+            value: m[metric.key],
           }));
 
           const hasData = chartData.some((d) => d.value !== null);

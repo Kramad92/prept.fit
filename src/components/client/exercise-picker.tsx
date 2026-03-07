@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus } from "lucide-react";
 import type { LibraryExercise } from "@/types";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, type Translations } from "@/lib/i18n";
 
 const CATEGORIES = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"];
 
@@ -11,7 +11,7 @@ interface ExercisePickerProps {
   onSelect: (exercise: { name: string; exerciseLibraryId?: string }) => void;
 }
 
-const CATEGORY_KEYS: Record<string, string> = {
+const CATEGORY_KEYS: Record<string, keyof Translations["exerciseLibrary"]> = {
   Chest: "chest", Back: "back", Legs: "legs", Shoulders: "shoulders",
   Arms: "arms", Core: "core", Cardio: "cardio",
 };
@@ -91,7 +91,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            {(t.exerciseLibrary as any)[CATEGORY_KEYS[cat]] || cat}
+            {t.exerciseLibrary[CATEGORY_KEYS[cat]] || cat}
           </button>
         ))}
       </div>

@@ -4,21 +4,22 @@ import { useState, useEffect } from "react";
 import { ClipboardCheck, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
+import type { CheckInQuestion, CheckInAnswer } from "@/types";
 
 interface CheckInTemplate {
   id: string;
   name: string;
-  questions: Array<{ id: string; question: string; type: string }>;
+  questions: CheckInQuestion[];
   frequency: string;
   isActive: boolean;
 }
 
 interface CheckIn {
   id: string;
-  answers: Array<{ questionId: string; answer: string }>;
+  answers: CheckInAnswer[];
   submittedAt: string;
   coachNotes: string | null;
-  template: { name: string; questions: Array<{ id: string; question: string; type: string }> };
+  template: { name: string; questions: CheckInQuestion[] };
 }
 
 export default function PortalCheckInsPage() {
@@ -49,7 +50,7 @@ export default function PortalCheckInsPage() {
     const template = templates.find((t) => t.id === templateId);
     if (!template) return;
 
-    const answerList = (template.questions as any[]).map((q: any) => ({
+    const answerList = template.questions.map((q) => ({
       questionId: q.id,
       answer: answers[q.id] || "",
     }));
@@ -107,7 +108,6 @@ export default function PortalCheckInsPage() {
           {templates
             .filter((t) => t.isActive !== false)
             .map((template) => {
-              const questions = template.questions as any[];
               const isActive = activeTemplate === template.id;
 
               return (
@@ -125,7 +125,7 @@ export default function PortalCheckInsPage() {
                           {template.name}
                         </h3>
                         <p className="text-xs text-gray-500 capitalize">
-                          {template.frequency} &middot; {questions.length}{" "}
+                          {template.frequency} &middot; {template.questions.length}{" "}
                           {t.portalCheckIns.questions}
                         </p>
                       </div>
@@ -135,7 +135,7 @@ export default function PortalCheckInsPage() {
 
                   {isActive && (
                     <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
-                      {questions.map((q: any) => (
+                      {template.questions.map((q) => (
                         <div key={q.id}>
                           <label className="block text-sm font-medium text-gray-700">
                             {q.question}
@@ -201,8 +201,6 @@ export default function PortalCheckInsPage() {
           </h2>
           <div className="mt-3 space-y-3">
             {checkIns.map((ci) => {
-              const questions = ci.template.questions as any[];
-              const ciAnswers = ci.answers as any[];
               const isExpanded = expandedHistory === ci.id;
 
               return (
@@ -228,9 +226,9 @@ export default function PortalCheckInsPage() {
 
                   {isExpanded && (
                     <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
-                      {questions.map((q: any) => {
-                        const answer = ciAnswers.find(
-                          (a: any) => a.questionId === q.id
+                      {ci.template.questions.map((q) => {
+                        const answer = ci.answers.find(
+                          (a) => a.questionId === q.id
                         );
                         return (
                           <div key={q.id}>

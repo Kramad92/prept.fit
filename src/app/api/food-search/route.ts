@@ -240,7 +240,8 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(foods);
-  } catch {
+  } catch (error) {
+    console.error("[GET /api/food-search]", error);
     return NextResponse.json({ error: "Failed to search USDA" }, { status: 502 });
   }
 }

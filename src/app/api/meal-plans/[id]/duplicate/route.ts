@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -30,7 +31,7 @@ export async function POST(
         create: original.meals.map((m) => ({
           name: m.name,
           time: m.time,
-          foods: m.foods as any,
+          foods: m.foods as Prisma.InputJsonValue,
           orderIndex: m.orderIndex,
         })),
       },

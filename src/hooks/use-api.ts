@@ -58,9 +58,9 @@ export function useApis<T extends Record<string, any>>(
       const results = await Promise.all(
         entries.map(([, url]) => api.get(url))
       );
-      const newData: Partial<T> = {};
+      const newData = {} as Partial<T>;
       entries.forEach(([key], i) => {
-        (newData as any)[key] = results[i];
+        (newData as Record<keyof T, unknown>)[key] = results[i];
       });
       setData(newData);
     } catch (err: any) {

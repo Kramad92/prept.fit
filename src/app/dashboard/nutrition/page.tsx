@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   UtensilsCrossed,
@@ -60,6 +61,7 @@ function emptyForm(): FormState {
 export default function NutritionPage() {
   const t = useT();
   const { toastSuccess, toastError } = useToast();
+  const searchParams = useSearchParams();
   const [plans, setPlans] = useState<MealPlanSummary[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +92,17 @@ export default function NutritionPage() {
       .catch(() => toastError(t.errors.failedToLoad))
       .finally(() => setLoading(false));
   }, []);
+
+  // Auto-expand plan from query param (e.g. from global search)
+  useEffect(() => {
+    const planId = searchParams.get("plan");
+    if (planId && !loading && plans.some((p) => p.id === planId) && expandedPlan !== planId) {
+      api.get(`/api/meal-plans/${planId}`).then((data) => {
+        setPlanDetail(data);
+        setExpandedPlan(planId);
+      });
+    }
+  }, [searchParams, loading, plans]);
 
   async function loadPlanDetail(id: string) {
     if (expandedPlan === id) {

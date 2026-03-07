@@ -97,7 +97,7 @@ export function GlobalSearch() {
           id: wp.id,
           label: wp.name,
           sublabel: wp.description || undefined,
-          href: `/dashboard/workouts?highlight=${wp.id}`,
+          href: `/dashboard/workouts/${wp.id}`,
           category: t.nav.workouts,
           icon: Dumbbell,
         });
@@ -107,7 +107,7 @@ export function GlobalSearch() {
           id: mp.id,
           label: mp.name,
           sublabel: mp.description || undefined,
-          href: `/dashboard/nutrition?highlight=${mp.id}`,
+          href: `/dashboard/nutrition?plan=${mp.id}`,
           category: t.nav.nutrition,
           icon: UtensilsCrossed,
         });

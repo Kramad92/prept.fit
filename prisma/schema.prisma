@@ -39,11 +39,13 @@ model Tenant {
   habitTemplates HabitTemplate[]
   notifications  Notification[]
   mealPlans      MealPlan[]
-  exerciseLibrary  ExerciseLibrary[]
-  foodLibrary      FoodLibrary[]
-  certificates   Certificate[]
-  packages       Package[]
-  inquiries      Inquiry[]
+  exerciseLibrary    ExerciseLibrary[]
+  foodLibrary        FoodLibrary[]
+  certificates       Certificate[]
+  packages           Package[]
+  inquiries          Inquiry[]
+  equipmentTypes     EquipmentType[]
+  exerciseCategories ExerciseCategory[]
 
   @@map("tenants")
 }
@@ -575,6 +577,32 @@ model FoodLibrary {
 
   @@index([tenantId])
   @@map("food_library")
+}
+
+model EquipmentType {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("equipment_types")
+}
+
+model ExerciseCategory {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("exercise_categories")
 }
 
 model ClientExercise {

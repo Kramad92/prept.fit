@@ -428,6 +428,16 @@ export const en: Translations = {
     select: "Select...",
     noExercisesFound: "No exercises found.",
     addAsCustom: "Add as custom exercise",
+    manageOptions: "Manage Categories & Equipment",
+    categories: "Categories",
+    equipmentTypes: "Equipment Types",
+    addCategory: "Add Category",
+    addEquipment: "Add Equipment",
+    categoryName: "Category name",
+    equipmentName: "Equipment name",
+    alreadyExists: "Already exists",
+    deleteConfirm: "This will also clear this value from all exercises using it. Continue?",
+    usedByExercises: "exercises",
   },
 
   billing: {

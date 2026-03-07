@@ -437,6 +437,16 @@ export const hr = {
     select: "Izaberi...",
     noExercisesFound: "Nijedna vježba nije pronađena.",
     addAsCustom: "Dodaj kao vlastitu vježbu",
+    manageOptions: "Upravljaj kategorijama i opremom",
+    categories: "Kategorije",
+    equipmentTypes: "Tipovi opreme",
+    addCategory: "Dodaj kategoriju",
+    addEquipment: "Dodaj opremu",
+    categoryName: "Naziv kategorije",
+    equipmentName: "Naziv opreme",
+    alreadyExists: "Već postoji",
+    deleteConfirm: "Ovo će također obrisati ovu vrijednost sa svih vježbi koje je koriste. Nastaviti?",
+    usedByExercises: "vježbi",
   },
 
   // Billing / Payments

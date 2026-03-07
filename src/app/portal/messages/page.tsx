@@ -17,18 +17,22 @@ export default function PortalMessagesPage() {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 8rem)" }}>
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-lg font-semibold text-gray-900">
-          {t.messages.title}
-        </h1>
-        <p className="text-xs text-gray-500">{t.portalMessages.chatWithCoach}</p>
-      </div>
+    <div className="flex flex-col" style={{ height: "calc(100vh - 6rem)" }}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-4 py-3">
+          <h1 className="text-sm font-semibold text-gray-900">
+            {t.messages.title}
+          </h1>
+          <p className="text-xs text-gray-500">{t.portalMessages.chatWithCoach}</p>
+        </div>
 
-      <MessageThread
-        clientId={session.user.clientProfileId}
-        currentUserId={session.user.id}
-      />
+        <MessageThread
+          clientId={session.user.clientProfileId}
+          currentUserId={session.user.id}
+          tenantId={session.user.tenantId}
+        />
+      </div>
     </div>
   );
 }

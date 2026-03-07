@@ -163,7 +163,10 @@ export const measurementCreateSchema = z.object({
 // Schemas for previously unvalidated routes
 
 export const messageCreateSchema = z.object({
-  content: z.string().min(1).max(5000),
+  content: z.string().max(5000),
+  attachmentUrl: z.string().url().optional(),
+  attachmentType: z.enum(["image", "file"]).optional(),
+  attachmentName: z.string().max(500).optional(),
 });
 
 export const habitCreateSchema = z.object({

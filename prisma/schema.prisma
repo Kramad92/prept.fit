@@ -290,6 +290,10 @@ model Message {
   createdAt DateTime @default(now())
   isRead    Boolean  @default(false)
 
+  attachmentUrl  String?
+  attachmentType String?  // "image" | "file"
+  attachmentName String?
+
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

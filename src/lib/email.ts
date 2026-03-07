@@ -14,6 +14,42 @@ function getResend() {
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "TrainerHub <onboarding@resend.dev>";
 
+export async function sendInquiryNotification({
+  to,
+  businessName,
+  inquiryName,
+  inquiryEmail,
+  inquiryMessage,
+}: {
+  to: string;
+  businessName: string;
+  inquiryName: string;
+  inquiryEmail: string;
+  inquiryMessage: string;
+}) {
+  await getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `New inquiry from ${inquiryName} — ${businessName}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <h2 style="color: #111827; margin-bottom: 8px;">New Inquiry</h2>
+        <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
+          You received a new inquiry on your ${businessName} landing page.
+        </p>
+        <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin: 16px 0;">
+          <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${inquiryName}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${inquiryEmail}</p>
+          <p style="margin: 0;"><strong>Message:</strong><br/>${inquiryMessage}</p>
+        </div>
+        <p style="color: #9ca3af; font-size: 13px; margin-top: 24px;">
+          Reply to this inquiry from your TrainerHub dashboard under Settings → Inquiries.
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendInviteEmail({
   to,
   clientName,

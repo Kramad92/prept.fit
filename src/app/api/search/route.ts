@@ -43,7 +43,6 @@ export async function GET(req: NextRequest) {
       prisma.workoutPlan.findMany({
         where: {
           tenantId,
-          isTemplate: true,
           name: { contains: q, mode: "insensitive" },
         },
         select: { id: true, name: true, description: true },
@@ -53,7 +52,6 @@ export async function GET(req: NextRequest) {
       prisma.mealPlan.findMany({
         where: {
           tenantId,
-          isTemplate: true,
           name: { contains: q, mode: "insensitive" },
         },
         select: { id: true, name: true, description: true },

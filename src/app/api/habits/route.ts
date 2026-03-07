@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, habitCreateSchema } from "@/lib/validations";
 
 // Get habit templates for the tenant
 export async function GET() {
@@ -22,12 +23,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const parsed = await validateBody(req, habitCreateSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const habit = await prisma.habitTemplate.create({
     data: {
       name: body.name,
-      icon: body.icon || null,
+      icon: body.icon ?? null,
       tenantId: session.user.tenantId,
     },
   });

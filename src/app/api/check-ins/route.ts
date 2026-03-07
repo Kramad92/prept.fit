@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, checkInSubmitSchema } from "@/lib/validations";
 
 // Get check-ins (coach sees all, client sees own)
 export async function GET(req: NextRequest) {
@@ -38,7 +39,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const parsed = await validateBody(req, checkInSubmitSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const checkIn = await prisma.checkIn.create({
     data: {

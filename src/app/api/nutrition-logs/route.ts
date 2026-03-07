@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, nutritionLogCreateSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -38,26 +39,27 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, nutritionLogCreateSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   // Determine clientId: client logs for themselves, coach logs for a client
   const clientId =
-    session.user.role === "CLIENT" ? session.user.clientProfileId : body.clientId;
+    session.user.role === "CLIENT" ? session.user.clientProfileId : (body as any).clientId;
 
   if (!clientId) return NextResponse.json({ error: "Client ID required" }, { status: 400 });
 
   const log = await prisma.nutritionLog.create({
     data: {
       clientId,
-      date: body.date ? new Date(body.date) : new Date(),
+      date: new Date(),
       mealName: body.mealName,
       foods: body.foods,
-      calories: body.calories ? parseInt(body.calories) : null,
-      protein: body.protein ? parseInt(body.protein) : null,
-      carbs: body.carbs ? parseInt(body.carbs) : null,
-      fat: body.fat ? parseInt(body.fat) : null,
-      notes: body.notes || null,
-      photoUrl: body.photoUrl || null,
+      calories: body.calories ?? null,
+      protein: body.protein ?? null,
+      carbs: body.carbs ?? null,
+      fat: body.fat ?? null,
+      notes: body.notes ?? null,
     },
   });
 

@@ -51,10 +51,10 @@ export async function PUT(
         name: body.name,
         description: body.description,
         isTemplate: body.isTemplate,
-        targetCalories: body.targetCalories ? parseInt(body.targetCalories) : null,
-        targetProtein: body.targetProtein ? parseInt(body.targetProtein) : null,
-        targetCarbs: body.targetCarbs ? parseInt(body.targetCarbs) : null,
-        targetFat: body.targetFat ? parseInt(body.targetFat) : null,
+        targetCalories: body.targetCalories ?? null,
+        targetProtein: body.targetProtein ?? null,
+        targetCarbs: body.targetCarbs ?? null,
+        targetFat: body.targetFat ?? null,
         meals: {
           create: (body.meals || []).map((m: any, i: number) => ({
             name: m.name,

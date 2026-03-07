@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, habitAssignSchema } from "@/lib/validations";
 
 // Get habits assigned to a client
 export async function GET(req: NextRequest) {
@@ -37,7 +38,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { clientId, habitIds } = await req.json();
+  const parsed = await validateBody(req, habitAssignSchema);
+  if ("error" in parsed) return parsed.error;
+  const { clientId, habitIds } = parsed.data;
 
   const results = [];
   for (const habitId of habitIds) {

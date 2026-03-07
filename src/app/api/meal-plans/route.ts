@@ -54,10 +54,10 @@ export async function POST(req: NextRequest) {
       name: body.name,
       description: body.description || null,
       isTemplate: body.isTemplate || false,
-      targetCalories: body.targetCalories ? parseInt(body.targetCalories) : null,
-      targetProtein: body.targetProtein ? parseInt(body.targetProtein) : null,
-      targetCarbs: body.targetCarbs ? parseInt(body.targetCarbs) : null,
-      targetFat: body.targetFat ? parseInt(body.targetFat) : null,
+      targetCalories: body.targetCalories ?? null,
+      targetProtein: body.targetProtein ?? null,
+      targetCarbs: body.targetCarbs ?? null,
+      targetFat: body.targetFat ?? null,
       tenantId: session.user.tenantId,
       meals: {
         create: (body.meals || []).map(

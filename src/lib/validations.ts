@@ -24,6 +24,18 @@ export async function validateBody<T>(
   }
 }
 
+// Helper: accept number or numeric string, output number | null
+function numericNullable() {
+  return z.preprocess(
+    (v) => {
+      if (v == null || v === "") return null;
+      const n = Number(v);
+      return isNaN(n) ? null : n;
+    },
+    z.number().nullable()
+  ) as z.ZodType<number | null>;
+}
+
 export const paymentCreateSchema = z.object({
   amount: z.union([z.string(), z.number()]),
   date: z.string().optional(),
@@ -69,18 +81,18 @@ export const clientUpdateSchema = z.object({
 
 const exerciseSchema = z.object({
   name: z.string().min(1),
-  sets: z.any().optional(),
-  reps: z.any().optional(),
-  weight: z.any().optional(),
-  restSeconds: z.any().optional(),
-  notes: z.any().optional(),
-  videoUrl: z.any().optional(),
+  sets: numericNullable(),
+  reps: z.string().nullable().optional(),
+  weight: z.string().nullable().optional(),
+  restSeconds: numericNullable(),
+  notes: z.string().nullable().optional(),
+  videoUrl: z.string().nullable().optional(),
   orderIndex: z.number().optional(),
-}).passthrough();
+});
 
 export const workoutPlanSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
-  description: z.any().optional(),
+  description: z.string().nullable().optional(),
   isTemplate: z.boolean().optional().default(false),
   exercises: z.array(exerciseSchema).optional().default([]),
 });
@@ -88,36 +100,38 @@ export const workoutPlanSchema = z.object({
 const mealFoodSchema = z.object({
   name: z.string(),
   portion: z.string().optional().default(""),
-  calories: z.any().optional(),
-  protein: z.any().optional(),
-  carbs: z.any().optional(),
-  fat: z.any().optional(),
-}).passthrough();
+  calories: numericNullable(),
+  protein: numericNullable(),
+  carbs: numericNullable(),
+  fat: numericNullable(),
+  unitLabel: z.string().optional(),
+  gramsPerUnit: z.number().optional(),
+});
 
 const mealSchema = z.object({
   name: z.string().min(1),
-  time: z.any().optional(),
+  time: z.string().nullable().optional(),
   foods: z.array(mealFoodSchema).optional().default([]),
   orderIndex: z.number().optional(),
-}).passthrough();
+});
 
 export const mealPlanSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
-  description: z.any().optional(),
+  description: z.string().nullable().optional(),
   isTemplate: z.boolean().optional().default(false),
-  targetCalories: z.any().optional(),
-  targetProtein: z.any().optional(),
-  targetCarbs: z.any().optional(),
-  targetFat: z.any().optional(),
+  targetCalories: numericNullable(),
+  targetProtein: numericNullable(),
+  targetCarbs: numericNullable(),
+  targetFat: numericNullable(),
   meals: z.array(mealSchema).optional().default([]),
 });
 
 export const settingsUpdateSchema = z.object({
-  name: z.any().optional(),
-  bio: z.any().optional(),
-  phone: z.any().optional(),
-  email: z.any().optional(),
-  website: z.any().optional(),
+  name: z.string().max(200).optional(),
+  bio: z.string().max(5000).optional(),
+  phone: z.string().max(50).optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  website: z.string().max(500).optional(),
   brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color").optional(),
   timezone: z.string().max(100).optional(),
   locale: z.enum(["bs", "en"]).optional(),
@@ -135,4 +149,122 @@ export const measurementCreateSchema = z.object({
   arms: z.union([z.string(), z.number()]).optional(),
   thighs: z.union([z.string(), z.number()]).optional(),
   notes: z.string().max(2000).nullable().optional(),
+});
+
+// Schemas for previously unvalidated routes
+
+export const messageCreateSchema = z.object({
+  content: z.string().min(1).max(5000),
+});
+
+export const habitCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  icon: z.string().max(10).nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
+});
+
+export const habitLogSchema = z.object({
+  clientHabitId: z.string().min(1),
+  date: z.string().min(1),
+  completed: z.boolean(),
+});
+
+export const habitAssignSchema = z.object({
+  clientId: z.string().min(1),
+  habitIds: z.array(z.string().min(1)).min(1),
+});
+
+export const checkInTemplateSchema = z.object({
+  name: z.string().min(1).max(200),
+  questions: z.array(z.string().min(1)).min(1),
+  frequency: z.string().max(50).optional().default("weekly"),
+});
+
+export const checkInSubmitSchema = z.object({
+  templateId: z.string().min(1),
+  answers: z.array(z.string()),
+});
+
+export const checkInNotesSchema = z.object({
+  coachNotes: z.string().max(5000).nullable(),
+});
+
+export const nutritionLogCreateSchema = z.object({
+  mealName: z.string().min(1).max(200),
+  foods: z.string().max(5000),
+  calories: numericNullable(),
+  protein: numericNullable(),
+  carbs: numericNullable(),
+  fat: numericNullable(),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
+export const photoCreateSchema = z.object({
+  key: z.string().min(1),
+  caption: z.string().max(500).optional(),
+  category: z.string().max(50).nullable().optional(),
+});
+
+export const photoUpdateSchema = z.object({
+  photoId: z.string().min(1),
+  caption: z.string().max(500).optional(),
+  category: z.string().max(50).nullable().optional(),
+});
+
+export const bookingCreateSchema = z.object({
+  scheduleId: z.string().min(1),
+  date: z.string().min(1),
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+  notes: z.string().max(2000).optional(),
+});
+
+export const availabilitySchema = z.object({
+  dayOfWeek: z.number().min(0).max(6),
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+});
+
+export const scheduleCreateSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(2000).nullable().optional(),
+  duration: z.number().min(5).max(480),
+  price: numericNullable(),
+  maxClients: z.number().min(1).optional().default(1),
+  availability: z.array(availabilitySchema).optional().default([]),
+});
+
+export const exerciseLibrarySchema = z.object({
+  name: z.string().min(1).max(200),
+  category: z.string().max(100).nullable().optional(),
+  muscleGroup: z.string().max(100).nullable().optional(),
+  equipment: z.string().max(100).nullable().optional(),
+});
+
+export const foodLibrarySchema = z.object({
+  name: z.string().min(1).max(200),
+  portion: z.string().max(100).optional().default(""),
+  calories: numericNullable(),
+  protein: numericNullable(),
+  carbs: numericNullable(),
+  fat: numericNullable(),
+  category: z.string().max(100).nullable().optional(),
+});
+
+export const workoutLogSchema = z.object({
+  clientWorkoutPlanId: z.string().min(1),
+  date: z.string().optional(),
+  duration: z.number().optional(),
+  notes: z.string().max(2000).optional(),
+  entries: z.array(z.object({
+    exerciseName: z.string().min(1),
+    sets: z.number().optional(),
+    reps: z.string().optional(),
+    weight: z.string().optional(),
+    notes: z.string().optional(),
+  })).optional().default([]),
+});
+
+export const notificationMarkReadSchema = z.object({
+  ids: z.array(z.string().min(1)),
 });

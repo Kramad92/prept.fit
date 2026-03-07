@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, messageCreateSchema } from "@/lib/validations";
 
 // Get messages for a specific client thread
 export async function GET(
@@ -50,11 +51,9 @@ export async function POST(
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { content } = await req.json();
-
-  if (!content?.trim()) {
-    return NextResponse.json({ error: "Message cannot be empty" }, { status: 400 });
-  }
+  const parsed = await validateBody(req, messageCreateSchema);
+  if ("error" in parsed) return parsed.error;
+  const { content } = parsed.data;
 
   const message = await prisma.message.create({
     data: {

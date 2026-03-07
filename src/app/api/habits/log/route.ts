@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { startOfDay } from "date-fns";
+import { validateBody, habitLogSchema } from "@/lib/validations";
 
 // Client logs a habit completion
 export async function POST(req: NextRequest) {
@@ -10,7 +11,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { clientHabitId, date, completed, notes } = await req.json();
+  const parsed = await validateBody(req, habitLogSchema);
+  if ("error" in parsed) return parsed.error;
+  const { clientHabitId, date, completed } = parsed.data;
 
   const logDate = startOfDay(date ? new Date(date) : new Date());
 
@@ -21,12 +24,11 @@ export async function POST(req: NextRequest) {
         date: logDate,
       },
     },
-    update: { completed: completed ?? true, notes },
+    update: { completed },
     create: {
       clientHabitId,
       date: logDate,
-      completed: completed ?? true,
-      notes,
+      completed,
     },
   });
 

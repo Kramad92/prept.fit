@@ -246,9 +246,12 @@ export const scheduleCreateSchema = z.object({
 
 export const exerciseLibrarySchema = z.object({
   name: z.string().min(1).max(200),
+  nameBs: z.string().max(200).nullable().optional(),
   category: z.string().max(100).nullable().optional(),
   muscleGroup: z.string().max(100).nullable().optional(),
   equipment: z.string().max(100).nullable().optional(),
+  videoUrl: z.string().max(500).nullable().optional(),
+  instructions: z.string().max(5000).nullable().optional(),
 });
 
 export const foodLibrarySchema = z.object({
@@ -277,4 +280,15 @@ export const workoutLogSchema = z.object({
 
 export const notificationMarkReadSchema = z.object({
   ids: z.array(z.string().min(1)),
+});
+
+export const workoutAssignSchema = z.object({
+  clientId: z.string().min(1),
+  workoutPlanId: z.string().min(1),
+  mode: z.enum(["solo", "live"]).optional(),
+});
+
+export const mealPlanAssignSchema = z.object({
+  clientId: z.string().min(1),
+  mealPlanId: z.string().min(1),
 });

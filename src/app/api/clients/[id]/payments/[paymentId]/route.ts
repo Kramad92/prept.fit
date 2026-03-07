@@ -20,7 +20,7 @@ export async function PUT(
   const body = parsed.data;
 
   const payment = await prisma.payment.update({
-    where: { id: params.paymentId },
+    where: { id: params.paymentId, clientId: client.id },
     data: {
       amount: body.amount !== undefined ? parseFloat(String(body.amount)) : undefined,
       currency: body.currency,
@@ -49,7 +49,7 @@ export async function DELETE(
   });
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.payment.delete({ where: { id: params.paymentId } });
+  await prisma.payment.delete({ where: { id: params.paymentId, clientId: client.id } });
 
   return NextResponse.json({ success: true });
 }

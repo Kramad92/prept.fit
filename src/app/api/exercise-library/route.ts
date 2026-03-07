@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, exerciseLibrarySchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -34,7 +35,9 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, exerciseLibrarySchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const exercise = await prisma.exerciseLibrary.create({
     data: {

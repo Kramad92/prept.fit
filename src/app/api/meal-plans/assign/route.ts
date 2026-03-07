@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { deepCopyMealPlan } from "@/services/meal-plans";
+import { validateBody, mealPlanAssignSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { clientId, mealPlanId } = await req.json();
+  const parsed = await validateBody(req, mealPlanAssignSchema);
+  if ("error" in parsed) return parsed.error;
+  const { clientId, mealPlanId } = parsed.data;
 
   const result = await prisma.$transaction(async (tx) => {
     return deepCopyMealPlan(tx, {

@@ -15,6 +15,12 @@ export async function GET(
       ? session.user.clientProfileId
       : params.id;
 
+  // Verify client belongs to current tenant
+  const client = await prisma.client.findFirst({
+    where: { id: clientId, tenantId: session.user.tenantId },
+  });
+  if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const measurements = await prisma.measurement.findMany({
     where: { clientId },
     orderBy: { date: "asc" },

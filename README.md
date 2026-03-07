@@ -43,52 +43,6 @@ Built with Next.js 14, Prisma, PostgreSQL, and TailwindCSS.
 | Validation | Zod |
 | File Storage | AWS S3 / Cloudflare R2 |
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- PostgreSQL database
-- (Optional) S3-compatible storage for progress photos
-
-### Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/trainerhub.git
-   cd trainerhub
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` with your database URL and NextAuth secret:
-   ```
-   DATABASE_URL="postgresql://user:password@localhost:5432/trainerhub"
-   NEXTAUTH_URL="http://localhost:3000"
-   NEXTAUTH_SECRET="your-random-secret"
-   ```
-
-4. **Set up the database**
-   ```bash
-   npm run db:generate
-   npm run db:push
-   npm run db:seed        # Optional: seed initial data
-   ```
-
-5. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
 ## Project Structure
 
 ```
@@ -149,20 +103,6 @@ Workout and meal plans use a template-to-copy pattern. When a plan is assigned t
 ### Dynamic Brand Colors
 
 Each tenant has a `brandColor` setting. A `BrandColorProvider` component generates an HSL shade palette from the hex value and applies it as CSS custom properties, so TailwindCSS `brand-*` utilities update dynamically.
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run db:generate` | Generate Prisma client |
-| `npm run db:push` | Push schema to database |
-| `npm run db:migrate` | Run database migrations |
-| `npm run db:seed` | Seed database with initial data |
-| `npm run db:studio` | Open Prisma Studio |
 
 ## License
 

@@ -14,51 +14,82 @@ import {
 } from "lucide-react";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { FoodPicker } from "./food-picker";
-import type { Meal, ClientMeal, Food } from "@/types";
+import type { Food, AssignedMealPlan, FoodInput, MealInput } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
-
-interface AssignedMealPlan {
-  id: string;
-  customName: string | null;
-  notes: string | null;
-  isActive: boolean;
-  mealPlan: {
-    id: string;
-    name: string;
-    description: string | null;
-    targetCalories: number | null;
-    targetProtein: number | null;
-    targetCarbs: number | null;
-    targetFat: number | null;
-    sourceTemplate: { id: string; name: string } | null;
-    meals: Meal[];
-  };
-  clientMeals: ClientMeal[];
-}
-
-interface FoodInput {
-  name: string;
-  portion: string;
-  calories: string;
-  protein: string;
-  carbs: string;
-  fat: string;
-  unitLabel?: string;
-  gramsPerUnit?: number;
-}
-
-interface MealInput {
-  tempId: string;
-  name: string;
-  time: string;
-  foods: FoodInput[];
-}
+import { api } from "@/lib/api";
+import { scalePortionFoodInput, computeMealTotals } from "@/lib/portion-scaling";
 
 interface ClientNutritionTabProps {
   clientId: string;
   assignedMealPlans: AssignedMealPlan[];
   onRefresh: () => void;
+}
+
+interface FormState {
+  name: string;
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  meals: MealInput[];
+}
+
+function emptyForm(t: any): FormState {
+  return {
+    name: "",
+    calories: "",
+    protein: "",
+    carbs: "",
+    fat: "",
+    meals: [
+      { tempId: "b", name: t.nutrition.breakfast, time: "07:30", foods: [] },
+      { tempId: "l", name: t.nutrition.lunch, time: "12:30", foods: [] },
+      { tempId: "d", name: t.nutrition.dinner, time: "19:00", foods: [] },
+    ],
+  };
+}
+
+function mealsToPayload(meals: MealInput[]) {
+  return meals
+    .filter((m) => m.name.trim())
+    .map((m, i) => ({
+      name: m.name,
+      time: m.time || null,
+      foods: m.foods.filter((f) => f.name.trim()).map((f) => ({
+        name: f.name,
+        portion: f.portion,
+        calories: f.calories ? parseInt(f.calories) : null,
+        protein: f.protein ? parseInt(f.protein) : null,
+        carbs: f.carbs ? parseInt(f.carbs) : null,
+        fat: f.fat ? parseInt(f.fat) : null,
+      })),
+      orderIndex: i,
+    }));
+}
+
+function planToFormState(plan: AssignedMealPlan): FormState {
+  const source = plan.clientMeals.length > 0 ? plan.clientMeals : plan.mealPlan.meals;
+  return {
+    name: plan.customName || plan.mealPlan.name,
+    calories: plan.mealPlan.targetCalories?.toString() || "",
+    protein: plan.mealPlan.targetProtein?.toString() || "",
+    carbs: plan.mealPlan.targetCarbs?.toString() || "",
+    fat: plan.mealPlan.targetFat?.toString() || "",
+    meals: source.map((m) => ({
+      tempId: m.id,
+      name: m.name,
+      time: m.time || "",
+      foods: (m.foods as Food[]).map((f: any) => ({
+        name: f.name || "",
+        portion: f.portion || "",
+        calories: f.calories?.toString() || "",
+        protein: f.protein?.toString() || "",
+        carbs: f.carbs?.toString() || "",
+        fat: f.fat?.toString() || "",
+      })),
+    })),
+  };
 }
 
 export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: ClientNutritionTabProps) {
@@ -72,99 +103,51 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Custom form
-  const [customName, setCustomName] = useState("");
-  const [customCalories, setCustomCalories] = useState("");
-  const [customProtein, setCustomProtein] = useState("");
-  const [customCarbs, setCustomCarbs] = useState("");
-  const [customFat, setCustomFat] = useState("");
-  const [customMeals, setCustomMeals] = useState<MealInput[]>([]);
+  // Unified form state for both create and edit
+  const [form, setForm] = useState<FormState>(emptyForm(t));
 
-  // Edit form
-  const [editName, setEditName] = useState("");
-  const [editCalories, setEditCalories] = useState("");
-  const [editProtein, setEditProtein] = useState("");
-  const [editCarbs, setEditCarbs] = useState("");
-  const [editFat, setEditFat] = useState("");
-  const [editMeals, setEditMeals] = useState<MealInput[]>([]);
-
-  // Auto-calculate totals from foods in custom form
-  function computeTotals(meals: MealInput[]) {
-    let cal = 0, p = 0, c = 0, f = 0;
-    for (const meal of meals) {
-      for (const food of meal.foods) {
-        cal += parseInt(food.calories) || 0;
-        p += parseInt(food.protein) || 0;
-        c += parseInt(food.carbs) || 0;
-        f += parseInt(food.fat) || 0;
-      }
-    }
-    return { calories: cal, protein: p, carbs: c, fat: f };
-  }
-
-  const customTotals = useMemo(() => computeTotals(customMeals), [customMeals]);
-  const editTotals = useMemo(() => computeTotals(editMeals), [editMeals]);
+  const totals = useMemo(() => computeMealTotals(form.meals), [form.meals]);
 
   useEffect(() => {
-    setCustomCalories(customTotals.calories ? customTotals.calories.toString() : "");
-    setCustomProtein(customTotals.protein ? customTotals.protein.toString() : "");
-    setCustomCarbs(customTotals.carbs ? customTotals.carbs.toString() : "");
-    setCustomFat(customTotals.fat ? customTotals.fat.toString() : "");
-  }, [customTotals]);
+    setForm((f) => ({
+      ...f,
+      calories: totals.calories ? totals.calories.toString() : "",
+      protein: totals.protein ? totals.protein.toString() : "",
+      carbs: totals.carbs ? totals.carbs.toString() : "",
+      fat: totals.fat ? totals.fat.toString() : "",
+    }));
+  }, [totals]);
 
-  useEffect(() => {
-    if (editingPlanId) {
-      setEditCalories(editTotals.calories ? editTotals.calories.toString() : "");
-      setEditProtein(editTotals.protein ? editTotals.protein.toString() : "");
-      setEditCarbs(editTotals.carbs ? editTotals.carbs.toString() : "");
-      setEditFat(editTotals.fat ? editTotals.fat.toString() : "");
-    }
-  }, [editTotals, editingPlanId]);
-
-  function createEmptyMeal(): MealInput {
-    return {
-      tempId: Math.random().toString(36).slice(2),
-      name: "",
-      time: "",
-      foods: [],
-    };
+  function updateFormField(field: keyof FormState, value: string) {
+    setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function defaultMeals(): MealInput[] {
-    return [
-      { tempId: "b", name: t.nutrition.breakfast, time: "07:30", foods: [] },
-      { tempId: "l", name: t.nutrition.lunch, time: "12:30", foods: [] },
-      { tempId: "d", name: t.nutrition.dinner, time: "19:00", foods: [] },
-    ];
+  function setMeals(meals: MealInput[]) {
+    setForm((f) => ({ ...f, meals }));
   }
 
-  function mealsToPayload(meals: MealInput[]) {
-    return meals
-      .filter((m) => m.name.trim())
-      .map((m, i) => ({
-        name: m.name,
-        time: m.time || null,
-        foods: m.foods.filter((f) => f.name.trim()).map((f) => ({
-          name: f.name,
-          portion: f.portion,
-          calories: f.calories ? parseInt(f.calories) : null,
-          protein: f.protein ? parseInt(f.protein) : null,
-          carbs: f.carbs ? parseInt(f.carbs) : null,
-          fat: f.fat ? parseInt(f.fat) : null,
-        })),
-        orderIndex: i,
-      }));
+  function updateFood(mealIdx: number, foodIdx: number, field: string, value: string) {
+    setMeals(
+      form.meals.map((m, mi) => {
+        if (mi !== mealIdx) return m;
+        return {
+          ...m,
+          foods: m.foods.map((f, fi) => {
+            if (fi !== foodIdx) return f;
+            if (field === "portion") {
+              return { ...f, ...scalePortionFoodInput(f, value) };
+            }
+            return { ...f, [field]: value };
+          }),
+        };
+      })
+    );
   }
 
   async function handleAssignTemplate(templateId: string) {
     try {
-      const res = await fetch(`/api/clients/${clientId}/nutrition`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mealPlanId: templateId }),
-      });
-      if (res.ok) toastSuccess(t.nutrition.mealPlanAssigned);
-      else toastError(t.nutrition.failedToAssign);
+      await api.post(`/api/clients/${clientId}/nutrition`, { mealPlanId: templateId });
+      toastSuccess(t.nutrition.mealPlanAssigned);
     } catch {
       toastError(t.nutrition.failedToAssign);
     }
@@ -176,27 +159,18 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(`/api/clients/${clientId}/nutrition`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: customName,
-          targetCalories: customCalories ? parseInt(customCalories) : null,
-          targetProtein: customProtein ? parseInt(customProtein) : null,
-          targetCarbs: customCarbs ? parseInt(customCarbs) : null,
-          targetFat: customFat ? parseInt(customFat) : null,
-          meals: mealsToPayload(customMeals),
-        }),
+      await api.post(`/api/clients/${clientId}/nutrition`, {
+        name: form.name,
+        targetCalories: form.calories ? parseInt(form.calories) : null,
+        targetProtein: form.protein ? parseInt(form.protein) : null,
+        targetCarbs: form.carbs ? parseInt(form.carbs) : null,
+        targetFat: form.fat ? parseInt(form.fat) : null,
+        meals: mealsToPayload(form.meals),
       });
-      if (res.ok) {
-        toastSuccess(t.nutrition.customMealPlanCreated);
-        setShowCustomForm(false);
-        setCustomName("");
-        setCustomMeals([]);
-        onRefresh();
-      } else {
-        toastError(t.nutrition.failedToCreate);
-      }
+      toastSuccess(t.nutrition.customMealPlanCreated);
+      setShowCustomForm(false);
+      setForm(emptyForm(t));
+      onRefresh();
     } catch {
       toastError(t.nutrition.failedToCreate);
     }
@@ -204,65 +178,24 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   }
 
   function startEdit(plan: AssignedMealPlan) {
-    const meals = plan.clientMeals.length > 0
-      ? plan.clientMeals.map((m) => ({
-          tempId: m.id,
-          name: m.name,
-          time: m.time || "",
-          foods: (m.foods as Food[]).map((f: any) => ({
-            name: f.name || "",
-            portion: f.portion || "",
-            calories: f.calories?.toString() || "",
-            protein: f.protein?.toString() || "",
-            carbs: f.carbs?.toString() || "",
-            fat: f.fat?.toString() || "",
-          })),
-        }))
-      : plan.mealPlan.meals.map((m) => ({
-          tempId: m.id,
-          name: m.name,
-          time: m.time || "",
-          foods: (m.foods as Food[]).map((f: any) => ({
-            name: f.name || "",
-            portion: f.portion || "",
-            calories: f.calories?.toString() || "",
-            protein: f.protein?.toString() || "",
-            carbs: f.carbs?.toString() || "",
-            fat: f.fat?.toString() || "",
-          })),
-        }));
-
     setEditingPlanId(plan.id);
-    setEditName(plan.customName || plan.mealPlan.name);
-    setEditCalories(plan.mealPlan.targetCalories?.toString() || "");
-    setEditProtein(plan.mealPlan.targetProtein?.toString() || "");
-    setEditCarbs(plan.mealPlan.targetCarbs?.toString() || "");
-    setEditFat(plan.mealPlan.targetFat?.toString() || "");
-    setEditMeals(meals);
+    setForm(planToFormState(plan));
   }
 
   async function handleSaveEdit(planId: string) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/clients/${clientId}/nutrition/${planId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customName: editName,
-          targetCalories: editCalories ? parseInt(editCalories) : null,
-          targetProtein: editProtein ? parseInt(editProtein) : null,
-          targetCarbs: editCarbs ? parseInt(editCarbs) : null,
-          targetFat: editFat ? parseInt(editFat) : null,
-          meals: mealsToPayload(editMeals),
-        }),
+      await api.put(`/api/clients/${clientId}/nutrition/${planId}`, {
+        customName: form.name,
+        targetCalories: form.calories ? parseInt(form.calories) : null,
+        targetProtein: form.protein ? parseInt(form.protein) : null,
+        targetCarbs: form.carbs ? parseInt(form.carbs) : null,
+        targetFat: form.fat ? parseInt(form.fat) : null,
+        meals: mealsToPayload(form.meals),
       });
-      if (res.ok) {
-        toastSuccess(t.nutrition.mealPlanSaved);
-        setEditingPlanId(null);
-        onRefresh();
-      } else {
-        toastError(t.nutrition.failedToSave);
-      }
+      toastSuccess(t.nutrition.mealPlanSaved);
+      setEditingPlanId(null);
+      onRefresh();
     } catch {
       toastError(t.nutrition.failedToSave);
     }
@@ -271,7 +204,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
 
   async function handleDelete(planId: string) {
     try {
-      await fetch(`/api/clients/${clientId}/nutrition/${planId}`, { method: "DELETE" });
+      await api.delete(`/api/clients/${clientId}/nutrition/${planId}`);
       toastSuccess(t.nutrition.mealPlanRemoved);
       onRefresh();
     } catch {
@@ -279,70 +212,8 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     }
   }
 
-  function updateFood(
-    meals: MealInput[],
-    setMeals: (v: MealInput[]) => void,
-    mealIdx: number,
-    foodIdx: number,
-    field: string,
-    value: string
-  ) {
-    setMeals(
-      meals.map((m, mi) => {
-        if (mi !== mealIdx) return m;
-        return {
-          ...m,
-          foods: m.foods.map((f, fi) => {
-            if (fi !== foodIdx) return f;
-            if (field === "portion") {
-              const scale = (v: string, ratio: number) => {
-                const n = parseInt(v);
-                return isNaN(n) ? v : Math.round(n * ratio).toString();
-              };
-              // Unit-based portions: detect qty change
-              if (f.gramsPerUnit && f.unitLabel) {
-                const oldQty = parseInt(f.portion) || 1;
-                const newQty = parseInt(value) || oldQty;
-                if (newQty !== oldQty && newQty > 0) {
-                  const ratio = newQty / oldQty;
-                  const totalGrams = newQty * f.gramsPerUnit;
-                  return {
-                    ...f,
-                    portion: `${newQty} ${f.unitLabel} (${Math.round(totalGrams)}g)`,
-                    calories: scale(f.calories, ratio),
-                    protein: scale(f.protein, ratio),
-                    carbs: scale(f.carbs, ratio),
-                    fat: scale(f.fat, ratio),
-                  };
-                }
-                return { ...f, portion: value };
-              }
-              // Plain gram portions
-              const oldG = f.portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
-              const newG = value.match(/^(\d+(?:\.\d+)?)\s*g$/i);
-              if (oldG && newG) {
-                const ratio = parseFloat(newG[1]) / parseFloat(oldG[1]);
-                if (ratio > 0 && ratio !== 1) {
-                  return {
-                    ...f,
-                    portion: value,
-                    calories: scale(f.calories, ratio),
-                    protein: scale(f.protein, ratio),
-                    carbs: scale(f.carbs, ratio),
-                    fat: scale(f.fat, ratio),
-                  };
-                }
-              }
-              return { ...f, portion: value };
-            }
-            return { ...f, [field]: value };
-          }),
-        };
-      })
-    );
-  }
-
-  function renderMealEditor(meals: MealInput[], setMeals: (v: MealInput[]) => void) {
+  function renderMealEditor() {
+    const { meals } = form;
     return (
       <div className="space-y-3">
         {meals.map((meal, mi) => (
@@ -420,18 +291,17 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                       }}
                     />
                   </div>
-                  <input type="text" value={food.portion} onChange={(e) => updateFood(meals, setMeals, mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
-                  <input type="number" value={food.calories} onChange={(e) => updateFood(meals, setMeals, mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
-                  <input type="number" value={food.protein} onChange={(e) => updateFood(meals, setMeals, mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P" />
+                  <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
+                  <input type="number" value={food.calories} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
+                  <input type="number" value={food.protein} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P" />
                   <div className="flex gap-1">
-                    <input type="number" value={food.fat} onChange={(e) => updateFood(meals, setMeals, mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F" />
+                    <input type="number" value={food.fat} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F" />
                     <button type="button" onClick={() => {
                       setMeals(meals.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
                     }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
                   </div>
                 </div>
               ))}
-              {/* Add food — typing triggers search */}
               <FoodPicker
                 variant="inline"
                 inputClassName="input text-xs"
@@ -466,12 +336,23 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         ))}
         <button
           type="button"
-          onClick={() => setMeals([...meals, createEmptyMeal()])}
+          onClick={() => setMeals([...meals, { tempId: Math.random().toString(36).slice(2), name: "", time: "", foods: [] }])}
           className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-brand-300 hover:text-brand-600"
         >
           <Plus className="h-4 w-4" />
           {t.nutrition.addMeal}
         </button>
+      </div>
+    );
+  }
+
+  function renderMacroFields() {
+    return (
+      <div className="grid grid-cols-4 gap-3">
+        <div><label className="text-xs text-gray-500">{t.nutrition.calories}</label><input type="number" value={form.calories} onChange={(e) => updateFormField("calories", e.target.value)} className="input mt-0.5" placeholder="1800" /></div>
+        <div><label className="text-xs text-gray-500">{t.nutrition.protein}</label><input type="number" value={form.protein} onChange={(e) => updateFormField("protein", e.target.value)} className="input mt-0.5" placeholder="150" /></div>
+        <div><label className="text-xs text-gray-500">{t.nutrition.carbs}</label><input type="number" value={form.carbs} onChange={(e) => updateFormField("carbs", e.target.value)} className="input mt-0.5" placeholder="180" /></div>
+        <div><label className="text-xs text-gray-500">{t.nutrition.fat}</label><input type="number" value={form.fat} onChange={(e) => updateFormField("fat", e.target.value)} className="input mt-0.5" placeholder="60" /></div>
       </div>
     );
   }
@@ -490,7 +371,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
             <button
               onClick={() => {
                 setShowCustomForm(true);
-                setCustomMeals(defaultMeals());
+                setForm(emptyForm(t));
               }}
               className="btn-secondary"
             >
@@ -520,7 +401,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           <button
             onClick={() => {
               setShowCustomForm(true);
-              setCustomMeals(defaultMeals());
+              setForm(emptyForm(t));
             }}
             className="btn-primary text-sm"
           >
@@ -541,17 +422,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
               </button>
             </div>
             <div className="mt-3">
-              <input type="text" required value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder={t.nutrition.planName} className="input" />
+              <input type="text" required value={form.name} onChange={(e) => updateFormField("name", e.target.value)} placeholder={t.nutrition.planName} className="input" />
             </div>
-            <div className="mt-3 grid grid-cols-4 gap-3">
-              <div><label className="text-xs text-gray-500">{t.nutrition.calories}</label><input type="number" value={customCalories} onChange={(e) => setCustomCalories(e.target.value)} className="input mt-0.5" placeholder="1800" /></div>
-              <div><label className="text-xs text-gray-500">{t.nutrition.protein} ({t.nutrition.gram})</label><input type="number" value={customProtein} onChange={(e) => setCustomProtein(e.target.value)} className="input mt-0.5" placeholder="150" /></div>
-              <div><label className="text-xs text-gray-500">{t.nutrition.carbs} ({t.nutrition.gram})</label><input type="number" value={customCarbs} onChange={(e) => setCustomCarbs(e.target.value)} className="input mt-0.5" placeholder="180" /></div>
-              <div><label className="text-xs text-gray-500">{t.nutrition.fat} ({t.nutrition.gram})</label><input type="number" value={customFat} onChange={(e) => setCustomFat(e.target.value)} className="input mt-0.5" placeholder="60" /></div>
-            </div>
-            <div className="mt-3">
-              {renderMealEditor(customMeals, setCustomMeals)}
-            </div>
+            <div className="mt-3">{renderMacroFields()}</div>
+            <div className="mt-3">{renderMealEditor()}</div>
             <button type="submit" disabled={saving} className="btn-primary mt-4 w-full">
               {saving ? t.nutrition.creating : t.nutrition.createMealPlan}
             </button>
@@ -654,15 +528,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
                 <div className="mt-4 border-t border-gray-100 pt-4">
                   <div className="mb-3">
                     <label className="text-xs text-gray-500">{t.nutrition.planName}</label>
-                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="input mt-0.5" />
+                    <input type="text" value={form.name} onChange={(e) => updateFormField("name", e.target.value)} className="input mt-0.5" />
                   </div>
-                  <div className="mb-3 grid grid-cols-4 gap-3">
-                    <div><label className="text-xs text-gray-500">{t.nutrition.calories}</label><input type="number" value={editCalories} onChange={(e) => setEditCalories(e.target.value)} className="input mt-0.5" /></div>
-                    <div><label className="text-xs text-gray-500">{t.nutrition.protein}</label><input type="number" value={editProtein} onChange={(e) => setEditProtein(e.target.value)} className="input mt-0.5" /></div>
-                    <div><label className="text-xs text-gray-500">{t.nutrition.carbs}</label><input type="number" value={editCarbs} onChange={(e) => setEditCarbs(e.target.value)} className="input mt-0.5" /></div>
-                    <div><label className="text-xs text-gray-500">{t.nutrition.fat}</label><input type="number" value={editFat} onChange={(e) => setEditFat(e.target.value)} className="input mt-0.5" /></div>
-                  </div>
-                  {renderMealEditor(editMeals, setEditMeals)}
+                  <div className="mb-3">{renderMacroFields()}</div>
+                  {renderMealEditor()}
                   <div className="mt-4 flex gap-2">
                     <button onClick={() => handleSaveEdit(plan.id)} disabled={saving} className="btn-primary text-sm">
                       <Check className="mr-1 h-4 w-4" />

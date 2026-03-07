@@ -13,7 +13,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FoodPicker } from "@/components/client/food-picker";
 import { format } from "date-fns";
 import { useT } from "@/lib/i18n";
-import type { Food, Meal, ClientMeal } from "@/types";
+import { api } from "@/lib/api";
+import type { Food, NutritionLog } from "@/types";
 
 interface AssignedPlan {
   id: string;
@@ -27,21 +28,22 @@ interface AssignedPlan {
     targetProtein: number | null;
     targetCarbs: number | null;
     targetFat: number | null;
-    meals: Meal[];
+    meals: Array<{
+      id: string;
+      name: string;
+      time: string | null;
+      foods: Food[];
+      orderIndex: number;
+    }>;
   };
-  clientMeals: ClientMeal[];
-}
-
-interface NutritionLog {
-  id: string;
-  date: string;
-  mealName: string;
-  foods: string;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-  notes: string | null;
+  clientMeals: Array<{
+    id: string;
+    name: string;
+    time: string | null;
+    foods: Food[];
+    orderIndex: number;
+    notes: string | null;
+  }>;
 }
 
 export default function PortalNutritionPage() {
@@ -58,8 +60,8 @@ export default function PortalNutritionPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/portal/me").then((r) => r.json()),
-      fetch("/api/nutrition-logs?days=14").then((r) => r.json()),
+      api.get<any>("/api/portal/me"),
+      api.get<NutritionLog[]>("/api/nutrition-logs?days=14"),
     ])
       .then(([data, logData]) => {
         setPlans(data.assignedMealPlans || []);
@@ -93,21 +95,16 @@ export default function PortalNutritionPage() {
       notes: fd.get("notes") || null,
     };
 
-    const res = await fetch("/api/nutrition-logs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    if (res.ok) {
+    try {
+      await api.post("/api/nutrition-logs", data);
       setSaved(true);
       setShowLog(false);
       setLogFoods([]);
-      const updated = await fetch("/api/nutrition-logs?days=14").then((r) =>
-        r.json()
-      );
+      const updated = await api.get<NutritionLog[]>("/api/nutrition-logs?days=14");
       setLogs(updated);
       setTimeout(() => setSaved(false), 3000);
+    } catch {
+      // handled by api client
     }
     setSaving(false);
   }

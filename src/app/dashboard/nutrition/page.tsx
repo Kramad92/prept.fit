@@ -15,22 +15,11 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FoodPicker } from "@/components/client/food-picker";
-import type { Food } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
-
-interface MealPlanSummary {
-  id: string;
-  name: string;
-  description: string | null;
-  isTemplate: boolean;
-  targetCalories: number | null;
-  targetProtein: number | null;
-  targetCarbs: number | null;
-  targetFat: number | null;
-  mealCount: number;
-  assignedCount: number;
-}
+import { api } from "@/lib/api";
+import { scalePortionFood, computeFoodTotals } from "@/lib/portion-scaling";
+import type { Food, MealPlanSummary, ClientOption } from "@/types";
 
 interface MealRow {
   name: string;
@@ -38,9 +27,32 @@ interface MealRow {
   foods: Food[];
 }
 
-interface ClientOption {
-  id: string;
+interface FormState {
   name: string;
+  description: string;
+  targetCalories: string;
+  targetProtein: string;
+  targetCarbs: string;
+  targetFat: string;
+  meals: MealRow[];
+}
+
+const DEFAULT_MEALS: MealRow[] = [
+  { name: "Breakfast", time: "07:30", foods: [] },
+  { name: "Lunch", time: "12:30", foods: [] },
+  { name: "Dinner", time: "19:00", foods: [] },
+];
+
+function emptyForm(): FormState {
+  return {
+    name: "",
+    description: "",
+    targetCalories: "",
+    targetProtein: "",
+    targetCarbs: "",
+    targetFat: "",
+    meals: DEFAULT_MEALS.map((m) => ({ ...m, foods: [] })),
+  };
 }
 
 export default function NutritionPage() {
@@ -56,28 +68,18 @@ export default function NutritionPage() {
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [planDetail, setPlanDetail] = useState<any>(null);
   const [duplicating, setDuplicating] = useState<string | null>(null);
-
-  // Edit state
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
-
-  // Create/Edit form state
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [newCalories, setNewCalories] = useState("");
-  const [newProtein, setNewProtein] = useState("");
-  const [newCarbs, setNewCarbs] = useState("");
-  const [newFat, setNewFat] = useState("");
-  const [meals, setMeals] = useState<MealRow[]>([
-    { name: "Breakfast", time: "07:30", foods: [] },
-    { name: "Lunch", time: "12:30", foods: [] },
-    { name: "Dinner", time: "19:00", foods: [] },
-  ]);
+  const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
+
+  function updateMeals(updater: (meals: MealRow[]) => MealRow[]) {
+    setForm((prev) => ({ ...prev, meals: updater(prev.meals) }));
+  }
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/meal-plans").then((r) => r.json()),
-      fetch("/api/clients").then((r) => r.json()),
+      api.get<MealPlanSummary[]>("/api/meal-plans"),
+      api.get<ClientOption[]>("/api/clients"),
     ])
       .then(([p, c]) => {
         setPlans(p);
@@ -93,7 +95,7 @@ export default function NutritionPage() {
       setPlanDetail(null);
       return;
     }
-    const data = await fetch(`/api/meal-plans/${id}`).then((r) => r.json());
+    const data = await api.get(`/api/meal-plans/${id}`);
     setPlanDetail(data);
     setExpandedPlan(id);
   }
@@ -103,13 +105,13 @@ export default function NutritionPage() {
     setSaving(true);
 
     const body = {
-      name: newName,
-      description: newDesc || null,
-      targetCalories: newCalories ? parseInt(newCalories) : null,
-      targetProtein: newProtein ? parseInt(newProtein) : null,
-      targetCarbs: newCarbs ? parseInt(newCarbs) : null,
-      targetFat: newFat ? parseInt(newFat) : null,
-      meals: meals
+      name: form.name,
+      description: form.description || null,
+      targetCalories: form.targetCalories ? parseInt(form.targetCalories) : null,
+      targetProtein: form.targetProtein ? parseInt(form.targetProtein) : null,
+      targetCarbs: form.targetCarbs ? parseInt(form.targetCarbs) : null,
+      targetFat: form.targetFat ? parseInt(form.targetFat) : null,
+      meals: form.meals
         .filter((m) => m.name.trim())
         .map((m, i) => ({
           name: m.name,
@@ -119,57 +121,59 @@ export default function NutritionPage() {
         })),
     };
 
-    const url = editingPlanId ? `/api/meal-plans/${editingPlanId}` : "/api/meal-plans";
-    const method = editingPlanId ? "PUT" : "POST";
-
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (res.ok) {
-      const updated = await fetch("/api/meal-plans").then((r) => r.json());
+    try {
+      if (editingPlanId) {
+        await api.put(`/api/meal-plans/${editingPlanId}`, body);
+      } else {
+        await api.post("/api/meal-plans", body);
+      }
+      const updated = await api.get<MealPlanSummary[]>("/api/meal-plans");
       setPlans(updated);
       setShowCreate(false);
       setEditingPlanId(null);
-      resetForm();
+      setForm(emptyForm());
+    } catch {
+      toastError(t.errors.somethingWentWrong);
     }
     setSaving(false);
   }
 
   async function handleDuplicate(planId: string) {
     setDuplicating(planId);
-    const res = await fetch(`/api/meal-plans/${planId}/duplicate`, { method: "POST" });
-    if (res.ok) {
-      const updated = await fetch("/api/meal-plans").then((r) => r.json());
+    try {
+      await api.post(`/api/meal-plans/${planId}/duplicate`);
+      const updated = await api.get<MealPlanSummary[]>("/api/meal-plans");
       setPlans(updated);
+    } catch {
+      toastError(t.errors.somethingWentWrong);
     }
     setDuplicating(null);
   }
 
   async function handleDelete(planId: string) {
-    const res = await fetch(`/api/meal-plans/${planId}`, { method: "DELETE" });
-    if (res.ok) {
+    try {
+      await api.delete(`/api/meal-plans/${planId}`);
       setPlans((prev) => prev.filter((p) => p.id !== planId));
       if (expandedPlan === planId) {
         setExpandedPlan(null);
         setPlanDetail(null);
       }
+    } catch {
+      toastError(t.errors.somethingWentWrong);
     }
   }
 
   async function handleEdit(planId: string) {
-    const data = await fetch(`/api/meal-plans/${planId}`).then((r) => r.json());
+    const data = await api.get<any>(`/api/meal-plans/${planId}`);
     setEditingPlanId(planId);
-    setNewName(data.name);
-    setNewDesc(data.description || "");
-    setNewCalories(data.targetCalories?.toString() || "");
-    setNewProtein(data.targetProtein?.toString() || "");
-    setNewCarbs(data.targetCarbs?.toString() || "");
-    setNewFat(data.targetFat?.toString() || "");
-    setMeals(
-      data.meals.map((m: any) => ({
+    setForm({
+      name: data.name,
+      description: data.description || "",
+      targetCalories: data.targetCalories?.toString() || "",
+      targetProtein: data.targetProtein?.toString() || "",
+      targetCarbs: data.targetCarbs?.toString() || "",
+      targetFat: data.targetFat?.toString() || "",
+      meals: data.meals.map((m: any) => ({
         name: m.name,
         time: m.time || "",
         foods: (m.foods as Food[])?.length > 0
@@ -182,41 +186,29 @@ export default function NutritionPage() {
               fat: f.fat ?? null,
             }))
           : [],
-      }))
-    );
+      })),
+    });
     setShowCreate(true);
   }
 
   async function handleAssign() {
     if (!assignPlanId || !assignClientId) return;
-    await fetch("/api/meal-plans/assign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mealPlanId: assignPlanId, clientId: assignClientId }),
-    });
-    const updated = await fetch("/api/meal-plans").then((r) => r.json());
-    setPlans(updated);
+    try {
+      await api.post("/api/meal-plans/assign", {
+        mealPlanId: assignPlanId,
+        clientId: assignClientId,
+      });
+      const updated = await api.get<MealPlanSummary[]>("/api/meal-plans");
+      setPlans(updated);
+    } catch {
+      toastError(t.errors.somethingWentWrong);
+    }
     setAssignPlanId(null);
     setAssignClientId("");
   }
 
-  function resetForm() {
-    setNewName("");
-    setNewDesc("");
-    setNewCalories("");
-    setNewProtein("");
-    setNewCarbs("");
-    setNewFat("");
-    setEditingPlanId(null);
-    setMeals([
-      { name: "Breakfast", time: "07:30", foods: [] },
-      { name: "Lunch", time: "12:30", foods: [] },
-      { name: "Dinner", time: "19:00", foods: [] },
-    ]);
-  }
-
   function updateFood(mealIndex: number, foodIndex: number, field: string, value: string) {
-    setMeals((prev) =>
+    updateMeals((prev) =>
       prev.map((m, mi) =>
         mi === mealIndex
           ? {
@@ -224,43 +216,14 @@ export default function NutritionPage() {
               foods: m.foods.map((f, fi) => {
                 if (fi !== foodIndex) return f;
                 if (field === "portion") {
-                  // Unit-based portions: detect qty change, auto-update grams & macros
-                  if (f.gramsPerUnit && f.unitLabel) {
-                    const oldQty = parseInt(f.portion) || 1;
-                    const newQty = parseInt(value) || oldQty;
-                    if (newQty !== oldQty && newQty > 0) {
-                      const ratio = newQty / oldQty;
-                      const totalGrams = newQty * f.gramsPerUnit;
-                      return {
-                        ...f,
-                        portion: `${newQty} ${f.unitLabel} (${Math.round(totalGrams)}g)`,
-                        calories: f.calories != null ? Math.round(f.calories * ratio) : null,
-                        protein: f.protein != null ? Math.round(f.protein * ratio) : null,
-                        carbs: f.carbs != null ? Math.round(f.carbs * ratio) : null,
-                        fat: f.fat != null ? Math.round(f.fat * ratio) : null,
-                      };
-                    }
-                    return { ...f, portion: value };
-                  }
-                  // Plain gram portions: scale when grams change
-                  const oldG = f.portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
-                  const newG = value.match(/^(\d+(?:\.\d+)?)\s*g$/i);
-                  if (oldG && newG) {
-                    const ratio = parseFloat(newG[1]) / parseFloat(oldG[1]);
-                    if (ratio > 0 && ratio !== 1) {
-                      return {
-                        ...f,
-                        portion: value,
-                        calories: f.calories != null ? Math.round(f.calories * ratio) : null,
-                        protein: f.protein != null ? Math.round(f.protein * ratio) : null,
-                        carbs: f.carbs != null ? Math.round(f.carbs * ratio) : null,
-                        fat: f.fat != null ? Math.round(f.fat * ratio) : null,
-                      };
-                    }
-                  }
-                  return { ...f, portion: value };
+                  return { ...f, ...scalePortionFood(f, value) };
                 }
-                return { ...f, [field]: ["calories", "protein", "carbs", "fat"].includes(field) ? (value ? parseInt(value) : null) : value };
+                return {
+                  ...f,
+                  [field]: ["calories", "protein", "carbs", "fat"].includes(field)
+                    ? (value ? parseInt(value) : null)
+                    : value,
+                };
               }),
             }
           : m
@@ -268,25 +231,17 @@ export default function NutritionPage() {
     );
   }
 
-  const totals = useMemo(() => {
-    let cal = 0, p = 0, c = 0, f = 0;
-    for (const meal of meals) {
-      for (const food of meal.foods) {
-        cal += food.calories || 0;
-        p += food.protein || 0;
-        c += food.carbs || 0;
-        f += food.fat || 0;
-      }
-    }
-    return { calories: cal, protein: p, carbs: c, fat: f };
-  }, [meals]);
+  const totals = useMemo(() => computeFoodTotals(form.meals), [form.meals]);
 
   // Auto-fill macro fields from food totals
   useEffect(() => {
-    setNewCalories(totals.calories ? totals.calories.toString() : "");
-    setNewProtein(totals.protein ? totals.protein.toString() : "");
-    setNewCarbs(totals.carbs ? totals.carbs.toString() : "");
-    setNewFat(totals.fat ? totals.fat.toString() : "");
+    setForm((prev) => ({
+      ...prev,
+      targetCalories: totals.calories ? totals.calories.toString() : "",
+      targetProtein: totals.protein ? totals.protein.toString() : "",
+      targetCarbs: totals.carbs ? totals.carbs.toString() : "",
+      targetFat: totals.fat ? totals.fat.toString() : "",
+    }));
   }, [totals]);
 
   const filtered = plans.filter((p) =>
@@ -310,7 +265,7 @@ export default function NutritionPage() {
             {t.nutrition.mealPlanTemplatesDesc}
           </p>
         </div>
-        <button onClick={() => { resetForm(); setShowCreate(true); }} className="btn-primary">
+        <button onClick={() => { setForm(emptyForm()); setEditingPlanId(null); setShowCreate(true); }} className="btn-primary">
           <Plus className="h-4 w-4 md:mr-2" />
           <span className="hidden md:inline">{t.nutrition.newMealPlan}</span>
         </button>
@@ -334,7 +289,7 @@ export default function NutritionPage() {
             title={t.nutrition.noMealPlans}
             description={t.nutrition.noMealPlansDesc}
             action={
-              <button onClick={() => { resetForm(); setShowCreate(true); }} className="btn-primary">
+              <button onClick={() => { setForm(emptyForm()); setEditingPlanId(null); setShowCreate(true); }} className="btn-primary">
                 <Plus className="mr-1 h-4 w-4" />
                 {t.nutrition.createPlan}
               </button>
@@ -516,7 +471,7 @@ export default function NutritionPage() {
                   {editingPlanId ? t.nutrition.editMealPlan : t.nutrition.createMealPlan}
                 </h2>
                 <button
-                  onClick={() => { setShowCreate(false); resetForm(); }}
+                  onClick={() => { setShowCreate(false); setForm(emptyForm()); setEditingPlanId(null); }}
                   className="rounded-lg p-1 hover:bg-gray-100"
                 >
                   <X className="h-5 w-5" />
@@ -526,29 +481,29 @@ export default function NutritionPage() {
               <form onSubmit={handleCreate} className="mt-4 space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">{t.nutrition.planName} *</label>
-                  <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)} className="input mt-1" placeholder={t.nutrition.planNamePlaceholder} />
+                  <input type="text" required value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} className="input mt-1" placeholder={t.nutrition.planNamePlaceholder} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">{t.common.description}</label>
-                  <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="input mt-1" placeholder={t.nutrition.descriptionPlaceholder} />
+                  <input type="text" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} className="input mt-1" placeholder={t.nutrition.descriptionPlaceholder} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700">{t.nutrition.calories}</label>
-                    <input type="number" value={newCalories} onChange={(e) => setNewCalories(e.target.value)} className="input mt-1" placeholder="1800" />
+                    <input type="number" value={form.targetCalories} onChange={(e) => setForm((prev) => ({ ...prev, targetCalories: e.target.value }))} className="input mt-1" placeholder="1800" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700">{t.nutrition.proteinG}</label>
-                    <input type="number" value={newProtein} onChange={(e) => setNewProtein(e.target.value)} className="input mt-1" placeholder="150" />
+                    <input type="number" value={form.targetProtein} onChange={(e) => setForm((prev) => ({ ...prev, targetProtein: e.target.value }))} className="input mt-1" placeholder="150" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700">{t.nutrition.carbsG}</label>
-                    <input type="number" value={newCarbs} onChange={(e) => setNewCarbs(e.target.value)} className="input mt-1" placeholder="180" />
+                    <input type="number" value={form.targetCarbs} onChange={(e) => setForm((prev) => ({ ...prev, targetCarbs: e.target.value }))} className="input mt-1" placeholder="180" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700">{t.nutrition.fatG}</label>
-                    <input type="number" value={newFat} onChange={(e) => setNewFat(e.target.value)} className="input mt-1" placeholder="60" />
+                    <input type="number" value={form.targetFat} onChange={(e) => setForm((prev) => ({ ...prev, targetFat: e.target.value }))} className="input mt-1" placeholder="60" />
                   </div>
                 </div>
 
@@ -558,7 +513,7 @@ export default function NutritionPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setMeals((prev) => [...prev, { name: "", time: "", foods: [] }]);
+                        updateMeals((prev) => [...prev, { name: "", time: "", foods: [] }]);
                         setTimeout(() => {
                           const el = document.querySelector("[data-meal-end]");
                           el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -570,14 +525,14 @@ export default function NutritionPage() {
                     </button>
                   </div>
 
-                  {meals.map((meal, mi) => (
+                  {form.meals.map((meal, mi) => (
                     <div key={mi} className="mt-3 rounded-lg border border-gray-200 p-3">
                       <div className="flex gap-3">
                         <div className="flex-1">
                           <input
                             type="text"
                             value={meal.name}
-                            onChange={(e) => setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, name: e.target.value } : m))}
+                            onChange={(e) => updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, name: e.target.value } : m))}
                             className="input"
                             placeholder={t.nutrition.mealNamePlaceholder}
                           />
@@ -586,14 +541,14 @@ export default function NutritionPage() {
                           <input
                             type="time"
                             value={meal.time}
-                            onChange={(e) => setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, time: e.target.value } : m))}
+                            onChange={(e) => updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, time: e.target.value } : m))}
                             className="input"
                           />
                         </div>
-                        {meals.length > 1 && (
+                        {form.meals.length > 1 && (
                           <button
                             type="button"
-                            onClick={() => setMeals((prev) => prev.filter((_, i) => i !== mi))}
+                            onClick={() => updateMeals((prev) => prev.filter((_, i) => i !== mi))}
                             className="text-gray-400 hover:text-red-500"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -622,7 +577,7 @@ export default function NutritionPage() {
                                   placeholder={t.nutrition.foodItem}
                                   initialValue={food.name}
                                   onSelect={(result) => {
-                                    setMeals((prev) =>
+                                    updateMeals((prev) =>
                                       prev.map((m, i) =>
                                         i === mi
                                           ? {
@@ -654,7 +609,7 @@ export default function NutritionPage() {
                               <div className="flex gap-1">
                                 <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder={t.nutrition.fG} />
                                 <button type="button" onClick={() => {
-                                  setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
+                                  updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
                                 }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
                               </div>
                             </div>
@@ -668,7 +623,7 @@ export default function NutritionPage() {
                                     placeholder={t.nutrition.foodItem}
                                     initialValue={food.name}
                                     onSelect={(result) => {
-                                      setMeals((prev) =>
+                                      updateMeals((prev) =>
                                         prev.map((m, i) =>
                                           i === mi
                                             ? {
@@ -695,7 +650,7 @@ export default function NutritionPage() {
                                   />
                                 </div>
                                 <button type="button" onClick={() => {
-                                  setMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
+                                  updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
                                 }} className="text-gray-400 hover:text-red-500 p-1"><Trash2 className="h-4 w-4" /></button>
                               </div>
                               <div className="grid grid-cols-2 gap-1.5">
@@ -714,7 +669,7 @@ export default function NutritionPage() {
                             inputClassName="input text-xs"
                             placeholder={t.nutrition.addFoodItem}
                             onSelect={(food) => {
-                              setMeals((prev) =>
+                              updateMeals((prev) =>
                                 prev.map((m, i) =>
                                   i === mi
                                     ? {
@@ -738,7 +693,7 @@ export default function NutritionPage() {
                               );
                               // Focus the portion field of the newly added food
                               setTimeout(() => {
-                                const newIdx = meals[mi].foods.length; // index of new food after state update
+                                const newIdx = form.meals[mi].foods.length;
                                 const el = document.querySelector(`[data-food-portion="${mi}-${newIdx}"]`) as HTMLInputElement
                                   || document.querySelector(`[data-food-portion-m="${mi}-${newIdx}"]`) as HTMLInputElement;
                                 if (el) {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Plus, GripVertical, Trash2 } from "lucide-react";
 import { ExercisePicker } from "@/components/client/exercise-picker";
 import { ExerciseNameInput } from "@/components/client/exercise-name-input";
+import { AIGenerateWorkout } from "@/components/ai/ai-generate-workout";
 import type { ExerciseInput } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -168,7 +169,18 @@ export default function EditWorkoutPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="input mt-1"
+              placeholder={t.workouts.aiPromptPlaceholder}
             />
+            <div className="mt-1.5">
+              <AIGenerateWorkout
+                prompt={description}
+                onGenerate={(data) => {
+                  if (!name) setName(data.name);
+                  setDescription(data.description || description);
+                  setExercises(data.exercises);
+                }}
+              />
+            </div>
           </div>
           <label className="flex items-center gap-2">
             <input

@@ -79,6 +79,41 @@ function pickBestPortion(portions: USDAFoodPortion[]): { portion: USDAFoodPortio
   return valid[0];
 }
 
+/**
+ * Clean up verbose USDA descriptions:
+ * "Chicken, broilers or fryers, breast, meat only, raw" → "Chicken breast, raw"
+ * "Rice, white, long-grain, regular, raw, enriched" → "Rice, white, long-grain, raw"
+ */
+function cleanFoodName(description: string): string {
+  const noise = [
+    /,?\s*broilers or fryers/i,
+    /,?\s*meat only/i,
+    /,?\s*enriched/i,
+    /,?\s*unenriched/i,
+    /,?\s*regular/i,
+    /,?\s*not fortified/i,
+    /,?\s*fortified/i,
+    /,?\s*without added fat/i,
+    /,?\s*without skin/i,
+    /,?\s*mature seeds/i,
+    /,?\s*commercially prepared/i,
+    /,?\s*NFS/i,
+    /,?\s*NS as to form/i,
+    /,?\s*NS as to.*$/i,
+  ];
+
+  let name = description;
+  for (const pattern of noise) {
+    name = name.replace(pattern, "");
+  }
+
+  // Collapse multiple commas/spaces
+  name = name.replace(/,\s*,/g, ",").replace(/,\s*$/, "").replace(/\s{2,}/g, " ").trim();
+
+  // Capitalize first letter
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 function extractNutrient(nutrients: USDANutrient[], id: number): number | null {
   const n = nutrients.find((n) => n.nutrientId === id);
   return n ? Math.round(n.value) : null;
@@ -111,7 +146,7 @@ export async function GET(req: NextRequest) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query,
-          dataType: ["Foundation", "SR Legacy", "Survey (FNDDS)"],
+          dataType: ["Foundation", "SR Legacy"],
           pageSize: 8,
         }),
       }
@@ -180,7 +215,7 @@ export async function GET(req: NextRequest) {
 
         return {
           fdcId: f.fdcId,
-          name: f.description,
+          name: cleanFoodName(f.description),
           portion: `${cached.label} (${Math.round(gw)}g)`,
           calories: scaleNutrient(cal, gw),
           protein: scaleNutrient(protein, gw),
@@ -194,7 +229,7 @@ export async function GET(req: NextRequest) {
 
       return {
         fdcId: f.fdcId,
-        name: f.description,
+        name: cleanFoodName(f.description),
         portion: "100g",
         calories: cal,
         protein,

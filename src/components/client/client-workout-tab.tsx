@@ -17,6 +17,7 @@ import {
 import { TemplatePickerModal } from "./template-picker-modal";
 import { ExercisePicker } from "./exercise-picker";
 import { ExerciseNameInput } from "./exercise-name-input";
+import { AIGenerateWorkout } from "@/components/ai/ai-generate-workout";
 import type { Exercise, ExerciseInput, AssignedWorkoutPlan } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -42,6 +43,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
 
   // Custom plan form state
   const [customName, setCustomName] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
   const [customExercises, setCustomExercises] = useState<ExerciseInput[]>([]);
   const [saving, setSaving] = useState(false);
   const [assignMode, setAssignMode] = useState<"solo" | "live">("solo");
@@ -303,6 +305,25 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
                 placeholder={t.workouts.planName}
                 className="input"
               />
+            </div>
+            <div className="mt-2">
+              <input
+                type="text"
+                value={customDescription}
+                onChange={(e) => setCustomDescription(e.target.value)}
+                placeholder={t.workouts.aiPromptPlaceholder}
+                className="input text-sm"
+              />
+              <div className="mt-1.5">
+                <AIGenerateWorkout
+                  prompt={customDescription}
+                  onGenerate={(data) => {
+                    if (!customName && data.name) setCustomName(data.name);
+                    setCustomDescription(data.description || customDescription);
+                    setCustomExercises(data.exercises);
+                  }}
+                />
+              </div>
             </div>
             <div className="mt-3">
               <label className="text-xs text-gray-500">{t.workouts.workoutMode}</label>

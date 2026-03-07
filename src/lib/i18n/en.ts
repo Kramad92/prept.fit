@@ -250,6 +250,12 @@ export const en: Translations = {
     failedToRemove: "Failed to remove plan",
     remove: "Remove",
     addExerciseManually: "Add Exercise Manually",
+    generateWithAI: "Generate with AI",
+    generateWorkout: "Generate Workout",
+    generating: "Generating...",
+    aiPromptPlaceholder: "Describe the workout (e.g. 'push day chest focus, intermediate level')",
+    aiGenerated: "AI Generated Plan",
+    aiError: "Generation failed — please try again",
   },
 
   nutrition: {
@@ -340,6 +346,18 @@ export const en: Translations = {
     usdaDatabase: "USDA Database",
     saveToLibrary: "Save to your food library",
     searchFoodsPlaceholder: "Search foods (e.g. chicken breast, rice)...",
+    generateWithAI: "Generate with AI",
+    generateMealPlan: "Generate Meal Plan",
+    generating: "Generating...",
+    fillMacros: "Fill Macros",
+    fillingMacros: "Filling...",
+    aiPromptPlaceholder: "Describe the meal plan (e.g. '1800 cal, high protein, 4 meals')",
+    aiGenerated: "AI Generated Plan",
+    aiError: "Generation failed — please try again",
+    targetCalories: "Target Calories",
+    numberOfMeals: "Number of meals",
+    preferences: "Preferences",
+    preferencesPlaceholder: "e.g. lactose-free, high protein...",
   },
 
   exerciseLibrary: {

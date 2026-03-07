@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FoodPicker } from "@/components/client/food-picker";
+import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
+import { AIFillMacros } from "@/components/ai/ai-fill-macros";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
@@ -485,7 +487,23 @@ export default function NutritionPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">{t.common.description}</label>
-                  <input type="text" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} className="input mt-1" placeholder={t.nutrition.descriptionPlaceholder} />
+                  <input type="text" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} className="input mt-1" placeholder={t.nutrition.aiPromptPlaceholder} />
+                  <div className="mt-1.5">
+                    <AIGenerateMealPlan
+                      prompt={form.description}
+                      onGenerate={(data) => {
+                        setForm({
+                          name: data.name || form.name,
+                          description: form.description,
+                          targetCalories: data.targetCalories,
+                          targetProtein: data.targetProtein,
+                          targetCarbs: data.targetCarbs,
+                          targetFat: data.targetFat,
+                          meals: data.meals,
+                        });
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
@@ -509,7 +527,13 @@ export default function NutritionPage() {
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-700">{t.nutrition.meals}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-gray-700">{t.nutrition.meals}</h3>
+                      <AIFillMacros
+                        meals={form.meals}
+                        onFilled={(updatedMeals) => setForm((prev) => ({ ...prev, meals: updatedMeals }))}
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => {

@@ -257,6 +257,12 @@ export const bs = {
     failedToRemove: "Greška pri uklanjanju plana",
     remove: "Ukloni",
     addExerciseManually: "Dodaj vježbu ručno",
+    generateWithAI: "Generiši sa AI",
+    generateWorkout: "Generiši trening",
+    generating: "Generisanje...",
+    aiPromptPlaceholder: "Opišite trening (npr. 'push day fokus na grudi, srednji nivo')",
+    aiGenerated: "AI generisani plan",
+    aiError: "Greška pri generisanju — pokušajte ponovo",
   },
 
   // Nutrition
@@ -348,6 +354,18 @@ export const bs = {
     failedToAssign: "Greška pri dodjeljivanju plana ishrane",
     failedToRemove: "Greška pri uklanjanju plana ishrane",
     remove: "Ukloni",
+    generateWithAI: "Generiši sa AI",
+    generateMealPlan: "Generiši plan ishrane",
+    generating: "Generisanje...",
+    fillMacros: "Popuni makro vrijednosti",
+    fillingMacros: "Popunjavanje...",
+    aiPromptPlaceholder: "Opišite plan ishrane (npr. '1800 kcal, visoki proteini, 4 obroka')",
+    aiGenerated: "AI generisani plan",
+    aiError: "Greška pri generisanju — pokušajte ponovo",
+    targetCalories: "Ciljane kalorije",
+    numberOfMeals: "Broj obroka",
+    preferences: "Preferencije",
+    preferencesPlaceholder: "npr. bez laktoze, visoki proteini...",
   },
 
   // Exercise Library

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { FoodPicker } from "./food-picker";
+import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
 import type { Food, AssignedMealPlan, FoodInput, MealInput } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
@@ -100,6 +101,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   );
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [customDescription, setCustomDescription] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -423,6 +425,42 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
             </div>
             <div className="mt-3">
               <input type="text" required value={form.name} onChange={(e) => updateFormField("name", e.target.value)} placeholder={t.nutrition.planName} className="input" />
+            </div>
+            <div className="mt-2">
+              <input
+                type="text"
+                value={customDescription}
+                onChange={(e) => setCustomDescription(e.target.value)}
+                placeholder={t.nutrition.aiPromptPlaceholder}
+                className="input text-sm"
+              />
+              <div className="mt-1.5">
+                <AIGenerateMealPlan
+                  prompt={customDescription}
+                  onGenerate={(data) => {
+                    setForm({
+                      name: data.name || form.name,
+                      calories: data.targetCalories,
+                      protein: data.targetProtein,
+                      carbs: data.targetCarbs,
+                      fat: data.targetFat,
+                      meals: data.meals.map((m) => ({
+                        tempId: Math.random().toString(36).slice(2),
+                        name: m.name,
+                        time: m.time || "",
+                        foods: m.foods.map((f) => ({
+                          name: f.name,
+                          portion: f.portion || "100g",
+                          calories: f.calories?.toString() || "",
+                          protein: f.protein?.toString() || "",
+                          carbs: f.carbs?.toString() || "",
+                          fat: f.fat?.toString() || "",
+                        })),
+                      })),
+                    });
+                  }}
+                />
+              </div>
             </div>
             <div className="mt-3">{renderMacroFields()}</div>
             <div className="mt-3">{renderMealEditor()}</div>

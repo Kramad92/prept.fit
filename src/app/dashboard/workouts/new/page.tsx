@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Plus, GripVertical, Trash2 } from "lucide-react";
 import { ExercisePicker } from "@/components/client/exercise-picker";
 import { ExerciseNameInput } from "@/components/client/exercise-name-input";
+import { AIGenerateWorkout } from "@/components/ai/ai-generate-workout";
 import type { ExerciseInput } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -17,6 +18,7 @@ export default function NewWorkoutPage() {
   const { toastError } = useToast();
   const [loading, setLoading] = useState(false);
   const [exercises, setExercises] = useState<ExerciseInput[]>([]);
+  const [description, setDescription] = useState("");
 
   function addExercise() {
     const ex = createEmptyExercise();
@@ -135,8 +137,21 @@ export default function NewWorkoutPage() {
               name="description"
               rows={2}
               className="input mt-1"
-              placeholder={t.workouts.descriptionPlaceholder}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t.workouts.aiPromptPlaceholder}
             />
+            <div className="mt-1.5">
+              <AIGenerateWorkout
+                prompt={description}
+                onGenerate={(data) => {
+                  const nameInput = document.querySelector<HTMLInputElement>("input[name=name]");
+                  if (nameInput && !nameInput.value) nameInput.value = data.name;
+                  setDescription(data.description || description);
+                  setExercises(data.exercises);
+                }}
+              />
+            </div>
           </div>
           <label className="flex items-center gap-2">
             <input

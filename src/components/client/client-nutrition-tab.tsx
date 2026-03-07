@@ -17,7 +17,7 @@ import { FoodPicker } from "./food-picker";
 import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
 import type { Food, AssignedMealPlan, FoodInput, MealInput } from "@/types";
 import { useToast } from "@/components/ui/toast";
-import { useT } from "@/lib/i18n";
+import { useLocale } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import { scalePortionFoodInput, computeMealTotals } from "@/lib/portion-scaling";
 
@@ -95,7 +95,7 @@ function planToFormState(plan: AssignedMealPlan): FormState {
 
 export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: ClientNutritionTabProps) {
   const { toastSuccess, toastError } = useToast();
-  const t = useT();
+  const { t, locale } = useLocale();
   const [expanded, setExpanded] = useState<string | null>(
     assignedMealPlans.length > 0 ? assignedMealPlans[0].id : null
   );
@@ -146,9 +146,13 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     );
   }
 
-  async function handleAssignTemplate(templateId: string) {
+  async function handleAssignTemplate(templateId: string, _mode?: string, aiAdjust?: boolean) {
     try {
-      await api.post(`/api/clients/${clientId}/nutrition`, { mealPlanId: templateId });
+      await api.post(`/api/clients/${clientId}/nutrition`, {
+        mealPlanId: templateId,
+        aiAdjust: aiAdjust ?? false,
+        locale,
+      });
       toastSuccess(t.nutrition.mealPlanAssigned);
     } catch {
       toastError(t.nutrition.failedToAssign);

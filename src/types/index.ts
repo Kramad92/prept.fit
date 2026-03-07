@@ -79,6 +79,7 @@ export interface Payment {
 export interface LibraryExercise {
   id: string;
   name: string;
+  nameBs: string | null;
   category: string | null;
   muscleGroup: string | null;
   equipment: string | null;
@@ -152,6 +153,11 @@ export interface ClientDetail {
   gender: string | null;
   goals: string | null;
   notes: string | null;
+  allergies: string | null;
+  dietaryPrefs: string | null;
+  injuries: string | null;
+  fitnessLevel: string | null;
+  activityLevel: string | null;
   status: string;
   userId: string | null;
   createdAt: string;

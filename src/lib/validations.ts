@@ -60,6 +60,14 @@ export const paymentUpdateSchema = z.object({
   currency: z.string().optional(),
 });
 
+const clientProfileFields = {
+  allergies: z.string().max(1000).nullable().optional(),
+  dietaryPrefs: z.string().max(1000).nullable().optional(),
+  injuries: z.string().max(1000).nullable().optional(),
+  fitnessLevel: z.string().nullable().optional(),
+  activityLevel: z.string().nullable().optional(),
+};
+
 export const clientCreateSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   email: z.string().email().nullable().optional().or(z.literal("")),
@@ -67,6 +75,7 @@ export const clientCreateSchema = z.object({
   gender: z.string().nullable().optional(),
   goals: z.string().max(2000).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
+  ...clientProfileFields,
 });
 
 export const clientUpdateSchema = z.object({
@@ -77,6 +86,7 @@ export const clientUpdateSchema = z.object({
   goals: z.string().max(2000).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   status: z.enum(["active", "inactive", "paused"]).optional(),
+  ...clientProfileFields,
 });
 
 const exerciseSchema = z.object({

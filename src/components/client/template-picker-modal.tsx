@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Dumbbell, UtensilsCrossed, Search, User, Users } from "lucide-react";
+import { X, Dumbbell, UtensilsCrossed, Search, User, Users, Sparkles } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 interface Template {
@@ -15,7 +15,7 @@ interface Template {
 
 interface TemplatePickerModalProps {
   type: "workout" | "nutrition";
-  onSelect: (templateId: string, mode?: string) => void;
+  onSelect: (templateId: string, mode?: string, aiAdjust?: boolean) => void;
   onClose: () => void;
 }
 
@@ -25,6 +25,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<"solo" | "live">("solo");
+  const [aiAdjust, setAiAdjust] = useState(true);
 
   useEffect(() => {
     const url = type === "workout" ? "/api/workouts" : "/api/meal-plans";
@@ -77,6 +78,17 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
           />
         </div>
 
+        <label className="mt-3 flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={aiAdjust}
+            onChange={(e) => setAiAdjust(e.target.checked)}
+            className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 h-4 w-4"
+          />
+          <Sparkles className="h-4 w-4 text-brand-600" />
+          <span className="text-sm font-medium text-brand-700">{t.assign.aiAdjustForClient}</span>
+        </label>
+
         <div className="mt-4 max-h-80 space-y-2 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8">
@@ -90,7 +102,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
             filtered.map((tmpl) => (
               <button
                 key={tmpl.id}
-                onClick={() => onSelect(tmpl.id, mode)}
+                onClick={() => onSelect(tmpl.id, mode, aiAdjust)}
                 className="flex w-full items-center gap-3 rounded-lg border border-gray-200 p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>

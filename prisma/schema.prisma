@@ -71,15 +71,20 @@ model User {
 }
 
 model Client {
-  id          String   @id @default(cuid())
-  name        String
-  email       String?
-  phone       String?
-  dateOfBirth DateTime?
-  gender      String?
-  notes       String?
-  goals       String?
-  status      String   @default("active") // active, paused, archived
+  id               String   @id @default(cuid())
+  name             String
+  email            String?
+  phone            String?
+  dateOfBirth      DateTime?
+  gender           String?
+  notes            String?
+  goals            String?
+  allergies        String?  // e.g. "gluten, dairy, nuts"
+  dietaryPrefs     String?  // e.g. "no pork, vegetarian, halal"
+  injuries         String?  // e.g. "lower back pain, knee injury"
+  fitnessLevel     String?  // "beginner", "intermediate", "advanced"
+  activityLevel    String?  // "sedentary", "light", "moderate", "active", "very_active"
+  status           String   @default("active") // active, paused, archived
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -525,7 +530,8 @@ model NutritionLog {
 
 model ExerciseLibrary {
   id            String   @id @default(cuid())
-  name          String
+  name          String   // English name (canonical)
+  nameBs        String?  // Bosnian translation
   category      String?  // "Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"
   muscleGroup   String?
   equipment     String?  // "Barbell", "Dumbbell", "Cable", "Bodyweight", etc.

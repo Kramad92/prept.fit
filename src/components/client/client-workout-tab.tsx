@@ -21,7 +21,7 @@ import { AIGenerateWorkout } from "@/components/ai/ai-generate-workout";
 import type { Exercise, ExerciseInput, AssignedWorkoutPlan } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
-import { useT } from "@/lib/i18n";
+import { useLocale } from "@/lib/i18n";
 import { api } from "@/lib/api";
 
 interface ClientWorkoutTabProps {
@@ -32,7 +32,7 @@ interface ClientWorkoutTabProps {
 
 export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientWorkoutTabProps) {
   const { toastSuccess, toastError } = useToast();
-  const t = useT();
+  const { t, locale } = useLocale();
   const [expanded, setExpanded] = useState<string | null>(
     assignedPlans.length > 0 ? assignedPlans[0].id : null
   );
@@ -52,10 +52,15 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   const [editExercises, setEditExercises] = useState<ExerciseInput[]>([]);
   const [editName, setEditName] = useState("");
 
-  async function handleAssignTemplate(templateId: string, mode?: string) {
+  async function handleAssignTemplate(templateId: string, mode?: string, aiAdjust?: boolean) {
     setAssigning(true);
     try {
-      await api.post(`/api/clients/${clientId}/workouts`, { workoutPlanId: templateId, mode: mode || "solo" });
+      await api.post(`/api/clients/${clientId}/workouts`, {
+        workoutPlanId: templateId,
+        mode: mode || "solo",
+        aiAdjust: aiAdjust ?? false,
+        locale,
+      });
       toastSuccess(t.workouts.templateAssigned);
     } catch {
       toastError(t.workouts.failedToAssign);

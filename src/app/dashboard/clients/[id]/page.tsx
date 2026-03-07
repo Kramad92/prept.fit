@@ -166,12 +166,46 @@ export default function ClientDetailPage() {
       <div className="mt-6">
         {activeTab === "overview" && (
           <div className="space-y-4">
-            {client.notes && (
-              <div className="card">
-                <h3 className="text-sm font-semibold text-gray-700">{t.common.notes}</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600">
-                  {client.notes}
-                </p>
+            {(client.allergies || client.dietaryPrefs || client.injuries || client.fitnessLevel || client.activityLevel || client.notes) && (
+              <div className="card space-y-3">
+                {(client.fitnessLevel || client.activityLevel) && (
+                  <div className="flex flex-wrap gap-2">
+                    {client.fitnessLevel && (
+                      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                        {t.clients.fitnessLevel}: {t.clients[client.fitnessLevel as "beginner" | "intermediate" | "advanced"] || client.fitnessLevel}
+                      </span>
+                    )}
+                    {client.activityLevel && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+                        {t.clients.activityLevel}: {client.activityLevel}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {client.allergies && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-red-600">{t.clients.allergies}</h4>
+                    <p className="text-sm text-gray-600">{client.allergies}</p>
+                  </div>
+                )}
+                {client.dietaryPrefs && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-orange-600">{t.clients.dietaryPrefs}</h4>
+                    <p className="text-sm text-gray-600">{client.dietaryPrefs}</p>
+                  </div>
+                )}
+                {client.injuries && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-amber-600">{t.clients.injuries}</h4>
+                    <p className="text-sm text-gray-600">{client.injuries}</p>
+                  </div>
+                )}
+                {client.notes && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-700">{t.common.notes}</h4>
+                    <p className="whitespace-pre-wrap text-sm text-gray-600">{client.notes}</p>
+                  </div>
+                )}
               </div>
             )}
             <div className="card">

@@ -74,6 +74,11 @@ export async function PUT(
       gender: body.gender || null,
       goals: body.goals || null,
       notes: body.notes || null,
+      allergies: body.allergies || null,
+      dietaryPrefs: body.dietaryPrefs || null,
+      injuries: body.injuries || null,
+      fitnessLevel: body.fitnessLevel || null,
+      activityLevel: body.activityLevel || null,
       status: body.status,
     },
   });

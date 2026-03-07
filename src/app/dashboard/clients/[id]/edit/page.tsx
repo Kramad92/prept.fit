@@ -14,6 +14,11 @@ interface ClientData {
   gender: string | null;
   goals: string | null;
   notes: string | null;
+  allergies: string | null;
+  dietaryPrefs: string | null;
+  injuries: string | null;
+  fitnessLevel: string | null;
+  activityLevel: string | null;
   status: string;
 }
 
@@ -53,6 +58,11 @@ export default function EditClientPage() {
       gender: fd.get("gender") || null,
       goals: fd.get("goals") || null,
       notes: fd.get("notes") || null,
+      allergies: fd.get("allergies") || null,
+      dietaryPrefs: fd.get("dietaryPrefs") || null,
+      injuries: fd.get("injuries") || null,
+      fitnessLevel: fd.get("fitnessLevel") || null,
+      activityLevel: fd.get("activityLevel") || null,
       status: fd.get("status"),
     };
 
@@ -168,6 +178,80 @@ export default function EditClientPage() {
             defaultValue={client.goals || ""}
             className="input mt-1"
             placeholder={t.clients.goalsPlaceholder}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t.clients.fitnessLevel}
+            </label>
+            <select
+              name="fitnessLevel"
+              defaultValue={client.fitnessLevel || ""}
+              className="input mt-1"
+            >
+              <option value="">{t.clients.selectLevel}</option>
+              <option value="beginner">{t.clients.beginner}</option>
+              <option value="intermediate">{t.clients.intermediate}</option>
+              <option value="advanced">{t.clients.advanced}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t.clients.activityLevel}
+            </label>
+            <select
+              name="activityLevel"
+              defaultValue={client.activityLevel || ""}
+              className="input mt-1"
+            >
+              <option value="">{t.clients.selectLevel}</option>
+              <option value="sedentary">{t.clients.sedentary}</option>
+              <option value="light">{t.clients.lightActivity}</option>
+              <option value="moderate">{t.clients.moderateActivity}</option>
+              <option value="active">{t.clients.activeLevel}</option>
+              <option value="very_active">{t.clients.veryActive}</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.allergies}
+          </label>
+          <input
+            type="text"
+            name="allergies"
+            defaultValue={client.allergies || ""}
+            className="input mt-1"
+            placeholder={t.clients.allergiesPlaceholder}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.dietaryPrefs}
+          </label>
+          <input
+            type="text"
+            name="dietaryPrefs"
+            defaultValue={client.dietaryPrefs || ""}
+            className="input mt-1"
+            placeholder={t.clients.dietaryPrefsPlaceholder}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.injuries}
+          </label>
+          <input
+            type="text"
+            name="injuries"
+            defaultValue={client.injuries || ""}
+            className="input mt-1"
+            placeholder={t.clients.injuriesPlaceholder}
           />
         </div>
 

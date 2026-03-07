@@ -23,6 +23,11 @@ export default function NewClientPage() {
       gender: formData.get("gender") as string,
       goals: formData.get("goals") as string,
       notes: formData.get("notes") as string,
+      allergies: formData.get("allergies") as string,
+      dietaryPrefs: formData.get("dietaryPrefs") as string,
+      injuries: formData.get("injuries") as string,
+      fitnessLevel: formData.get("fitnessLevel") as string,
+      activityLevel: formData.get("activityLevel") as string,
     };
 
     try {
@@ -115,6 +120,69 @@ export default function NewClientPage() {
             rows={3}
             className="input mt-1"
             placeholder={t.clients.goalsPlaceholder}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t.clients.fitnessLevel}
+            </label>
+            <select name="fitnessLevel" className="input mt-1">
+              <option value="">{t.clients.selectLevel}</option>
+              <option value="beginner">{t.clients.beginner}</option>
+              <option value="intermediate">{t.clients.intermediate}</option>
+              <option value="advanced">{t.clients.advanced}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t.clients.activityLevel}
+            </label>
+            <select name="activityLevel" className="input mt-1">
+              <option value="">{t.clients.selectLevel}</option>
+              <option value="sedentary">{t.clients.sedentary}</option>
+              <option value="light">{t.clients.lightActivity}</option>
+              <option value="moderate">{t.clients.moderateActivity}</option>
+              <option value="active">{t.clients.activeLevel}</option>
+              <option value="very_active">{t.clients.veryActive}</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.allergies}
+          </label>
+          <input
+            type="text"
+            name="allergies"
+            className="input mt-1"
+            placeholder={t.clients.allergiesPlaceholder}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.dietaryPrefs}
+          </label>
+          <input
+            type="text"
+            name="dietaryPrefs"
+            className="input mt-1"
+            placeholder={t.clients.dietaryPrefsPlaceholder}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.injuries}
+          </label>
+          <input
+            type="text"
+            name="injuries"
+            className="input mt-1"
+            placeholder={t.clients.injuriesPlaceholder}
           />
         </div>
 

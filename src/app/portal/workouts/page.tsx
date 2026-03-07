@@ -97,9 +97,7 @@ export default function PortalWorkoutsPage() {
                         )}
                       </div>
                       {plan.workoutPlan.description && (
-                        <p className="text-sm text-gray-500">
-                          {plan.workoutPlan.description}
-                        </p>
+                        <ExpandableNotes notes={plan.workoutPlan.description} className="text-sm text-gray-500" />
                       )}
                     </div>
                   </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { validateBody, messageCreateSchema } from "@/lib/validations";
+import { getPusherServer, getChatChannel } from "@/lib/pusher";
 
 // Get messages for a specific client thread
 export async function GET(
@@ -38,6 +39,13 @@ export async function GET(
       where: { id: { in: unreadIds } },
       data: { isRead: true },
     });
+
+    // Notify the other side that messages were read
+    const pusher = getPusherServer();
+    if (pusher) {
+      const channel = getChatChannel(session.user.tenantId, params.clientId);
+      pusher.trigger(channel, "message-read", { readBy: session.user.id }).catch(() => {});
+    }
   }
 
   return NextResponse.json(messages.reverse());
@@ -53,11 +61,19 @@ export async function POST(
 
   const parsed = await validateBody(req, messageCreateSchema);
   if ("error" in parsed) return parsed.error;
-  const { content } = parsed.data;
+  const { content, attachmentUrl, attachmentType, attachmentName } = parsed.data;
+
+  // Must have either content or attachment
+  if (!content?.trim() && !attachmentUrl) {
+    return NextResponse.json({ error: "Message content or attachment required" }, { status: 400 });
+  }
 
   const message = await prisma.message.create({
     data: {
-      content: content.trim(),
+      content: (content || "").trim(),
+      attachmentUrl: attachmentUrl || null,
+      attachmentType: attachmentType || null,
+      attachmentName: attachmentName || null,
       senderId: session.user.id,
       clientId: params.clientId,
       tenantId: session.user.tenantId,
@@ -66,6 +82,13 @@ export async function POST(
       sender: { select: { id: true, name: true, role: true, avatar: true } },
     },
   });
+
+  // Trigger real-time event
+  const pusher = getPusherServer();
+  if (pusher) {
+    const channel = getChatChannel(session.user.tenantId, params.clientId);
+    pusher.trigger(channel, "new-message", message).catch(() => {});
+  }
 
   // Create notification for the recipient
   const client = await prisma.client.findUnique({
@@ -78,7 +101,7 @@ export async function POST(
       data: {
         type: "new_message",
         title: "New message",
-        body: `${session.user.name}: ${content.trim().slice(0, 100)}`,
+        body: `${session.user.name}: ${(content || "").trim().slice(0, 100) || "Sent an attachment"}`,
         userId: client.userId,
         tenantId: session.user.tenantId,
         data: { clientId: params.clientId },

@@ -244,6 +244,14 @@ export const scheduleCreateSchema = z.object({
   availability: z.array(availabilitySchema).optional().default([]),
 });
 
+export const equipmentTypeSchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
+export const exerciseCategorySchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
 export const exerciseLibrarySchema = z.object({
   name: z.string().min(1).max(200),
   nameBs: z.string().max(200).nullable().optional(),

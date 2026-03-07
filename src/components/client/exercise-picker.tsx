@@ -3,18 +3,16 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus } from "lucide-react";
 import type { LibraryExercise } from "@/types";
-import { useT, useLocale, type Translations } from "@/lib/i18n";
-
-const CATEGORIES = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"];
+import { useT, useLocale } from "@/lib/i18n";
 
 interface ExercisePickerProps {
   onSelect: (exercise: { name: string; exerciseLibraryId?: string }) => void;
 }
 
-const CATEGORY_KEYS: Record<string, keyof Translations["exerciseLibrary"]> = {
-  Chest: "chest", Back: "back", Legs: "legs", Shoulders: "shoulders",
-  Arms: "arms", Core: "core", Cardio: "cardio",
-};
+interface CategoryItem {
+  id: string;
+  name: string;
+}
 
 export function ExercisePicker({ onSelect }: ExercisePickerProps) {
   const t = useT();
@@ -23,11 +21,20 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
   function displayName(ex: LibraryExercise) {
     return locale !== "en" && ex.nameBs ? ex.nameBs : ex.name;
   }
+
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [results, setResults] = useState<LibraryExercise[]>([]);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/exercise-categories")
+      .then((r) => r.json())
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!query.trim() && !category) {
@@ -77,21 +84,21 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
 
       {/* Category chips */}
       <div className="mt-1.5 flex flex-wrap gap-1">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button
-            key={cat}
+            key={cat.id}
             type="button"
             onClick={() => {
-              setCategory(category === cat ? "" : cat);
+              setCategory(category === cat.name ? "" : cat.name);
               setOpen(true);
             }}
             className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-              category === cat
+              category === cat.name
                 ? "bg-brand-600 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            {t.exerciseLibrary[CATEGORY_KEYS[cat]] || cat}
+            {cat.name}
           </button>
         ))}
       </div>

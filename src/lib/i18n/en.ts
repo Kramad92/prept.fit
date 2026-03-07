@@ -21,6 +21,7 @@ export const en: Translations = {
     or: "or",
     noResults: "No results",
     theme: "Theme",
+    language: "Language",
     signOut: "Sign out",
     signIn: "Sign in",
     status: "Status",

@@ -20,11 +20,14 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useT } from "@/lib/i18n";
+import { useT, useLocale, type Locale } from "@/lib/i18n";
+
+const LOCALE_LABELS: Record<Locale, string> = { bs: "BHS", sr: "SRP", hr: "HRV", en: "ENG" };
 
 export function PortalMobileNav() {
   const pathname = usePathname();
   const t = useT();
+  const { locale, setLocale } = useLocale();
 
   const navItems = [
     { href: "/portal", icon: Home, label: t.nav.home },
@@ -104,6 +107,34 @@ export function PortalMobileNav() {
                 );
               })}
             </div>
+
+            <div className="mt-3 flex items-center justify-between border-t border-gray-100 px-3 pt-3">
+              <div className="flex items-center gap-1.5">
+                {(Object.keys(LOCALE_LABELS) as Locale[]).map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setLocale(l)}
+                    className={cn(
+                      "rounded px-2 py-1 text-[11px] font-medium transition-colors",
+                      locale === l
+                        ? "bg-brand-100 text-brand-700"
+                        : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    )}
+                  >
+                    {LOCALE_LABELS[l]}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -151,6 +182,7 @@ export function PortalMobileNav() {
 export function PortalDesktopNav() {
   const pathname = usePathname();
   const t = useT();
+  const { locale, setLocale } = useLocale();
 
   const navItems = [
     { href: "/portal", icon: Home, label: t.nav.home },
@@ -195,6 +227,25 @@ export function PortalDesktopNav() {
         </nav>
 
         <div className="border-t border-gray-200 p-3">
+          <div className="flex items-center justify-between px-3 py-1">
+            <span className="text-xs text-gray-400">{t.common.language}</span>
+            <div className="flex gap-1">
+              {(Object.keys(LOCALE_LABELS) as Locale[]).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLocale(l)}
+                  className={cn(
+                    "rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                    locale === l
+                      ? "bg-brand-100 text-brand-700"
+                      : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  )}
+                >
+                  {LOCALE_LABELS[l]}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex items-center justify-between px-3 py-1">
             <span className="text-xs text-gray-400">{t.common.theme}</span>
             <ThemeToggle />

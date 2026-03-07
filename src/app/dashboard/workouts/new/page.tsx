@@ -127,6 +127,12 @@ export default function NewWorkoutPage() {
               required
               className="input mt-1"
               placeholder={t.workouts.planNamePlaceholder}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  (document.querySelector("textarea[name=description]") as HTMLTextAreaElement)?.focus();
+                }
+              }}
             />
           </div>
           <div>

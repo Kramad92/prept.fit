@@ -158,6 +158,12 @@ export default function EditWorkoutPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="input mt-1"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  (document.querySelector("textarea") as HTMLTextAreaElement)?.focus();
+                }
+              }}
             />
           </div>
           <div>

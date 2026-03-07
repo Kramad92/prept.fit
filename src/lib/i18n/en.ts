@@ -75,6 +75,7 @@ export const en: Translations = {
     home: "Home",
     progress: "Progress",
     book: "Book",
+    payments: "Payments",
     charts: "Charts",
     myPortal: "My Portal",
   },
@@ -810,6 +811,16 @@ export const en: Translations = {
     notesPlaceholder: "Felt great, followed meal plan",
     calTarget: "cal target",
     calTotal: "cal total",
+  },
+
+  portalPayments: {
+    title: "Payments",
+    subtitle: "View your payment history and outstanding balances.",
+    overdueAlert: "You have overdue payments",
+    contactCoach: "Please contact your coach to arrange payment.",
+    payment: "Payment",
+    noPayments: "No payments recorded yet.",
+    noMatch: "No payments match this filter.",
   },
 
   portalMessages: {

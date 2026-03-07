@@ -13,6 +13,7 @@ import {
   Sparkles,
   UtensilsCrossed,
   TrendingUp,
+  CreditCard,
   LogOut,
   MoreHorizontal,
   X,
@@ -38,6 +39,7 @@ export function PortalMobileNav() {
     { href: "/portal/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
     { href: "/portal/habits", icon: Sparkles, label: t.nav.habits },
     { href: "/portal/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+    { href: "/portal/payments", icon: CreditCard, label: t.nav.payments },
     { href: "/portal/progress/charts", icon: TrendingUp, label: t.nav.charts },
   ];
 
@@ -193,6 +195,7 @@ export function PortalDesktopNav() {
     { href: "/portal/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
     { href: "/portal/habits", icon: Sparkles, label: t.nav.habits },
     { href: "/portal/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+    { href: "/portal/payments", icon: CreditCard, label: t.nav.payments },
     { href: "/portal/progress/charts", icon: TrendingUp, label: t.nav.charts },
   ];
 

@@ -76,6 +76,7 @@ export const bs = {
     home: "Početna",
     progress: "Napredak",
     book: "Zakaži",
+    payments: "Plaćanja",
     charts: "Grafici",
     myPortal: "Moj Portal",
   },
@@ -836,6 +837,16 @@ export const bs = {
   },
 
   // Portal messages
+  portalPayments: {
+    title: "Plaćanja",
+    subtitle: "Pregledajte historiju plaćanja i neizmirene obaveze.",
+    overdueAlert: "Imate dospjela plaćanja",
+    contactCoach: "Kontaktirajte svog trenera da dogovorite plaćanje.",
+    payment: "Plaćanje",
+    noPayments: "Još nema zabilježenih plaćanja.",
+    noMatch: "Nema plaćanja koja odgovaraju ovom filteru.",
+  },
+
   portalMessages: {
     chatWithCoach: "Razgovarajte sa trenerom",
   },

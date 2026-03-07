@@ -76,6 +76,7 @@ export const hr = {
     home: "Početna",
     progress: "Napredak",
     book: "Zakaži",
+    payments: "Plaćanja",
     charts: "Grafici",
     myPortal: "Moj Portal",
   },
@@ -833,6 +834,16 @@ export const hr = {
     notesPlaceholder: "Osjećao/la se odlično, pratio/la plan prehrane",
     calTarget: "kal cilj",
     calTotal: "kal ukupno",
+  },
+
+  portalPayments: {
+    title: "Plaćanja",
+    subtitle: "Pregledajte povijest plaćanja i neplaćene obaveze.",
+    overdueAlert: "Imate dospjela plaćanja",
+    contactCoach: "Kontaktirajte svog trenera da dogovorite plaćanje.",
+    payment: "Plaćanje",
+    noPayments: "Još nema zabilježenih plaćanja.",
+    noMatch: "Nema plaćanja koja odgovaraju ovom filteru.",
   },
 
   // Portal messages

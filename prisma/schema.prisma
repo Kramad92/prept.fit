@@ -22,6 +22,10 @@ model Tenant {
   phone       String?
   email       String?
   website     String?
+  coachPhoto  String?  // Personal headshot (separate from logo)
+  socialLinks Json?    // { instagram?, facebook?, tiktok?, youtube?, twitter?, linkedin? }
+  specialties Json?    // string[] e.g. ["Weight Loss", "HIIT"]
+  landingPageEnabled Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -37,6 +41,9 @@ model Tenant {
   mealPlans      MealPlan[]
   exerciseLibrary  ExerciseLibrary[]
   foodLibrary      FoodLibrary[]
+  certificates   Certificate[]
+  packages       Package[]
+  inquiries      Inquiry[]
 
   @@map("tenants")
 }
@@ -642,4 +649,68 @@ model Payment {
   @@index([clientId, status])
   @@index([dueDate])
   @@map("payments")
+}
+
+// ========== CERTIFICATES (Coach credentials) ==========
+
+model Certificate {
+  id          String   @id @default(cuid())
+  name        String
+  issuer      String?
+  year        Int?
+  description String?
+  imageUrl    String?
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("certificates")
+}
+
+// ========== PACKAGES (Pricing plans for landing page) ==========
+
+model Package {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  currency    String   @default("USD")
+  duration    String?  // "monthly", "one-time", "12 sessions", etc.
+  features    Json?    // string[]
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("packages")
+}
+
+// ========== INQUIRIES (Contact form submissions) ==========
+
+model Inquiry {
+  id            String   @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  message       String
+  preferredSlot String?
+  status        String   @default("new") // "new", "contacted", "archived"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("inquiries")
 }

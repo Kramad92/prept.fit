@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { validateBody, settingsUpdateSchema } from "@/lib/validations";
+import { validateBody, landingPageSettingsSchema } from "@/lib/validations";
 
 export async function GET() {
   const session = await getSession();
@@ -9,6 +9,12 @@ export async function GET() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.user.tenantId },
+    select: {
+      landingPageEnabled: true,
+      coachPhoto: true,
+      specialties: true,
+      socialLinks: true,
+    },
   });
 
   return NextResponse.json(tenant);
@@ -18,22 +24,17 @@ export async function PUT(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const parsed = await validateBody(req, settingsUpdateSchema);
+  const parsed = await validateBody(req, landingPageSettingsSchema);
   if ("error" in parsed) return parsed.error;
   const body = parsed.data;
 
   const tenant = await prisma.tenant.update({
     where: { id: session.user.tenantId },
     data: {
-      name: body.name,
-      bio: body.bio || null,
-      phone: body.phone || null,
-      email: body.email || null,
-      website: body.website || null,
-      timezone: body.timezone,
-      locale: body.locale,
-      units: body.units,
-      currency: body.currency,
+      landingPageEnabled: body.landingPageEnabled,
+      coachPhoto: body.coachPhoto,
+      specialties: body.specialties,
+      socialLinks: body.socialLinks,
     },
   });
 

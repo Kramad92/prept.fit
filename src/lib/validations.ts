@@ -142,7 +142,6 @@ export const settingsUpdateSchema = z.object({
   phone: z.string().max(50).optional(),
   email: z.string().email().optional().or(z.literal("")),
   website: z.string().max(500).optional(),
-  brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color").optional(),
   timezone: z.string().max(100).optional(),
   locale: z.enum(["bs", "sr", "hr", "en"]).optional(),
   units: z.enum(["metric", "imperial"]).optional(),
@@ -291,4 +290,52 @@ export const workoutAssignSchema = z.object({
 export const mealPlanAssignSchema = z.object({
   clientId: z.string().min(1),
   mealPlanId: z.string().min(1),
+});
+
+export const inquiryCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email().max(200),
+  phone: z.string().max(50).optional(),
+  message: z.string().min(1).max(5000),
+  preferredSlot: z.string().max(200).optional(),
+  _hp: z.string().max(0).optional(), // honeypot field
+});
+
+export const certificateSchema = z.object({
+  name: z.string().min(1).max(200),
+  issuer: z.string().max(200).optional(),
+  year: z.number().min(1900).max(2100).optional(),
+  description: z.string().max(2000).optional(),
+  imageUrl: z.string().max(500).optional(),
+  orderIndex: z.number().optional(),
+});
+
+export const packageSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  price: z.number().min(0),
+  currency: z.string().max(10).optional(),
+  duration: z.string().max(100).optional(),
+  features: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  orderIndex: z.number().optional(),
+});
+
+export const landingPageSettingsSchema = z.object({
+  landingPageEnabled: z.boolean().optional(),
+  coachPhoto: z.string().max(500).nullable().optional(),
+  specialties: z.array(z.string().max(100)).optional(),
+  socialLinks: z.object({
+    instagram: z.string().max(500).optional(),
+    facebook: z.string().max(500).optional(),
+    tiktok: z.string().max(500).optional(),
+    youtube: z.string().max(500).optional(),
+    twitter: z.string().max(500).optional(),
+    linkedin: z.string().max(500).optional(),
+  }).optional(),
+});
+
+export const inquiryUpdateSchema = z.object({
+  status: z.enum(["new", "contacted", "archived"]),
 });

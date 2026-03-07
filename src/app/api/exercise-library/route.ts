@@ -13,7 +13,12 @@ export async function GET(req: NextRequest) {
     where: {
       tenantId: session.user.tenantId,
       ...(search
-        ? { name: { contains: search, mode: "insensitive" as const } }
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" as const } },
+              { nameBs: { contains: search, mode: "insensitive" as const } },
+            ],
+          }
         : {}),
       ...(category ? { category } : {}),
     },
@@ -34,6 +39,7 @@ export async function POST(req: NextRequest) {
   const exercise = await prisma.exerciseLibrary.create({
     data: {
       name: body.name,
+      nameBs: body.nameBs || null,
       category: body.category || null,
       muscleGroup: body.muscleGroup || null,
       equipment: body.equipment || null,

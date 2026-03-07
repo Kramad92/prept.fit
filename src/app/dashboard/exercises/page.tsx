@@ -13,11 +13,12 @@ import {
   Filter,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useT } from "@/lib/i18n";
+import { useT, useLocale } from "@/lib/i18n";
 
 interface ExerciseItem {
   id: string;
   name: string;
+  nameBs: string | null;
   category: string | null;
   muscleGroup: string | null;
   equipment: string | null;
@@ -40,6 +41,11 @@ const EQUIPMENT_KEYS: Record<string, keyof typeof import("@/lib/i18n/bs").bs.exe
 
 export default function ExerciseLibraryPage() {
   const t = useT();
+  const { locale } = useLocale();
+
+  function displayName(ex: ExerciseItem) {
+    return locale === "bs" && ex.nameBs ? ex.nameBs : ex.name;
+  }
 
   function tCategory(cat: string) {
     const key = CATEGORY_KEYS[cat];
@@ -61,6 +67,7 @@ export default function ExerciseLibraryPage() {
 
   // Form state
   const [formName, setFormName] = useState("");
+  const [formNameBs, setFormNameBs] = useState("");
   const [formCategory, setFormCategory] = useState("");
   const [formMuscleGroup, setFormMuscleGroup] = useState("");
   const [formEquipment, setFormEquipment] = useState("");
@@ -82,6 +89,7 @@ export default function ExerciseLibraryPage() {
 
   function resetForm() {
     setFormName("");
+    setFormNameBs("");
     setFormCategory("");
     setFormMuscleGroup("");
     setFormEquipment("");
@@ -103,6 +111,7 @@ export default function ExerciseLibraryPage() {
 
     const body = {
       name: formName,
+      nameBs: formNameBs || null,
       category: formCategory || null,
       muscleGroup: formMuscleGroup || null,
       equipment: formEquipment || null,
@@ -133,6 +142,7 @@ export default function ExerciseLibraryPage() {
   function startEdit(ex: ExerciseItem) {
     setEditingId(ex.id);
     setFormName(ex.name);
+    setFormNameBs(ex.nameBs || "");
     setFormCategory(ex.category || "");
     setFormMuscleGroup(ex.muscleGroup || "");
     setFormEquipment(ex.equipment || "");
@@ -147,7 +157,8 @@ export default function ExerciseLibraryPage() {
   }
 
   const filtered = exercises.filter((ex) => {
-    const matchSearch = ex.name.toLowerCase().includes(search.toLowerCase());
+    const s = search.toLowerCase();
+    const matchSearch = ex.name.toLowerCase().includes(s) || (ex.nameBs?.toLowerCase().includes(s) ?? false);
     const matchCategory = !filterCategory || ex.category === filterCategory;
     return matchSearch && matchCategory;
   });
@@ -259,7 +270,10 @@ export default function ExerciseLibraryPage() {
                   {exs.map((ex) => (
                     <div key={ex.id} className="card flex items-center justify-between py-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-gray-900">{ex.name}</p>
+                        <p className="truncate font-medium text-gray-900">{displayName(ex)}</p>
+                        {locale === "bs" && ex.nameBs && (
+                          <p className="truncate text-xs text-gray-400">{ex.name}</p>
+                        )}
                         <div className="flex gap-2 text-xs text-gray-500">
                           {ex.muscleGroup && <span>{ex.muscleGroup}</span>}
                           {ex.equipment && <span>- {ex.equipment}</span>}
@@ -307,8 +321,12 @@ export default function ExerciseLibraryPage() {
             </div>
             <form onSubmit={handleSave} className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t.common.name} *</label>
-                <input type="text" required value={formName} onChange={(e) => setFormName(e.target.value)} className="input mt-1" placeholder={t.exerciseLibrary.namePlaceholder} />
+                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.nameEn} *</label>
+                <input type="text" required value={formName} onChange={(e) => setFormName(e.target.value)} className="input mt-1" placeholder="e.g. Bench Press" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.nameBs}</label>
+                <input type="text" value={formNameBs} onChange={(e) => setFormNameBs(e.target.value)} className="input mt-1" placeholder="npr. Potisak sa šipkom" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

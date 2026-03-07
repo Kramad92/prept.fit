@@ -21,6 +21,7 @@ export async function PUT(
     where: { id: params.id },
     data: {
       name: body.name,
+      nameBs: body.nameBs ?? null,
       category: body.category,
       muscleGroup: body.muscleGroup,
       equipment: body.equipment,

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus } from "lucide-react";
 import type { LibraryExercise } from "@/types";
-import { useT } from "@/lib/i18n";
+import { useT, useLocale } from "@/lib/i18n";
 
 const CATEGORIES = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"];
 
@@ -18,6 +18,11 @@ const CATEGORY_KEYS: Record<string, string> = {
 
 export function ExercisePicker({ onSelect }: ExercisePickerProps) {
   const t = useT();
+  const { locale } = useLocale();
+
+  function displayName(ex: LibraryExercise) {
+    return locale === "bs" && ex.nameBs ? ex.nameBs : ex.name;
+  }
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [results, setResults] = useState<LibraryExercise[]>([]);
@@ -102,7 +107,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
                 key={ex.id}
                 type="button"
                 onClick={() => {
-                  onSelect({ name: ex.name, exerciseLibraryId: ex.id });
+                  onSelect({ name: displayName(ex), exerciseLibraryId: ex.id });
                   setQuery("");
                   setCategory("");
                   setOpen(false);
@@ -110,7 +115,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
                 className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900">{ex.name}</span>
+                  <span className="font-medium text-gray-900">{displayName(ex)}</span>
                   {ex.equipment && (
                     <span className="text-xs text-gray-400">{ex.equipment}</span>
                   )}

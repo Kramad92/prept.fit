@@ -17,6 +17,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useT } from "@/lib/i18n";
+import { ExpandableNotes } from "@/components/ui/expandable-notes";
 
 interface Exercise {
   id: string;
@@ -200,9 +201,7 @@ export default function WorkoutDetailPage() {
                     {ex.restSeconds && <span>{ex.restSeconds}s {t.workouts.restLabel}</span>}
                   </div>
                   {ex.notes && (
-                    <p className="mt-1 text-sm italic text-gray-400">
-                      {ex.notes}
-                    </p>
+                    <ExpandableNotes notes={ex.notes} />
                   )}
                   {ex.videoUrl && (
                     <div className="mt-3">

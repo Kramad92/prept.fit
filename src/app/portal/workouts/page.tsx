@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Dumbbell, ChevronDown, ChevronUp, Play, Users } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ExpandableNotes } from "@/components/ui/expandable-notes";
 import { useT } from "@/lib/i18n";
 import type { Exercise } from "@/types";
 
@@ -130,9 +131,7 @@ export default function PortalWorkoutsPage() {
                             )}
                           </div>
                           {ex.notes && (
-                            <p className="mt-1 text-sm italic text-gray-400">
-                              {ex.notes}
-                            </p>
+                            <ExpandableNotes notes={ex.notes} />
                           )}
                         </div>
                       </div>

@@ -30,6 +30,9 @@ async function main() {
   await prisma.measurement.deleteMany();
   await prisma.schedule.deleteMany();
   await prisma.availability.deleteMany();
+  await prisma.exerciseLibrary.deleteMany();
+  await prisma.exerciseCategory.deleteMany();
+  await prisma.equipmentType.deleteMany();
   await prisma.client.deleteMany();
   await prisma.user.deleteMany();
   await prisma.tenant.deleteMany();
@@ -50,6 +53,21 @@ async function main() {
       timezone: "Europe/Sarajevo",
     },
   });
+
+  // ========== EXERCISE CATEGORIES & EQUIPMENT TYPES ==========
+  const defaultCategories = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio"];
+  for (const name of defaultCategories) {
+    await prisma.exerciseCategory.create({ data: { name, tenantId: tenant.id } });
+  }
+
+  const defaultEquipment = [
+    "Barbell", "Dumbbell", "Cable", "Machine", "Bodyweight", "Kettlebell",
+    "Ab Wheel", "Treadmill", "Rower", "Bike", "Jump Rope", "Plyo Box",
+    "Battle Ropes", "Sled",
+  ];
+  for (const name of defaultEquipment) {
+    await prisma.equipmentType.create({ data: { name, tenantId: tenant.id } });
+  }
 
   // ========== COACH USER ==========
   const coach = await prisma.user.create({

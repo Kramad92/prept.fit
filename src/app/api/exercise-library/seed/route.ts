@@ -146,5 +146,38 @@ export async function POST() {
     });
   }
 
+  // Auto-create missing categories & equipment types from seeded exercises
+  const allExercises = toCreate.length > 0 ? DEFAULT_EXERCISES : [];
+  const newCategories = Array.from(new Set(allExercises.map((e) => e.category)));
+  const newEquipment = Array.from(new Set(allExercises.map((e) => e.equipment)));
+
+  if (newCategories.length > 0) {
+    const existingCats = await prisma.exerciseCategory.findMany({
+      where: { tenantId },
+      select: { name: true },
+    });
+    const existingCatNames = new Set(existingCats.map((c) => c.name));
+    const catsToCreate = newCategories.filter((c) => !existingCatNames.has(c));
+    if (catsToCreate.length > 0) {
+      await prisma.exerciseCategory.createMany({
+        data: catsToCreate.map((name) => ({ name, tenantId })),
+      });
+    }
+  }
+
+  if (newEquipment.length > 0) {
+    const existingEq = await prisma.equipmentType.findMany({
+      where: { tenantId },
+      select: { name: true },
+    });
+    const existingEqNames = new Set(existingEq.map((e) => e.name));
+    const eqToCreate = newEquipment.filter((e) => !existingEqNames.has(e));
+    if (eqToCreate.length > 0) {
+      await prisma.equipmentType.createMany({
+        data: eqToCreate.map((name) => ({ name, tenantId })),
+      });
+    }
+  }
+
   return NextResponse.json({ message: "Library seeded", added: toCreate.length, updated });
 }

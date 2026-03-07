@@ -149,7 +149,7 @@ export default function WorkoutDetailPage() {
           )}
         </div>
         {plan.description && (
-          <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
+          <ExpandableNotes notes={plan.description} className="mt-1 text-sm text-gray-500" />
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">

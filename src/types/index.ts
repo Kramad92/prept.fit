@@ -226,3 +226,52 @@ export interface HabitTemplate {
   name: string;
   icon: string | null;
 }
+
+export interface Certificate {
+  id: string;
+  name: string;
+  issuer: string | null;
+  year: number | null;
+  description: string | null;
+  imageUrl: string | null;
+  orderIndex: number;
+}
+
+export interface Package {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  duration: string | null;
+  features: string[] | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  orderIndex: number;
+}
+
+export interface Inquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  preferredSlot: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface CoachPublicProfile {
+  name: string;
+  slug: string;
+  logo: string | null;
+  bio: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  coachPhoto: string | null;
+  socialLinks: Record<string, string> | null;
+  specialties: string[] | null;
+  certificates: Certificate[];
+  packages: Package[];
+}

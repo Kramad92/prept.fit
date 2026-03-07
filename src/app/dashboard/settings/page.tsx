@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Save, Palette, Clock, ChevronRight } from "lucide-react";
+import { Save, Palette, Clock, ChevronRight, Globe, Mail } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useT, useLocale, type Locale } from "@/lib/i18n";
 
@@ -12,7 +12,6 @@ interface Settings {
   email: string | null;
   phone: string | null;
   website: string | null;
-  brandColor: string | null;
   timezone: string | null;
   locale: string | null;
   units: string | null;
@@ -46,7 +45,6 @@ export default function SettingsPage() {
       phone: formData.get("phone"),
       email: formData.get("email"),
       website: formData.get("website"),
-      brandColor: formData.get("brandColor"),
       timezone: formData.get("timezone"),
       locale: formData.get("locale"),
       units: formData.get("units"),
@@ -88,7 +86,7 @@ export default function SettingsPage() {
       </p>
 
       {/* Quick Links */}
-      <div className="mt-6 max-w-lg">
+      <div className="mt-6 max-w-lg space-y-3">
         <Link
           href="/dashboard/settings/availability"
           className="card flex items-center justify-between transition-shadow hover:shadow-md"
@@ -101,6 +99,42 @@ export default function SettingsPage() {
               <p className="font-medium text-gray-900">{t.settings.availability}</p>
               <p className="text-sm text-gray-500">
                 {t.settings.availabilityDesc}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-gray-400" />
+        </Link>
+
+        <Link
+          href="/dashboard/settings/landing-page"
+          className="card flex items-center justify-between transition-shadow hover:shadow-md"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+              <Globe className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-900">{t.settings.landingPage}</p>
+              <p className="text-sm text-gray-500">
+                {t.settings.landingPageDesc}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-gray-400" />
+        </Link>
+
+        <Link
+          href="/dashboard/settings/inquiries"
+          className="card flex items-center justify-between transition-shadow hover:shadow-md"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+              <Mail className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-900">{t.landingPage.inquiries}</p>
+              <p className="text-sm text-gray-500">
+                {t.landingPage.inquiriesDesc}
               </p>
             </div>
           </div>
@@ -142,22 +176,6 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.settings.brandColor}
-            </label>
-            <div className="mt-1 flex items-center gap-3">
-              <input
-                type="color"
-                name="brandColor"
-                defaultValue={settings?.brandColor || "#22c55e"}
-                className="h-10 w-14 cursor-pointer rounded border border-gray-300"
-              />
-              <span className="text-sm text-gray-500">
-                {t.settings.brandColorDesc}
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* Contact */}

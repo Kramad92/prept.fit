@@ -1,7 +1,6 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { TopBar } from "@/components/layout/top-bar";
-import { BrandColorProvider } from "@/components/brand-color-provider";
 import { MobileInputScroll } from "@/components/mobile-input-scroll";
 import { GlobalSearch } from "@/components/layout/global-search";
 
@@ -12,7 +11,6 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen bg-gray-50">
-      <BrandColorProvider />
       <Sidebar />
       <TopBar />
       <main className="pb-20 md:pb-0 md:pl-64">

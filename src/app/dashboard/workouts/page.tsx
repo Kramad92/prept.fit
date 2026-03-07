@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Dumbbell, Search, Zap } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageSkeleton } from "@/components/ui/skeleton";
 import { useT } from "@/lib/i18n";
+import { useApi } from "@/hooks/use-api";
+import { api } from "@/lib/api";
 
 interface WorkoutPlan {
   id: string;
@@ -90,33 +91,21 @@ export default function WorkoutsPage() {
   const t = useT();
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [plans, setPlans] = useState<WorkoutPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: plans, loading } = useApi<WorkoutPlan[]>("/api/workouts");
   const [creating, setCreating] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/workouts")
-      .then((r) => r.json())
-      .then(setPlans)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
 
   async function createFromPreset(preset: (typeof PRESET_TEMPLATES)[0]) {
     setCreating(preset.name);
-    const res = await fetch("/api/workouts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(preset),
-    });
-    if (res.ok) {
-      const plan = await res.json();
+    try {
+      const plan = await api.post<{ id: string }>("/api/workouts", preset);
       router.push(`/dashboard/workouts/${plan.id}/edit`);
+    } catch {
+      // handled by api client
     }
     setCreating(null);
   }
 
-  const filtered = plans.filter((p) =>
+  const filtered = (plans || []).filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 

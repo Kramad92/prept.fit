@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   DollarSign,
@@ -13,6 +13,7 @@ import {
 import { useT, useLocale } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useApi } from "@/hooks/use-api";
 
 interface PaymentWithClient {
   id: string;
@@ -42,29 +43,13 @@ interface Summary {
 export default function BillingPage() {
   const t = useT();
   const { locale } = useLocale();
-  const [payments, setPayments] = useState<PaymentWithClient[]>([]);
-  const [summary, setSummary] = useState<Summary>({
-    totalCollected: 0,
-    totalPending: 0,
-    totalOverdue: 0,
-    totalPayments: 0,
-  });
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("");
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (filter) params.set("status", filter);
-    fetch(`/api/payments?${params}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setPayments(data.payments);
-        setSummary(data.summary);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [filter]);
+  const url = filter ? `/api/payments?status=${filter}` : "/api/payments";
+  const { data, loading } = useApi<{ payments: PaymentWithClient[]; summary: Summary }>(url);
+  const payments = data?.payments || [];
+  const summary = data?.summary || { totalCollected: 0, totalPending: 0, totalOverdue: 0, totalPayments: 0 };
 
   const filtered = search
     ? payments.filter(

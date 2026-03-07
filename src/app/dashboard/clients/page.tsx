@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageSkeleton } from "@/components/ui/skeleton";
 import { useT } from "@/lib/i18n";
+import { useApi } from "@/hooks/use-api";
 
 interface Client {
   id: string;
@@ -21,18 +21,9 @@ interface Client {
 export default function ClientsPage() {
   const t = useT();
   const [search, setSearch] = useState("");
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: clients, loading } = useApi<Client[]>("/api/clients");
 
-  useEffect(() => {
-    fetch("/api/clients")
-      .then((r) => r.json())
-      .then(setClients)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = clients.filter((c) =>
+  const filtered = (clients || []).filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 

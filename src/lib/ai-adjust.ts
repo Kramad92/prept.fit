@@ -1,5 +1,6 @@
 import { aiJSON } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
+import { getAILanguageInstruction } from "@/lib/ai-locale";
 
 interface ClientContext {
   name: string;
@@ -101,9 +102,7 @@ export async function adjustMealPlanForClient(
   const ctx = await getClientContext(clientId);
   const clientInfo = buildClientPrompt(ctx);
 
-  const langInstruction = locale === "bs"
-    ? "ALL food names and meal names MUST be in Bosnian/Croatian/Serbian language."
-    : "ALL text must be in English.";
+  const langInstruction = getAILanguageInstruction(locale);
 
   return aiJSON<AdjustedMealPlan>({
     messages: [
@@ -188,9 +187,7 @@ export async function adjustWorkoutPlanForClient(
   const ctx = await getClientContext(clientId);
   const clientInfo = buildClientPrompt(ctx);
 
-  const langInstruction = locale === "bs"
-    ? "ALL exercise names and notes MUST be in Bosnian/Croatian/Serbian language (with English in parentheses)."
-    : "ALL text must be in English.";
+  const langInstruction = getAILanguageInstruction(locale);
 
   return aiJSON<AdjustedWorkoutPlan>({
     messages: [

@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Search,
 } from "lucide-react";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useApi } from "@/hooks/use-api";
@@ -186,7 +186,7 @@ export default function BillingPage() {
                   {formatCurrency(p.amount, p.currency || "BAM")}
                   {p.dueDate && (
                     <span className="ml-1 text-xs text-yellow-600">
-                      {t.billing.due} {new Date(p.dueDate).toLocaleDateString(locale === "bs" ? "bs-BA" : "en-US", { month: "short", day: "numeric" })}
+                      {t.billing.due} {new Date(p.dueDate).toLocaleDateString(getDateLocale(locale), { month: "short", day: "numeric" })}
                     </span>
                   )}
                 </span>
@@ -270,7 +270,7 @@ export default function BillingPage() {
                     {formatCurrency(p.amount, p.currency || "BAM")}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
-                    {new Date(p.date).toLocaleDateString(locale === "bs" ? "bs-BA" : "en-US", {
+                    {new Date(p.date).toLocaleDateString(getDateLocale(locale), {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

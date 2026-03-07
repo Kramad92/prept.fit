@@ -247,6 +247,8 @@ export default function SettingsPage() {
               }}
             >
               <option value="bs">Bosanski</option>
+              <option value="sr">Srpski</option>
+              <option value="hr">Hrvatski</option>
               <option value="en">English</option>
             </select>
           </div>

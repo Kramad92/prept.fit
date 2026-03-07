@@ -27,13 +27,13 @@ import { InviteModal } from "@/components/client/invite-modal";
 import { MeasurementModal } from "@/components/client/measurement-modal";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import type { ClientDetail } from "@/types";
 
 export default function ClientDetailPage() {
   const t = useT();
   const { locale } = useLocale();
-  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLocale = getDateLocale(locale);
   const params = useParams();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);

@@ -4,11 +4,12 @@ import { aiJSON } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
+import { getAILanguageInstruction, getAIExerciseNameInstruction } from "@/lib/ai-locale";
 
 const schema = z.object({
   prompt: z.string().min(3).max(1000),
   preferences: z.string().max(500).optional(),
-  locale: z.enum(["bs", "en"]).optional().default("bs"),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("bs"),
   includeVideos: z.boolean().optional().default(false),
 });
 
@@ -52,9 +53,8 @@ export async function POST(req: NextRequest) {
     ? `Additional preferences/constraints: ${preferences}`
     : "";
 
-  const langInstruction = locale === "bs"
-    ? "IMPORTANT: Exercise names MUST be in Bosnian/Croatian/Serbian with the English name in parentheses. Format: \"Bosnian Name (English Name)\". Example: \"Potisak s klupe (Bench Press)\", \"Čučanj (Squat)\", \"Mrtvo dizanje (Deadlift)\". Workout name, description, and notes must also be in Bosnian."
-    : "ALL text output must be in English.";
+  const langInstruction = getAILanguageInstruction(locale || "bs");
+  const exerciseNameInstruction = getAIExerciseNameInstruction(locale || "bs");
 
   try {
     const result = await aiJSON<GeneratedWorkoutPlan>({
@@ -70,6 +70,7 @@ Rules:
 - Use appropriate set/rep schemes for the goal (strength: 3-5x3-5, hypertrophy: 3-4x8-12, endurance: 2-3x15-20)
 - Include rest periods appropriate for the training style
 - The "notes" field MUST contain helpful form cues and technique tips for each exercise (2-3 sentences). Example: "Držite leđa ravno, spuštajte šipku do grudi kontrolisano. Laktove držite pod uglom od 45 stepeni. Izdahnite pri guranju."
+- ${exerciseNameInstruction}
 - ${langInstruction}
 ${prefInstruction}
 

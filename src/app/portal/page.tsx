@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Calendar, Dumbbell, Camera, CalendarPlus, Clock } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 
 interface PortalData {
   name: string;
@@ -36,7 +36,7 @@ interface PortalData {
 export default function PortalHomePage() {
   const t = useT();
   const { locale } = useLocale();
-  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLocale = getDateLocale(locale);
   const [data, setData] = useState<PortalData | null>(null);
 
   useEffect(() => {

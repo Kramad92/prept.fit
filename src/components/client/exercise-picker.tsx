@@ -21,7 +21,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
   const { locale } = useLocale();
 
   function displayName(ex: LibraryExercise) {
-    return locale === "bs" && ex.nameBs ? ex.nameBs : ex.name;
+    return locale !== "en" && ex.nameBs ? ex.nameBs : ex.name;
   }
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");

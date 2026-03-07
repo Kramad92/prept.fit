@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3, Plus, X, Trash2 } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 
 interface ProgressPhoto {
   id: string;
@@ -31,7 +31,7 @@ interface Measurement {
 export default function PortalProgressPage() {
   const t = useT();
   const { locale } = useLocale();
-  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLocale = getDateLocale(locale);
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);

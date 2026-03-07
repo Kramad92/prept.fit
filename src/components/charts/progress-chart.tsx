@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useLocale } from "@/lib/i18n";
+import { useLocale, getDateLocale } from "@/lib/i18n";
 
 interface DataPoint {
   date: string;
@@ -22,7 +22,7 @@ export function ProgressChart({
   unit = "",
 }: ProgressChartProps) {
   const { locale } = useLocale();
-  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLocale = getDateLocale(locale);
   const filtered = data.filter((d) => d.value !== null) as Array<{
     date: string;
     value: number;

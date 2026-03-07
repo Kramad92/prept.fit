@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { aiJSON } from "@/lib/ai";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
+import { getAILanguageInstruction } from "@/lib/ai-locale";
 
 const schema = z.object({
   foods: z.array(
@@ -11,7 +12,7 @@ const schema = z.object({
       portion: z.string().optional().default("100g"),
     })
   ).min(1).max(30),
-  locale: z.enum(["bs", "en"]).optional().default("bs"),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("bs"),
 });
 
 interface FoodMacros {
@@ -32,9 +33,7 @@ export async function POST(req: NextRequest) {
 
   const { foods, locale } = parsed.data;
 
-  const langNote = locale === "bs"
-    ? "Keep food names in Bosnian/Croatian/Serbian language."
-    : "Keep food names in English.";
+  const langNote = getAILanguageInstruction(locale || "bs");
 
   const foodList = foods
     .map((f, i) => `${i + 1}. ${f.name} — ${f.portion}`)

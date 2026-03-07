@@ -144,7 +144,7 @@ export const settingsUpdateSchema = z.object({
   website: z.string().max(500).optional(),
   brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex color").optional(),
   timezone: z.string().max(100).optional(),
-  locale: z.enum(["bs", "en"]).optional(),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional(),
   units: z.enum(["metric", "imperial"]).optional(),
   currency: z.string().max(10).optional(),
 });

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight, Columns2, Maximize2, Filter, Pencil, Check } from "lucide-react";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 
 interface Photo {
   id: string;
@@ -57,7 +57,7 @@ export function CategoryChip({ category }: { category: string }) {
 export function PhotoLightbox({ photos, initialIndex, onClose, onUpdate }: PhotoLightboxProps) {
   const t = useT();
   const { locale } = useLocale();
-  const dateLoc = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLoc = getDateLocale(locale);
   const [index, setIndex] = useState(initialIndex);
   const [compareMode, setCompareMode] = useState(false);
   const [leftId, setLeftId] = useState<string | null>(null);

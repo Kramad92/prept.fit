@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, TrendingUp } from "lucide-react";
 import { ProgressChart } from "@/components/charts/progress-chart";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 
 interface ChartData {
   measurements: Array<{
@@ -24,7 +24,7 @@ interface ChartData {
 export default function ProgressChartsPage() {
   const t = useT();
   const { locale } = useLocale();
-  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLocale = getDateLocale(locale);
   const [data, setData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState(true);
 

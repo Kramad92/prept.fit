@@ -3,10 +3,14 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { bs, type Translations } from "./bs";
 import { en } from "./en";
+import { sr } from "./sr";
+import { hr } from "./hr";
 
-export type Locale = "bs" | "en";
+export type Locale = "bs" | "sr" | "hr" | "en";
 
-const translations: Record<Locale, Translations> = { bs, en };
+const VALID_LOCALES: Locale[] = ["bs", "sr", "hr", "en"];
+
+const translations: Record<Locale, Translations> = { bs, sr, hr, en };
 
 interface I18nContextValue {
   locale: Locale;
@@ -28,7 +32,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
-        if (data?.locale && (data.locale === "bs" || data.locale === "en")) {
+        if (data?.locale && VALID_LOCALES.includes(data.locale)) {
           setLocale(data.locale);
         }
       })
@@ -50,6 +54,18 @@ export function useT() {
 
 export function useLocale() {
   return useContext(I18nContext);
+}
+
+/** Map app locale to BCP 47 date locale for toLocaleDateString() */
+const DATE_LOCALES: Record<Locale, string> = {
+  bs: "bs-BA",
+  sr: "sr-Latn-RS",
+  hr: "hr-HR",
+  en: "en-US",
+};
+
+export function getDateLocale(locale: Locale): string {
+  return DATE_LOCALES[locale] || "bs-BA";
 }
 
 export { type Translations };

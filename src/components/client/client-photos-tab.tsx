@@ -5,7 +5,7 @@ import { Camera, X } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
 import { useToast } from "@/components/ui/toast";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import type { ProgressPhoto } from "@/types";
 
@@ -18,7 +18,7 @@ interface ClientPhotosTabProps {
 export function ClientPhotosTab({ clientId, photos, onRefresh }: ClientPhotosTabProps) {
   const t = useT();
   const { locale } = useLocale();
-  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLocale = getDateLocale(locale);
   const [showUpload, setShowUpload] = useState(false);
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("");

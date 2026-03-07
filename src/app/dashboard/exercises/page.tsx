@@ -44,7 +44,7 @@ export default function ExerciseLibraryPage() {
   const { locale } = useLocale();
 
   function displayName(ex: ExerciseItem) {
-    return locale === "bs" && ex.nameBs ? ex.nameBs : ex.name;
+    return locale !== "en" && ex.nameBs ? ex.nameBs : ex.name;
   }
 
   function tCategory(cat: string) {
@@ -271,7 +271,7 @@ export default function ExerciseLibraryPage() {
                     <div key={ex.id} className="card flex items-center justify-between py-3">
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-gray-900">{displayName(ex)}</p>
-                        {locale === "bs" && ex.nameBs && (
+                        {locale !== "en" && ex.nameBs && (
                           <p className="truncate text-xs text-gray-400">{ex.name}</p>
                         )}
                         <div className="flex gap-2 text-xs text-gray-500">

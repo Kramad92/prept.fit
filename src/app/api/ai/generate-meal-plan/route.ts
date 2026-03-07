@@ -3,13 +3,14 @@ import { getSession } from "@/lib/session";
 import { aiJSON } from "@/lib/ai";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
+import { getAILanguageInstruction } from "@/lib/ai-locale";
 
 const schema = z.object({
   prompt: z.string().min(3).max(1000),
   targetCalories: z.number().min(500).max(10000).optional(),
   numMeals: z.number().min(1).max(10).optional(),
   preferences: z.string().max(500).optional(),
-  locale: z.enum(["bs", "en"]).optional().default("bs"),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("bs"),
 });
 
 interface GeneratedFood {
@@ -46,9 +47,7 @@ export async function POST(req: NextRequest) {
 
   const { prompt, targetCalories, numMeals, preferences, locale } = parsed.data;
 
-  const langInstruction = locale === "bs"
-    ? "IMPORTANT: ALL text output (plan name, description, meal names, food names) MUST be in Bosnian/Croatian/Serbian language. Example food names: piletina, riža, jaja, zobene pahuljice, banana, maslinovo ulje, hljeb, sir, jogurt, tunjevina."
-    : "ALL text output (plan name, description, meal names, food names) must be in English.";
+  const langInstruction = getAILanguageInstruction(locale || "bs");
 
   const calorieInstruction = targetCalories
     ? `The TOTAL daily calories MUST be exactly ${targetCalories} kcal. Distribute them across all meals.`

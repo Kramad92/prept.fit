@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { CalendarPlus, Check, Clock } from "lucide-react";
 import { formatTime } from "@/lib/utils";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 
 interface Slot {
   date: string;
@@ -18,7 +18,7 @@ interface GroupedSlots {
 export default function BookingPage() {
   const t = useT();
   const { locale } = useLocale();
-  const dateLocale = locale === "bs" ? "bs-BA" : "en-US";
+  const dateLocale = getDateLocale(locale);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);

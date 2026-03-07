@@ -15,6 +15,7 @@ import type { Payment } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
+import { api } from "@/lib/api";
 
 interface ClientPaymentsTabProps {
   clientId: string;
@@ -49,8 +50,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
   const [notes, setNotes] = useState("");
 
   function loadPayments() {
-    fetch(`/api/clients/${clientId}/payments`)
-      .then((r) => r.json())
+    api.get<Payment[]>(`/api/clients/${clientId}/payments`)
       .then((data) => {
         setPayments(data);
         setLoading(false);
@@ -106,23 +106,15 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
     };
 
     try {
-      const url = editingId
-        ? `/api/clients/${clientId}/payments/${editingId}`
-        : `/api/clients/${clientId}/payments`;
-      const res = await fetch(url, {
-        method: editingId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        toastSuccess(editingId ? t.billing.paymentUpdated : t.billing.paymentRecorded);
-        setShowForm(false);
-        resetForm();
-        loadPayments();
+      if (editingId) {
+        await api.put(`/api/clients/${clientId}/payments/${editingId}`, payload);
       } else {
-        const err = await res.json().catch(() => null);
-        toastError(err?.error || t.billing.failedToSave);
+        await api.post(`/api/clients/${clientId}/payments`, payload);
       }
+      toastSuccess(editingId ? t.billing.paymentUpdated : t.billing.paymentRecorded);
+      setShowForm(false);
+      resetForm();
+      loadPayments();
     } catch {
       toastError(t.billing.failedToSave);
     } finally {
@@ -132,9 +124,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
 
   async function handleDelete(paymentId: string) {
     try {
-      await fetch(`/api/clients/${clientId}/payments/${paymentId}`, {
-        method: "DELETE",
-      });
+      await api.delete(`/api/clients/${clientId}/payments/${paymentId}`);
       toastSuccess(t.billing.paymentDeleted);
       loadPayments();
     } catch {

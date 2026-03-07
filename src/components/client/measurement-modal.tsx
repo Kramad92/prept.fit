@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
+import { api } from "@/lib/api";
 
 interface MeasurementModalProps {
   clientId: string;
@@ -26,20 +27,10 @@ export function MeasurementModal({ clientId, onClose, onSaved }: MeasurementModa
     });
 
     try {
-      const res = await fetch(`/api/clients/${clientId}/measurements`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (res.ok) {
-        toastSuccess(t.measurements.saved);
-        onSaved();
-        onClose();
-      } else {
-        const err = await res.json().catch(() => null);
-        toastError(err?.error || t.measurements.failedToSave);
-      }
+      await api.post(`/api/clients/${clientId}/measurements`, data);
+      toastSuccess(t.measurements.saved);
+      onSaved();
+      onClose();
     } catch {
       toastError(t.measurements.failedToSave);
     } finally {

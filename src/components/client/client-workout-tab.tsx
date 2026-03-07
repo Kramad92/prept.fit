@@ -17,32 +17,15 @@ import {
 import { TemplatePickerModal } from "./template-picker-modal";
 import { ExercisePicker } from "./exercise-picker";
 import { ExerciseNameInput } from "./exercise-name-input";
-import type { Exercise, ClientExercise, ExerciseInput } from "@/types";
+import type { Exercise, ExerciseInput, AssignedWorkoutPlan } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
-
-interface AssignedPlan {
-  id: string;
-  customName: string | null;
-  notes: string | null;
-  mode: string;
-  isActive: boolean;
-  startDate: string | null;
-  endDate: string | null;
-  workoutPlan: {
-    id: string;
-    name: string;
-    description: string | null;
-    sourceTemplate: { id: string; name: string } | null;
-    exercises: Exercise[];
-  };
-  clientExercises: ClientExercise[];
-}
+import { api } from "@/lib/api";
 
 interface ClientWorkoutTabProps {
   clientId: string;
-  assignedPlans: AssignedPlan[];
+  assignedPlans: AssignedWorkoutPlan[];
   onRefresh: () => void;
 }
 
@@ -70,16 +53,8 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   async function handleAssignTemplate(templateId: string, mode?: string) {
     setAssigning(true);
     try {
-      const res = await fetch(`/api/clients/${clientId}/workouts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workoutPlanId: templateId, mode: mode || "solo" }),
-      });
-      if (res.ok) {
-        toastSuccess(t.workouts.templateAssigned);
-      } else {
-        toastError(t.workouts.failedToAssign);
-      }
+      await api.post(`/api/clients/${clientId}/workouts`, { workoutPlanId: templateId, mode: mode || "solo" });
+      toastSuccess(t.workouts.templateAssigned);
     } catch {
       toastError(t.workouts.failedToAssign);
     }
@@ -92,43 +67,35 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(`/api/clients/${clientId}/workouts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: customName,
-          mode: assignMode,
-          exercises: customExercises
-            .filter((ex) => ex.name.trim())
-            .map((ex, i) => ({
-              name: ex.name,
-              sets: ex.sets ? parseInt(ex.sets) : null,
-              reps: ex.reps || null,
-              weight: ex.weight || null,
-              restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
-              notes: ex.notes || null,
-              videoUrl: ex.videoUrl || null,
-              orderIndex: i,
-            })),
-        }),
+      await api.post(`/api/clients/${clientId}/workouts`, {
+        name: customName,
+        mode: assignMode,
+        exercises: customExercises
+          .filter((ex) => ex.name.trim())
+          .map((ex, i) => ({
+            name: ex.name,
+            sets: ex.sets ? parseInt(ex.sets) : null,
+            reps: ex.reps || null,
+            weight: ex.weight || null,
+            restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
+            notes: ex.notes || null,
+            videoUrl: ex.videoUrl || null,
+            orderIndex: i,
+          })),
       });
-      if (res.ok) {
-        toastSuccess(t.workouts.customPlanCreated);
-        setShowCustomForm(false);
-        setCustomName("");
-        setCustomExercises([]);
-        onRefresh();
-      } else {
-        toastError(t.workouts.failedToCreate);
-      }
+      toastSuccess(t.workouts.customPlanCreated);
+      setShowCustomForm(false);
+      setCustomName("");
+      setCustomExercises([]);
+      onRefresh();
     } catch {
       toastError(t.workouts.failedToCreate);
     }
     setSaving(false);
   }
 
-  function startEdit(plan: AssignedPlan) {
-    const exercises = plan.clientExercises.length > 0 ? plan.clientExercises : plan.workoutPlan.exercises;
+  function startEdit(plan: AssignedWorkoutPlan) {
+    const exercises: Exercise[] = plan.clientExercises.length > 0 ? plan.clientExercises : plan.workoutPlan.exercises;
     setEditingPlanId(plan.id);
     setEditName(plan.customName || plan.workoutPlan.name);
     setEditExercises(
@@ -148,32 +115,24 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   async function handleSaveEdit(planId: string) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/clients/${clientId}/workouts/${planId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customName: editName,
-          exercises: editExercises
-            .filter((ex) => ex.name.trim())
-            .map((ex, i) => ({
-              name: ex.name,
-              sets: ex.sets ? parseInt(ex.sets) : null,
-              reps: ex.reps || null,
-              weight: ex.weight || null,
-              restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
-              notes: ex.notes || null,
-              videoUrl: ex.videoUrl || null,
-              orderIndex: i,
-            })),
-        }),
+      await api.put(`/api/clients/${clientId}/workouts/${planId}`, {
+        customName: editName,
+        exercises: editExercises
+          .filter((ex) => ex.name.trim())
+          .map((ex, i) => ({
+            name: ex.name,
+            sets: ex.sets ? parseInt(ex.sets) : null,
+            reps: ex.reps || null,
+            weight: ex.weight || null,
+            restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
+            notes: ex.notes || null,
+            videoUrl: ex.videoUrl || null,
+            orderIndex: i,
+          })),
       });
-      if (res.ok) {
-        toastSuccess(t.workouts.workoutPlanSaved);
-        setEditingPlanId(null);
-        onRefresh();
-      } else {
-        toastError(t.workouts.failedToSave);
-      }
+      toastSuccess(t.workouts.workoutPlanSaved);
+      setEditingPlanId(null);
+      onRefresh();
     } catch {
       toastError(t.workouts.failedToSave);
     }
@@ -182,7 +141,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
 
   async function handleDelete(planId: string) {
     try {
-      await fetch(`/api/clients/${clientId}/workouts/${planId}`, { method: "DELETE" });
+      await api.delete(`/api/clients/${clientId}/workouts/${planId}`);
       toastSuccess(t.assign.planRemoved);
       onRefresh();
     } catch {

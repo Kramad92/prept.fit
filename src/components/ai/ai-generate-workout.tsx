@@ -7,11 +7,13 @@ import type { ExerciseInput } from "@/types";
 
 interface GeneratedExercise {
   name: string;
+  nameEn: string;
   sets: number;
   reps: string;
   weight: string;
   restSeconds: number;
   notes: string;
+  videoUrl?: string;
 }
 
 interface GeneratedPlan {
@@ -34,6 +36,7 @@ export function AIGenerateWorkout({ prompt, onGenerate }: AIGenerateWorkoutProps
   const { t, locale } = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [includeVideos, setIncludeVideos] = useState(false);
 
   async function handleGenerate() {
     if (!prompt.trim() || loading) return;
@@ -44,7 +47,7 @@ export function AIGenerateWorkout({ prompt, onGenerate }: AIGenerateWorkoutProps
       const res = await fetch("/api/ai/generate-workout-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), locale }),
+        body: JSON.stringify({ prompt: prompt.trim(), locale, includeVideos }),
       });
 
       if (!res.ok) throw new Error("Failed");
@@ -59,7 +62,7 @@ export function AIGenerateWorkout({ prompt, onGenerate }: AIGenerateWorkoutProps
         weight: ex.weight || "",
         restSeconds: ex.restSeconds?.toString() || "60",
         notes: ex.notes || "",
-        videoUrl: "",
+        videoUrl: ex.videoUrl || "",
       }));
 
       onGenerate({
@@ -94,6 +97,15 @@ export function AIGenerateWorkout({ prompt, onGenerate }: AIGenerateWorkoutProps
           </>
         )}
       </button>
+      <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={includeVideos}
+          onChange={(e) => setIncludeVideos(e.target.checked)}
+          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 h-3.5 w-3.5"
+        />
+        {t.workouts.includeVideo}
+      </label>
       {error && <span className="text-xs text-red-500">{error}</span>}
     </div>
   );

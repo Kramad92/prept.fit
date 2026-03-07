@@ -256,6 +256,7 @@ export const en: Translations = {
     aiPromptPlaceholder: "Describe the workout (e.g. 'push day chest focus, intermediate level')",
     aiGenerated: "AI Generated Plan",
     aiError: "Generation failed — please try again",
+    includeVideo: "Include video links",
   },
 
   nutrition: {

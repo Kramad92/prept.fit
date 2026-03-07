@@ -263,6 +263,7 @@ export const bs = {
     aiPromptPlaceholder: "Opišite trening (npr. 'push day fokus na grudi, srednji nivo')",
     aiGenerated: "AI generisani plan",
     aiError: "Greška pri generisanju — pokušajte ponovo",
+    includeVideo: "Uključi video linkove",
   },
 
   // Nutrition

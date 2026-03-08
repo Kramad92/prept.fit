@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 // Get the logged-in client's full profile
 export async function GET() {
   const session = await getSession();
+  console.log("[portal/me] session:", JSON.stringify(session?.user, null, 2));
   if (!session || !session.user.clientProfileId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

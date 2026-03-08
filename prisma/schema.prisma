@@ -46,6 +46,8 @@ model Tenant {
   inquiries          Inquiry[]
   equipmentTypes     EquipmentType[]
   exerciseCategories ExerciseCategory[]
+  trainingGroups     TrainingGroup[]
+  groupSessions      GroupSession[]
 
   @@map("tenants")
 }
@@ -118,6 +120,8 @@ model Client {
   clientMeals     ClientMeal[]
   payments        Payment[]
   inviteTokens    InviteToken[]
+  trainingGroupMemberships TrainingGroupMember[]
+  groupSessionParticipations GroupSessionParticipant[]
 
   @@index([tenantId])
   @@map("clients")
@@ -175,6 +179,7 @@ model WorkoutPlan {
   exercises   Exercise[]
   assignedTo  ClientWorkoutPlan[]
   workoutLogs WorkoutLog[]
+  groupSessions GroupSession[]
 
   @@index([tenantId])
   @@index([sourceTemplateId])
@@ -219,6 +224,7 @@ model ClientWorkoutPlan {
   workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
 
   clientExercises ClientExercise[]
+  groupSessionParticipant GroupSessionParticipant?
 
   @@index([clientId])
   @@index([workoutPlanId])
@@ -745,4 +751,92 @@ model Inquiry {
   @@index([tenantId])
   @@index([tenantId, status])
   @@map("inquiries")
+}
+
+// ========== GROUP TRAINING ==========
+
+model TrainingGroup {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  maxParticipants  Int      @default(20)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  members          TrainingGroupMember[]
+  sessions         GroupSession[]
+
+  @@index([tenantId])
+  @@map("training_groups")
+}
+
+model TrainingGroupMember {
+  id        String   @id @default(cuid())
+  joinedAt  DateTime @default(now())
+
+  groupId   String
+  group     TrainingGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  clientId  String
+  client    Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, clientId])
+  @@index([groupId])
+  @@index([clientId])
+  @@map("training_group_members")
+}
+
+model GroupSession {
+  id              String   @id @default(cuid())
+  title           String
+  date            DateTime
+  startTime       String   // "09:00"
+  endTime         String   // "10:00"
+  location        String?
+  notes           String?
+  status          String   @default("scheduled") // scheduled, completed, cancelled
+  maxParticipants Int      @default(20)
+  isOpen          Boolean  @default(false) // any client can join
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  groupId         String?
+  group           TrainingGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  workoutPlanId   String?
+  workoutPlan     WorkoutPlan? @relation(fields: [workoutPlanId], references: [id], onDelete: SetNull)
+
+  participants    GroupSessionParticipant[]
+
+  @@index([tenantId])
+  @@index([groupId])
+  @@index([date])
+  @@map("group_sessions")
+}
+
+model GroupSessionParticipant {
+  id          String   @id @default(cuid())
+  status      String   @default("enrolled") // enrolled, attended, no-show, cancelled
+  enrolledAt  DateTime @default(now())
+
+  sessionId   String
+  session     GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  clientId    String
+  client      Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  clientWorkoutPlanId String? @unique
+  clientWorkoutPlan   ClientWorkoutPlan? @relation(fields: [clientWorkoutPlanId], references: [id], onDelete: SetNull)
+
+  @@unique([sessionId, clientId])
+  @@index([sessionId])
+  @@index([clientId])
+  @@map("group_session_participants")
 }

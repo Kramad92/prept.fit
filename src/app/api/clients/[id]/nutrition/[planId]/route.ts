@@ -76,6 +76,7 @@ export async function PUT(
           meals: {
             create: body.meals.map((m: any, i: number) => ({
               name: m.name,
+              description: m.description || null,
               time: m.time || null,
               foods: m.foods || [],
               orderIndex: i,
@@ -92,6 +93,7 @@ export async function PUT(
         await tx.clientMeal.create({
           data: {
             name: m.name,
+            description: m.description || null,
             time: m.time || null,
             foods: m.foods || [],
             orderIndex: i,

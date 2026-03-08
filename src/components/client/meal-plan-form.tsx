@@ -24,9 +24,9 @@ export function emptyForm(t: any): FormState {
     carbs: "",
     fat: "",
     meals: [
-      { tempId: "b", name: t.nutrition.breakfast, time: "07:30", foods: [] },
-      { tempId: "l", name: t.nutrition.lunch, time: "12:30", foods: [] },
-      { tempId: "d", name: t.nutrition.dinner, time: "19:00", foods: [] },
+      { tempId: "b", name: "", description: "", time: "07:30", foods: [] },
+      { tempId: "l", name: "", description: "", time: "12:30", foods: [] },
+      { tempId: "d", name: "", description: "", time: "19:00", foods: [] },
     ],
   };
 }
@@ -36,6 +36,7 @@ export function mealsToPayload(meals: MealInput[]) {
     .filter((m) => m.name.trim())
     .map((m, i) => ({
       name: m.name,
+      description: m.description || null,
       time: m.time || null,
       foods: m.foods.filter((f) => f.name.trim()).map((f) => ({
         name: f.name,
@@ -60,6 +61,7 @@ export function planToFormState(plan: AssignedMealPlan): FormState {
     meals: source.map((m) => ({
       tempId: m.id,
       name: m.name,
+      description: (m as any).description || "",
       time: m.time || "",
       foods: (m.foods as Food[]).map((f: any) => ({
         name: f.name || "",
@@ -130,6 +132,13 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
               </button>
             )}
           </div>
+          <textarea
+            value={meal.description}
+            onChange={(e) => setMeals(meals.map((m, i) => (i === mi ? { ...m, description: e.target.value } : m)))}
+            className="input mt-2 text-xs"
+            rows={1}
+            placeholder={t.nutrition.mealDescriptionPlaceholder}
+          />
           <div className="mt-2 space-y-1">
             {meal.foods.length > 0 && (
               <div className="grid grid-cols-6 gap-2 px-0.5">
@@ -220,7 +229,7 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
       ))}
       <button
         type="button"
-        onClick={() => setMeals([...meals, { tempId: Math.random().toString(36).slice(2), name: "", time: "", foods: [] }])}
+        onClick={() => setMeals([...meals, { tempId: Math.random().toString(36).slice(2), name: "", description: "", time: "", foods: [] }])}
         className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-brand-300 hover:text-brand-600"
       >
         <Plus className="h-4 w-4" />
@@ -338,6 +347,7 @@ function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit
                   meals: data.meals.map((m) => ({
                     tempId: Math.random().toString(36).slice(2),
                     name: m.name,
+                    description: (m as any).description || "",
                     time: m.time || "",
                     foods: m.foods.map((f) => ({
                       name: f.name,

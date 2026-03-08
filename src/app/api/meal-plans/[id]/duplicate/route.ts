@@ -30,6 +30,7 @@ export async function POST(
       meals: {
         create: original.meals.map((m) => ({
           name: m.name,
+          description: m.description,
           time: m.time,
           foods: m.foods as Prisma.InputJsonValue,
           orderIndex: m.orderIndex,

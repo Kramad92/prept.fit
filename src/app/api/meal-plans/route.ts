@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
         create: (body.meals || []).map(
           (meal: any, i: number) => ({
             name: meal.name,
+            description: meal.description || null,
             time: meal.time || null,
             foods: meal.foods || [],
             orderIndex: meal.orderIndex ?? i,

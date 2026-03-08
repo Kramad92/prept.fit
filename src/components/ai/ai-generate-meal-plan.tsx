@@ -16,6 +16,7 @@ interface GeneratedFood {
 
 interface GeneratedMeal {
   name: string;
+  description: string;
   time: string;
   foods: GeneratedFood[];
 }
@@ -32,6 +33,7 @@ interface GeneratedPlan {
 
 interface MealRow {
   name: string;
+  description: string;
   time: string;
   foods: Food[];
 }
@@ -75,6 +77,7 @@ export function AIGenerateMealPlan({ prompt, onGenerate }: AIGenerateMealPlanPro
 
       const meals: MealRow[] = plan.meals.map((m) => ({
         name: m.name,
+        description: m.description || "",
         time: m.time || "",
         foods: m.foods.map((f) => ({
           name: f.name,

@@ -31,6 +31,7 @@ interface AssignedPlan {
     meals: Array<{
       id: string;
       name: string;
+      description: string | null;
       time: string | null;
       foods: Food[];
       orderIndex: number;
@@ -39,6 +40,7 @@ interface AssignedPlan {
   clientMeals: Array<{
     id: string;
     name: string;
+    description: string | null;
     time: string | null;
     foods: Food[];
     orderIndex: number;
@@ -252,6 +254,9 @@ export default function PortalNutritionPage() {
                                   </span>
                                 )}
                               </div>
+                              {meal.description && (
+                                <p className="mt-0.5 text-xs text-gray-500 italic">{meal.description}</p>
+                              )}
                               {(meal.foods as Food[]).map((food, fi) => (
                                 <div
                                   key={fi}

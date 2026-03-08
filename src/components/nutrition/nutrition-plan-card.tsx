@@ -133,6 +133,9 @@ export function NutritionPlanCard({
                   <span className="text-xs text-gray-400">{meal.time}</span>
                 )}
               </div>
+              {meal.description && (
+                <p className="mt-0.5 text-xs text-gray-500 italic">{meal.description}</p>
+              )}
               {(meal.foods as Food[])?.map((food: any, fi: number) => (
                 <div key={fi} className="mt-1 flex justify-between text-sm text-gray-600">
                   <span>

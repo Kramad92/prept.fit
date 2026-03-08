@@ -10,6 +10,7 @@ import type { Food } from "@/types";
 
 export interface MealRow {
   name: string;
+  description: string;
   time: string;
   foods: Food[];
 }
@@ -143,7 +144,7 @@ export function NutritionPlanForm({
                 <button
                   type="button"
                   onClick={() => {
-                    updateMeals((prev) => [...prev, { name: "", time: "", foods: [] }]);
+                    updateMeals((prev) => [...prev, { name: "", description: "", time: "", foods: [] }]);
                     setTimeout(() => {
                       const el = document.querySelector("[data-meal-end]");
                       el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -185,6 +186,13 @@ export function NutritionPlanForm({
                       </button>
                     )}
                   </div>
+                  <textarea
+                    value={meal.description}
+                    onChange={(e) => updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, description: e.target.value } : m))}
+                    className="input mt-2 text-xs"
+                    rows={1}
+                    placeholder={t.nutrition.mealDescriptionPlaceholder}
+                  />
 
                   <div className="mt-2 space-y-1">
                     {(meal.foods.length > 0) && (

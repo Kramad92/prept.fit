@@ -493,9 +493,10 @@ model MealPlan {
 
 model Meal {
   id          String  @id @default(cuid())
-  name        String  // "Breakfast", "Lunch", "Snack 1", etc.
+  name        String  // dish name (e.g. "Greek Yogurt Parfait", "Grilled Chicken Salad")
+  description String? // prep instructions or what the dish is
   time        String? // suggested time "07:30"
-  foods       Json    // [{ name, portion, calories, protein, carbs, fat, notes }]
+  foods       Json    // [{ name, portion, calories, protein, carbs, fat }]
   orderIndex  Int     @default(0)
 
   mealPlanId  String
@@ -643,7 +644,8 @@ model ClientExercise {
 
 model ClientMeal {
   id          String   @id @default(cuid())
-  name        String   // "Breakfast", "Lunch", etc.
+  name        String   // dish name
+  description String?  // prep instructions or what the dish is
   time        String?
   foods       Json     // [{ name, portion, calories, protein, carbs, fat }]
   orderIndex  Int      @default(0)

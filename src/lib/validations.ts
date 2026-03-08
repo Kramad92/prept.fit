@@ -120,6 +120,7 @@ const mealFoodSchema = z.object({
 
 const mealSchema = z.object({
   name: z.string().min(1),
+  description: z.string().nullable().optional(),
   time: z.string().nullable().optional(),
   foods: z.array(mealFoodSchema).optional().default([]),
   orderIndex: z.number().optional(),

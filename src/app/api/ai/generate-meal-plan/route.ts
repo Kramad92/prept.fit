@@ -24,6 +24,7 @@ interface GeneratedFood {
 
 interface GeneratedMeal {
   name: string;
+  description: string;
   time: string;
   foods: GeneratedFood[];
 }
@@ -69,23 +70,25 @@ export async function POST(req: NextRequest) {
           content: `You are an expert fitness nutrition coach. Generate a complete daily meal plan based on the user's request.
 
 CRITICAL RULES — you MUST follow these exactly:
-1. Use ONLY basic, single ingredients (chicken breast, rice, oats, eggs, olive oil, banana, etc.) — NEVER prepared/combined meals, recipes, or dishes
-2. Portions MUST use weight in grams (e.g. "150g", "200g", "30g") or count for countable items (e.g. "2 eggs", "1 banana"). NEVER mix units (wrong: "2 eggs" for oats)
-3. Macros for each food MUST be accurate for the stated portion size. Use standard nutritional databases as reference:
+1. Each meal MUST be a real dish or recipe with a descriptive name (e.g. "Greek Yogurt Parfait", "Grilled Chicken & Rice Bowl", "Banana Oatmeal"). NEVER use generic time-slot names like "Breakfast" or "Lunch" as meal names.
+2. Each meal MUST have a short "description" field (1-2 sentences) explaining what the dish is or how to prepare it (e.g. "Cook oats in milk, top with sliced banana and drizzle honey").
+3. List individual ingredients as "foods" for macro tracking. Use basic, single ingredients (chicken breast, rice, oats, eggs, olive oil, banana, etc.).
+4. Portions MUST use weight in grams (e.g. "150g", "200g", "30g") or count for countable items (e.g. "2 eggs", "1 banana"). NEVER mix units (wrong: "2 eggs" for oats).
+5. Macros for each food MUST be accurate for the stated portion size. Use standard nutritional databases as reference:
    - Chicken breast: ~31g protein, 0g carbs, 3.6g fat per 100g
    - Rice (cooked): ~2.7g protein, 28g carbs, 0.3g fat per 100g
    - Eggs: ~6g protein, 0.6g carbs, 5g fat per egg (50g)
    - Oats (dry): ~13g protein, 66g carbs, 7g fat per 100g
    - Banana: ~1.1g protein, 23g carbs, 0.3g fat per 100g
-4. ${calorieInstruction}
-5. ${mealCountInstruction}
-6. Use standard meal times (07:00, 10:00, 13:00, 16:00, 19:00, 21:00 — pick appropriate ones)
-7. Each meal should have 2-5 ingredients
-8. All macro values must be integers
-9. VERIFY: Sum all food calories across all meals. The total MUST equal the targetCalories value (±20 kcal). If it doesn't, adjust portions until it does.
-10. VERIFY: targetCalories = targetProtein*4 + targetCarbs*4 + targetFat*9 (±30 kcal)
-11. Give the plan a short descriptive name
-12. ${langInstruction}
+6. ${calorieInstruction}
+7. ${mealCountInstruction}
+8. Use standard meal times (07:00, 10:00, 13:00, 16:00, 19:00, 21:00 — pick appropriate ones)
+9. Each meal should have 2-5 ingredients
+10. All macro values must be integers
+11. VERIFY: Sum all food calories across all meals. The total MUST equal the targetCalories value (±20 kcal). If it doesn't, adjust portions until it does.
+12. VERIFY: targetCalories = targetProtein*4 + targetCarbs*4 + targetFat*9 (±30 kcal)
+13. Give the plan a short descriptive name
+14. ${langInstruction}
 ${prefInstruction}
 
 Return a JSON object with this exact structure:
@@ -98,7 +101,8 @@ Return a JSON object with this exact structure:
   "targetFat": number,
   "meals": [
     {
-      "name": "Meal name",
+      "name": "Dish name (e.g. Grilled Chicken & Rice Bowl)",
+      "description": "Short prep instructions or description of the dish",
       "time": "HH:MM",
       "foods": [
         { "name": "Food", "portion": "150g", "calories": 200, "protein": 30, "carbs": 0, "fat": 8 }

@@ -49,6 +49,7 @@ export interface Food {
 export interface Meal {
   id: string;
   name: string;
+  description: string | null;
   time: string | null;
   foods: Food[];
   orderIndex: number;
@@ -57,6 +58,7 @@ export interface Meal {
 export interface ClientMeal {
   id: string;
   name: string;
+  description: string | null;
   time: string | null;
   foods: Food[];
   orderIndex: number;
@@ -194,6 +196,7 @@ export interface FoodInput {
 export interface MealInput {
   tempId: string;
   name: string;
+  description: string;
   time: string;
   foods: FoodInput[];
 }

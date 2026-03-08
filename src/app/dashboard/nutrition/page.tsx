@@ -13,9 +13,9 @@ import { computeFoodTotals } from "@/lib/portion-scaling";
 import type { Food, MealPlanSummary, ClientOption } from "@/types";
 
 const DEFAULT_MEALS: MealRow[] = [
-  { name: "Breakfast", time: "07:30", foods: [] },
-  { name: "Lunch", time: "12:30", foods: [] },
-  { name: "Dinner", time: "19:00", foods: [] },
+  { name: "", description: "", time: "07:30", foods: [] },
+  { name: "", description: "", time: "12:30", foods: [] },
+  { name: "", description: "", time: "19:00", foods: [] },
 ];
 
 function emptyForm(): FormState {
@@ -102,6 +102,7 @@ function NutritionContent() {
         .filter((m) => m.name.trim())
         .map((m, i) => ({
           name: m.name,
+          description: m.description || null,
           time: m.time || null,
           foods: m.foods.filter((f) => f.name.trim()),
           orderIndex: i,
@@ -161,6 +162,7 @@ function NutritionContent() {
       targetFat: data.targetFat?.toString() || "",
       meals: data.meals.map((m: any) => ({
         name: m.name,
+        description: m.description || "",
         time: m.time || "",
         foods: (m.foods as Food[])?.length > 0
           ? (m.foods as Food[]).map((f: Food) => ({

@@ -16,6 +16,7 @@ interface FoodMacros {
 
 interface MealRow {
   name: string;
+  description: string;
   time: string;
   foods: Food[];
 }

@@ -286,3 +286,55 @@ export interface CheckInAnswer {
   questionId: string;
   answer: string;
 }
+
+export interface TrainingGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  maxParticipants: number;
+  isActive: boolean;
+  createdAt: string;
+  _count?: {
+    members: number;
+    sessions: number;
+  };
+}
+
+export interface TrainingGroupDetail extends TrainingGroup {
+  members: Array<{
+    id: string;
+    joinedAt: string;
+    client: { id: string; name: string; email: string | null };
+  }>;
+  sessions: GroupSession[];
+}
+
+export interface GroupSession {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string | null;
+  notes: string | null;
+  status: string;
+  maxParticipants: number;
+  isOpen: boolean;
+  groupId: string | null;
+  workoutPlanId: string | null;
+  group?: { id: string; name: string } | null;
+  workoutPlan?: { id: string; name: string } | null;
+  _count?: {
+    participants: number;
+  };
+}
+
+export interface GroupSessionDetail extends GroupSession {
+  participants: Array<{
+    id: string;
+    status: string;
+    enrolledAt: string;
+    client: { id: string; name: string; email: string | null };
+    clientWorkoutPlanId: string | null;
+  }>;
+}

@@ -6,6 +6,10 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Clean existing data
+  await prisma.groupSessionParticipant.deleteMany();
+  await prisma.groupSession.deleteMany();
+  await prisma.trainingGroupMember.deleteMany();
+  await prisma.trainingGroup.deleteMany();
   await prisma.inquiry.deleteMany();
   await prisma.package.deleteMany();
   await prisma.certificate.deleteMany();
@@ -562,6 +566,98 @@ async function main() {
       { type: "workout_assigned", title: "New workout plan", body: "Your coach assigned you: Full Body Circuit", userId: selmaUser.id, tenantId: tenant.id, isRead: true, createdAt: subDays(new Date(), 10) },
       { type: "habit_reminder", title: "Daily habits", body: "Don't forget to check off your daily habits!", userId: selmaUser.id, tenantId: tenant.id, isRead: true, createdAt: subDays(new Date(), 1) },
     ],
+  });
+
+  // ========== GROUP TRAINING ==========
+
+  const morningHiit = await prisma.trainingGroup.create({
+    data: {
+      name: "Morning HIIT",
+      description: "High-intensity interval training — Monday/Wednesday/Friday at 7 AM",
+      maxParticipants: 12,
+      tenantId: tenant.id,
+    },
+  });
+
+  const strengthClub = await prisma.trainingGroup.create({
+    data: {
+      name: "Strength Club",
+      description: "Barbell focused strength training for intermediate lifters",
+      maxParticipants: 8,
+      tenantId: tenant.id,
+    },
+  });
+
+  // Add members to groups
+  for (const client of [selma, damir, lejla]) {
+    await prisma.trainingGroupMember.create({
+      data: { groupId: morningHiit.id, clientId: client.id },
+    });
+  }
+  for (const client of [damir, alen, sara]) {
+    await prisma.trainingGroupMember.create({
+      data: { groupId: strengthClub.id, clientId: client.id },
+    });
+  }
+
+  // Group sessions
+  const hiitSession = await prisma.groupSession.create({
+    data: {
+      title: "Morning HIIT - Monday",
+      date: addDays(today, 1),
+      startTime: "07:00",
+      endTime: "08:00",
+      location: "Main gym floor",
+      status: "scheduled",
+      maxParticipants: 12,
+      isOpen: false,
+      groupId: morningHiit.id,
+      tenantId: tenant.id,
+    },
+  });
+
+  // Auto-enroll group members
+  for (const client of [selma, damir, lejla]) {
+    await prisma.groupSessionParticipant.create({
+      data: { sessionId: hiitSession.id, clientId: client.id, status: "enrolled" },
+    });
+  }
+
+  // Open session (standalone, any client can join)
+  const openSession = await prisma.groupSession.create({
+    data: {
+      title: "Saturday Outdoor Bootcamp",
+      date: addDays(today, 5),
+      startTime: "09:00",
+      endTime: "10:30",
+      location: "City park",
+      status: "scheduled",
+      maxParticipants: 20,
+      isOpen: true,
+      tenantId: tenant.id,
+    },
+  });
+
+  // A completed session (past)
+  await prisma.groupSession.create({
+    data: {
+      title: "Strength Club - Wednesday",
+      date: subDays(today, 2),
+      startTime: "18:00",
+      endTime: "19:30",
+      location: "Weight room",
+      status: "completed",
+      maxParticipants: 8,
+      groupId: strengthClub.id,
+      tenantId: tenant.id,
+      participants: {
+        create: [
+          { clientId: damir.id, status: "attended" },
+          { clientId: alen.id, status: "attended" },
+          { clientId: sara.id, status: "no-show" },
+        ],
+      },
+    },
   });
 
   console.log("\n✅ Seed complete!\n");

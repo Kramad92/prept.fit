@@ -351,3 +351,62 @@ export const landingPageSettingsSchema = z.object({
 export const inquiryUpdateSchema = z.object({
   status: z.enum(["new", "contacted", "archived"]),
 });
+
+export const trainingGroupCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).nullable().optional(),
+  maxParticipants: z.number().min(1).max(200).optional().default(20),
+});
+
+export const trainingGroupUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).nullable().optional(),
+  maxParticipants: z.number().min(1).max(200).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const groupMembersAddSchema = z.object({
+  clientIds: z.array(z.string().min(1)).min(1),
+});
+
+const timeRegex = /^\d{2}:\d{2}$/;
+
+export const groupSessionCreateSchema = z.object({
+  title: z.string().min(1).max(200),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().regex(timeRegex),
+  endTime: z.string().regex(timeRegex),
+  location: z.string().max(500).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  maxParticipants: z.number().min(1).max(200).optional().default(20),
+  isOpen: z.boolean().optional().default(false),
+  groupId: z.string().nullable().optional(),
+  workoutPlanId: z.string().nullable().optional(),
+});
+
+export const groupSessionUpdateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startTime: z.string().regex(timeRegex).optional(),
+  endTime: z.string().regex(timeRegex).optional(),
+  location: z.string().max(500).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  status: z.enum(["scheduled", "completed", "cancelled"]).optional(),
+  maxParticipants: z.number().min(1).max(200).optional(),
+  isOpen: z.boolean().optional(),
+});
+
+export const groupSessionEnrollSchema = z.object({
+  clientId: z.string().min(1),
+});
+
+export const groupAttendanceSchema = z.object({
+  participants: z.array(z.object({
+    clientId: z.string().min(1),
+    status: z.enum(["enrolled", "attended", "no-show", "cancelled"]),
+  })),
+});
+
+export const groupWorkoutAssignSchema = z.object({
+  workoutPlanId: z.string().min(1),
+});

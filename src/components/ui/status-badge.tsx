@@ -16,6 +16,8 @@ const statusStyles: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
   overdue: "bg-red-100 text-red-700",
   "no-show": "bg-orange-100 text-orange-700",
+  enrolled: "bg-blue-100 text-blue-700",
+  attended: "bg-green-100 text-green-700",
 };
 
 interface StatusBadgeProps {
@@ -35,6 +37,10 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     cancelled: t.statuses.cancelled,
     confirmed: t.statuses.confirmed,
     completed: t.statuses.completed,
+    enrolled: t.groupTraining.enrolled,
+    attended: t.groupTraining.attended,
+    "no-show": t.groupTraining.noShow,
+    scheduled: t.groupTraining.scheduled,
   };
 
   return (

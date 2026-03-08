@@ -76,6 +76,7 @@ model User {
 
   sentMessages     Message[] @relation("sender")
   notifications    Notification[]
+  refreshTokens    RefreshToken[]
 
   @@index([tenantId])
   @@map("users")
@@ -841,4 +842,20 @@ model GroupSessionParticipant {
   @@index([sessionId])
   @@index([clientId])
   @@map("group_session_participants")
+}
+
+// ========== MOBILE AUTH ==========
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
 }

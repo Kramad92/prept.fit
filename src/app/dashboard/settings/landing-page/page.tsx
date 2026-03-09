@@ -250,9 +250,17 @@ export default function LandingPageSettingsPage() {
               </div>
             </div>
             <button
-              onClick={() =>
-                setSettings({ ...settings, landingPageEnabled: !settings.landingPageEnabled })
-              }
+              onClick={async () => {
+                const newVal = !settings.landingPageEnabled;
+                setSettings({ ...settings, landingPageEnabled: newVal });
+                try {
+                  await fetch("/api/settings/landing-page", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...settings, landingPageEnabled: newVal }),
+                  });
+                } catch {}
+              }}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 settings.landingPageEnabled ? "bg-emerald-600" : "bg-gray-300"
               }`}

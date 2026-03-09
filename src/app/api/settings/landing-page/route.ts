@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { validateBody, landingPageSettingsSchema } from "@/lib/validations";
@@ -33,8 +34,8 @@ export async function PUT(req: NextRequest) {
     data: {
       landingPageEnabled: body.landingPageEnabled,
       coachPhoto: body.coachPhoto,
-      specialties: body.specialties,
-      socialLinks: body.socialLinks,
+      specialties: body.specialties ?? Prisma.DbNull,
+      socialLinks: body.socialLinks ?? Prisma.DbNull,
     },
   });
 

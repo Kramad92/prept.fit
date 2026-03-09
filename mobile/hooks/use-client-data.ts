@@ -8,6 +8,10 @@ import type {
   CheckIn,
   CheckInTemplate,
   AppNotification,
+  BookingSlot,
+  TrainingGroup,
+  GroupSessionsResponse,
+  PaymentResponse,
 } from "@/types/api";
 
 export function useClientProfile() {
@@ -71,5 +75,36 @@ export function useNotifications() {
     queryKey: ["notifications"],
     queryFn: () => api.get<AppNotification[]>("/api/notifications"),
     refetchInterval: 30000,
+  });
+}
+
+// Phase 4: Scheduling & Groups
+
+export function useBookingSlots(days = 14) {
+  return useQuery<BookingSlot[]>({
+    queryKey: ["booking-slots", days],
+    queryFn: () => api.get<BookingSlot[]>(`/api/booking/slots?days=${days}`),
+  });
+}
+
+export function useTrainingGroups() {
+  return useQuery<TrainingGroup[]>({
+    queryKey: ["training-groups"],
+    queryFn: () => api.get<TrainingGroup[]>("/api/portal/training-groups"),
+  });
+}
+
+export function useGroupSessions() {
+  return useQuery<GroupSessionsResponse>({
+    queryKey: ["group-sessions"],
+    queryFn: () =>
+      api.get<GroupSessionsResponse>("/api/portal/group-sessions"),
+  });
+}
+
+export function usePayments() {
+  return useQuery<PaymentResponse>({
+    queryKey: ["payments"],
+    queryFn: () => api.get<PaymentResponse>("/api/portal/payments"),
   });
 }

@@ -284,3 +284,60 @@ export interface AppNotification {
   userId: string;
   tenantId: string;
 }
+
+// Phase 4: Scheduling & Groups
+
+export interface TrainingGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  memberCount: number;
+  joinedAt: string;
+  nextSession?: {
+    date: string;
+    startTime: string;
+  } | null;
+}
+
+export interface GroupSession {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  maxParticipants: number;
+  isOpen: boolean;
+  group: { id: string; name: string } | null;
+  workoutPlan?: { id: string; name: string } | null;
+  _count: { participants: number };
+  participants: Array<{
+    status: string;
+    clientWorkoutPlanId: string | null;
+  }>;
+}
+
+export interface GroupSessionsResponse {
+  enrolled: GroupSession[];
+  open: GroupSession[];
+}
+
+export interface Payment {
+  id: string;
+  amount: number;
+  currency: string;
+  date: string;
+  dueDate: string | null;
+  method: string | null;
+  status: string;
+  period: string | null;
+  description: string | null;
+}
+
+export interface PaymentResponse {
+  payments: Payment[];
+  summary: {
+    totalPaid: number;
+    totalPending: number;
+    totalOverdue: number;
+  };
+}

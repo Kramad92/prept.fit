@@ -38,6 +38,16 @@ interface DaySlot {
   workoutPlanId: string | null;
 }
 
+const DAY_KEYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
 export default function EditProgramPage() {
   const t = useT();
   const params = useParams();
@@ -165,6 +175,11 @@ export default function EditProgramPage() {
     weekGroups[d.weekNumber].push(d);
   }
 
+  const dayOptions = DAY_KEYS.map((key) => ({
+    value: t.programs[key],
+    label: t.programs[key],
+  }));
+
   return (
     <div>
       <Link
@@ -250,8 +265,7 @@ export default function EditProgramPage() {
                       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                         {slot.dayNumber}
                       </span>
-                      <input
-                        type="text"
+                      <select
                         value={slot.label}
                         onChange={(e) =>
                           updateLabel(
@@ -260,9 +274,15 @@ export default function EditProgramPage() {
                             e.target.value
                           )
                         }
-                        placeholder={`${t.programs.day} ${slot.dayNumber}`}
-                        className="w-32 flex-shrink-0 rounded border border-gray-200 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none"
-                      />
+                        className="w-36 flex-shrink-0 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+                      >
+                        <option value="">{t.programs.selectDay}</option>
+                        {dayOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
                       <select
                         value={slot.workoutPlanId || ""}
                         onChange={(e) =>

@@ -1119,6 +1119,18 @@ export const bs = {
     deleteConfirm: "Jeste li sigurni da želite obrisati ovaj program?",
     noWorkoutsAdded: "Još nema treninga dodanih u ovaj program.",
     programAssigned: "Program uspješno dodijeljen",
+    generateWithAI: "Generiši sa AI",
+    generating: "Generisanje...",
+    aiError: "Generisanje nije uspjelo — pokušajte ponovo",
+    monday: "Ponedjeljak",
+    tuesday: "Utorak",
+    wednesday: "Srijeda",
+    thursday: "Četvrtak",
+    friday: "Petak",
+    saturday: "Subota",
+    sunday: "Nedjelja",
+    selectDay: "Odaberite dan...",
+    noWorkoutsAvailable: "Prvo kreirajte treninge za korištenje AI generisanja.",
   },
 };
 

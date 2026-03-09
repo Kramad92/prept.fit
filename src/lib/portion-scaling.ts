@@ -20,7 +20,7 @@ function scaleStr(val: string, ratio: number): string {
 }
 
 export function scalePortionFood(food: ScalableFood, newPortion: string): Partial<ScalableFood> {
-  // Unit-based portions: detect qty change, auto-update grams & macros
+  // Unit-based portions with known gramsPerUnit: detect qty change, auto-update grams & macros
   if (food.gramsPerUnit && food.unitLabel) {
     const oldQty = parseInt(food.portion) || 1;
     const newQty = parseInt(newPortion) || oldQty;
@@ -38,11 +38,27 @@ export function scalePortionFood(food: ScalableFood, newPortion: string): Partia
     return { portion: newPortion };
   }
 
-  // Plain gram portions: scale when grams change
+  // Plain gram portions: scale when grams change (e.g. "150g" → "200g")
   const oldG = food.portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
   const newG = newPortion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
   if (oldG && newG) {
     const ratio = parseFloat(newG[1]) / parseFloat(oldG[1]);
+    if (ratio > 0 && ratio !== 1) {
+      return {
+        portion: newPortion,
+        calories: scaleNum(food.calories, ratio),
+        protein: scaleNum(food.protein, ratio),
+        carbs: scaleNum(food.carbs, ratio),
+        fat: scaleNum(food.fat, ratio),
+      };
+    }
+  }
+
+  // Count-based portions without gramsPerUnit (e.g. "6 eggs" → "4 eggs", "2 banana" → "3 banana")
+  const oldCount = food.portion.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  const newCount = newPortion.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  if (oldCount && newCount) {
+    const ratio = parseFloat(newCount[1]) / parseFloat(oldCount[1]);
     if (ratio > 0 && ratio !== 1) {
       return {
         portion: newPortion,
@@ -79,6 +95,22 @@ export function scalePortionFoodInput(food: FoodInput, newPortion: string): Part
   const newG = newPortion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
   if (oldG && newG) {
     const ratio = parseFloat(newG[1]) / parseFloat(oldG[1]);
+    if (ratio > 0 && ratio !== 1) {
+      return {
+        portion: newPortion,
+        calories: scaleStr(food.calories, ratio),
+        protein: scaleStr(food.protein, ratio),
+        carbs: scaleStr(food.carbs, ratio),
+        fat: scaleStr(food.fat, ratio),
+      };
+    }
+  }
+
+  // Count-based portions without gramsPerUnit (e.g. "6 eggs" → "4 eggs")
+  const oldCount = food.portion.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  const newCount = newPortion.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  if (oldCount && newCount) {
+    const ratio = parseFloat(newCount[1]) / parseFloat(oldCount[1]);
     if (ratio > 0 && ratio !== 1) {
       return {
         portion: newPortion,

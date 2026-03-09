@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     .join("\n");
 
   try {
-    const result = await aiJSON<FoodMacros[]>({
+    const raw = await aiJSON<FoodMacros[] | { foods: FoodMacros[] }>({
       messages: [
         {
           role: "system",
@@ -63,6 +63,11 @@ Rules:
       maxTokens: 2048,
     });
 
+    // Normalize — AI sometimes wraps array in an object
+    const result = Array.isArray(raw) ? raw : (raw as any).foods || [];
+    if (!Array.isArray(result) || result.length === 0) {
+      return NextResponse.json({ error: "Invalid AI response" }, { status: 502 });
+    }
     return NextResponse.json(result);
   } catch (e) {
     console.error("AI fill-macros error:", e);

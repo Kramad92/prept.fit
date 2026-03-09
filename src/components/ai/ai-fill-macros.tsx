@@ -29,16 +29,12 @@ interface AIFillMacrosProps {
 export function AIFillMacros({ meals, onFilled }: AIFillMacrosProps) {
   const { t, locale } = useLocale();
   const [loading, setLoading] = useState(false);
-
-  // Collect all foods that have a name but missing macros
-  const foodsToFill = meals.flatMap((m) =>
-    m.foods.filter((f) => f.name.trim() && (f.calories == null || f.calories === 0))
-  );
+  const [error, setError] = useState("");
 
   async function handleFill() {
     if (loading) return;
 
-    // Collect ALL foods with names (not just missing macros) for batch fill
+    // Collect ALL foods with names for batch fill
     const allFoods = meals.flatMap((m) =>
       m.foods.filter((f) => f.name.trim())
     );
@@ -46,6 +42,7 @@ export function AIFillMacros({ meals, onFilled }: AIFillMacrosProps) {
     if (allFoods.length === 0) return;
 
     setLoading(true);
+    setError("");
 
     try {
       const res = await fetch("/api/ai/fill-macros", {
@@ -60,22 +57,27 @@ export function AIFillMacros({ meals, onFilled }: AIFillMacrosProps) {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        throw new Error("API error");
+      }
 
-      const filled: FoodMacros[] = await res.json();
+      const data = await res.json();
 
-      // Build a lookup by name+portion for matching
-      const lookup = new Map<string, FoodMacros>();
-      filled.forEach((f) => lookup.set(`${f.name}||${f.portion}`, f));
+      // Handle both array and object-wrapped responses
+      const filled: FoodMacros[] = Array.isArray(data) ? data : data?.foods;
+      if (!Array.isArray(filled) || filled.length === 0) {
+        throw new Error("Bad response format");
+      }
 
-      // Update meals with filled macros
+      console.log("[Fill Macros] Got", filled.length, "results for", allFoods.length, "foods");
+
+      // Update meals with filled macros — match by position
       let fillIndex = 0;
       const updatedMeals = meals.map((meal) => ({
         ...meal,
         foods: meal.foods.map((food) => {
           if (!food.name.trim()) return food;
 
-          // Try to match by position (same order as sent)
           const filledFood = filled[fillIndex];
           fillIndex++;
 
@@ -84,17 +86,19 @@ export function AIFillMacros({ meals, onFilled }: AIFillMacrosProps) {
           return {
             ...food,
             portion: food.portion || filledFood.portion,
-            calories: filledFood.calories,
-            protein: filledFood.protein,
-            carbs: filledFood.carbs,
-            fat: filledFood.fat,
+            calories: filledFood.calories ?? food.calories,
+            protein: filledFood.protein ?? food.protein,
+            carbs: filledFood.carbs ?? food.carbs,
+            fat: filledFood.fat ?? food.fat,
           };
         }),
       }));
 
+      console.log("[Fill Macros] Calling onFilled with updated meals");
       onFilled(updatedMeals);
-    } catch {
-      // Silent fail — user can retry
+    } catch (e) {
+      console.error("Fill macros error:", e);
+      setError(t.nutrition.aiError || "Failed");
     } finally {
       setLoading(false);
     }
@@ -105,23 +109,26 @@ export function AIFillMacros({ meals, onFilled }: AIFillMacrosProps) {
   if (!hasFoods) return null;
 
   return (
-    <button
-      type="button"
-      onClick={handleFill}
-      disabled={loading}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50"
-    >
-      {loading ? (
-        <>
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          {t.nutrition.fillingMacros}
-        </>
-      ) : (
-        <>
-          <Sparkles className="h-3.5 w-3.5" />
-          {t.nutrition.fillMacros}
-        </>
-      )}
-    </button>
+    <span className="inline-flex items-center gap-2">
+      <button
+        type="button"
+        onClick={handleFill}
+        disabled={loading}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {t.nutrition.fillingMacros}
+          </>
+        ) : (
+          <>
+            <Sparkles className="h-3.5 w-3.5" />
+            {t.nutrition.fillMacros}
+          </>
+        )}
+      </button>
+      {error && <span className="text-xs text-red-500">{error}</span>}
+    </span>
   );
 }

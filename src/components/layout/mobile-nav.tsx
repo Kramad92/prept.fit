@@ -123,8 +123,9 @@ export function MobileNav() {
           <div className="flex items-center justify-around">
             {primaryNav.map((item) => {
               const isActive =
-                pathname === item.href ||
-                pathname.startsWith(item.href + "/");
+                item.href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}

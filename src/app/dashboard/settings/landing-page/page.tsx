@@ -227,7 +227,7 @@ export default function LandingPageSettingsPage() {
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700"
+          className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
         >
           <ExternalLink className="h-4 w-4" />
           {t.landingPage.previewPage}
@@ -239,7 +239,7 @@ export default function LandingPageSettingsPage() {
         <div className="card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Globe className="h-5 w-5 text-emerald-600" />
+              <Globe className="h-5 w-5 text-brand-600" />
               <div>
                 <p className="font-medium text-gray-900">{t.landingPage.enableLandingPage}</p>
                 <p className="text-sm text-gray-500">
@@ -262,7 +262,7 @@ export default function LandingPageSettingsPage() {
                 } catch {}
               }}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.landingPageEnabled ? "bg-emerald-600" : "bg-gray-300"
+                settings.landingPageEnabled ? "bg-brand-600" : "bg-gray-300"
               }`}
             >
               <span
@@ -321,7 +321,7 @@ export default function LandingPageSettingsPage() {
             {(settings.specialties || []).map((s, i) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700"
+                className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-sm text-brand-700"
               >
                 {s}
                 <button onClick={() => removeSpecialty(i)} className="hover:text-red-600">
@@ -507,7 +507,7 @@ export default function LandingPageSettingsPage() {
                       onClick={() =>
                         updatePackage(pkg.id, { features: [...(pkg.features || []), ""] })
                       }
-                      className="text-xs text-emerald-600 hover:text-emerald-700"
+                      className="text-xs text-brand-600 hover:text-brand-700"
                     >
                       + {t.landingPage.addFeature}
                     </button>

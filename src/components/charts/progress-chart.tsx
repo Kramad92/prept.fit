@@ -18,7 +18,7 @@ interface ProgressChartProps {
 export function ProgressChart({
   data,
   label,
-  color = "#22c55e",
+  color = "#124559",
   unit = "",
 }: ProgressChartProps) {
   const { locale } = useLocale();

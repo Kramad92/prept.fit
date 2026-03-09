@@ -26,7 +26,7 @@ export function AvailabilityViewer({ slug }: { slug: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
       </div>
     );
   }
@@ -64,7 +64,7 @@ export function AvailabilityViewer({ slug }: { slug: string }) {
             {grouped[date].map((slot) => (
               <span
                 key={`${slot.date}_${slot.startTime}`}
-                className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-700"
+                className="inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm text-brand-700"
               >
                 <Clock className="h-3 w-3" />
                 {slot.startTime} – {slot.endTime}

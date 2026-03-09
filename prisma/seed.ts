@@ -53,7 +53,7 @@ async function main() {
       email: "info@fitpro.ba",
       phone: "+387 61 123 456",
       website: "https://fitpro.ba",
-      brandColor: "#22c55e",
+      brandColor: "#124559",
       timezone: "Europe/Sarajevo",
     },
   });

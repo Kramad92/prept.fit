@@ -8,7 +8,7 @@ export function HomePage() {
       <header className="border-b border-gray-100">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
-            <Dumbbell className="h-7 w-7 text-emerald-600" />
+            <Dumbbell className="h-7 w-7 text-brand-600" />
             <span className="text-xl font-bold">TrainerHub</span>
           </div>
           <div className="flex items-center gap-3">
@@ -26,7 +26,7 @@ export function HomePage() {
       <section className="px-4 py-20 text-center">
         <h1 className="mx-auto max-w-2xl text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
           Your personal training business,{" "}
-          <span className="text-emerald-600">simplified</span>
+          <span className="text-brand-600">simplified</span>
         </h1>
         <p className="mx-auto mt-4 max-w-lg text-lg text-gray-500">
           Manage clients, schedule sessions, build workout plans, and track
@@ -69,8 +69,8 @@ export function HomePage() {
               },
             ].map((feature) => (
               <div key={feature.title} className="card text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50">
-                  <feature.icon className="h-6 w-6 text-emerald-600" />
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
+                  <feature.icon className="h-6 w-6 text-brand-600" />
                 </div>
                 <h3 className="mt-4 font-semibold text-gray-900">
                   {feature.title}

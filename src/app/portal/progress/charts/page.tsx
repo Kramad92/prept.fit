@@ -68,7 +68,7 @@ export default function ProgressChartsPage() {
   }
 
   const metrics: Array<{ key: MeasurementKey; label: string; color: string; unit: string }> = [
-    { key: "weight", label: t.portalCharts.weight, color: "#22c55e", unit: "kg" },
+    { key: "weight", label: t.portalCharts.weight, color: "#124559", unit: "kg" },
     { key: "bodyFat", label: t.portalCharts.bodyFat, color: "#f59e0b", unit: "%" },
     { key: "waist", label: t.portalCharts.waist, color: "#8b5cf6", unit: "cm" },
     { key: "chest", label: t.portalCharts.chest, color: "#3b82f6", unit: "cm" },

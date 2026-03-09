@@ -49,9 +49,9 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
 
   if (submitted) {
     return (
-      <div className="rounded-xl bg-emerald-50 p-8 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-          <Send className="h-5 w-5 text-emerald-600" />
+      <div className="rounded-xl bg-brand-50 p-8 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
+          <Send className="h-5 w-5 text-brand-600" />
         </div>
         <h3 className="text-lg font-semibold text-gray-900">Message Sent!</h3>
         <p className="mt-1 text-sm text-gray-600">
@@ -73,7 +73,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
             type="text"
             name="name"
             required
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
         </div>
         <div>
@@ -82,7 +82,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
             type="email"
             name="email"
             required
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
         </div>
       </div>
@@ -92,7 +92,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
         <input
           type="tel"
           name="phone"
-          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
       </div>
 
@@ -103,7 +103,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
           </label>
           <select
             name="preferredSlot"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
             <option value="">Select a slot...</option>
             {slots.slice(0, 20).map((slot) => (
@@ -125,7 +125,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
           required
           rows={4}
           placeholder="Tell me about your goals..."
-          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
       </div>
 
@@ -134,7 +134,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
       <button
         type="submit"
         disabled={submitting}
-        className="inline-flex items-center rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+        className="inline-flex items-center rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
       >
         <Send className="mr-2 h-4 w-4" />
         {submitting ? "Sending..." : "Send Message"}

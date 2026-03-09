@@ -1,6 +1,7 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./token-store";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const REQUEST_TIMEOUT = 15000; // 15 seconds
 
 let isRefreshing = false;
 let refreshQueue: Array<{
@@ -16,11 +17,23 @@ function processRefreshQueue(error: Error | null, token: string | null) {
   refreshQueue = [];
 }
 
+function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeout = REQUEST_TIMEOUT
+): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+    clearTimeout(id)
+  );
+}
+
 async function refreshAccessToken(): Promise<string> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) throw new Error("No refresh token");
 
-  const res = await fetch(`${API_URL}/api/auth/mobile/refresh`, {
+  const res = await fetchWithTimeout(`${API_URL}/api/auth/mobile/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken }),
@@ -51,7 +64,10 @@ async function fetchWithAuth(
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  let res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let res = await fetchWithTimeout(`${API_URL}${path}`, {
+    ...options,
+    headers,
+  });
 
   // If 401, try refreshing the token
   if (res.status === 401 && accessToken) {
@@ -61,7 +77,7 @@ async function fetchWithAuth(
         refreshQueue.push({ resolve, reject });
       });
       headers["Authorization"] = `Bearer ${newToken}`;
-      return fetch(`${API_URL}${path}`, { ...options, headers });
+      return fetchWithTimeout(`${API_URL}${path}`, { ...options, headers });
     }
 
     isRefreshing = true;
@@ -71,7 +87,7 @@ async function fetchWithAuth(
       processRefreshQueue(null, newToken);
 
       headers["Authorization"] = `Bearer ${newToken}`;
-      return fetch(`${API_URL}${path}`, { ...options, headers });
+      return fetchWithTimeout(`${API_URL}${path}`, { ...options, headers });
     } catch (error) {
       isRefreshing = false;
       processRefreshQueue(error as Error, null);
@@ -130,11 +146,12 @@ export const api = {
     const headers: Record<string, string> = {};
     if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
     // Don't set Content-Type — fetch sets it with boundary for FormData
-    const res = await fetch(`${API_URL}${path}`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
+    // Use longer timeout for file uploads
+    const res = await fetchWithTimeout(
+      `${API_URL}${path}`,
+      { method: "POST", headers, body: formData },
+      60000
+    );
     return handleResponse<T>(res);
   },
 };

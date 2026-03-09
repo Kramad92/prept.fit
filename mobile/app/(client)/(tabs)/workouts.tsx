@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { api } from "@/lib/api-client";
 import { Dumbbell, ChevronRight, Filter } from "lucide-react-native";
+import { QueryError } from "@/components/query-error";
 import type { ClientProfile } from "@/types/api";
 
 export default function WorkoutsScreen() {
@@ -18,7 +19,7 @@ export default function WorkoutsScreen() {
   const [showAll, setShowAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: profile, isLoading } = useQuery<ClientProfile>({
+  const { data: profile, isLoading, isError, refetch } = useQuery<ClientProfile>({
     queryKey: ["client-profile"],
     queryFn: () => api.get<ClientProfile>("/api/portal/me"),
   });
@@ -46,6 +47,14 @@ export default function WorkoutsScreen() {
             </View>
           ))}
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+        <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }

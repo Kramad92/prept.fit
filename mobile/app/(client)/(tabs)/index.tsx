@@ -16,6 +16,7 @@ import {
   CheckCircle,
   ChevronRight,
 } from "lucide-react-native";
+import { QueryError } from "@/components/query-error";
 import { router } from "expo-router";
 
 function SkeletonCard() {
@@ -30,7 +31,7 @@ function SkeletonCard() {
 export default function HomeScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: profile, isLoading, isRefetching } = useClientProfile();
+  const { data: profile, isLoading, isError, refetch } = useClientProfile();
   const { data: habits } = useHabits(profile?.id);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -83,6 +84,14 @@ export default function HomeScreen() {
           <SkeletonCard />
           <SkeletonCard />
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+        <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }

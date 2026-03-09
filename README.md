@@ -32,6 +32,9 @@ Built with Next.js 14, Prisma, PostgreSQL, and TailwindCSS.
 - **Messages** — Chat with coach
 - **Payments** — View payment history and overdue alerts
 
+### Mobile App
+React Native client app built with Expo (SDK 54) for iOS and Android. Includes workouts, nutrition, habits, check-ins, progress tracking, group training, session booking, payments, real-time messaging, and notifications.
+
 ### Internationalization
 - Full i18n support with 4 locales: English, Bosnian, Croatian, Serbian
 - Language switcher in both dashboard and portal navigation
@@ -51,6 +54,7 @@ Built with Next.js 14, Prisma, PostgreSQL, and TailwindCSS.
 | File Storage | AWS S3 / Cloudflare R2 |
 | Real-time | Pusher |
 | AI | Gemini 2.0 Flash / Claude (configurable) |
+| Mobile | Expo, Expo Router, NativeWind, TanStack Query |
 
 ## Project Structure
 
@@ -108,6 +112,13 @@ src/
 ├── lib/                     # Utilities (prisma, auth, session, S3, i18n, validation, AI)
 ├── services/                # Server-side business logic (deep-copy, group session enrollment)
 └── types/                   # Shared TypeScript interfaces
+
+mobile/                      # React Native (Expo) client app
+├── app/                     # Expo Router screens
+├── components/              # Shared mobile components
+├── hooks/                   # Mobile-specific hooks
+├── lib/                     # API client, auth, storage
+└── types/                   # Mobile type definitions
 ```
 
 ## Architecture

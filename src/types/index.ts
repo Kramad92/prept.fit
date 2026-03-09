@@ -118,6 +118,8 @@ export interface AssignedWorkoutPlan {
   isActive: boolean;
   startDate: string | null;
   endDate: string | null;
+  accessPolicy: string;
+  clientWorkoutProgramId: string | null;
   workoutPlan: {
     id: string;
     name: string;
@@ -126,6 +128,67 @@ export interface AssignedWorkoutPlan {
     exercises: Exercise[];
   };
   clientExercises: ClientExercise[];
+}
+
+export interface WorkoutProgramDay {
+  id: string;
+  weekNumber: number;
+  dayNumber: number;
+  label: string | null;
+  workoutPlanId: string | null;
+  workoutPlan: { id: string; name: string; description: string | null } | null;
+}
+
+export interface WorkoutProgramSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  durationWeeks: number;
+  daysPerWeek: number;
+  isTemplate: boolean;
+  dayCount: number;
+  assignedCount: number;
+}
+
+export interface WorkoutProgramDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  durationWeeks: number;
+  daysPerWeek: number;
+  isTemplate: boolean;
+  createdAt: string;
+  days: WorkoutProgramDay[];
+  assignments: Array<{
+    id: string;
+    startDate: string;
+    endDate: string | null;
+    accessPolicy: string;
+    isActive: boolean;
+    currentWeek: number;
+    currentDay: number;
+    client: { id: string; name: string; status: string };
+  }>;
+}
+
+export interface AssignedWorkoutProgram {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  accessPolicy: string;
+  isActive: boolean;
+  currentWeek: number;
+  currentDay: number;
+  notes: string | null;
+  program: {
+    id: string;
+    name: string;
+    description: string | null;
+    durationWeeks: number;
+    daysPerWeek: number;
+    days: WorkoutProgramDay[];
+  };
+  clientWorkoutPlans: AssignedWorkoutPlan[];
 }
 
 export interface AssignedMealPlan {

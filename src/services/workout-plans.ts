@@ -19,6 +19,10 @@ export async function deepCopyWorkoutPlan(
     clientId: string;
     tenantId: string;
     mode?: string;
+    accessPolicy?: string;
+    startDate?: Date | null;
+    endDate?: Date | null;
+    clientWorkoutProgramId?: string | null;
   }
 ) {
   const original = await tx.workoutPlan.findFirst({
@@ -58,6 +62,10 @@ export async function deepCopyWorkoutPlan(
       workoutPlanId: clone.id,
       isActive: true,
       mode: opts.mode || "solo",
+      accessPolicy: opts.accessPolicy || "unlimited",
+      startDate: opts.startDate || null,
+      endDate: opts.endDate || null,
+      clientWorkoutProgramId: opts.clientWorkoutProgramId || null,
     },
   });
 

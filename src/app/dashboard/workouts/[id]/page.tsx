@@ -61,6 +61,8 @@ export default function WorkoutDetailPage() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [showAssign, setShowAssign] = useState(false);
   const [assignClientId, setAssignClientId] = useState("");
+  const [assignAccessPolicy, setAssignAccessPolicy] = useState("unlimited");
+  const [assignEndDate, setAssignEndDate] = useState("");
   const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
@@ -99,6 +101,8 @@ export default function WorkoutDetailPage() {
       body: JSON.stringify({
         workoutPlanId: params.id,
         clientId: assignClientId,
+        accessPolicy: assignAccessPolicy,
+        endDate: assignAccessPolicy === "date_range" && assignEndDate ? assignEndDate : null,
       }),
     });
     // Reload plan to update assigned list
@@ -108,6 +112,8 @@ export default function WorkoutDetailPage() {
     setPlan(updated);
     setShowAssign(false);
     setAssignClientId("");
+    setAssignAccessPolicy("unlimited");
+    setAssignEndDate("");
   }
 
   if (loading || !plan) {
@@ -300,23 +306,48 @@ export default function WorkoutDetailPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="mt-4">
-              <select
-                value={assignClientId}
-                onChange={(e) => setAssignClientId(e.target.value)}
-                className="input"
-              >
-                <option value="">{t.workouts.selectClient}</option>
-                {availableClients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <div className="mt-4 space-y-3">
+              <div>
+                <select
+                  value={assignClientId}
+                  onChange={(e) => setAssignClientId(e.target.value)}
+                  className="input"
+                >
+                  <option value="">{t.workouts.selectClient}</option>
+                  {availableClients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">{t.programs.accessPolicy}</label>
+                <select
+                  value={assignAccessPolicy}
+                  onChange={(e) => setAssignAccessPolicy(e.target.value)}
+                  className="input"
+                >
+                  <option value="unlimited">{t.programs.unlimited}</option>
+                  <option value="date_range">{t.programs.dateRange}</option>
+                  <option value="subscription_tied">{t.programs.subscriptionTied}</option>
+                </select>
+              </div>
+              {assignAccessPolicy === "date_range" && (
+                <div>
+                  <label className="label">End Date</label>
+                  <input
+                    type="date"
+                    value={assignEndDate}
+                    onChange={(e) => setAssignEndDate(e.target.value)}
+                    className="input"
+                  />
+                </div>
+              )}
               <button
                 onClick={handleAssign}
                 disabled={!assignClientId}
-                className="btn-primary mt-3 w-full"
+                className="btn-primary w-full"
               >
                 {t.workouts.assignPlan}
               </button>

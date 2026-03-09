@@ -583,6 +583,9 @@ export const en: Translations = {
     presetStretch: "Stretch for 10 minutes",
     presetNoSugar: "No processed sugar",
     presetTrackMeals: "Track meals",
+    editHabit: "Edit Habit",
+    habitUpdated: "Habit updated",
+    habitDeleted: "Habit deleted",
   },
 
   settings: {

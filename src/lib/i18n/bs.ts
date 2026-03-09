@@ -596,6 +596,9 @@ export const bs = {
     presetStretch: "Istezanje 10 minuta",
     presetNoSugar: "Bez prerađenog šećera",
     presetTrackMeals: "Pratiti obroke",
+    editHabit: "Uredi naviku",
+    habitUpdated: "Navika ažurirana",
+    habitDeleted: "Navika obrisana",
   },
 
   // Settings

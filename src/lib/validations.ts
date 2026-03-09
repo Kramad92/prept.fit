@@ -176,6 +176,12 @@ export const habitCreateSchema = z.object({
   description: z.string().max(2000).nullable().optional(),
 });
 
+export const habitUpdateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(200),
+  icon: z.string().max(10).nullable().optional(),
+});
+
 export const habitLogSchema = z.object({
   clientHabitId: z.string().min(1),
   date: z.string().min(1),

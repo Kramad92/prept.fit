@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Pencil, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/ui/toast";
 
 interface HabitTemplate {
   id: string;
@@ -24,11 +25,15 @@ export default function HabitsPage() {
     { name: t.habits.presetNoSugar, icon: "🚫" },
     { name: t.habits.presetTrackMeals, icon: "📝" },
   ];
+  const { toastSuccess, toastError } = useToast();
   const [habits, setHabits] = useState<HabitTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("");
+  const [editingHabit, setEditingHabit] = useState<HabitTemplate | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editIcon, setEditIcon] = useState("");
 
   useEffect(() => {
     fetch("/api/habits")
@@ -48,6 +53,38 @@ export default function HabitsPage() {
       const habit = await res.json();
       setHabits((prev) => [habit, ...prev]);
     }
+  }
+
+  async function updateHabit(id: string, name: string, icon: string) {
+    const res = await fetch("/api/habits", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, name, icon }),
+    });
+
+    if (res.ok) {
+      const updated = await res.json();
+      setHabits((prev) => prev.map((h) => (h.id === id ? updated : h)));
+      toastSuccess(t.habits.habitUpdated);
+    } else {
+      toastError(t.errors.failedToLoad);
+    }
+  }
+
+  async function deleteHabit(id: string) {
+    const res = await fetch(`/api/habits?id=${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setHabits((prev) => prev.filter((h) => h.id !== id));
+      toastSuccess(t.habits.habitDeleted);
+    } else {
+      toastError(t.errors.failedToLoad);
+    }
+  }
+
+  function startEdit(habit: HabitTemplate) {
+    setEditingHabit(habit);
+    setEditName(habit.name);
+    setEditIcon(habit.icon || "");
   }
 
   if (loading) {
@@ -111,7 +148,21 @@ export default function HabitsPage() {
                 className="card flex items-center gap-3"
               >
                 <span className="text-2xl">{habit.icon || "✅"}</span>
-                <p className="font-medium text-gray-900">{habit.name}</p>
+                <p className="flex-1 font-medium text-gray-900">{habit.name}</p>
+                <button
+                  onClick={() => startEdit(habit)}
+                  className="rounded p-1.5 text-gray-300 hover:bg-brand-50 hover:text-brand-600"
+                  title={t.common.edit}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => deleteHabit(habit.id)}
+                  className="rounded p-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500"
+                  title={t.common.delete}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             ))}
           </div>
@@ -167,6 +218,63 @@ export default function HabitsPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreate(false)}
+                  className="btn-secondary"
+                >
+                  {t.common.cancel}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingHabit && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
+          <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
+            <h2 className="text-lg font-semibold">{t.habits.editHabit}</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (editName.trim()) {
+                  updateHabit(editingHabit.id, editName.trim(), editIcon || "✅");
+                  setEditingHabit(null);
+                }
+              }}
+              className="mt-4 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.habits.habitName}
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="input mt-1"
+                  placeholder={t.habits.walkMinutes}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.habits.iconEmoji}
+                </label>
+                <input
+                  type="text"
+                  value={editIcon}
+                  onChange={(e) => setEditIcon(e.target.value)}
+                  className="input mt-1"
+                  placeholder="🏃"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary flex-1">
+                  {t.common.save}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingHabit(null)}
                   className="btn-secondary"
                 >
                   {t.common.cancel}

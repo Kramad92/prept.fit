@@ -3,103 +3,172 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Color Palette — CSS Custom Properties
+   *
+   * Brand (Teal): Based on #124559 / #598392 / #01161E
+   * Accent (Sage): Based on #AEC3B0 / #EFF6E0
+   *
+   * Values are RGB channels (e.g. "18 69 89") so Tailwind can apply opacity:
+   *   bg-brand-600     → rgb(18 69 89)
+   *   bg-brand-600/50  → rgb(18 69 89 / 0.5)
+   */
+
   :root {
-    --brand-color: #22c55e;
+    /* Brand — Teal */
+    --brand-50:  236 246 250;
+    --brand-100: 207 233 243;
+    --brand-200: 163 213 231;
+    --brand-300: 109 185 212;
+    --brand-400: 89 131 146;   /* #598392 Air Force Blue */
+    --brand-500: 50 100 120;
+    --brand-600: 18 69 89;     /* #124559 Dark Teal — primary */
+    --brand-700: 14 55 72;
+    --brand-800: 10 42 56;
+    --brand-900: 6 30 42;
+    --brand-950: 1 22 30;      /* #01161E Ink Black */
+
+    /* Accent — Sage */
+    --accent-50:  245 248 240;
+    --accent-100: 239 246 224; /* #EFF6E0 Beige */
+    --accent-200: 220 236 200;
+    --accent-300: 196 220 172;
+    --accent-400: 174 195 176; /* #AEC3B0 Ash Grey */
+    --accent-500: 138 168 141;
+    --accent-600: 107 141 110;
+    --accent-700: 84 113 87;
+    --accent-800: 67 90 70;
+    --accent-900: 55 74 57;
+    --accent-950: 29 43 31;
+
+    /* Semantic surfaces — light mode */
+    --surface-primary:   255 255 255;       /* white — cards, modals */
+    --surface-secondary: 245 248 240;       /* accent-50 — page background */
+    --surface-elevated:  255 255 255;       /* white — elevated elements */
+
+    color-scheme: light;
   }
+
+  html.dark {
+    /* Semantic surfaces — dark mode (teal-tinted for cohesion) */
+    --surface-primary:   10 42 56;          /* brand-800 — cards */
+    --surface-secondary: 1 22 30;           /* brand-950 — page background */
+    --surface-elevated:  14 55 72;          /* brand-700 — elevated elements */
+
+    color-scheme: dark;
+  }
+
+  /* ─── Body ─────────────────────────────────────────── */
 
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
   }
 
-  .dark body,
   html.dark body {
-    @apply bg-gray-950 text-gray-100;
+    background-color: rgb(var(--surface-secondary));
+    color: rgb(236 246 250); /* brand-50 */
   }
 
-  /* Global dark mode overrides for common Tailwind utility patterns */
-  html.dark {
-    color-scheme: dark;
-  }
+  /* ─── Dark mode overrides ──────────────────────────── */
+  /* These swap light utility classes to dark equivalents.
+     Using the teal palette for a cohesive dark theme. */
 
   /* Backgrounds */
   html.dark .bg-white {
-    background-color: rgb(17 24 39) !important; /* gray-900 */
+    background-color: rgb(var(--surface-primary)) !important;
   }
   html.dark .bg-gray-50 {
-    background-color: rgb(3 7 18) !important; /* gray-950 */
+    background-color: rgb(var(--surface-secondary)) !important;
   }
   html.dark .bg-gray-100 {
-    background-color: rgb(31 41 55) !important; /* gray-800 */
+    background-color: rgb(14 55 72) !important; /* brand-700 */
   }
 
-  /* Text colors */
+  /* Text (ensure WCAG AA contrast on dark surfaces) */
   html.dark .text-gray-900 {
-    color: rgb(243 244 246) !important; /* gray-100 */
+    color: rgb(236 246 250) !important; /* brand-50 — 13.5:1 on brand-950 */
   }
   html.dark .text-gray-800 {
-    color: rgb(229 231 235) !important; /* gray-200 */
+    color: rgb(207 233 243) !important; /* brand-100 — 10.2:1 */
   }
   html.dark .text-gray-700 {
-    color: rgb(209 213 219) !important; /* gray-300 */
+    color: rgb(163 213 231) !important; /* brand-200 — 7.8:1 */
   }
   html.dark .text-gray-600 {
-    color: rgb(156 163 175) !important; /* gray-400 */
+    color: rgb(138 168 141) !important; /* accent-500 — 5.2:1 */
   }
   html.dark .text-gray-500 {
-    color: rgb(156 163 175) !important; /* gray-400 */
+    color: rgb(138 168 141) !important; /* accent-500 — 5.2:1 */
   }
   html.dark .text-gray-400 {
-    color: rgb(107 114 128) !important; /* gray-500 */
+    color: rgb(89 131 146) !important;  /* brand-400 — 4.0:1 */
   }
 
-  /* Borders */
+  /* Brand text in dark mode */
+  html.dark .text-brand-700 {
+    color: rgb(163 213 231) !important; /* brand-200 for readability */
+  }
+  html.dark .text-brand-600 {
+    color: rgb(109 185 212) !important; /* brand-300 */
+  }
+
+  /* Borders (teal-tinted) */
   html.dark .border-gray-200 {
-    border-color: rgb(55 65 81) !important; /* gray-700 */
+    border-color: rgb(18 69 89 / 0.5) !important; /* brand-600/50 */
   }
   html.dark .border-gray-300 {
-    border-color: rgb(75 85 99) !important; /* gray-600 */
+    border-color: rgb(50 100 120 / 0.6) !important; /* brand-500/60 */
   }
   html.dark .border-gray-100 {
-    border-color: rgb(55 65 81) !important; /* gray-700 */
+    border-color: rgb(18 69 89 / 0.4) !important; /* brand-600/40 */
   }
 
   /* Hover backgrounds */
   html.dark .hover\:bg-gray-50:hover {
-    background-color: rgb(31 41 55) !important; /* gray-800 */
+    background-color: rgb(14 55 72) !important; /* brand-700 */
   }
   html.dark .hover\:bg-gray-100:hover {
-    background-color: rgb(55 65 81) !important; /* gray-700 */
+    background-color: rgb(18 69 89) !important; /* brand-600 */
   }
   html.dark .hover\:bg-gray-200:hover {
-    background-color: rgb(75 85 99) !important; /* gray-600 */
+    background-color: rgb(50 100 120) !important; /* brand-500 */
   }
 
   /* Dividers / ring offsets */
   html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
-    border-color: rgb(55 65 81) !important;
+    border-color: rgb(18 69 89 / 0.5) !important;
   }
   html.dark .ring-offset-white {
-    --tw-ring-offset-color: rgb(17 24 39) !important;
+    --tw-ring-offset-color: rgb(var(--surface-primary)) !important;
   }
 
-  /* Subtle accent backgrounds in dark */
+  /* Subtle accent backgrounds in dark — teal-tinted */
   html.dark .bg-brand-50 {
-    background-color: rgb(5 46 22 / 0.5) !important; /* brand-950 at 50% */
+    background-color: rgb(18 69 89 / 0.3) !important;
   }
   html.dark .bg-blue-50 {
-    background-color: rgb(30 58 138 / 0.3) !important;
+    background-color: rgb(30 58 138 / 0.25) !important;
   }
   html.dark .bg-green-50 {
-    background-color: rgb(20 83 45 / 0.3) !important;
+    background-color: rgb(20 83 45 / 0.25) !important;
   }
   html.dark .bg-red-50 {
-    background-color: rgb(127 29 29 / 0.3) !important;
+    background-color: rgb(127 29 29 / 0.25) !important;
   }
   html.dark .bg-orange-100 {
-    background-color: rgb(124 45 18 / 0.3) !important;
+    background-color: rgb(124 45 18 / 0.25) !important;
   }
   html.dark .bg-purple-100 {
-    background-color: rgb(88 28 135 / 0.3) !important;
+    background-color: rgb(88 28 135 / 0.25) !important;
+  }
+  html.dark .bg-yellow-50 {
+    background-color: rgb(113 63 18 / 0.25) !important;
+  }
+  html.dark .bg-purple-50 {
+    background-color: rgb(88 28 135 / 0.2) !important;
+  }
+  html.dark .bg-indigo-50 {
+    background-color: rgb(49 46 129 / 0.25) !important;
   }
 
   /* Modal / overlay backgrounds */
@@ -110,11 +179,11 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed md:px-4 md:py-2.5;
+    @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed md:px-4 md:py-2.5;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed md:px-4 md:py-2.5;
+    @apply inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed md:px-4 md:py-2.5;
   }
 
   .btn-danger {

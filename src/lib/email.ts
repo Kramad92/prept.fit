@@ -76,7 +76,7 @@ export async function sendInviteEmail({
         <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
           <strong>${coachName}</strong> has invited you to join <strong>${businessName}</strong> on TrainerHub. You'll be able to view your workouts, meal plans, track habits, and more.
         </p>
-        <a href="${inviteUrl}" style="display: inline-block; background-color: #22c55e; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0;">
+        <a href="${inviteUrl}" style="display: inline-block; background-color: #124559; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0;">
           Set Up Your Account
         </a>
         <p style="color: #9ca3af; font-size: 13px; margin-top: 24px;">

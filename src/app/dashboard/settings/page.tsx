@@ -110,8 +110,8 @@ export default function SettingsPage() {
           className="card flex items-center justify-between transition-shadow hover:shadow-md"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
-              <Globe className="h-5 w-5 text-emerald-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
+              <Globe className="h-5 w-5 text-brand-600" />
             </div>
             <div>
               <p className="font-medium text-gray-900">{t.settings.landingPage}</p>

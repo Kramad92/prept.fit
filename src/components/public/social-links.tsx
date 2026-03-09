@@ -26,7 +26,7 @@ export function SocialLinks({ links }: { links: Record<string, string> | null })
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-emerald-100 hover:text-emerald-600"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-brand-100 hover:text-brand-600"
             title={meta.label}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">

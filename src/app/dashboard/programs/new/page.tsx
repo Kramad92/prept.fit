@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, X, Dumbbell } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
+import { AIGenerateProgram } from "@/components/ai/ai-generate-program";
 
 interface WorkoutOption {
   id: string;
@@ -21,6 +22,16 @@ interface DaySlot {
   workoutPlanId: string | null;
   workoutName: string | null;
 }
+
+const DAY_KEYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
 
 export default function NewProgramPage() {
   const t = useT();
@@ -81,6 +92,39 @@ export default function NewProgramPage() {
     );
   }
 
+  function handleAIGenerate(data: {
+    name: string;
+    description: string;
+    days: {
+      weekNumber: number;
+      dayNumber: number;
+      label: string;
+      workoutPlanId: string | null;
+      workoutName: string | null;
+    }[];
+  }) {
+    setName(data.name);
+    setDescription(data.description);
+
+    // Merge AI-generated days into the current grid
+    setDays((prev) =>
+      prev.map((slot) => {
+        const aiDay = data.days.find(
+          (d) => d.weekNumber === slot.weekNumber && d.dayNumber === slot.dayNumber
+        );
+        if (aiDay) {
+          return {
+            ...slot,
+            label: aiDay.label || slot.label,
+            workoutPlanId: aiDay.workoutPlanId,
+            workoutName: aiDay.workoutName,
+          };
+        }
+        return slot;
+      })
+    );
+  }
+
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
@@ -112,6 +156,11 @@ export default function NewProgramPage() {
     if (!weekGroups[d.weekNumber]) weekGroups[d.weekNumber] = [];
     weekGroups[d.weekNumber].push(d);
   }
+
+  const dayOptions = DAY_KEYS.map((key) => ({
+    value: t.programs[key],
+    label: t.programs[key],
+  }));
 
   return (
     <div>
@@ -149,6 +198,14 @@ export default function NewProgramPage() {
               className="input"
               rows={2}
             />
+            <div className="mt-2">
+              <AIGenerateProgram
+                prompt={description}
+                durationWeeks={durationWeeks}
+                daysPerWeek={daysPerWeek}
+                onGenerate={handleAIGenerate}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -208,15 +265,20 @@ export default function NewProgramPage() {
                         <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                           {slot.dayNumber}
                         </span>
-                        <input
-                          type="text"
+                        <select
                           value={slot.label}
                           onChange={(e) =>
                             updateLabel(slot.weekNumber, slot.dayNumber, e.target.value)
                           }
-                          placeholder={`${t.programs.day} ${slot.dayNumber}`}
-                          className="w-32 flex-shrink-0 rounded border border-gray-200 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none"
-                        />
+                          className="w-36 flex-shrink-0 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+                        >
+                          <option value="">{t.programs.selectDay}</option>
+                          {dayOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
                         <select
                           value={slot.workoutPlanId || ""}
                           onChange={(e) =>

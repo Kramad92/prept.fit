@@ -566,6 +566,18 @@ model ExerciseLibrary {
   equipment     String?  // "Barbell", "Dumbbell", "Cable", "Bodyweight", etc.
   videoUrl      String?
   instructions  String?
+
+  // Extended fields from exercise database
+  difficulty         String?  // "Beginner", "Novice", "Intermediate", "Advanced", "Expert"
+  bodyRegion         String?  // "Upper Body", "Lower Body", "Core"
+  secondaryMuscles   String?  // Comma-separated secondary + tertiary muscles
+  secondaryEquipment String?  // Secondary equipment needed
+  movementPattern    String?  // Primary movement pattern (e.g. "Horizontal Push", "Hip Hinge")
+  forceType          String?  // "Push", "Pull", "Other"
+  mechanics          String?  // "Compound", "Isolation"
+  laterality         String?  // "Bilateral", "Unilateral", "Contralateral"
+  classification     String?  // "Bodybuilding", "Calisthenics", "Postural", "Olympic Lifting", etc.
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

@@ -65,6 +65,14 @@ export function AIGenerateMealPlan({ prompt, onGenerate }: AIGenerateMealPlanPro
     try {
       const body: Record<string, unknown> = { prompt: prompt.trim(), locale };
 
+      // Extract calorie target from prompt (e.g. "2200 calories", "2200 cal", "2200 kcal")
+      const calMatch = prompt.match(/(\d{3,5})\s*(?:cal(?:ories?)?|kcal)/i);
+      if (calMatch) body.targetCalories = parseInt(calMatch[1], 10);
+
+      // Extract meal count from prompt (e.g. "5 meals", "5 meal")
+      const mealMatch = prompt.match(/(\d{1,2})\s*meals?/i);
+      if (mealMatch) body.numMeals = parseInt(mealMatch[1], 10);
+
       const res = await fetch("/api/ai/generate-meal-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

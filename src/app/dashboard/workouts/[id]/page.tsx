@@ -11,12 +11,14 @@ import {
   ExternalLink,
   Copy,
   Pencil,
+  Trash2,
   UserPlus,
   X,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useT } from "@/lib/i18n";
+import { api } from "@/lib/api";
 import { ExpandableNotes } from "@/components/ui/expandable-notes";
 
 interface Exercise {
@@ -64,6 +66,7 @@ export default function WorkoutDetailPage() {
   const [assignAccessPolicy, setAssignAccessPolicy] = useState("unlimited");
   const [assignEndDate, setAssignEndDate] = useState("");
   const [duplicating, setDuplicating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -91,6 +94,17 @@ export default function WorkoutDetailPage() {
       router.push(`/dashboard/workouts/${copy.id}`);
     }
     setDuplicating(false);
+  }
+
+  async function handleDelete() {
+    if (!confirm(t.workouts.deleteConfirm)) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/api/workouts/${params.id}`);
+      router.push("/dashboard/workouts");
+    } catch {
+      setDeleting(false);
+    }
   }
 
   async function handleAssign() {
@@ -182,6 +196,14 @@ export default function WorkoutDetailPage() {
           >
             <UserPlus className="mr-1.5 h-4 w-4" />
             {t.workouts.assign}
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="btn-secondary text-sm !text-red-600 hover:!bg-red-50"
+          >
+            <Trash2 className="mr-1.5 h-4 w-4" />
+            {t.common.delete}
           </button>
         </div>
       </div>

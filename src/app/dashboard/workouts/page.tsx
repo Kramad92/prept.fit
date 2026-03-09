@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Dumbbell, Search, Zap } from "lucide-react";
+import { Plus, Dumbbell, Search, Zap, Pencil, Copy, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
@@ -91,8 +91,9 @@ export default function WorkoutsPage() {
   const t = useT();
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const { data: plans, loading } = useApi<WorkoutPlan[]>("/api/workouts");
+  const { data: plans, loading, refresh } = useApi<WorkoutPlan[]>("/api/workouts");
   const [creating, setCreating] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
 
   async function createFromPreset(preset: (typeof PRESET_TEMPLATES)[0]) {
     setCreating(preset.name);
@@ -103,6 +104,27 @@ export default function WorkoutsPage() {
       // handled by api client
     }
     setCreating(null);
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm(t.workouts.deleteConfirm)) return;
+    try {
+      await api.delete(`/api/workouts/${id}`);
+      refresh();
+    } catch {
+      // handled by api client
+    }
+  }
+
+  async function handleDuplicate(id: string) {
+    setDuplicating(id);
+    try {
+      const copy = await api.post<{ id: string }>(`/api/workouts/${id}/duplicate`, {});
+      router.push(`/dashboard/workouts/${copy.id}/edit`);
+    } catch {
+      // handled by api client
+    }
+    setDuplicating(null);
   }
 
   const filtered = (plans || []).filter((p) =>
@@ -174,36 +196,56 @@ export default function WorkoutsPage() {
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2 stagger-in">
           {filtered.map((plan) => (
-            <Link
-              key={plan.id}
-              href={`/dashboard/workouts/${plan.id}`}
-              className="card transition-shadow hover:shadow-md"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
+            <div key={plan.id} className="card">
+              <div className="flex items-center justify-between">
+                <Link
+                  href={`/dashboard/workouts/${plan.id}`}
+                  className="flex flex-1 items-center gap-3 text-left"
+                >
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
                     <Dumbbell className="h-5 w-5 text-brand-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                    {plan.description && (
-                      <p className="mt-0.5 text-sm text-gray-500 line-clamp-1">
-                        {plan.description}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">{plan.name}</h3>
+                      {plan.isTemplate && (
+                        <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                          {t.workouts.template}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-3 text-xs text-gray-500">
+                      <span>{plan.exerciseCount} {t.workouts.exercises_count}</span>
+                      <span>{plan.assignedCount} {t.workouts.clients_count}</span>
+                    </div>
                   </div>
+                </Link>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => router.push(`/dashboard/workouts/${plan.id}/edit`)}
+                    className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    title={t.common.edit}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDuplicate(plan.id)}
+                    disabled={duplicating !== null}
+                    className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    title={t.workouts.duplicate}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(plan.id)}
+                    className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                    title={t.common.delete}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-                {plan.isTemplate && (
-                  <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                    {t.workouts.template}
-                  </span>
-                )}
               </div>
-              <div className="mt-4 flex gap-4 text-xs text-gray-500">
-                <span>{plan.exerciseCount} {t.workouts.exercises_count}</span>
-                <span>{plan.assignedCount} {t.workouts.clients_count}</span>
-              </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

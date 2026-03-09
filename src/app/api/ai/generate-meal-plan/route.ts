@@ -136,6 +136,39 @@ Return a JSON object with this exact structure:
       }
     }
 
+    // Auto-scale portions to hit the calorie target (AI can't do math)
+    if (targetCalories && totalCalories > 0) {
+      const ratio = targetCalories / totalCalories;
+      // Only scale if off by more than 5%
+      if (Math.abs(ratio - 1) > 0.05) {
+        for (const meal of result.meals) {
+          for (const food of meal.foods) {
+            // Scale macros
+            food.calories = Math.round((food.calories || 0) * ratio);
+            food.protein = Math.round((food.protein || 0) * ratio);
+            food.carbs = Math.round((food.carbs || 0) * ratio);
+            food.fat = Math.round((food.fat || 0) * ratio);
+
+            // Scale portions
+            food.portion = scalePortionString(food.portion, ratio);
+          }
+        }
+        // Recalculate after scaling
+        totalCalories = 0;
+        totalProtein = 0;
+        totalCarbs = 0;
+        totalFat = 0;
+        for (const meal of result.meals) {
+          for (const food of meal.foods) {
+            totalCalories += food.calories || 0;
+            totalProtein += food.protein || 0;
+            totalCarbs += food.carbs || 0;
+            totalFat += food.fat || 0;
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       ...result,
       targetCalories: totalCalories,
@@ -147,4 +180,48 @@ Return a JSON object with this exact structure:
     console.error("AI generate-meal-plan error:", e);
     return NextResponse.json({ error: "Failed to generate meal plan" }, { status: 502 });
   }
+}
+
+/**
+ * Scale a portion string by a ratio.
+ * "150g" × 1.4 → "210g"
+ * "2 eggs" × 1.5 → "3 eggs"
+ * "1 banana" × 2 → "2 bananas"
+ * "30g" × 1.4 → "40g"
+ */
+function scalePortionString(portion: string, ratio: number): string {
+  if (!portion) return portion;
+
+  // Gram-based: "150g", "150 g"
+  const gramMatch = portion.match(/^(\d+(?:\.\d+)?)\s*g$/i);
+  if (gramMatch) {
+    const scaled = Math.round(parseFloat(gramMatch[1]) * ratio / 5) * 5; // Round to nearest 5g
+    return `${scaled}g`;
+  }
+
+  // Count + unit: "2 eggs", "1 banana", "3 slices bread"
+  const countMatch = portion.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  if (countMatch) {
+    const count = parseFloat(countMatch[1]);
+    const unit = countMatch[2];
+    const scaled = Math.round(count * ratio * 2) / 2; // Round to nearest 0.5
+    const finalCount = Math.max(0.5, scaled);
+    return `${finalCount % 1 === 0 ? finalCount.toFixed(0) : finalCount} ${unit}`;
+  }
+
+  // Gram-based with context: "150g chicken" → just scale the number
+  const gramCtxMatch = portion.match(/^(\d+(?:\.\d+)?)\s*g\s+(.+)$/i);
+  if (gramCtxMatch) {
+    const scaled = Math.round(parseFloat(gramCtxMatch[1]) * ratio / 5) * 5;
+    return `${scaled}g ${gramCtxMatch[2]}`;
+  }
+
+  // ml-based: "200ml", "200 ml"
+  const mlMatch = portion.match(/^(\d+(?:\.\d+)?)\s*ml$/i);
+  if (mlMatch) {
+    const scaled = Math.round(parseFloat(mlMatch[1]) * ratio / 10) * 10; // Round to nearest 10ml
+    return `${scaled}ml`;
+  }
+
+  return portion; // Can't parse — return as-is
 }

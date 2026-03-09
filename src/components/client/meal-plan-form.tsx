@@ -134,8 +134,18 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
           </div>
           <textarea
             value={meal.description}
-            onChange={(e) => setMeals(meals.map((m, i) => (i === mi ? { ...m, description: e.target.value } : m)))}
-            className="input mt-2 text-xs"
+            onChange={(e) => {
+              setMeals(meals.map((m, i) => (i === mi ? { ...m, description: e.target.value } : m)));
+              e.target.style.height = "auto";
+              e.target.style.height = Math.min(e.target.scrollHeight, 4.5 * 16) + "px";
+            }}
+            ref={(el) => {
+              if (el && meal.description) {
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 4.5 * 16) + "px";
+              }
+            }}
+            className="input mt-2 text-xs resize-none overflow-hidden"
             rows={1}
             placeholder={t.nutrition.mealDescriptionPlaceholder}
           />

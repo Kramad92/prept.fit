@@ -58,17 +58,17 @@ export function scalePortionFood(food: ScalableFood, newPortion: string): Partia
     }
   }
 
-  // Count-based portions (e.g. "6 eggs" → "4 eggs", or "6 eggs" → "4")
-  const oldCount = food.portion.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
-  const newCount = newPortion.match(/^(\d+(?:\.\d+)?)(?:\s+(.+))?$/);
+  // Count-based portions (e.g. "6 eggs" → "4 eggs", "6 eggs" → "4", "5eggs" → "2eggs")
+  const oldCount = food.portion.match(/^(\d+(?:\.\d+)?)\s*(\D.+)$/);
+  const newCount = newPortion.match(/^(\d+(?:\.\d+)?)(?:\s*(\D.+))?$/);
   if (oldCount && newCount) {
     const oldVal = parseFloat(oldCount[1]);
     const newVal = parseFloat(newCount[1]);
     const ratio = newVal / oldVal;
     if (ratio > 0 && ratio !== 1) {
-      // Auto-append unit if user omitted it
-      const unit = newCount[2] || oldCount[2];
-      const finalPortion = newCount[2] ? newPortion : `${newCount[1]} ${unit}`;
+      // Auto-append unit if user omitted it, always with a space
+      const unit = newCount[2]?.trim() || oldCount[2].trim();
+      const finalPortion = `${newCount[1]} ${unit}`;
       return {
         portion: finalPortion,
         calories: scaleNum(food.calories, ratio),
@@ -118,16 +118,16 @@ export function scalePortionFoodInput(food: FoodInput, newPortion: string): Part
     }
   }
 
-  // Count-based portions (e.g. "6 eggs" → "4 eggs", or "6 eggs" → "4")
-  const oldCount = food.portion.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
-  const newCount = newPortion.match(/^(\d+(?:\.\d+)?)(?:\s+(.+))?$/);
+  // Count-based portions (e.g. "6 eggs" → "4 eggs", "6 eggs" → "4", "5eggs" → "2eggs")
+  const oldCount = food.portion.match(/^(\d+(?:\.\d+)?)\s*(\D.+)$/);
+  const newCount = newPortion.match(/^(\d+(?:\.\d+)?)(?:\s*(\D.+))?$/);
   if (oldCount && newCount) {
     const oldVal = parseFloat(oldCount[1]);
     const newVal = parseFloat(newCount[1]);
     const ratio = newVal / oldVal;
     if (ratio > 0 && ratio !== 1) {
-      const unit = newCount[2] || oldCount[2];
-      const finalPortion = newCount[2] ? newPortion : `${newCount[1]} ${unit}`;
+      const unit = newCount[2]?.trim() || oldCount[2].trim();
+      const finalPortion = `${newCount[1]} ${unit}`;
       return {
         portion: finalPortion,
         calories: scaleStr(food.calories, ratio),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus, Trash2, X, Check } from "lucide-react";
 import { FoodPicker } from "./food-picker";
 import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
@@ -82,6 +82,8 @@ interface MealEditorProps {
 }
 
 function MealEditor({ meals, setMeals, t }: MealEditorProps) {
+  const portionBeforeEdit = useRef<{ mi: number; fi: number; portion: string } | null>(null);
+
   function updateFood(mealIdx: number, foodIdx: number, field: string, value: string) {
     setMeals(
       meals.map((m, mi) => {
@@ -91,12 +93,42 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
           foods: m.foods.map((f, fi) => {
             if (fi !== foodIdx) return f;
             if (field === "portion") {
-              return { ...f, ...scalePortionFoodInput(f, value) };
+              // Just update text — scaling happens on blur
+              return { ...f, portion: value };
             }
             return { ...f, [field]: value };
           }),
         };
       })
+    );
+  }
+
+  function handlePortionFocus(mi: number, fi: number, currentPortion: string) {
+    portionBeforeEdit.current = { mi, fi, portion: currentPortion };
+  }
+
+  function handlePortionBlur(mi: number, fi: number) {
+    const saved = portionBeforeEdit.current;
+    if (!saved || saved.mi !== mi || saved.fi !== fi) return;
+    portionBeforeEdit.current = null;
+
+    setMeals(
+      meals.map((m, mIdx) =>
+        mIdx === mi
+          ? {
+              ...m,
+              foods: m.foods.map((f, fIdx) => {
+                if (fIdx !== fi) return f;
+                if (f.portion === saved.portion) return f;
+                const scaled = scalePortionFoodInput(
+                  { ...f, portion: saved.portion },
+                  f.portion
+                );
+                return { ...f, ...scaled };
+              }),
+            }
+          : m
+      )
     );
   }
 
@@ -194,7 +226,7 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
                     }}
                   />
                 </div>
-                <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder="Portion" />
+                <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} className="input text-xs" placeholder="Portion" />
                 <input type="number" value={food.calories} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
                 <input type="number" value={food.protein} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P" />
                 <div className="flex gap-1">

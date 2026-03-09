@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { X, Trash2 } from "lucide-react";
 import { FoodPicker } from "@/components/client/food-picker";
 import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
@@ -43,6 +44,7 @@ export function NutritionPlanForm({
   onClose,
 }: NutritionPlanFormProps) {
   const t = useT();
+  const portionBeforeEdit = useRef<{ mi: number; fi: number; portion: string } | null>(null);
 
   function updateMeals(updater: (meals: MealRow[]) => MealRow[]) {
     onFormChange((prev) => ({ ...prev, meals: updater(prev.meals) }));
@@ -57,7 +59,8 @@ export function NutritionPlanForm({
               foods: m.foods.map((f, fi) => {
                 if (fi !== foodIndex) return f;
                 if (field === "portion") {
-                  return { ...f, ...scalePortionFood(f, value) };
+                  // Just update the text — scaling happens on blur
+                  return { ...f, portion: value };
                 }
                 return {
                   ...f,
@@ -65,6 +68,36 @@ export function NutritionPlanForm({
                     ? (value ? parseInt(value) : null)
                     : value,
                 };
+              }),
+            }
+          : m
+      )
+    );
+  }
+
+  function handlePortionFocus(mi: number, fi: number, currentPortion: string) {
+    portionBeforeEdit.current = { mi, fi, portion: currentPortion };
+  }
+
+  function handlePortionBlur(mi: number, fi: number) {
+    const saved = portionBeforeEdit.current;
+    if (!saved || saved.mi !== mi || saved.fi !== fi) return;
+    portionBeforeEdit.current = null;
+
+    updateMeals((prev) =>
+      prev.map((m, mIdx) =>
+        mIdx === mi
+          ? {
+              ...m,
+              foods: m.foods.map((f, fIdx) => {
+                if (fIdx !== fi) return f;
+                if (f.portion === saved.portion) return f; // no change
+                // Scale macros based on old → new portion
+                const scaled = scalePortionFood(
+                  { ...f, portion: saved.portion },
+                  f.portion
+                );
+                return { ...f, ...scaled };
               }),
             }
           : m
@@ -251,7 +284,7 @@ export function NutritionPlanForm({
                               }}
                             />
                           </div>
-                          <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder={t.nutrition.portion} data-food-portion={`${mi}-${fi}`} onFocus={(e) => e.target.select()} />
+                          <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder={t.nutrition.portion} data-food-portion={`${mi}-${fi}`} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} />
                           <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder={t.nutrition.cal} />
                           <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder={t.nutrition.pG} />
                           <div className="flex gap-1">
@@ -302,7 +335,7 @@ export function NutritionPlanForm({
                             }} className="text-gray-400 hover:text-red-500 p-1"><Trash2 className="h-4 w-4" /></button>
                           </div>
                           <div className="grid grid-cols-2 gap-1.5">
-                            <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder={t.nutrition.portion} data-food-portion-m={`${mi}-${fi}`} onFocus={(e) => e.target.select()} />
+                            <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder={t.nutrition.portion} data-food-portion-m={`${mi}-${fi}`} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} />
                             <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder={t.nutrition.calories} />
                             <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder={t.nutrition.proteinG} />
                             <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder={t.nutrition.fatG} />

@@ -60,7 +60,7 @@ Rules:
           content: `Return macros for these foods:\n${foodList}`,
         },
       ],
-      maxTokens: 1024,
+      maxTokens: 2048,
     });
 
     return NextResponse.json(result);

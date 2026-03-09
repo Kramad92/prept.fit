@@ -18,7 +18,15 @@ import type { AssignedHabit } from "@/types/api";
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function getDateStr(date: Date): string {
-  return date.toISOString().split("T")[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function logMatchesDate(logDate: string, targetDateStr: string): boolean {
+  const d = new Date(logDate);
+  return getDateStr(d) === targetDateStr;
 }
 
 function getLast7Days(): Date[] {
@@ -42,7 +50,7 @@ function computeStreak(habits: AssignedHabit[]): number {
     d.setDate(d.getDate() - i);
     const dateStr = getDateStr(d);
     const allDone = habits.every((h) =>
-      h.logs.some((l) => l.date.startsWith(dateStr) && l.completed)
+      h.logs.some((l) => logMatchesDate(l.date, dateStr) && l.completed)
     );
     if (allDone) streak++;
     else if (i > 0) break;
@@ -68,7 +76,7 @@ export default function HabitsScreen() {
 
   const activeHabits = useMemo(() => habits?.filter((h) => h.isActive) || [], [habits]);
   const todayDone = useMemo(
-    () => activeHabits.filter((h) => h.logs.some((l) => l.date.startsWith(todayStr) && l.completed)).length,
+    () => activeHabits.filter((h) => h.logs.some((l) => logMatchesDate(l.date, todayStr) && l.completed)).length,
     [activeHabits, todayStr]
   );
   const streak = useMemo(() => computeStreak(activeHabits), [activeHabits]);
@@ -84,7 +92,7 @@ export default function HabitsScreen() {
 
   const toggleHabit = useCallback(
     (habit: AssignedHabit) => {
-      const isDone = habit.logs.some((l) => l.date.startsWith(todayStr) && l.completed);
+      const isDone = habit.logs.some((l) => logMatchesDate(l.date, todayStr) && l.completed);
       haptics.light();
       setTogglingId(habit.id);
       toggleMutation.mutate({ clientHabitId: habit.id, completed: !isDone }, { onSettled: () => setTogglingId(null) });
@@ -137,8 +145,8 @@ export default function HabitsScreen() {
           {last7.map((day) => {
             const ds = getDateStr(day);
             const isToday = ds === todayStr;
-            const allDone = activeHabits.length > 0 && activeHabits.every((h) => h.logs.some((l) => l.date.startsWith(ds) && l.completed));
-            const someDone = !allDone && activeHabits.some((h) => h.logs.some((l) => l.date.startsWith(ds) && l.completed));
+            const allDone = activeHabits.length > 0 && activeHabits.every((h) => h.logs.some((l) => logMatchesDate(l.date, ds) && l.completed));
+            const someDone = !allDone && activeHabits.some((h) => h.logs.some((l) => logMatchesDate(l.date, ds) && l.completed));
             return (
               <View key={ds} className="items-center">
                 <Text className={`text-xs mb-1 ${isToday ? "text-brand-600 font-bold" : "text-gray-400"}`}>{DAY_NAMES[day.getDay()]}</Text>
@@ -157,7 +165,7 @@ export default function HabitsScreen() {
           </View>
         ) : (
           activeHabits.map((habit) => {
-            const isDone = habit.logs.some((l) => l.date.startsWith(todayStr) && l.completed);
+            const isDone = habit.logs.some((l) => logMatchesDate(l.date, todayStr) && l.completed);
             const isToggling = togglingId === habit.id;
             return (
               <TouchableOpacity

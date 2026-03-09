@@ -227,3 +227,60 @@ export interface PaymentSummary {
     totalOverdue: number;
   };
 }
+
+// Phase 3: Communication & Tracking
+
+export interface Message {
+  id: string;
+  content: string;
+  createdAt: string;
+  isRead: boolean;
+  attachmentUrl: string | null;
+  attachmentType: string | null;
+  attachmentName: string | null;
+  senderId: string;
+  clientId: string;
+  tenantId: string;
+  sender: {
+    id: string;
+    name: string;
+    role: string;
+    avatar: string | null;
+  };
+}
+
+export interface CheckInTemplate {
+  id: string;
+  name: string;
+  questions: Array<{ id: string; question: string; type: string }>;
+  frequency: string;
+  isActive: boolean;
+  createdAt: string;
+  tenantId: string;
+}
+
+export interface CheckIn {
+  id: string;
+  answers: Array<{ questionId: string; answer: string }>;
+  submittedAt: string;
+  coachNotes: string | null;
+  templateId: string;
+  clientId: string;
+  template?: {
+    id: string;
+    name: string;
+    questions: Array<{ id: string; question: string; type: string }>;
+  };
+}
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  data: Record<string, string> | null;
+  createdAt: string;
+  userId: string;
+  tenantId: string;
+}

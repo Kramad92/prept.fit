@@ -124,4 +124,17 @@ export const api = {
     const res = await fetchWithAuth(path, { method: "DELETE" });
     return handleResponse<T>(res);
   },
+
+  upload: async <T>(path: string, formData: FormData): Promise<T> => {
+    const accessToken = await getAccessToken();
+    const headers: Record<string, string> = {};
+    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+    // Don't set Content-Type — fetch sets it with boundary for FormData
+    const res = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    return handleResponse<T>(res);
+  },
 };

@@ -120,7 +120,7 @@ export function NutritionPlanForm({
             </button>
           </div>
 
-          <form onSubmit={onSubmit} className="mt-4 space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
+          <form onSubmit={onSubmit} onKeyDown={(e) => { if (e.key === "Enter" && (e.target as HTMLElement).tagName !== "BUTTON") { e.preventDefault(); (e.target as HTMLElement).blur(); } }} className="mt-4 space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.nutrition.planName} *</label>
               <input type="text" required value={form.name} onChange={(e) => onFormChange((prev) => ({ ...prev, name: e.target.value }))} className="input mt-1" placeholder={t.nutrition.planNamePlaceholder} />

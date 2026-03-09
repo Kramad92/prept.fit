@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { haptics } from "@/lib/haptics";
 import { CheckCircle, Circle, Flame } from "lucide-react-native";
 import type { AssignedHabit } from "@/types/api";
 
@@ -84,6 +85,7 @@ export default function HabitsScreen() {
   const toggleHabit = useCallback(
     (habit: AssignedHabit) => {
       const isDone = habit.logs.some((l) => l.date.startsWith(todayStr) && l.completed);
+      haptics.light();
       setTogglingId(habit.id);
       toggleMutation.mutate({ clientHabitId: habit.id, completed: !isDone }, { onSettled: () => setTogglingId(null) });
     },

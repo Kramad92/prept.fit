@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { UtensilsCrossed, ChevronDown, ChevronUp, Flame } from "lucide-react-native";
+import { QueryError } from "@/components/query-error";
 import type { ClientProfile, AssignedMealPlan, ClientMeal, Food, Meal } from "@/types/api";
 
 function MacroPill({ label, value }: { label: string; value: number | null }) {
@@ -103,7 +104,7 @@ export default function NutritionScreen() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: profile, isLoading } = useQuery<ClientProfile>({
+  const { data: profile, isLoading, isError, refetch } = useQuery<ClientProfile>({
     queryKey: ["client-profile"],
     queryFn: () => api.get<ClientProfile>("/api/portal/me"),
   });
@@ -137,6 +138,14 @@ export default function NutritionScreen() {
           <View className="bg-white rounded-xl p-4 mb-3 border border-gray-100 h-32" />
           <View className="bg-white rounded-xl p-4 mb-3 border border-gray-100 h-32" />
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+        <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }

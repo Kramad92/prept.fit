@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
+import { haptics } from "@/lib/haptics";
 import { ArrowLeft, Check, ChevronRight, Timer, Plus, Trophy } from "lucide-react-native";
 import type { ClientProfile, ClientExercise, Exercise } from "@/types/api";
 
@@ -113,6 +114,7 @@ export default function WorkoutLogScreen() {
 
   const toggleSet = useCallback(
     (setIdx: number) => {
+      haptics.light();
       const wasCompleted = exerciseLogs[currentIndex]?.sets[setIdx]?.completed;
       setExerciseLogs((prev) => {
         const next = [...prev];
@@ -209,6 +211,7 @@ export default function WorkoutLogScreen() {
       });
     },
     onSuccess: () => {
+      haptics.success();
       queryClient.invalidateQueries({ queryKey: ["workout-logs"] });
       queryClient.invalidateQueries({ queryKey: ["client-profile"] });
       router.dismiss(2);

@@ -10,6 +10,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const now = new Date();
+
   const client = await prisma.client.findUnique({
     where: { id: session.user.clientProfileId },
     include: {
@@ -27,7 +29,7 @@ export async function GET() {
       },
       schedules: {
         where: {
-          date: { gte: new Date() },
+          date: { gte: now },
           status: { not: "cancelled" },
         },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
@@ -42,8 +44,59 @@ export async function GET() {
           clientMeals: { orderBy: { orderIndex: "asc" } },
         },
       },
+      assignedPrograms: {
+        where: { isActive: true },
+        include: {
+          program: {
+            include: {
+              days: {
+                orderBy: [{ weekNumber: "asc" }, { dayNumber: "asc" }],
+                include: { workoutPlan: { select: { id: true, name: true, description: true } } },
+              },
+            },
+          },
+          clientWorkoutPlans: {
+            include: {
+              workoutPlan: {
+                include: { exercises: { orderBy: { orderIndex: "asc" } } },
+              },
+              clientExercises: { orderBy: { orderIndex: "asc" } },
+            },
+          },
+        },
+      },
     },
   });
 
-  return NextResponse.json(client);
+  if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Filter out expired plans based on access policy
+  const activePlans = (client.assignedPlans || []).filter((plan) => {
+    if (plan.accessPolicy === "unlimited") return true;
+    if (plan.accessPolicy === "date_range" && plan.endDate) {
+      return new Date(plan.endDate) >= now;
+    }
+    if (plan.accessPolicy === "subscription_tied") {
+      return client.status === "active";
+    }
+    return true;
+  });
+
+  // Filter expired programs
+  const activePrograms = (client.assignedPrograms || []).filter((prog) => {
+    if (prog.accessPolicy === "unlimited") return true;
+    if (prog.accessPolicy === "date_range" && prog.endDate) {
+      return new Date(prog.endDate) >= now;
+    }
+    if (prog.accessPolicy === "subscription_tied") {
+      return client.status === "active";
+    }
+    return true;
+  });
+
+  return NextResponse.json({
+    ...client,
+    assignedPlans: activePlans,
+    assignedPrograms: activePrograms,
+  });
 }

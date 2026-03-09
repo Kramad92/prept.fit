@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = await validateBody(req, workoutAssignSchema);
   if ("error" in parsed) return parsed.error;
-  const { clientId, workoutPlanId, mode } = parsed.data;
+  const { clientId, workoutPlanId, mode, accessPolicy, startDate, endDate } = parsed.data;
 
   const result = await prisma.$transaction(async (tx) => {
     return deepCopyWorkoutPlan(tx, {
@@ -18,6 +18,9 @@ export async function POST(req: NextRequest) {
       clientId,
       tenantId: session.user.tenantId,
       mode,
+      accessPolicy,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
     });
   });
 

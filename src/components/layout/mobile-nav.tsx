@@ -16,6 +16,7 @@ import {
   Sparkles,
   DollarSign,
   Settings,
+  CalendarRange,
   Library,
   X,
 } from "lucide-react";
@@ -36,6 +37,7 @@ export function MobileNav() {
   const moreNav = [
     { href: "/dashboard/schedule", icon: Calendar, label: t.nav.schedule },
     { href: "/dashboard/group-training", icon: UsersRound, label: t.nav.groupTraining },
+    { href: "/dashboard/programs", icon: CalendarRange, label: t.nav.programs },
     { href: "/dashboard/exercises", icon: Library, label: t.nav.exerciseLibrary },
     { href: "/dashboard/messages", icon: MessageSquare, label: t.nav.messages },
     { href: "/dashboard/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },

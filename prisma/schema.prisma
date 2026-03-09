@@ -48,6 +48,7 @@ model Tenant {
   exerciseCategories ExerciseCategory[]
   trainingGroups     TrainingGroup[]
   groupSessions      GroupSession[]
+  workoutPrograms    WorkoutProgram[]
 
   @@map("tenants")
 }
@@ -123,6 +124,7 @@ model Client {
   inviteTokens    InviteToken[]
   trainingGroupMemberships TrainingGroupMember[]
   groupSessionParticipations GroupSessionParticipant[]
+  assignedPrograms  ClientWorkoutProgram[]
 
   @@index([tenantId])
   @@map("clients")
@@ -181,6 +183,7 @@ model WorkoutPlan {
   assignedTo  ClientWorkoutPlan[]
   workoutLogs WorkoutLog[]
   groupSessions GroupSession[]
+  programDays   WorkoutProgramDay[]
 
   @@index([tenantId])
   @@index([sourceTemplateId])
@@ -216,6 +219,7 @@ model ClientWorkoutPlan {
   startDate   DateTime?
   endDate     DateTime?
   isActive    Boolean   @default(true)
+  accessPolicy String  @default("unlimited") // "unlimited", "date_range", "subscription_tied"
   assignedAt  DateTime  @default(now())
 
   clientId    String
@@ -224,11 +228,15 @@ model ClientWorkoutPlan {
   workoutPlanId String
   workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
 
+  clientWorkoutProgramId String?
+  clientWorkoutProgram   ClientWorkoutProgram? @relation(fields: [clientWorkoutProgramId], references: [id], onDelete: SetNull)
+
   clientExercises ClientExercise[]
   groupSessionParticipant GroupSessionParticipant?
 
   @@index([clientId])
   @@index([workoutPlanId])
+  @@index([clientWorkoutProgramId])
   @@map("client_workout_plans")
 }
 
@@ -842,6 +850,73 @@ model GroupSessionParticipant {
   @@index([sessionId])
   @@index([clientId])
   @@map("group_session_participants")
+}
+
+// ========== WORKOUT PROGRAMS ==========
+
+model WorkoutProgram {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  durationWeeks   Int      @default(4)
+  daysPerWeek     Int      @default(3)
+  isTemplate      Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sourceTemplateId String?
+  sourceTemplate   WorkoutProgram? @relation("programTemplateClones", fields: [sourceTemplateId], references: [id], onDelete: SetNull)
+  clones           WorkoutProgram[] @relation("programTemplateClones")
+
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  days        WorkoutProgramDay[]
+  assignments ClientWorkoutProgram[]
+
+  @@index([tenantId])
+  @@index([sourceTemplateId])
+  @@map("workout_programs")
+}
+
+model WorkoutProgramDay {
+  id          String  @id @default(cuid())
+  weekNumber  Int     // 1-based
+  dayNumber   Int     // 1-based within week
+  label       String? // "Push Day", "Rest Day", etc.
+
+  programId   String
+  program     WorkoutProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  workoutPlanId String?
+  workoutPlan   WorkoutPlan? @relation(fields: [workoutPlanId], references: [id], onDelete: SetNull)
+
+  @@index([programId])
+  @@map("workout_program_days")
+}
+
+model ClientWorkoutProgram {
+  id              String   @id @default(cuid())
+  startDate       DateTime
+  endDate         DateTime?
+  accessPolicy    String   @default("date_range") // "unlimited", "date_range", "subscription_tied"
+  isActive        Boolean  @default(true)
+  currentWeek     Int      @default(1)
+  currentDay      Int      @default(1)
+  notes           String?
+  assignedAt      DateTime @default(now())
+
+  clientId  String
+  client    Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  programId String
+  program   WorkoutProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  clientWorkoutPlans ClientWorkoutPlan[]
+
+  @@index([clientId])
+  @@index([programId])
+  @@map("client_workout_programs")
 }
 
 // ========== MOBILE AUTH ==========

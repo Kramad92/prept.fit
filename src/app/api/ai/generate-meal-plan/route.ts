@@ -122,7 +122,27 @@ Return a JSON object with this exact structure:
       temperature: 0.3,
     });
 
-    return NextResponse.json(result);
+    // Recalculate totals from actual food items — AI math is unreliable
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+    for (const meal of result.meals) {
+      for (const food of meal.foods) {
+        totalCalories += food.calories || 0;
+        totalProtein += food.protein || 0;
+        totalCarbs += food.carbs || 0;
+        totalFat += food.fat || 0;
+      }
+    }
+
+    return NextResponse.json({
+      ...result,
+      targetCalories: totalCalories,
+      targetProtein: totalProtein,
+      targetCarbs: totalCarbs,
+      targetFat: totalFat,
+    });
   } catch (e) {
     console.error("AI generate-meal-plan error:", e);
     return NextResponse.json({ error: "Failed to generate meal plan" }, { status: 502 });

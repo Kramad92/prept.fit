@@ -370,7 +370,7 @@ export const packageSchema = z.object({
 export const landingPageSettingsSchema = z.object({
   landingPageEnabled: z.boolean().optional(),
   coachPhoto: z.string().max(500).nullable().optional(),
-  specialties: z.array(z.string().max(100)).optional(),
+  specialties: z.array(z.string().max(100)).nullable().optional(),
   socialLinks: z.object({
     instagram: z.string().max(500).optional(),
     facebook: z.string().max(500).optional(),
@@ -378,7 +378,7 @@ export const landingPageSettingsSchema = z.object({
     youtube: z.string().max(500).optional(),
     twitter: z.string().max(500).optional(),
     linkedin: z.string().max(500).optional(),
-  }).optional(),
+  }).nullable().optional(),
 });
 
 export const inquiryUpdateSchema = z.object({

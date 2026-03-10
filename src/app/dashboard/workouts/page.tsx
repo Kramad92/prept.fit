@@ -200,16 +200,16 @@ export default function WorkoutsPage() {
               <div className="flex items-center justify-between">
                 <Link
                   href={`/dashboard/workouts/${plan.id}`}
-                  className="flex flex-1 items-center gap-3 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-50">
                     <Dumbbell className="h-5 w-5 text-brand-600" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{plan.name}</h3>
+                      <h3 className="truncate font-semibold text-gray-900">{plan.name}</h3>
                       {plan.isTemplate && (
-                        <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                        <span className="flex-shrink-0 rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
                           {t.workouts.template}
                         </span>
                       )}
@@ -220,7 +220,7 @@ export default function WorkoutsPage() {
                     </div>
                   </div>
                 </Link>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-shrink-0 items-center gap-1">
                   <button
                     onClick={() => router.push(`/dashboard/workouts/${plan.id}/edit`)}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"

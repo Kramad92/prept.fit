@@ -199,7 +199,7 @@ export default function BillingPage() {
               </select>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.amount} *
@@ -476,8 +476,8 @@ export default function BillingPage() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-xl border border-gray-200">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 <th className="px-4 py-3">{t.billing.client}</th>

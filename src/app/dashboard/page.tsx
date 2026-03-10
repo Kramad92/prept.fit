@@ -185,16 +185,11 @@ export default function DashboardPage() {
         <UnreadMessagesBanner messages={data.unreadMessages} t={t} />
       )}
 
-      {/* Two-column: Sessions + Payments */}
+      {/* Two-column cascading layout */}
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        <TodaysSessions data={data} t={t} />
-        <PaymentsOverview data={data} t={t} fmt={fmt} />
-      </div>
-
-      {/* Two-column: Birthdays/Expiring + Completion/Check-ins */}
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        {/* Left: Birthdays + Expiring Plans */}
+        {/* Left column */}
         <div className="space-y-8">
+          <TodaysSessions data={data} t={t} />
           {data && data.birthdays.length > 0 && (
             <BirthdaysCard birthdays={data.birthdays} t={t} />
           )}
@@ -204,21 +199,18 @@ export default function DashboardPage() {
           {data && data.checkIns.length > 0 && (
             <RecentCheckIns checkIns={data.checkIns} t={t} />
           )}
+          {data && data.activityFeed.length > 0 && (
+            <ActivityFeed feed={data.activityFeed} t={t} />
+          )}
         </div>
 
-        {/* Right: Completion + Client Insights */}
+        {/* Right column */}
         <div className="space-y-8">
+          <PaymentsOverview data={data} t={t} fmt={fmt} />
           {data && <WorkoutCompletionCard completion={data.weeklyWorkoutCompletion} t={t} />}
           <ClientInsights data={data} t={t} />
+          <RecentClients data={data} t={t} />
         </div>
-      </div>
-
-      {/* Activity Feed + Recent Clients */}
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        {data && data.activityFeed.length > 0 && (
-          <ActivityFeed feed={data.activityFeed} t={t} />
-        )}
-        <RecentClients data={data} t={t} />
       </div>
     </div>
   );

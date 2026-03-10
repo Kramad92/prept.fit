@@ -181,6 +181,18 @@ export const hr = {
     moderateActivity: "Umjerena aktivnost",
     activeLevel: "Aktivan",
     veryActive: "Vrlo aktivan",
+    archived: "Arhiviran",
+    activate: "Aktiviraj",
+    deactivate: "Deaktiviraj",
+    archive: "Arhiviraj",
+    deleteClient: "Obriši klijenta",
+    deleteClientConfirm: "Jeste li sigurni da želite trajno obrisati ovog klijenta? Ovo se ne može poništiti.",
+    archiveClientConfirm: "Jeste li sigurni da želite arhivirati ovog klijenta? Izgubit će pristup portalu.",
+    portalConnected: "Portal",
+    portalBlocked: "Portal (blokiran)",
+    clientDeleted: "Klijent obrisan",
+    clientArchived: "Klijent arhiviran",
+    statusUpdated: "Status klijenta ažuriran",
   },
 
   // Invite
@@ -966,6 +978,7 @@ export const hr = {
     cancelled: "otkazano",
     confirmed: "potvrđeno",
     completed: "završeno",
+    archived: "arhiviran",
   },
 
   // Notification bell

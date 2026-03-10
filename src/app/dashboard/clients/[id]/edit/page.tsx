@@ -63,7 +63,7 @@ export default function EditClientPage() {
       injuries: fd.get("injuries") || null,
       fitnessLevel: fd.get("fitnessLevel") || null,
       activityLevel: fd.get("activityLevel") || null,
-      status: fd.get("status"),
+      status: client!.status,
     };
 
     const res = await fetch(`/api/clients/${params.id}`, {
@@ -137,35 +137,19 @@ export default function EditClientPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.clients.gender}
-            </label>
-            <select
-              name="gender"
-              defaultValue={client.gender || ""}
-              className="input mt-1"
-            >
-              <option value="">{t.clients.other}</option>
-              <option value="male">{t.clients.male}</option>
-              <option value="female">{t.clients.female}</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.common.status}
-            </label>
-            <select
-              name="status"
-              defaultValue={client.status}
-              className="input mt-1"
-            >
-              <option value="active">{t.clients.active}</option>
-              <option value="paused">{t.clients.paused}</option>
-              <option value="inactive">{t.clients.inactive}</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.gender}
+          </label>
+          <select
+            name="gender"
+            defaultValue={client.gender || ""}
+            className="input mt-1"
+          >
+            <option value="">{t.clients.other}</option>
+            <option value="male">{t.clients.male}</option>
+            <option value="female">{t.clients.female}</option>
+          </select>
         </div>
 
         <div>

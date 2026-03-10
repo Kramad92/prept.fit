@@ -10,6 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { FoodPicker } from "@/components/client/food-picker";
 import { format } from "date-fns";
 import { useT } from "@/lib/i18n";
@@ -58,6 +59,7 @@ export default function PortalNutritionPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"plans" | "log">("plans");
+  const [mealName, setMealName] = useState("Breakfast");
   const [logFoods, setLogFoods] = useState<{ name: string; portion?: string; calories?: number | null; protein?: number | null; carbs?: number | null; fat?: number | null }[]>([]);
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function PortalNutritionPage() {
     const totalC = logFoods.reduce((s, f) => s + (f.carbs || 0), 0);
     const totalF = logFoods.reduce((s, f) => s + (f.fat || 0), 0);
     const data = {
-      mealName: fd.get("mealName"),
+      mealName,
       foods: allFoods,
       calories: (fd.get("calories") ? Number(fd.get("calories")) : 0) + totalCal || null,
       protein: (fd.get("protein") ? Number(fd.get("protein")) : 0) + totalP || null,
@@ -101,6 +103,7 @@ export default function PortalNutritionPage() {
       await api.post("/api/nutrition-logs", data);
       setSaved(true);
       setShowLog(false);
+      setMealName("Breakfast");
       setLogFoods([]);
       const updated = await api.get<NutritionLog[]>("/api/nutrition-logs?days=14");
       setLogs(updated);
@@ -377,14 +380,20 @@ export default function PortalNutritionPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.portalNutrition.meal} *
                 </label>
-                <select name="mealName" required className="input mt-1">
-                  <option value="Breakfast">{t.nutrition.breakfast}</option>
-                  <option value="Snack">{t.portalNutrition.morningSnack}</option>
-                  <option value="Lunch">{t.nutrition.lunch}</option>
-                  <option value="Afternoon Snack">{t.portalNutrition.afternoonSnack}</option>
-                  <option value="Dinner">{t.nutrition.dinner}</option>
-                  <option value="Evening Snack">{t.portalNutrition.eveningSnack}</option>
-                </select>
+                <FilterSelect
+                  value={mealName}
+                  onChange={setMealName}
+                  placeholder={t.portalNutrition.meal}
+                  className="mt-1"
+                  options={[
+                    { value: "Breakfast", label: t.nutrition.breakfast },
+                    { value: "Snack", label: t.portalNutrition.morningSnack },
+                    { value: "Lunch", label: t.nutrition.lunch },
+                    { value: "Afternoon Snack", label: t.portalNutrition.afternoonSnack },
+                    { value: "Dinner", label: t.nutrition.dinner },
+                    { value: "Evening Snack", label: t.portalNutrition.eveningSnack },
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">

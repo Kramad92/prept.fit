@@ -5,6 +5,7 @@ import { Camera, X } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
 import { useToast } from "@/components/ui/toast";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import type { ProgressPhoto } from "@/types";
@@ -90,16 +91,13 @@ export function ClientPhotosTab({ clientId, photos, onRefresh }: ClientPhotosTab
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500">{t.photos.category}</label>
-              <select
+              <FilterSelect
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="input mt-0.5 text-sm"
-              >
-                <option value="">{t.photos.selectCategory}</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>{t.photos[c as keyof typeof t.photos]}</option>
-                ))}
-              </select>
+                onChange={setCategory}
+                placeholder={t.photos.selectCategory}
+                className="mt-0.5"
+                options={categories.map((c) => ({ value: c, label: t.photos[c as keyof typeof t.photos] as string }))}
+              />
             </div>
             <div>
               <label className="text-xs text-gray-500">{t.photos.caption}</label>

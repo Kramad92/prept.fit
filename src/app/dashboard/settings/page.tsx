@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Save, Palette, Clock, ChevronRight, Globe, Mail } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, type Locale } from "@/lib/i18n";
 
 interface Settings {
@@ -22,6 +23,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [timezone, setTimezone] = useState("Europe/Sarajevo");
+  const [localeVal, setLocaleVal] = useState("bs");
+  const [units, setUnits] = useState("metric");
+  const [currency, setCurrency] = useState("BAM");
   const { toastSuccess, toastError } = useToast();
   const t = useT();
   const { setLocale } = useLocale();
@@ -29,7 +34,13 @@ export default function SettingsPage() {
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
-      .then((data) => setSettings(data))
+      .then((data) => {
+        setSettings(data);
+        if (data.timezone) setTimezone(data.timezone);
+        if (data.locale) setLocaleVal(data.locale);
+        if (data.units) setUnits(data.units);
+        if (data.currency) setCurrency(data.currency);
+      })
       .catch(() => toastError(t.settings.failedToLoad))
       .finally(() => setLoading(false));
   }, [toastError]);
@@ -45,10 +56,10 @@ export default function SettingsPage() {
       phone: formData.get("phone"),
       email: formData.get("email"),
       website: formData.get("website"),
-      timezone: formData.get("timezone"),
-      locale: formData.get("locale"),
-      units: formData.get("units"),
-      currency: formData.get("currency"),
+      timezone,
+      locale: localeVal,
+      units,
+      currency,
     };
 
     try {
@@ -231,31 +242,32 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.settings.timezone}
             </label>
-            <select
-              name="timezone"
-              defaultValue={settings?.timezone || "Europe/Sarajevo"}
-              className="input mt-1"
-            >
-              <option value="America/New_York">{t.settings.easternTime}</option>
-              <option value="America/Chicago">{t.settings.centralTime}</option>
-              <option value="America/Denver">{t.settings.mountainTime}</option>
-              <option value="America/Los_Angeles">{t.settings.pacificTime}</option>
-              <option value="Europe/London">{t.settings.london}</option>
-              <option value="Europe/Paris">{t.settings.centralEuropean}</option>
-              <option value="Europe/Sarajevo">{t.settings.sarajevo}</option>
-              <option value="Australia/Sydney">{t.settings.sydney}</option>
-            </select>
+            <FilterSelect
+              value={timezone}
+              onChange={setTimezone}
+              placeholder={t.settings.timezone}
+              className="mt-1"
+              options={[
+                { value: "America/New_York", label: t.settings.easternTime },
+                { value: "America/Chicago", label: t.settings.centralTime },
+                { value: "America/Denver", label: t.settings.mountainTime },
+                { value: "America/Los_Angeles", label: t.settings.pacificTime },
+                { value: "Europe/London", label: t.settings.london },
+                { value: "Europe/Paris", label: t.settings.centralEuropean },
+                { value: "Europe/Sarajevo", label: t.settings.sarajevo },
+                { value: "Australia/Sydney", label: t.settings.sydney },
+              ]}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Jezik / Language
             </label>
-            <select
-              name="locale"
-              defaultValue={settings?.locale || "bs"}
-              className="input mt-1"
-              onChange={(e) => {
-                const newLocale = e.target.value as Locale;
+            <FilterSelect
+              value={localeVal}
+              onChange={(v) => {
+                setLocaleVal(v);
+                const newLocale = v as Locale;
                 setLocale(newLocale);
                 fetch("/api/settings", {
                   method: "PUT",
@@ -263,40 +275,47 @@ export default function SettingsPage() {
                   body: JSON.stringify({ locale: newLocale }),
                 });
               }}
-            >
-              <option value="bs">Bosanski</option>
-              <option value="sr">Srpski</option>
-              <option value="hr">Hrvatski</option>
-              <option value="en">English</option>
-            </select>
+              placeholder="Jezik / Language"
+              className="mt-1"
+              options={[
+                { value: "bs", label: "Bosanski" },
+                { value: "sr", label: "Srpski" },
+                { value: "hr", label: "Hrvatski" },
+                { value: "en", label: "English" },
+              ]}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               {t.settings.units}
             </label>
-            <select
-              name="units"
-              defaultValue={settings?.units || "metric"}
-              className="input mt-1"
-            >
-              <option value="metric">{t.settings.metric}</option>
-              <option value="imperial">{t.settings.imperial}</option>
-            </select>
+            <FilterSelect
+              value={units}
+              onChange={setUnits}
+              placeholder={t.settings.units}
+              className="mt-1"
+              options={[
+                { value: "metric", label: t.settings.metric },
+                { value: "imperial", label: t.settings.imperial },
+              ]}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               {t.settings.currency}
             </label>
-            <select
-              name="currency"
-              defaultValue={settings?.currency || "BAM"}
-              className="input mt-1"
-            >
-              <option value="BAM">BAM (KM)</option>
-              <option value="EUR">EUR</option>
-              <option value="USD">USD</option>
-              <option value="GBP">GBP</option>
-            </select>
+            <FilterSelect
+              value={currency}
+              onChange={setCurrency}
+              placeholder={t.settings.currency}
+              className="mt-1"
+              options={[
+                { value: "BAM", label: "BAM (KM)" },
+                { value: "EUR", label: "EUR" },
+                { value: "USD", label: "USD" },
+                { value: "GBP", label: "GBP" },
+              ]}
+            />
           </div>
         </div>
 

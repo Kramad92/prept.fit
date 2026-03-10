@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Payment } from "@/types";
 import { useToast } from "@/components/ui/toast";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -153,36 +154,39 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
   return (
     <div>
       {/* Summary Cards */}
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <div className="card flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
+      <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="card flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-3 sm:text-left">
+          <div className="hidden h-10 w-10 items-center justify-center rounded-lg bg-green-50 sm:flex">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
           </div>
-          <div>
-            <p className="text-xs text-gray-500">{t.billing.collected}</p>
-            <p className="text-lg font-bold text-gray-900">
+          <CheckCircle2 className="h-5 w-5 text-green-600 sm:hidden" />
+          <div className="min-w-0">
+            <p className="truncate text-xs text-gray-500">{t.billing.collected}</p>
+            <p className="text-base font-bold text-gray-900 sm:text-lg">
               {formatCurrency(totalPaid)}
             </p>
           </div>
         </div>
-        <div className="card flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50">
+        <div className="card flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-3 sm:text-left">
+          <div className="hidden h-10 w-10 items-center justify-center rounded-lg bg-yellow-50 sm:flex">
             <Clock className="h-5 w-5 text-yellow-600" />
           </div>
-          <div>
-            <p className="text-xs text-gray-500">{t.billing.pending}</p>
-            <p className="text-lg font-bold text-gray-900">
+          <Clock className="h-5 w-5 text-yellow-600 sm:hidden" />
+          <div className="min-w-0">
+            <p className="truncate text-xs text-gray-500">{t.billing.pending}</p>
+            <p className="text-base font-bold text-gray-900 sm:text-lg">
               {formatCurrency(totalPending)}
             </p>
           </div>
         </div>
-        <div className="card flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50">
+        <div className="card flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-3 sm:text-left">
+          <div className="hidden h-10 w-10 items-center justify-center rounded-lg bg-red-50 sm:flex">
             <AlertTriangle className="h-5 w-5 text-red-600" />
           </div>
-          <div>
-            <p className="text-xs text-gray-500">{t.billing.overdue}</p>
-            <p className="text-lg font-bold text-red-600">
+          <AlertTriangle className="h-5 w-5 text-red-600 sm:hidden" />
+          <div className="min-w-0">
+            <p className="truncate text-xs text-gray-500">{t.billing.overdue}</p>
+            <p className="text-base font-bold text-red-600 sm:text-lg">
               {formatCurrency(totalOverdue)}
             </p>
           </div>
@@ -226,7 +230,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
               </button>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.amount} *
@@ -245,16 +249,18 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.common.status}
                 </label>
-                <select
+                <FilterSelect
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="input mt-1"
-                >
-                  <option value="paid">{t.billing.paid}</option>
-                  <option value="pending">{t.billing.pending}</option>
-                  <option value="overdue">{t.billing.overdue}</option>
-                  <option value="cancelled">{t.billing.cancelled}</option>
-                </select>
+                  onChange={setStatus}
+                  placeholder={t.common.status}
+                  className="mt-1"
+                  options={[
+                    { value: "paid", label: t.billing.paid },
+                    { value: "pending", label: t.billing.pending },
+                    { value: "overdue", label: t.billing.overdue },
+                    { value: "cancelled", label: t.billing.cancelled },
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -267,7 +273,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                   className="input mt-1"
                 />
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.dueDate}
                 </label>
@@ -277,25 +283,20 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                   onChange={(e) => setDueDate(e.target.value)}
                   className="input mt-1"
                 />
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.method}
                 </label>
-                <select
+                <FilterSelect
                   value={method}
-                  onChange={(e) => setMethod(e.target.value)}
-                  className="input mt-1"
-                >
-                  <option value="">{t.billing.selectMethod}</option>
-                  {METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
+                  onChange={setMethod}
+                  placeholder={t.billing.selectMethod}
+                  className="mt-1"
+                  options={METHODS}
+                />
+              </div> */}
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.period}
                 </label>
@@ -306,7 +307,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                   placeholder={t.billing.periodPlaceholder}
                   className="input mt-1"
                 />
-              </div>
+              </div> */}
             </div>
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700">

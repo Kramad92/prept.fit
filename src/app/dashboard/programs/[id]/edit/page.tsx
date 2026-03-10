@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, X } from "lucide-react";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 
@@ -217,31 +218,27 @@ export default function EditProgramPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">{t.programs.durationWeeks}</label>
-              <select
-                value={durationWeeks}
-                onChange={(e) => setDurationWeeks(Number(e.target.value))}
-                className="input"
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((w) => (
-                  <option key={w} value={w}>
-                    {w} {t.programs.weeks}
-                  </option>
-                ))}
-              </select>
+              <FilterSelect
+                value={String(durationWeeks)}
+                onChange={(v) => setDurationWeeks(Number(v))}
+                placeholder={t.programs.durationWeeks}
+                options={Array.from({ length: 12 }, (_, i) => ({
+                  value: String(i + 1),
+                  label: `${i + 1} ${t.programs.weeks}`,
+                }))}
+              />
             </div>
             <div>
               <label className="label">{t.programs.trainingDays}</label>
-              <select
-                value={daysPerWeek}
-                onChange={(e) => setDaysPerWeek(Number(e.target.value))}
-                className="input"
-              >
-                {Array.from({ length: 7 }, (_, i) => i + 1).map((d) => (
-                  <option key={d} value={d}>
-                    {d} {t.programs.daysWeek}
-                  </option>
-                ))}
-              </select>
+              <FilterSelect
+                value={String(daysPerWeek)}
+                onChange={(v) => setDaysPerWeek(Number(v))}
+                placeholder={t.programs.trainingDays}
+                options={Array.from({ length: 7 }, (_, i) => ({
+                  value: String(i + 1),
+                  label: `${i + 1} ${t.programs.daysWeek}`,
+                }))}
+              />
             </div>
           </div>
         </div>
@@ -265,43 +262,27 @@ export default function EditProgramPage() {
                       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                         {slot.dayNumber}
                       </span>
-                      <select
+                      <FilterSelect
                         value={slot.label}
-                        onChange={(e) =>
-                          updateLabel(
-                            slot.weekNumber,
-                            slot.dayNumber,
-                            e.target.value
-                          )
+                        onChange={(v) =>
+                          updateLabel(slot.weekNumber, slot.dayNumber, v)
                         }
-                        className="w-36 flex-shrink-0 rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
-                      >
-                        <option value="">{t.programs.selectDay}</option>
-                        {dayOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                      <select
+                        placeholder={t.programs.selectDay}
+                        options={dayOptions}
+                        className="w-36 flex-shrink-0"
+                      />
+                      <FilterSelect
                         value={slot.workoutPlanId || ""}
-                        onChange={(e) =>
-                          updateDay(
-                            slot.weekNumber,
-                            slot.dayNumber,
-                            e.target.value || null
-                          )
+                        onChange={(v) =>
+                          updateDay(slot.weekNumber, slot.dayNumber, v || null)
                         }
-                        className="input flex-1 !py-1.5 text-sm"
-                      >
-                        <option value="">{t.programs.selectWorkout}</option>
-                        {workouts.map((w) => (
-                          <option key={w.id} value={w.id}>
-                            {w.name} ({w.exerciseCount}{" "}
-                            {t.workouts.exercises_count})
-                          </option>
-                        ))}
-                      </select>
+                        placeholder={t.programs.selectWorkout}
+                        options={workouts.map((w) => ({
+                          value: w.id,
+                          label: `${w.name} (${w.exerciseCount} ${t.workouts.exercises_count})`,
+                        }))}
+                        className="flex-1"
+                      />
                       {slot.workoutPlanId && (
                         <button
                           onClick={() =>

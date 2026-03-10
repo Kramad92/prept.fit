@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
+import { FilterSelect } from "@/components/ui/filter-select";
 
 interface GroupOption {
   id: string;
@@ -91,12 +92,12 @@ export function NewSessionForm({ groups, onCreated, onCancel }: NewSessionFormPr
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">{t.groupTraining.linkedGroup}</label>
-          <select className="input" value={form.groupId} onChange={(e) => update({ groupId: e.target.value })}>
-            <option value="">{t.groupTraining.noGroup}</option>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
+          <FilterSelect
+            value={form.groupId}
+            onChange={(v) => update({ groupId: v })}
+            placeholder={t.groupTraining.noGroup}
+            options={groups.map((g) => ({ value: g.id, label: g.name }))}
+          />
         </div>
         <div className="flex items-center gap-2 pt-6">
           <input

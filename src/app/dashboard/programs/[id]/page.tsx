@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import type { WorkoutProgramDetail } from "@/types";
@@ -280,18 +281,12 @@ export default function ProgramDetailPage() {
             <div className="mt-4 space-y-3">
               <div>
                 <label className="label">{t.programs.client}</label>
-                <select
+                <FilterSelect
                   value={assignClientId}
-                  onChange={(e) => setAssignClientId(e.target.value)}
-                  className="input"
-                >
-                  <option value="">{t.workouts.selectClient}</option>
-                  {availableClients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setAssignClientId}
+                  placeholder={t.workouts.selectClient}
+                  options={availableClients.map((c) => ({ value: c.id, label: c.name }))}
+                />
               </div>
               <div>
                 <label className="label">{t.programs.startDate}</label>
@@ -304,17 +299,16 @@ export default function ProgramDetailPage() {
               </div>
               <div>
                 <label className="label">{t.programs.accessPolicy}</label>
-                <select
+                <FilterSelect
                   value={accessPolicy}
-                  onChange={(e) => setAccessPolicy(e.target.value)}
-                  className="input"
-                >
-                  <option value="date_range">{t.programs.dateRange}</option>
-                  <option value="unlimited">{t.programs.unlimited}</option>
-                  <option value="subscription_tied">
-                    {t.programs.subscriptionTied}
-                  </option>
-                </select>
+                  onChange={setAccessPolicy}
+                  placeholder={t.programs.accessPolicy}
+                  options={[
+                    { value: "date_range", label: t.programs.dateRange },
+                    { value: "unlimited", label: t.programs.unlimited },
+                    { value: "subscription_tied", label: t.programs.subscriptionTied },
+                  ]}
+                />
                 <p className="mt-1 text-xs text-gray-500">
                   {accessPolicy === "date_range" && t.programs.dateRangeDesc}
                   {accessPolicy === "unlimited" && t.programs.unlimitedDesc}

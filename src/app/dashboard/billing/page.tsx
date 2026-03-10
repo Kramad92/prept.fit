@@ -239,7 +239,7 @@ export default function BillingPage() {
                   className="input mt-1"
                 />
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.dueDate}
                 </label>
@@ -249,8 +249,8 @@ export default function BillingPage() {
                   onChange={(e) => setDueDate(e.target.value)}
                   className="input mt-1"
                 />
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.method}
                 </label>
@@ -261,8 +261,8 @@ export default function BillingPage() {
                   options={METHODS}
                   className="mt-1"
                 />
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.period}
                 </label>
@@ -273,7 +273,7 @@ export default function BillingPage() {
                   placeholder={t.billing.periodPlaceholder}
                   className="input mt-1"
                 />
-              </div>
+              </div> */}
             </div>
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700">

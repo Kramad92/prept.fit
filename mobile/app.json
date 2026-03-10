@@ -57,7 +57,6 @@
           "cameraPermission": "TrainerHub needs camera access to take progress photos."
         }
       ],
-      "expo-haptics"
     ],
     "extra": {
       "eas": {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Plus,
@@ -49,6 +49,14 @@ interface OptionItem {
 }
 
 export default function ExerciseLibraryPage() {
+  return (
+    <Suspense>
+      <ExerciseLibraryContent />
+    </Suspense>
+  );
+}
+
+function ExerciseLibraryContent() {
   const t = useT();
   const { locale } = useLocale();
   const searchParams = useSearchParams();

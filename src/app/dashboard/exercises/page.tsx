@@ -308,19 +308,19 @@ export default function ExerciseLibraryPage() {
     <div>
       {/* Batch delete bar */}
       {selectMode && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl bg-red-50 px-4 py-3">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-red-50 px-4 py-3 sm:gap-3">
           <span className="text-sm font-medium text-red-700">
             {selected.size} selected
           </span>
           <button onClick={selectAllFiltered} className="text-sm text-red-600 underline hover:text-red-800">
-            Select all {filtered.length} visible
+            Select all {filtered.length}
           </button>
           {selected.size > 0 && (
             <button onClick={deselectAll} className="text-sm text-gray-500 underline hover:text-gray-700">
-              Deselect all
+              Deselect
             </button>
           )}
-          <div className="flex-1" />
+          <div className="hidden flex-1 sm:block" />
           <button
             onClick={handleBatchDelete}
             disabled={selected.size === 0 || batchDeleting}
@@ -338,7 +338,7 @@ export default function ExerciseLibraryPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t.exerciseLibrary.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -348,7 +348,7 @@ export default function ExerciseLibraryPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {exercises.length === 0 && (
             <button onClick={handleSeed} disabled={seeding} className="btn-secondary">
               <Download className="mr-2 h-4 w-4" />
@@ -391,7 +391,7 @@ export default function ExerciseLibraryPage() {
       </div>
 
       <div className="mt-6 space-y-3">
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
@@ -407,7 +407,7 @@ export default function ExerciseLibraryPage() {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="input appearance-none pl-10 pr-8"
+              className="input w-full appearance-none pl-10 pr-8 sm:w-auto"
             >
               <option value="">{t.exerciseLibrary.allCategories}</option>
               {categories.map((c) => (
@@ -537,7 +537,7 @@ export default function ExerciseLibraryPage() {
                           </div>
                         </div>
                         {!selectMode && (
-                          <div className="flex flex-shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <div className="flex flex-shrink-0 gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                             <button
                               onClick={(e) => { e.stopPropagation(); startEdit(ex); }}
                               className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
@@ -576,7 +576,7 @@ export default function ExerciseLibraryPage() {
       {/* Add/Edit Exercise Modal */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="w-full max-w-md rounded-t-2xl bg-white p-6 md:rounded-2xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">
                 {editingId ? t.exerciseLibrary.editExercise : t.exerciseLibrary.addExercise}
@@ -871,7 +871,7 @@ function ManageOptionsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-      <div className="w-full max-w-lg rounded-t-2xl bg-white p-6 md:rounded-2xl">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{t.exerciseLibrary.manageOptions}</h2>
           <button onClick={onClose} className="rounded-lg p-1 hover:bg-gray-100">

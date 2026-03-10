@@ -77,13 +77,13 @@ export default function ProgramsPage() {
               <div className="flex items-center justify-between">
                 <Link
                   href={`/dashboard/programs/${prog.id}`}
-                  className="flex flex-1 items-center gap-3 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50">
                     <CalendarRange className="h-5 w-5 text-indigo-600" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{prog.name}</h3>
+                  <div className="min-w-0">
+                    <h3 className="truncate font-semibold text-gray-900">{prog.name}</h3>
                     {prog.description && (
                       <p className="mt-0.5 text-sm text-gray-500 line-clamp-1">
                         {prog.description}
@@ -100,7 +100,7 @@ export default function ProgramsPage() {
                     </div>
                   </div>
                 </Link>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-shrink-0 items-center gap-1">
                   <button
                     onClick={() => router.push(`/dashboard/programs/${prog.id}/edit`)}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"

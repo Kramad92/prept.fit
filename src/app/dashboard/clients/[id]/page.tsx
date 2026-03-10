@@ -140,69 +140,36 @@ export default function ClientDetailPage() {
       </Link>
 
       {/* Client Header */}
-      <div className="card mt-4 flex items-start gap-4">
-        <Avatar name={client.name} size="lg" />
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-gray-900">{client.name}</h1>
-            <StatusBadge status={client.status} />
-            {client.userId && (
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                client.status === "active"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-500"
-              }`}>
-                {client.status === "active" ? <Globe className="h-3 w-3" /> : <GlobeLock className="h-3 w-3" />}
-                {client.status === "active" ? t.clients.portalConnected : t.clients.portalBlocked}
-              </span>
+      <div className="card mt-4">
+        <div className="flex items-start gap-4">
+          <Avatar name={client.name} size="lg" />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold text-gray-900">{client.name}</h1>
+              <StatusBadge status={client.status} />
+              {client.userId && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                  client.status === "active"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-500"
+                }`}>
+                  {client.status === "active" ? <Globe className="h-3 w-3" /> : <GlobeLock className="h-3 w-3" />}
+                  {client.status === "active" ? t.clients.portalConnected : t.clients.portalBlocked}
+                </span>
+              )}
+            </div>
+            {client.email && (
+              <p className="mt-0.5 truncate text-sm text-gray-500">{client.email}</p>
+            )}
+            {client.phone && (
+              <p className="text-sm text-gray-500">{client.phone}</p>
+            )}
+            {client.goals && (
+              <p className="mt-2 text-sm text-gray-700">{client.goals}</p>
             )}
           </div>
-          {client.email && (
-            <p className="mt-0.5 text-sm text-gray-500">{client.email}</p>
-          )}
-          {client.phone && (
-            <p className="text-sm text-gray-500">{client.phone}</p>
-          )}
-          {client.goals && (
-            <p className="mt-2 text-sm text-gray-700">{client.goals}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {!client.userId && client.email && (
-            <button
-              onClick={() => setShowInviteModal(true)}
-              className="btn-secondary"
-            >
-              <UserPlus className="mr-1 h-4 w-4" />
-              {t.clients.inviteToPortal}
-            </button>
-          )}
-          {client.status === "active" ? (
-            <button
-              onClick={() => handleStatusChange("inactive")}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
-            >
-              <Power className="mr-1 inline h-4 w-4" />
-              {t.clients.deactivate}
-            </button>
-          ) : client.status !== "archived" ? (
-            <button
-              onClick={() => handleStatusChange("active")}
-              className="rounded-lg border border-green-200 px-3 py-2 text-sm text-green-600 hover:bg-green-50"
-            >
-              <Power className="mr-1 inline h-4 w-4" />
-              {t.clients.activate}
-            </button>
-          ) : null}
-          <Link
-            href={`/dashboard/clients/${client.id}/edit`}
-            className="btn-secondary"
-          >
-            <Edit className="mr-1 h-4 w-4" />
-            {t.common.edit}
-          </Link>
-          {/* Three-dot menu */}
-          <div className="relative" ref={menuRef}>
+          {/* Three-dot menu (always visible) */}
+          <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
               className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
@@ -249,6 +216,42 @@ export default function ClientDetailPage() {
               </div>
             )}
           </div>
+        </div>
+        {/* Action buttons row */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+          {!client.userId && client.email && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="btn-secondary text-sm"
+            >
+              <UserPlus className="mr-1 h-4 w-4" />
+              {t.clients.inviteToPortal}
+            </button>
+          )}
+          {client.status === "active" ? (
+            <button
+              onClick={() => handleStatusChange("inactive")}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+            >
+              <Power className="mr-1 inline h-4 w-4" />
+              {t.clients.deactivate}
+            </button>
+          ) : client.status !== "archived" ? (
+            <button
+              onClick={() => handleStatusChange("active")}
+              className="rounded-lg border border-green-200 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50"
+            >
+              <Power className="mr-1 inline h-4 w-4" />
+              {t.clients.activate}
+            </button>
+          ) : null}
+          <Link
+            href={`/dashboard/clients/${client.id}/edit`}
+            className="btn-secondary text-sm"
+          >
+            <Edit className="mr-1 h-4 w-4" />
+            {t.common.edit}
+          </Link>
         </div>
       </div>
 

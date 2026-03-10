@@ -172,7 +172,7 @@ export default function HabitsPage() {
       {/* Create Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
+          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <h2 className="text-lg font-semibold">{t.habits.createCustomHabit}</h2>
             <form
               onSubmit={(e) => {
@@ -231,7 +231,7 @@ export default function HabitsPage() {
       {/* Edit Modal */}
       {editingHabit && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
+          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <h2 className="text-lg font-semibold">{t.habits.editHabit}</h2>
             <form
               onSubmit={(e) => {

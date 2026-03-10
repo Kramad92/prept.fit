@@ -17,12 +17,28 @@ export async function GET(
       assignedTo: {
         include: { client: { select: { id: true, name: true, status: true } } },
       },
+      // For templates: also include assignments from cloned copies
+      clones: {
+        select: {
+          assignedTo: {
+            include: { client: { select: { id: true, name: true, status: true } } },
+          },
+        },
+      },
     },
   });
 
   if (!plan) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json(plan, {
+  // Merge direct assignments with assignments from clones (deep-copied plans)
+  const cloneAssignments = plan.clones.flatMap((c) => c.assignedTo);
+  const merged = {
+    ...plan,
+    assignedTo: [...plan.assignedTo, ...cloneAssignments],
+    clones: undefined,
+  };
+
+  return NextResponse.json(merged, {
     headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
   });
 }

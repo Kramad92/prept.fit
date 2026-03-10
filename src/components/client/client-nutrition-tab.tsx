@@ -127,6 +127,28 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
     }
   }
 
+  async function handleToggleActive(planId: string, currentlyActive: boolean) {
+    try {
+      await api.put(`/api/clients/${clientId}/nutrition/${planId}`, {
+        isActive: !currentlyActive,
+      });
+      onRefresh();
+    } catch {
+      toastError(t.nutrition.failedToSave);
+    }
+  }
+
+  async function handleToggleDownload(planId: string, currentlyAllowed: boolean) {
+    try {
+      await api.put(`/api/clients/${clientId}/nutrition/${planId}`, {
+        allowDownload: !currentlyAllowed,
+      });
+      onRefresh();
+    } catch {
+      toastError(t.nutrition.failedToSave);
+    }
+  }
+
   if (assignedMealPlans.length === 0 && !showCustomForm) {
     return (
       <div>
@@ -214,6 +236,8 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
             onSaveEdit={() => handleSaveEdit(plan.id)}
             onCancelEdit={() => setEditingPlanId(null)}
             onDelete={() => handleDelete(plan.id)}
+            onToggleActive={() => handleToggleActive(plan.id, plan.isActive)}
+            onToggleDownload={() => handleToggleDownload(plan.id, plan.allowDownload)}
             t={t}
           />
         ))}

@@ -41,6 +41,7 @@ export const hr = {
     signInButton: "Prijavi se",
     signingIn: "Prijava...",
     invalidCredentials: "Pogrešan email ili lozinka",
+    portalDisabled: "Vaš pristup portalu je deaktiviran. Kontaktirajte svog trenera.",
     password: "Lozinka",
     email: "Email",
     dontHaveAccount: "Nemate račun?",
@@ -313,6 +314,14 @@ export const hr = {
     aiGenerated: "AI generirani plan",
     aiError: "Greška pri generiranju — pokušajte ponovo",
     includeVideo: "Uključi video linkove",
+    disable: "Deaktiviraj",
+    enable: "Aktiviraj",
+    pause: "Pauziraj",
+    resume: "Nastavi",
+    expired: "Isteklo",
+    disableDownload: "Isključi preuzimanje",
+    enableDownload: "Uključi preuzimanje",
+    daysLeft: "dana preostalo",
   },
 
   // Nutrition
@@ -529,6 +538,7 @@ export const hr = {
     paymentRecorded: "Plaćanje evidentirano",
     paymentUpdated: "Plaćanje ažurirano",
     paymentDeleted: "Plaćanje obrisano",
+    selectClient: "Odaberite klijenta...",
   },
 
   // Messages
@@ -767,7 +777,7 @@ export const hr = {
     currentWeight: "Trenutna težina",
     trackJourney: "Pratite svoju transformaciju",
     history: "Povijest",
-    noMeasurements: "Još nema evidentiranih mjerenja. Vaš trener će bilježiti statistiku tokom termina.",
+    noMeasurements: "Još nema evidentiranih mjerenja. Dodajte prvo mjerenje da započnete praćenje!",
   },
 
   // Portal workouts

@@ -28,7 +28,11 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError(t.auth.invalidCredentials);
+      setError(
+        result.error === "PORTAL_DISABLED"
+          ? t.auth.portalDisabled
+          : t.auth.invalidCredentials
+      );
     } else {
       // Redirect based on role
       const session = await getSession();

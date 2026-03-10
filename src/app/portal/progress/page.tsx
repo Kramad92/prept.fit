@@ -40,6 +40,8 @@ export default function PortalProgressPage() {
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showMeasurementForm, setShowMeasurementForm] = useState(false);
+  const [savingMeasurement, setSavingMeasurement] = useState(false);
 
   function loadData() {
     fetch("/api/portal/me")
@@ -81,6 +83,33 @@ export default function PortalProgressPage() {
     await fetch(`/api/portal/photos?photoId=${photoId}`, { method: "DELETE" });
     loadData();
   }
+
+  async function handleMeasurementSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSavingMeasurement(true);
+    const fd = new FormData(e.currentTarget);
+    const data: Record<string, string> = {};
+    fd.forEach((v, k) => {
+      if (v) data[k] = v as string;
+    });
+    try {
+      const res = await fetch("/api/portal/measurements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        setShowMeasurementForm(false);
+        loadData();
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setSavingMeasurement(false);
+    }
+  }
+
+  const lastMeasurement = measurements[0] || null;
 
   if (loading) {
     return (
@@ -239,14 +268,81 @@ export default function PortalProgressPage() {
 
         {tab === "stats" && (
           <>
-            {measurements.length === 0 ? (
+            <div className="mb-4 flex justify-end">
+              {!showMeasurementForm && (
+                <button onClick={() => setShowMeasurementForm(true)} className="btn-primary text-sm">
+                  <Plus className="mr-1 h-4 w-4" />
+                  {t.measurements.addMeasurement}
+                </button>
+              )}
+            </div>
+
+            {showMeasurementForm && (
+              <div className="card mb-4 border-2 border-brand-200">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900">{t.measurements.addMeasurement}</h4>
+                  <button onClick={() => setShowMeasurementForm(false)} className="rounded p-1 hover:bg-gray-100">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <form onSubmit={handleMeasurementSubmit} className="mt-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.common.date}</label>
+                    <input type="date" name="date" defaultValue={new Date().toISOString().split("T")[0]} className="input mt-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t.measurements.weight} ({t.measurements.kg})</label>
+                      <input type="number" name="weight" step="0.1" className="input mt-1" placeholder="75.0" defaultValue={lastMeasurement?.weight ?? undefined} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t.measurements.bodyFat} (%)</label>
+                      <input type="number" name="bodyFat" step="0.1" className="input mt-1" placeholder="18.0" defaultValue={lastMeasurement?.bodyFat ?? undefined} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t.measurements.chest} ({t.measurements.cm})</label>
+                      <input type="number" name="chest" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.chest ?? undefined} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t.measurements.waist} ({t.measurements.cm})</label>
+                      <input type="number" name="waist" step="0.1" className="input mt-1" placeholder="80.0" defaultValue={lastMeasurement?.waist ?? undefined} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t.measurements.hips} ({t.measurements.cm})</label>
+                      <input type="number" name="hips" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.hips ?? undefined} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t.measurements.arms} ({t.measurements.cm})</label>
+                      <input type="number" name="arms" step="0.1" className="input mt-1" placeholder="35.0" defaultValue={lastMeasurement?.arms ?? undefined} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.measurements.thighs} ({t.measurements.cm})</label>
+                    <input type="number" name="thighs" step="0.1" className="input mt-1" placeholder="55.0" defaultValue={lastMeasurement?.thighs ?? undefined} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">{t.common.notes}</label>
+                    <textarea name="notes" rows={2} className="input mt-1" placeholder={t.measurements.observations} />
+                  </div>
+                  <button type="submit" disabled={savingMeasurement} className="btn-primary w-full">
+                    {savingMeasurement ? t.common.saving : t.measurements.saveMeasurement}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {measurements.length === 0 && !showMeasurementForm ? (
               <div className="card flex flex-col items-center py-10 text-center">
                 <Ruler className="h-12 w-12 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">
                   {t.portal.noMeasurements}
                 </p>
               </div>
-            ) : (
+            ) : measurements.length > 0 && (
               <div className="space-y-4">
                 {/* Weight Trend Card */}
                 {measurements[0].weight && (

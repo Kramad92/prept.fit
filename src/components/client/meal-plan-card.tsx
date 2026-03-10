@@ -6,6 +6,8 @@ import {
   ChevronUp,
   Pencil,
   Trash2,
+  Power,
+  Download,
 } from "lucide-react";
 import type { Food, AssignedMealPlan, MealInput } from "@/types";
 import { MealPlanForm, type FormState } from "./meal-plan-form";
@@ -24,6 +26,8 @@ interface MealPlanCardProps {
   onSaveEdit: () => void;
   onCancelEdit: () => void;
   onDelete: () => void;
+  onToggleActive?: () => void;
+  onToggleDownload?: () => void;
   t: any;
 }
 
@@ -41,6 +45,8 @@ export function MealPlanCard({
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onToggleActive,
+  onToggleDownload,
   t,
 }: MealPlanCardProps) {
   const meals = plan.clientMeals.length > 0 ? plan.clientMeals : plan.mealPlan.meals;
@@ -64,6 +70,14 @@ export function MealPlanCard({
               )}
               {plan.mealPlan.targetCalories && <span>{plan.mealPlan.targetCalories} {t.nutrition.kcal}</span>}
               <span>{meals.length} {t.nutrition.meals_count}</span>
+              {!plan.isActive && (
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">{t.workouts.inactive}</span>
+              )}
+              {!plan.allowDownload && (
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">
+                  <Download className="inline h-3 w-3 opacity-50" /> off
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -76,11 +90,37 @@ export function MealPlanCard({
 
       {isOpen && !isEditing && (
         <div className="mt-4 border-t border-gray-100 pt-4">
-          <div className="mb-3 flex gap-2">
+          <div className="mb-3 flex flex-wrap gap-2">
             <button onClick={onStartEdit} className="btn-secondary text-xs">
               <Pencil className="mr-1 h-3 w-3" />
               {t.common.edit}
             </button>
+            {onToggleActive && (
+              <button
+                onClick={onToggleActive}
+                className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                  plan.isActive
+                    ? "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    : "border-green-200 text-green-600 hover:bg-green-50"
+                }`}
+              >
+                <Power className="mr-1 inline h-3 w-3" />
+                {plan.isActive ? t.workouts.disable : t.workouts.enable}
+              </button>
+            )}
+            {onToggleDownload && (
+              <button
+                onClick={onToggleDownload}
+                className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                  plan.allowDownload
+                    ? "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    : "border-brand-200 text-brand-600 hover:bg-brand-50"
+                }`}
+              >
+                <Download className="mr-1 inline h-3 w-3" />
+                {plan.allowDownload ? t.workouts.disableDownload : t.workouts.enableDownload}
+              </button>
+            )}
             <button
               onClick={onDelete}
               className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50"

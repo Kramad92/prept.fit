@@ -73,6 +73,18 @@ export async function POST(req: Request) {
       );
     }
 
+    // Block inactive clients from logging in
+    if (
+      user.role === "CLIENT" &&
+      user.clientProfile &&
+      user.clientProfile.status !== "active"
+    ) {
+      return NextResponse.json(
+        { error: "PORTAL_DISABLED" },
+        { status: 403 }
+      );
+    }
+
     const userPayload = {
       id: user.id,
       email: user.email,

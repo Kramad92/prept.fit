@@ -40,6 +40,8 @@ export default function WorkoutLogPage() {
   const [startTime] = useState(Date.now());
   const [showVideo, setShowVideo] = useState<string | null>(null);
 
+  const DRAFT_KEY = `workout-draft-${params.planId}`;
+
   useEffect(() => {
     fetch("/api/portal/me")
       .then((r) => r.json())
@@ -54,6 +56,20 @@ export default function WorkoutLogPage() {
             ? plan.clientExercises
             : plan.workoutPlan.exercises;
           setExercises(exs);
+
+          // Try restoring from localStorage first
+          try {
+            const saved = localStorage.getItem(DRAFT_KEY);
+            if (saved) {
+              const draft = JSON.parse(saved);
+              if (draft.entries && Object.keys(draft.entries).length > 0) {
+                setEntries(draft.entries);
+                if (draft.notes) setNotes(draft.notes);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {}
 
           // Pre-populate entries from prescribed sets
           const initialEntries: Record<string, LogEntry[]> = {};
@@ -72,6 +88,15 @@ export default function WorkoutLogPage() {
       })
       .finally(() => setLoading(false));
   }, [params.planId]);
+
+  // Save draft to localStorage whenever entries or notes change
+  useEffect(() => {
+    if (Object.keys(entries).length > 0) {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ entries, notes }));
+      } catch {}
+    }
+  }, [entries, notes]);
 
   function updateEntry(
     exerciseId: string,
@@ -119,6 +144,9 @@ export default function WorkoutLogPage() {
         })),
       }),
     });
+
+    // Clear draft on successful save
+    try { localStorage.removeItem(DRAFT_KEY); } catch {}
 
     router.push("/portal/workouts");
   }

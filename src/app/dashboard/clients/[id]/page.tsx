@@ -344,6 +344,7 @@ export default function ClientDetailPage() {
             {showMeasurementForm && (
               <MeasurementModal
                 clientId={client.id}
+                lastMeasurement={client.measurements[0] ?? null}
                 onClose={() => setShowMeasurementForm(false)}
                 onSaved={loadClient}
               />

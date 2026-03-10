@@ -9,6 +9,11 @@ import {
   Check,
   User,
   Users,
+  Power,
+  Pause,
+  Play,
+  Download,
+  Clock,
 } from "lucide-react";
 import type { ExerciseInput, AssignedWorkoutPlan } from "@/types";
 import type { Translations } from "@/lib/i18n/bs";
@@ -29,6 +34,9 @@ interface WorkoutPlanCardProps {
   onCancelEdit: () => void;
   onEditNameChange: (name: string) => void;
   onEditExercisesChange: (exercises: ExerciseInput[]) => void;
+  onToggleActive?: () => void;
+  onTogglePause?: () => void;
+  onToggleDownload?: () => void;
 }
 
 export function WorkoutPlanCard({
@@ -46,7 +54,14 @@ export function WorkoutPlanCard({
   onCancelEdit,
   onEditNameChange,
   onEditExercisesChange,
+  onToggleActive,
+  onTogglePause,
+  onToggleDownload,
 }: WorkoutPlanCardProps) {
+  const isPaused = !!plan.pausedAt;
+  const daysLeft = plan.endDate
+    ? Math.ceil((new Date(plan.endDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+    : null;
   const exercises =
     plan.clientExercises.length > 0
       ? plan.clientExercises
@@ -78,8 +93,24 @@ export function WorkoutPlanCard({
                 {plan.mode === "live" ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
                 {plan.mode === "live" ? t.workouts.live : t.workouts.solo}
               </span>
-              {!plan.isActive && (
+              {isPaused && (
+                <span className="rounded bg-yellow-100 px-1.5 py-0.5 text-yellow-700">{t.statuses.paused}</span>
+              )}
+              {!plan.isActive && !isPaused && (
                 <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">{t.workouts.inactive}</span>
+              )}
+              {daysLeft !== null && plan.isActive && !isPaused && (
+                <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${
+                  daysLeft <= 3 ? "bg-red-100 text-red-700" : daysLeft <= 7 ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-500"
+                }`}>
+                  <Clock className="h-3 w-3" />
+                  {daysLeft > 0 ? `${daysLeft}d` : t.workouts.expired}
+                </span>
+              )}
+              {!plan.allowDownload && (
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">
+                  <Download className="inline h-3 w-3 opacity-50" /> off
+                </span>
               )}
             </div>
           </div>
@@ -93,11 +124,50 @@ export function WorkoutPlanCard({
 
       {isOpen && !isEditing && (
         <div className="mt-4 border-t border-gray-100 pt-4">
-          <div className="mb-3 flex gap-2">
+          <div className="mb-3 flex flex-wrap gap-2">
             <button onClick={onStartEdit} className="btn-secondary text-xs">
               <Pencil className="mr-1 h-3 w-3" />
               {t.common.edit}
             </button>
+            {onToggleActive && (
+              <button
+                onClick={onToggleActive}
+                className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                  plan.isActive
+                    ? "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    : "border-green-200 text-green-600 hover:bg-green-50"
+                }`}
+              >
+                <Power className="mr-1 inline h-3 w-3" />
+                {plan.isActive ? t.workouts.disable : t.workouts.enable}
+              </button>
+            )}
+            {onTogglePause && plan.accessPolicy === "date_range" && (
+              <button
+                onClick={onTogglePause}
+                className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                  isPaused
+                    ? "border-green-200 text-green-600 hover:bg-green-50"
+                    : "border-yellow-200 text-yellow-600 hover:bg-yellow-50"
+                }`}
+              >
+                {isPaused ? <Play className="mr-1 inline h-3 w-3" /> : <Pause className="mr-1 inline h-3 w-3" />}
+                {isPaused ? t.workouts.resume : t.workouts.pause}
+              </button>
+            )}
+            {onToggleDownload && (
+              <button
+                onClick={onToggleDownload}
+                className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                  plan.allowDownload
+                    ? "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    : "border-brand-200 text-brand-600 hover:bg-brand-50"
+                }`}
+              >
+                <Download className="mr-1 inline h-3 w-3" />
+                {plan.allowDownload ? t.workouts.disableDownload : t.workouts.enableDownload}
+              </button>
+            )}
             <button
               onClick={onDelete}
               className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50"

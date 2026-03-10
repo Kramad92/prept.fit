@@ -121,12 +121,15 @@ export async function PUT(
     }
 
     // Update the ClientMealPlan metadata
+    const mealPlanMeta: any = {};
+    if (body.customName !== undefined) mealPlanMeta.customName = body.customName;
+    if (body.notes !== undefined) mealPlanMeta.notes = body.notes;
+    if (body.isActive !== undefined) mealPlanMeta.isActive = body.isActive;
+    if (body.allowDownload !== undefined) mealPlanMeta.allowDownload = body.allowDownload;
+
     return tx.clientMealPlan.update({
       where: { id: params.planId },
-      data: {
-        customName: body.customName !== undefined ? body.customName : undefined,
-        notes: body.notes !== undefined ? body.notes : undefined,
-      },
+      data: mealPlanMeta,
       include: {
         mealPlan: {
           include: {

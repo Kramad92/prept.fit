@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 
 interface ClientData {
@@ -29,11 +30,19 @@ export default function EditClientPage() {
   const [client, setClient] = useState<ClientData | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [gender, setGender] = useState("");
+  const [fitnessLevel, setFitnessLevel] = useState("");
+  const [activityLevel, setActivityLevel] = useState("");
 
   useEffect(() => {
     fetch(`/api/clients/${params.id}`)
       .then((r) => r.json())
-      .then(setClient)
+      .then((data: ClientData) => {
+        setClient(data);
+        setGender(data.gender || "");
+        setFitnessLevel(data.fitnessLevel || "");
+        setActivityLevel(data.activityLevel || "");
+      })
       .catch(() => router.push("/dashboard/clients"));
   }, [params.id, router]);
 
@@ -55,14 +64,14 @@ export default function EditClientPage() {
       name: fd.get("name"),
       email: fd.get("email") || null,
       phone: fd.get("phone") || null,
-      gender: fd.get("gender") || null,
+      gender: gender || null,
       goals: fd.get("goals") || null,
       notes: fd.get("notes") || null,
       allergies: fd.get("allergies") || null,
       dietaryPrefs: fd.get("dietaryPrefs") || null,
       injuries: fd.get("injuries") || null,
-      fitnessLevel: fd.get("fitnessLevel") || null,
-      activityLevel: fd.get("activityLevel") || null,
+      fitnessLevel: fitnessLevel || null,
+      activityLevel: activityLevel || null,
       status: client!.status,
     };
 
@@ -141,15 +150,17 @@ export default function EditClientPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.clients.gender}
           </label>
-          <select
-            name="gender"
-            defaultValue={client.gender || ""}
-            className="input mt-1"
-          >
-            <option value="">{t.clients.other}</option>
-            <option value="male">{t.clients.male}</option>
-            <option value="female">{t.clients.female}</option>
-          </select>
+          <FilterSelect
+            value={gender}
+            onChange={setGender}
+            placeholder={t.clients.other}
+            className="mt-1"
+            options={[
+              { value: "male", label: t.clients.male },
+              { value: "female", label: t.clients.female },
+              { value: "other", label: t.clients.other },
+            ]}
+          />
         </div>
 
         <div>
@@ -170,33 +181,35 @@ export default function EditClientPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.clients.fitnessLevel}
             </label>
-            <select
-              name="fitnessLevel"
-              defaultValue={client.fitnessLevel || ""}
-              className="input mt-1"
-            >
-              <option value="">{t.clients.selectLevel}</option>
-              <option value="beginner">{t.clients.beginner}</option>
-              <option value="intermediate">{t.clients.intermediate}</option>
-              <option value="advanced">{t.clients.advanced}</option>
-            </select>
+            <FilterSelect
+              value={fitnessLevel}
+              onChange={setFitnessLevel}
+              placeholder={t.clients.selectLevel}
+              className="mt-1"
+              options={[
+                { value: "beginner", label: t.clients.beginner },
+                { value: "intermediate", label: t.clients.intermediate },
+                { value: "advanced", label: t.clients.advanced },
+              ]}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               {t.clients.activityLevel}
             </label>
-            <select
-              name="activityLevel"
-              defaultValue={client.activityLevel || ""}
-              className="input mt-1"
-            >
-              <option value="">{t.clients.selectLevel}</option>
-              <option value="sedentary">{t.clients.sedentary}</option>
-              <option value="light">{t.clients.lightActivity}</option>
-              <option value="moderate">{t.clients.moderateActivity}</option>
-              <option value="active">{t.clients.activeLevel}</option>
-              <option value="very_active">{t.clients.veryActive}</option>
-            </select>
+            <FilterSelect
+              value={activityLevel}
+              onChange={setActivityLevel}
+              placeholder={t.clients.selectLevel}
+              className="mt-1"
+              options={[
+                { value: "sedentary", label: t.clients.sedentary },
+                { value: "light", label: t.clients.lightActivity },
+                { value: "moderate", label: t.clients.moderateActivity },
+                { value: "active", label: t.clients.activeLevel },
+                { value: "very_active", label: t.clients.veryActive },
+              ]}
+            />
           </div>
         </div>
 

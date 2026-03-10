@@ -24,10 +24,25 @@ const I18nContext = createContext<I18nContextValue>({
   setLocale: () => {},
 });
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>("bs");
+function getInitialLocale(): Locale {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("locale") as Locale | null;
+    if (stored && VALID_LOCALES.includes(stored)) return stored;
+  }
+  return "bs";
+}
 
-  // Load locale from settings on mount
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+
+  function setLocale(l: Locale) {
+    setLocaleState(l);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("locale", l);
+    }
+  }
+
+  // Sync from server settings on mount (updates localStorage if different)
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())

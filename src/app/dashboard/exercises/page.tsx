@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -10,7 +11,6 @@ import {
   X,
   Check,
   Download,
-  Filter,
   Settings,
   Play,
   CheckSquare,
@@ -21,6 +21,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale } from "@/lib/i18n";
 
 interface ExerciseItem {
@@ -50,6 +51,7 @@ interface OptionItem {
 export default function ExerciseLibraryPage() {
   const t = useT();
   const { locale } = useLocale();
+  const searchParams = useSearchParams();
 
   function displayName(ex: ExerciseItem) {
     return locale !== "en" && ex.nameBs ? ex.nameBs : ex.name;
@@ -61,8 +63,8 @@ export default function ExerciseLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
-  const [filterDifficulty, setFilterDifficulty] = useState("");
-  const [filterEquipment, setFilterEquipment] = useState("");
+  const [filterDifficulty, setFilterDifficulty] = useState<string[]>([]);
+  const [filterEquipment, setFilterEquipment] = useState<string[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
@@ -167,6 +169,15 @@ export default function ExerciseLibraryPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Open detail modal when navigated from global search
+  useEffect(() => {
+    const highlightId = searchParams.get("highlight");
+    if (highlightId && exercises.length > 0) {
+      const ex = exercises.find((e) => e.id === highlightId);
+      if (ex) setDetailExercise(ex);
+    }
+  }, [searchParams, exercises]);
 
   function resetForm() {
     setFormName("");
@@ -275,8 +286,8 @@ export default function ExerciseLibraryPage() {
     const s = search.toLowerCase();
     const matchSearch = ex.name.toLowerCase().includes(s) || (ex.nameBs?.toLowerCase().includes(s) ?? false);
     const matchCategory = !filterCategory || ex.category === filterCategory;
-    const matchDifficulty = !filterDifficulty || ex.difficulty === filterDifficulty;
-    const matchEquipment = !filterEquipment || ex.equipment === filterEquipment;
+    const matchDifficulty = filterDifficulty.length === 0 || (ex.difficulty && filterDifficulty.includes(ex.difficulty));
+    const matchEquipment = filterEquipment.length === 0 || (ex.equipment && filterEquipment.includes(ex.equipment));
     const notHiddenCat = !ex.category || !hiddenCategories.has(ex.category);
     const notHiddenEq = !ex.equipment || !hiddenEquipment.has(ex.equipment);
     return matchSearch && matchCategory && matchDifficulty && matchEquipment && notHiddenCat && notHiddenEq;
@@ -402,52 +413,44 @@ export default function ExerciseLibraryPage() {
               className="input pl-10"
             />
           </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="input w-full appearance-none pl-10 pr-8 sm:w-auto"
-            >
-              <option value="">{t.exerciseLibrary.allCategories}</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+          <FilterSelect
+            value={filterCategory}
+            onChange={setFilterCategory}
+            placeholder={t.exerciseLibrary.allCategories}
+            className="w-full sm:w-auto"
+            options={categories.map((c) => ({ value: c.name, label: c.name }))}
+          />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <select
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <FilterSelect
+            multi
             value={filterDifficulty}
-            onChange={(e) => setFilterDifficulty(e.target.value)}
-            className="input py-1.5 text-sm"
-          >
-            <option value="">All Difficulty</option>
-            {["Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Master", "Grand Master", "Legendary"].map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-          <select
+            onChange={setFilterDifficulty}
+            placeholder="All Difficulty"
+            options={["Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Master", "Grand Master", "Legendary"].map((d) => ({ value: d, label: d }))}
+            className="w-full sm:w-48"
+          />
+          <FilterSelect
+            multi
             value={filterEquipment}
-            onChange={(e) => setFilterEquipment(e.target.value)}
-            className="input py-1.5 text-sm"
-          >
-            <option value="">All Equipment</option>
-            {equipmentTypes.map((e) => (
-              <option key={e.id} value={e.name}>{e.name}</option>
-            ))}
-          </select>
-          {(filterCategory || filterDifficulty || filterEquipment) && (
-            <button
-              onClick={() => { setFilterCategory(""); setFilterDifficulty(""); setFilterEquipment(""); }}
-              className="rounded-lg px-2 py-1.5 text-sm text-gray-500 hover:bg-gray-100"
-            >
-              Clear filters
-            </button>
-          )}
-          <span className="flex items-center text-xs text-gray-400">
-            {filtered.length} / {exercises.length}
-          </span>
+            onChange={setFilterEquipment}
+            placeholder="All Equipment"
+            options={equipmentTypes.map((e) => ({ value: e.name, label: e.name }))}
+            className="w-full sm:w-48"
+          />
+          <div className="flex items-center gap-2">
+            {(filterCategory || filterDifficulty.length > 0 || filterEquipment.length > 0) && (
+              <button
+                onClick={() => { setFilterCategory(""); setFilterDifficulty([]); setFilterEquipment([]); }}
+                className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-100"
+              >
+                Clear filters
+              </button>
+            )}
+            <span className="flex items-center text-xs text-gray-400">
+              {filtered.length} / {exercises.length}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -599,21 +602,23 @@ export default function ExerciseLibraryPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.category}</label>
-                  <select value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="input mt-1">
-                    <option value="">{t.exerciseLibrary.select}</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
+                  <FilterSelect
+                    value={formCategory}
+                    onChange={setFormCategory}
+                    placeholder={t.exerciseLibrary.select}
+                    className="mt-1"
+                    options={categories.map((c) => ({ value: c.name, label: c.name }))}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.equipment}</label>
-                  <select value={formEquipment} onChange={(e) => setFormEquipment(e.target.value)} className="input mt-1">
-                    <option value="">{t.exerciseLibrary.select}</option>
-                    {equipmentTypes.map((e) => (
-                      <option key={e.id} value={e.name}>{e.name}</option>
-                    ))}
-                  </select>
+                  <FilterSelect
+                    value={formEquipment}
+                    onChange={setFormEquipment}
+                    placeholder={t.exerciseLibrary.select}
+                    className="mt-1"
+                    options={equipmentTypes.map((e) => ({ value: e.name, label: e.name }))}
+                  />
                 </div>
               </div>
               <div>

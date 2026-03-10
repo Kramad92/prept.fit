@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, Clock } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { FilterSelect } from "@/components/ui/filter-select";
 
 interface AvailabilitySlot {
   id: string;
@@ -20,6 +21,8 @@ export default function AvailabilityPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const t = useT();
+  const [dayOfWeek, setDayOfWeek] = useState("0");
+  const [slotMinutes, setSlotMinutes] = useState("60");
 
   const DAYS = [
     t.availability.sunday,
@@ -45,10 +48,10 @@ export default function AvailabilityPage() {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      dayOfWeek: parseInt(formData.get("dayOfWeek") as string),
+      dayOfWeek: parseInt(dayOfWeek),
       startTime: formData.get("startTime") as string,
       endTime: formData.get("endTime") as string,
-      slotMinutes: parseInt(formData.get("slotMinutes") as string) || 60,
+      slotMinutes: parseInt(slotMinutes) || 60,
     };
 
     try {
@@ -66,6 +69,8 @@ export default function AvailabilityPage() {
           )
         );
         e.currentTarget.reset();
+        setDayOfWeek("0");
+        setSlotMinutes("60");
       }
     } finally {
       setSaving(false);
@@ -114,13 +119,13 @@ export default function AvailabilityPage() {
         <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
             <label className="text-xs text-gray-500">{t.common.date}</label>
-            <select name="dayOfWeek" className="input mt-0.5" required>
-              {DAYS.map((day, i) => (
-                <option key={i} value={i}>
-                  {day}
-                </option>
-              ))}
-            </select>
+            <FilterSelect
+              value={dayOfWeek}
+              onChange={setDayOfWeek}
+              placeholder={t.common.date}
+              className="mt-0.5"
+              options={DAYS.map((day, i) => ({ value: String(i), label: day }))}
+            />
           </div>
           <div>
             <label className="text-xs text-gray-500">{t.schedule.startTime}</label>
@@ -144,14 +149,18 @@ export default function AvailabilityPage() {
           </div>
           <div>
             <label className="text-xs text-gray-500">{t.availability.slotLength}</label>
-            <select name="slotMinutes" className="input mt-0.5">
-              <option value="30">30 min</option>
-              <option value="45">45 min</option>
-              <option value="60" selected>
-                60 min
-              </option>
-              <option value="90">90 min</option>
-            </select>
+            <FilterSelect
+              value={slotMinutes}
+              onChange={setSlotMinutes}
+              placeholder={t.availability.slotLength}
+              className="mt-0.5"
+              options={[
+                { value: "30", label: "30 min" },
+                { value: "45", label: "45 min" },
+                { value: "60", label: "60 min" },
+                { value: "90", label: "90 min" },
+              ]}
+            />
           </div>
         </div>
         <button

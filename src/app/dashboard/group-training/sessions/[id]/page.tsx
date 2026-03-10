@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Dumbbell, CheckCircle2, Users, Plus, X, Trash2 } from "lucide-react";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -176,16 +177,13 @@ export default function SessionDetailPage() {
       {showAssignWorkout && (
         <div className="card mb-4">
           <h3 className="mb-3 font-medium">{t.groupTraining.assignWorkout}</h3>
-          <select
-            className="input mb-3"
+          <FilterSelect
             value={selectedWorkout}
-            onChange={(e) => setSelectedWorkout(e.target.value)}
-          >
-            <option value="">{t.groupTraining.selectWorkoutPlan}</option>
-            {(templates || []).map((tmpl) => (
-              <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
-            ))}
-          </select>
+            onChange={setSelectedWorkout}
+            placeholder={t.groupTraining.selectWorkoutPlan}
+            options={(templates || []).map((tmpl) => ({ value: tmpl.id, label: tmpl.name }))}
+            className="mb-3"
+          />
           <div className="flex gap-2">
             <button onClick={handleAssignWorkout} className="btn-primary text-sm">{t.workouts.assign}</button>
             <button onClick={() => setShowAssignWorkout(false)} className="btn-secondary text-sm">{t.common.cancel}</button>
@@ -226,16 +224,17 @@ export default function SessionDetailPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {session.status === "scheduled" && (
-                      <select
-                        className="rounded border border-gray-200 px-2 py-1 text-xs"
+                      <FilterSelect
                         value={currentStatus}
-                        onChange={(e) => setAttendance({ ...attendance, [p.client.id]: e.target.value })}
-                      >
-                        <option value="enrolled">{t.groupTraining.enrolled}</option>
-                        <option value="attended">{t.groupTraining.attended}</option>
-                        <option value="no-show">{t.groupTraining.noShow}</option>
-                        <option value="cancelled">{t.groupTraining.cancelled}</option>
-                      </select>
+                        onChange={(v) => setAttendance({ ...attendance, [p.client.id]: v })}
+                        placeholder={t.groupTraining.enrolled}
+                        options={[
+                          { value: "enrolled", label: t.groupTraining.enrolled },
+                          { value: "attended", label: t.groupTraining.attended },
+                          { value: "no-show", label: t.groupTraining.noShow },
+                          { value: "cancelled", label: t.groupTraining.cancelled },
+                        ]}
+                      />
                     )}
                     {session.status === "scheduled" && (
                       <button

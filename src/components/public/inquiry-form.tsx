@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
+import { FilterSelect } from "@/components/ui/filter-select";
 
 interface Slot {
   date: string;
@@ -13,6 +14,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [preferredSlot, setPreferredSlot] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -25,7 +27,7 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
       email: fd.get("email"),
       phone: fd.get("phone") || undefined,
       message: fd.get("message"),
-      preferredSlot: fd.get("preferredSlot") || undefined,
+      preferredSlot: preferredSlot || undefined,
       _hp: fd.get("_hp"),
     };
 
@@ -101,20 +103,16 @@ export function InquiryForm({ slug, slots }: { slug: string; slots: Slot[] }) {
           <label className="block text-sm font-medium text-gray-700">
             Preferred Time Slot
           </label>
-          <select
-            name="preferredSlot"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          >
-            <option value="">Select a slot...</option>
-            {slots.slice(0, 20).map((slot) => (
-              <option
-                key={`${slot.date}_${slot.startTime}`}
-                value={`${slot.date} ${slot.startTime}-${slot.endTime}`}
-              >
-                {slot.date} — {slot.startTime} to {slot.endTime}
-              </option>
-            ))}
-          </select>
+          <FilterSelect
+            value={preferredSlot}
+            onChange={setPreferredSlot}
+            placeholder="Select a slot..."
+            className="mt-1"
+            options={slots.slice(0, 20).map((slot) => ({
+              value: `${slot.date} ${slot.startTime}-${slot.endTime}`,
+              label: `${slot.date} — ${slot.startTime} to ${slot.endTime}`,
+            }))}
+          />
         </div>
       )}
 

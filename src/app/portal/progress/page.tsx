@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Camera, Ruler, TrendingDown, TrendingUp, BarChart3, Plus, X, Trash2 } from "lucide-react";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 
 interface ProgressPhoto {
@@ -192,13 +193,18 @@ export default function PortalProgressPage() {
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-gray-500">{t.photos.category}</label>
-                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="input mt-0.5 text-sm">
-                      <option value="">{t.photos.selectCategory}</option>
-                      <option value="front">{t.photos.front}</option>
-                      <option value="back">{t.photos.back}</option>
-                      <option value="side">{t.photos.side}</option>
-                      <option value="other">{t.photos.other}</option>
-                    </select>
+                    <FilterSelect
+                      value={category}
+                      onChange={setCategory}
+                      placeholder={t.photos.selectCategory}
+                      className="mt-0.5"
+                      options={[
+                        { value: "front", label: t.photos.front },
+                        { value: "back", label: t.photos.back },
+                        { value: "side", label: t.photos.side },
+                        { value: "other", label: t.photos.other },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">{t.photos.caption}</label>

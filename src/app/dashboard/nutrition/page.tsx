@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { NutritionPlanCard } from "@/components/nutrition/nutrition-plan-card";
 import { NutritionPlanForm, type FormState, type MealRow } from "@/components/nutrition/nutrition-plan-form";
 import { useToast } from "@/components/ui/toast";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import { computeFoodTotals } from "@/lib/portion-scaling";
@@ -287,16 +288,12 @@ function NutritionContent() {
               </button>
             </div>
             <div className="mt-4">
-              <select
+              <FilterSelect
                 value={assignClientId}
-                onChange={(e) => setAssignClientId(e.target.value)}
-                className="input"
-              >
-                <option value="">{t.nutrition.selectClient}</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={setAssignClientId}
+                placeholder={t.nutrition.selectClient}
+                options={clients.map((c) => ({ value: c.id, label: c.name }))}
+              />
               <button
                 onClick={handleAssign}
                 disabled={!assignClientId}

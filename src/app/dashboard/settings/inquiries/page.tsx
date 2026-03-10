@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Mail, Trash2, Clock } from "lucide-react";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
 import type { Inquiry } from "@/types";
@@ -117,15 +118,17 @@ export default function InquiriesPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <select
+                  <FilterSelect
                     value={inq.status}
-                    onChange={(e) => updateStatus(inq.id, e.target.value)}
-                    className="rounded border border-gray-200 px-2 py-1 text-xs"
-                  >
-                    <option value="new">{t.landingPage.statusNew}</option>
-                    <option value="contacted">{t.landingPage.statusContacted}</option>
-                    <option value="archived">{t.landingPage.statusArchived}</option>
-                  </select>
+                    onChange={(v) => updateStatus(inq.id, v)}
+                    placeholder={t.common.status}
+                    className="w-32"
+                    options={[
+                      { value: "new", label: t.landingPage.statusNew },
+                      { value: "contacted", label: t.landingPage.statusContacted },
+                      { value: "archived", label: t.landingPage.statusArchived },
+                    ]}
+                  />
                   <button
                     onClick={() => deleteInquiry(inq.id)}
                     className="p-1 text-gray-400 hover:text-red-500"

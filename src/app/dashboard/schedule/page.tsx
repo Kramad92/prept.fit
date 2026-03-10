@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Plus, Clock, X } from "lucide-react";
 import { Calendar, CalendarEvent } from "@/components/schedule/calendar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
 import { PageSkeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,8 @@ export default function SchedulePage() {
   const [showNewForm, setShowNewForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [clients, setClients] = useState<ClientOption[]>([]);
+  const [formClientId, setFormClientId] = useState("");
+  const [formType, setFormType] = useState("session");
 
   useEffect(() => {
     Promise.all([
@@ -138,8 +141,8 @@ export default function SchedulePage() {
                   date: formData.get("date"),
                   startTime: formData.get("startTime"),
                   endTime: formData.get("endTime"),
-                  clientId: formData.get("clientId"),
-                  type: formData.get("type"),
+                  clientId: formClientId,
+                  type: formType,
                   notes: formData.get("notes"),
                 };
 
@@ -150,6 +153,8 @@ export default function SchedulePage() {
                 });
 
                 setShowNewForm(false);
+                setFormClientId("");
+                setFormType("session");
                 const updated = await fetch("/api/schedules").then((r) => r.json());
                 setEvents(updated);
               }}
@@ -208,24 +213,29 @@ export default function SchedulePage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.schedule.client} *
                 </label>
-                <select name="clientId" required className="input mt-1">
-                  <option value="">{t.schedule.selectClient}</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <FilterSelect
+                  value={formClientId}
+                  onChange={setFormClientId}
+                  placeholder={t.schedule.selectClient}
+                  options={clients.map((c) => ({ value: c.id, label: c.name }))}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.schedule.type}
                 </label>
-                <select name="type" className="input mt-1">
-                  <option value="session">{t.schedule.trainingSession}</option>
-                  <option value="assessment">{t.schedule.assessment}</option>
-                  <option value="consultation">{t.schedule.consultation}</option>
-                </select>
+                <FilterSelect
+                  value={formType}
+                  onChange={setFormType}
+                  placeholder={t.schedule.type}
+                  options={[
+                    { value: "session", label: t.schedule.trainingSession },
+                    { value: "assessment", label: t.schedule.assessment },
+                    { value: "consultation", label: t.schedule.consultation },
+                  ]}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">

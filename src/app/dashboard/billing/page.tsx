@@ -17,6 +17,7 @@ import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useApi } from "@/hooks/use-api";
 import { useToast } from "@/components/ui/toast";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { api } from "@/lib/api";
 
 interface PaymentWithClient {
@@ -186,17 +187,13 @@ export default function BillingPage() {
               <label className="block text-sm font-medium text-gray-700">
                 {t.billing.client} *
               </label>
-              <select
-                required
+              <FilterSelect
                 value={selectedClientId}
-                onChange={(e) => setSelectedClientId(e.target.value)}
-                className="input mt-1"
-              >
-                <option value="">{t.billing.selectClient}</option>
-                {clients.filter((c) => c.status === "active").map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={setSelectedClientId}
+                placeholder={t.billing.selectClient}
+                options={clients.filter((c) => c.status === "active").map((c) => ({ value: c.id, label: c.name }))}
+                className="mt-1"
+              />
             </div>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
@@ -218,16 +215,18 @@ export default function BillingPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.common.status}
                 </label>
-                <select
+                <FilterSelect
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="input mt-1"
-                >
-                  <option value="paid">{t.billing.paid}</option>
-                  <option value="pending">{t.billing.pending}</option>
-                  <option value="overdue">{t.billing.overdue}</option>
-                  <option value="cancelled">{t.billing.cancelled}</option>
-                </select>
+                  onChange={setStatus}
+                  placeholder={t.common.status}
+                  options={[
+                    { value: "paid", label: t.billing.paid },
+                    { value: "pending", label: t.billing.pending },
+                    { value: "overdue", label: t.billing.overdue },
+                    { value: "cancelled", label: t.billing.cancelled },
+                  ]}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -255,16 +254,13 @@ export default function BillingPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.method}
                 </label>
-                <select
+                <FilterSelect
                   value={method}
-                  onChange={(e) => setMethod(e.target.value)}
-                  className="input mt-1"
-                >
-                  <option value="">{t.billing.selectMethod}</option>
-                  {METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  ))}
-                </select>
+                  onChange={setMethod}
+                  placeholder={t.billing.selectMethod}
+                  options={METHODS}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">

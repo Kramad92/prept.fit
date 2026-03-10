@@ -5,6 +5,7 @@ import { Plus, ClipboardCheck, MessageSquare, Copy, Pencil, Trash2, X, Check } f
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
+import { FilterSelect } from "@/components/ui/filter-select";
 import type { CheckInQuestion, CheckInAnswer } from "@/types";
 
 interface CheckInTemplate {
@@ -33,6 +34,7 @@ export default function CheckInsPage() {
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [coachNote, setCoachNote] = useState("");
   const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [createFreq, setCreateFreq] = useState("weekly");
 
   // Edit template state
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export default function CheckInsPage() {
 
     const data = {
       name: formData.get("name"),
-      frequency: formData.get("frequency"),
+      frequency: createFreq,
       questions: questionTexts.map((q, i) => ({
         id: `q${i}`,
         question: q.trim(),
@@ -80,6 +82,7 @@ export default function CheckInsPage() {
       const template = await res.json();
       setTemplates((prev) => [template, ...prev]);
       setShowCreate(false);
+      setCreateFreq("weekly");
     }
   }
 
@@ -202,15 +205,16 @@ export default function CheckInsPage() {
                       className="input"
                       placeholder={t.checkIns.templateName}
                     />
-                    <select
+                    <FilterSelect
                       value={editFrequency}
-                      onChange={(e) => setEditFrequency(e.target.value)}
-                      className="input"
-                    >
-                      <option value="weekly">{t.checkIns.weekly}</option>
-                      <option value="biweekly">{t.checkIns.biweekly}</option>
-                      <option value="monthly">{t.checkIns.monthly}</option>
-                    </select>
+                      onChange={setEditFrequency}
+                      placeholder={t.checkIns.frequency}
+                      options={[
+                        { value: "weekly", label: t.checkIns.weekly },
+                        { value: "biweekly", label: t.checkIns.biweekly },
+                        { value: "monthly", label: t.checkIns.monthly },
+                      ]}
+                    />
                     <textarea
                       value={editQuestions}
                       onChange={(e) => setEditQuestions(e.target.value)}
@@ -419,11 +423,17 @@ export default function CheckInsPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.checkIns.frequency}
                 </label>
-                <select name="frequency" className="input mt-1">
-                  <option value="weekly">{t.checkIns.weekly}</option>
-                  <option value="biweekly">{t.checkIns.biweekly}</option>
-                  <option value="monthly">{t.checkIns.monthly}</option>
-                </select>
+                <FilterSelect
+                  value={createFreq}
+                  onChange={setCreateFreq}
+                  placeholder={t.checkIns.frequency}
+                  className="mt-1"
+                  options={[
+                    { value: "weekly", label: t.checkIns.weekly },
+                    { value: "biweekly", label: t.checkIns.biweekly },
+                    { value: "monthly", label: t.checkIns.monthly },
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,6 +15,12 @@ import {
   UtensilsCrossed,
   DollarSign,
   Sparkles,
+  MoreVertical,
+  Trash2,
+  Archive,
+  Power,
+  Globe,
+  GlobeLock,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -42,7 +48,12 @@ export default function ClientDetailPage() {
     "overview" | "photos" | "workouts" | "nutrition" | "habits" | "payments" | "measurements"
   >("overview");
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
-  const { toastError } = useToast();
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { toastSuccess, toastError } = useToast();
+  const router = useRouter();
+
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const loadClient = useCallback(() => {
     api.get<ClientDetail>(`/api/clients/${params.id}`)
@@ -53,6 +64,52 @@ export default function ClientDetailPage() {
   useEffect(() => {
     loadClient();
   }, [loadClient]);
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    if (showMenu) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showMenu]);
+
+  async function handleStatusChange(status: string) {
+    if (!client) return;
+    try {
+      await api.put(`/api/clients/${params.id}`, { name: client.name, status });
+      toastSuccess(t.clients.statusUpdated);
+      loadClient();
+    } catch {
+      toastError(t.errors.failedToSave);
+    }
+    setShowMenu(false);
+  }
+
+  async function handleArchive() {
+    if (!client) return;
+    try {
+      await api.put(`/api/clients/${params.id}`, { name: client.name, status: "archived" });
+      toastSuccess(t.clients.clientArchived);
+      loadClient();
+    } catch {
+      toastError(t.errors.failedToSave);
+    }
+    setShowMenu(false);
+  }
+
+  async function handleDelete() {
+    try {
+      await api.delete(`/api/clients/${params.id}`);
+      toastSuccess(t.clients.clientDeleted);
+      router.push("/dashboard/clients");
+    } catch {
+      toastError(t.errors.failedToDelete);
+    }
+    setShowDeleteConfirm(false);
+  }
 
   if (!client) {
     return (
@@ -89,6 +146,16 @@ export default function ClientDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold text-gray-900">{client.name}</h1>
             <StatusBadge status={client.status} />
+            {client.userId && (
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                client.status === "active"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-500"
+              }`}>
+                {client.status === "active" ? <Globe className="h-3 w-3" /> : <GlobeLock className="h-3 w-3" />}
+                {client.status === "active" ? t.clients.portalConnected : t.clients.portalBlocked}
+              </span>
+            )}
           </div>
           {client.email && (
             <p className="mt-0.5 text-sm text-gray-500">{client.email}</p>
@@ -100,7 +167,7 @@ export default function ClientDetailPage() {
             <p className="mt-2 text-sm text-gray-700">{client.goals}</p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           {!client.userId && client.email && (
             <button
               onClick={() => setShowInviteModal(true)}
@@ -110,11 +177,23 @@ export default function ClientDetailPage() {
               {t.clients.inviteToPortal}
             </button>
           )}
-          {client.userId && (
-            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
-              {t.clients.portalActive}
-            </span>
-          )}
+          {client.status === "active" ? (
+            <button
+              onClick={() => handleStatusChange("inactive")}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+            >
+              <Power className="mr-1 inline h-4 w-4" />
+              {t.clients.deactivate}
+            </button>
+          ) : client.status !== "archived" ? (
+            <button
+              onClick={() => handleStatusChange("active")}
+              className="rounded-lg border border-green-200 px-3 py-2 text-sm text-green-600 hover:bg-green-50"
+            >
+              <Power className="mr-1 inline h-4 w-4" />
+              {t.clients.activate}
+            </button>
+          ) : null}
           <Link
             href={`/dashboard/clients/${client.id}/edit`}
             className="btn-secondary"
@@ -122,8 +201,74 @@ export default function ClientDetailPage() {
             <Edit className="mr-1 h-4 w-4" />
             {t.common.edit}
           </Link>
+          {/* Three-dot menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                {client.status !== "active" && (
+                  <button
+                    onClick={() => handleStatusChange("active")}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Power className="h-4 w-4 text-green-500" />
+                    {t.clients.activate}
+                  </button>
+                )}
+                {client.status !== "paused" && client.status !== "archived" && (
+                  <button
+                    onClick={() => handleStatusChange("paused")}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Power className="h-4 w-4 text-yellow-500" />
+                    {t.clients.paused}
+                  </button>
+                )}
+                {client.status !== "archived" && (
+                  <button
+                    onClick={handleArchive}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Archive className="h-4 w-4 text-gray-400" />
+                    {t.clients.archive}
+                  </button>
+                )}
+                <div className="my-1 border-t border-gray-100" />
+                <button
+                  onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t.clients.deleteClient}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Delete confirmation */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">{t.clients.deleteClient}</h3>
+            <p className="mt-2 text-sm text-gray-600">{t.clients.deleteClientConfirm}</p>
+            <div className="mt-4 flex gap-3">
+              <button onClick={handleDelete} className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+                {t.common.delete}
+              </button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                {t.common.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {inviteResult && (
         <div className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">

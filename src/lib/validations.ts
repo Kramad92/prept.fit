@@ -85,7 +85,7 @@ export const clientUpdateSchema = z.object({
   gender: z.string().nullable().optional(),
   goals: z.string().max(2000).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
-  status: z.enum(["active", "inactive", "paused"]).optional(),
+  status: z.enum(["active", "inactive", "paused", "archived"]).optional(),
   ...clientProfileFields,
 });
 

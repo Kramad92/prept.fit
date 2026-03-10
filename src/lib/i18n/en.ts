@@ -178,6 +178,18 @@ export const en: Translations = {
     moderateActivity: "Moderate Activity",
     activeLevel: "Active",
     veryActive: "Very Active",
+    archived: "Archived",
+    activate: "Activate",
+    deactivate: "Deactivate",
+    archive: "Archive",
+    deleteClient: "Delete Client",
+    deleteClientConfirm: "Are you sure you want to permanently delete this client? This cannot be undone.",
+    archiveClientConfirm: "Are you sure you want to archive this client? They will lose portal access.",
+    portalConnected: "Portal",
+    portalBlocked: "Portal (blocked)",
+    clientDeleted: "Client deleted",
+    clientArchived: "Client archived",
+    statusUpdated: "Client status updated",
   },
 
   invite: {
@@ -938,6 +950,7 @@ export const en: Translations = {
     cancelled: "cancelled",
     confirmed: "confirmed",
     completed: "completed",
+    archived: "archived",
   },
 
   notifications: {

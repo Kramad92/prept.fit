@@ -39,6 +39,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     completed: t.statuses.completed,
     enrolled: t.groupTraining.enrolled,
     attended: t.groupTraining.attended,
+    archived: t.statuses.archived,
     "no-show": t.groupTraining.noShow,
     scheduled: t.groupTraining.scheduled,
   };

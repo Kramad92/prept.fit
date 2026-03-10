@@ -497,7 +497,7 @@ export default function ExerciseLibraryPage() {
                   {exs.map((ex) => (
                     <div
                       key={ex.id}
-                      className={`group card cursor-pointer py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${selectMode ? "" : ""} ${selected.has(ex.id) ? "ring-2 ring-red-300 bg-red-50/30" : ""}`}
+                      className={`group card cursor-pointer overflow-hidden py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${selected.has(ex.id) ? "ring-2 ring-red-300 bg-red-50/30" : ""}`}
                       onClick={selectMode ? () => toggleSelect(ex.id) : () => setDetailExercise(ex)}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -699,7 +699,7 @@ function ExerciseDetailModal({
     "bg-red-50 text-red-700";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black/50 p-0 md:items-center md:p-4" onClick={onClose}>
       <div
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl"
         onClick={(e) => e.stopPropagation()}

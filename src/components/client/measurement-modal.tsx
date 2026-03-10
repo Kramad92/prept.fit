@@ -5,14 +5,16 @@ import { X } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
+import type { Measurement } from "@/types";
 
 interface MeasurementModalProps {
   clientId: string;
+  lastMeasurement?: Measurement | null;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function MeasurementModal({ clientId, onClose, onSaved }: MeasurementModalProps) {
+export function MeasurementModal({ clientId, lastMeasurement, onClose, onSaved }: MeasurementModalProps) {
   const [saving, setSaving] = useState(false);
   const { toastSuccess, toastError } = useToast();
   const t = useT();
@@ -63,36 +65,36 @@ export function MeasurementModal({ clientId, onClose, onSaved }: MeasurementModa
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.weight} ({t.measurements.kg})</label>
-              <input type="number" name="weight" step="0.1" className="input mt-1" placeholder="75.0" />
+              <input type="number" name="weight" step="0.1" className="input mt-1" placeholder="75.0" defaultValue={lastMeasurement?.weight ?? undefined} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.bodyFat} (%)</label>
-              <input type="number" name="bodyFat" step="0.1" className="input mt-1" placeholder="18.0" />
+              <input type="number" name="bodyFat" step="0.1" className="input mt-1" placeholder="18.0" defaultValue={lastMeasurement?.bodyFat ?? undefined} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.chest} ({t.measurements.cm})</label>
-              <input type="number" name="chest" step="0.1" className="input mt-1" placeholder="95.0" />
+              <input type="number" name="chest" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.chest ?? undefined} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.waist} ({t.measurements.cm})</label>
-              <input type="number" name="waist" step="0.1" className="input mt-1" placeholder="80.0" />
+              <input type="number" name="waist" step="0.1" className="input mt-1" placeholder="80.0" defaultValue={lastMeasurement?.waist ?? undefined} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.hips} ({t.measurements.cm})</label>
-              <input type="number" name="hips" step="0.1" className="input mt-1" placeholder="95.0" />
+              <input type="number" name="hips" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.hips ?? undefined} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.arms} ({t.measurements.cm})</label>
-              <input type="number" name="arms" step="0.1" className="input mt-1" placeholder="35.0" />
+              <input type="number" name="arms" step="0.1" className="input mt-1" placeholder="35.0" defaultValue={lastMeasurement?.arms ?? undefined} />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">{t.measurements.thighs} ({t.measurements.cm})</label>
-            <input type="number" name="thighs" step="0.1" className="input mt-1" placeholder="55.0" />
+            <input type="number" name="thighs" step="0.1" className="input mt-1" placeholder="55.0" defaultValue={lastMeasurement?.thighs ?? undefined} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">{t.common.notes}</label>

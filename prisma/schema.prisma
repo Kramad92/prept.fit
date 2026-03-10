@@ -218,7 +218,9 @@ model ClientWorkoutPlan {
   mode        String    @default("solo") // "solo" (client does alone) or "live" (with coach)
   startDate   DateTime?
   endDate     DateTime?
+  pausedAt    DateTime? // When the plan was paused (null = not paused)
   isActive    Boolean   @default(true)
+  allowDownload Boolean @default(true)
   accessPolicy String  @default("unlimited") // "unlimited", "date_range", "subscription_tied"
   assignedAt  DateTime  @default(now())
 
@@ -520,6 +522,7 @@ model ClientMealPlan {
   customName  String?
   notes       String?
   isActive    Boolean   @default(true)
+  allowDownload Boolean @default(true)
   assignedAt  DateTime  @default(now())
 
   clientId    String

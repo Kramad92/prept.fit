@@ -34,6 +34,15 @@ export const authOptions: NextAuthOptions = {
 
         if (!isValid) return null;
 
+        // Block inactive clients from logging in
+        if (
+          user.role === "CLIENT" &&
+          user.clientProfile &&
+          user.clientProfile.status !== "active"
+        ) {
+          throw new Error("PORTAL_DISABLED");
+        }
+
         return {
           id: user.id,
           email: user.email,

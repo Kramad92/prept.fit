@@ -35,7 +35,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   const [editExercises, setEditExercises] = useState<ExerciseInput[]>([]);
   const [editName, setEditName] = useState("");
 
-  async function handleAssignTemplate(templateId: string, mode?: string, aiAdjust?: boolean) {
+  async function handleAssignTemplate(templateId: string, mode?: string, aiAdjust?: boolean, opts?: { accessPolicy?: string; startDate?: string; endDate?: string }) {
     setAssigning(true);
     try {
       await api.post(`/api/clients/${clientId}/workouts`, {
@@ -43,6 +43,9 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
         mode: mode || "solo",
         aiAdjust: aiAdjust ?? false,
         locale,
+        accessPolicy: opts?.accessPolicy,
+        startDate: opts?.startDate || null,
+        endDate: opts?.endDate || null,
       });
       toastSuccess(t.workouts.templateAssigned);
     } catch {
@@ -51,6 +54,39 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
     setShowTemplatePicker(false);
     setAssigning(false);
     onRefresh();
+  }
+
+  async function handleToggleActive(planId: string, currentlyActive: boolean) {
+    try {
+      await api.put(`/api/clients/${clientId}/workouts/${planId}`, {
+        isActive: !currentlyActive,
+      });
+      onRefresh();
+    } catch {
+      toastError(t.workouts.failedToSave);
+    }
+  }
+
+  async function handleTogglePause(planId: string, isPaused: boolean) {
+    try {
+      await api.put(`/api/clients/${clientId}/workouts/${planId}`, {
+        paused: !isPaused,
+      });
+      onRefresh();
+    } catch {
+      toastError(t.workouts.failedToSave);
+    }
+  }
+
+  async function handleToggleDownload(planId: string, currentlyAllowed: boolean) {
+    try {
+      await api.put(`/api/clients/${clientId}/workouts/${planId}`, {
+        allowDownload: !currentlyAllowed,
+      });
+      onRefresh();
+    } catch {
+      toastError(t.workouts.failedToSave);
+    }
   }
 
   async function handleCreateCustom(data: {
@@ -231,6 +267,9 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
             onCancelEdit={() => setEditingPlanId(null)}
             onEditNameChange={setEditName}
             onEditExercisesChange={setEditExercises}
+            onToggleActive={() => handleToggleActive(plan.id, plan.isActive)}
+            onTogglePause={() => handleTogglePause(plan.id, !!plan.pausedAt)}
+            onToggleDownload={() => handleToggleDownload(plan.id, plan.allowDownload)}
           />
         ))}
       </div>

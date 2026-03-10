@@ -53,6 +53,9 @@ export async function POST(
         clientId,
         tenantId: session.user.tenantId,
         mode: body.mode,
+        accessPolicy: body.accessPolicy,
+        startDate: body.startDate ? new Date(body.startDate) : null,
+        endDate: body.endDate ? new Date(body.endDate) : null,
       });
     });
 

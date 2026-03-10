@@ -118,7 +118,9 @@ export interface AssignedWorkoutPlan {
   isActive: boolean;
   startDate: string | null;
   endDate: string | null;
+  pausedAt: string | null;
   accessPolicy: string;
+  allowDownload: boolean;
   clientWorkoutProgramId: string | null;
   workoutPlan: {
     id: string;
@@ -196,6 +198,7 @@ export interface AssignedMealPlan {
   customName: string | null;
   notes: string | null;
   isActive: boolean;
+  allowDownload: boolean;
   mealPlan: {
     id: string;
     name: string;

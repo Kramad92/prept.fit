@@ -100,12 +100,33 @@ export async function PUT(
     }
 
     // Update the ClientWorkoutPlan metadata
+    const updateData: any = {};
+    if (body.customName !== undefined) updateData.customName = body.customName;
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.isActive !== undefined) updateData.isActive = body.isActive;
+    if (body.allowDownload !== undefined) updateData.allowDownload = body.allowDownload;
+    if (body.accessPolicy !== undefined) updateData.accessPolicy = body.accessPolicy;
+    if (body.startDate !== undefined) updateData.startDate = body.startDate ? new Date(body.startDate) : null;
+    if (body.endDate !== undefined) updateData.endDate = body.endDate ? new Date(body.endDate) : null;
+
+    // Pause/resume logic (plan stays visible but time is frozen)
+    if (body.paused === true && !assignment.pausedAt) {
+      updateData.pausedAt = new Date();
+    } else if (body.paused === false && assignment.pausedAt) {
+      // Extend endDate by the number of days paused
+      const pausedMs = Date.now() - new Date(assignment.pausedAt).getTime();
+      const pausedDays = Math.ceil(pausedMs / (24 * 60 * 60 * 1000));
+      if (assignment.endDate) {
+        const newEnd = new Date(assignment.endDate);
+        newEnd.setDate(newEnd.getDate() + pausedDays);
+        updateData.endDate = newEnd;
+      }
+      updateData.pausedAt = null;
+    }
+
     return tx.clientWorkoutPlan.update({
       where: { id: params.planId },
-      data: {
-        customName: body.customName !== undefined ? body.customName : undefined,
-        notes: body.notes !== undefined ? body.notes : undefined,
-      },
+      data: updateData,
       include: {
         workoutPlan: {
           include: {

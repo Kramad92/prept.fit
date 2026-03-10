@@ -10,6 +10,7 @@ import {
   Users,
   CalendarRange,
   CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ExpandableNotes } from "@/components/ui/expandable-notes";
@@ -265,6 +266,17 @@ export default function PortalWorkoutsPage() {
                           </span>
                         )}
                       </div>
+                      {plan.endDate && (
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-400">
+                          <Clock className="h-3 w-3" />
+                          {(() => {
+                            const days = Math.ceil((new Date(plan.endDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                            return days > 0
+                              ? `${days} ${t.workouts?.daysLeft || "days left"}`
+                              : t.workouts?.expired || "Expired";
+                          })()}
+                        </p>
+                      )}
                       {plan.workoutPlan.description && (
                         <ExpandableNotes
                           notes={plan.workoutPlan.description}

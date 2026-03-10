@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   DollarSign,
@@ -9,11 +9,15 @@ import {
   Clock,
   TrendingUp,
   Search,
+  Plus,
+  X,
 } from "lucide-react";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useApi } from "@/hooks/use-api";
+import { useToast } from "@/components/ui/toast";
+import { api } from "@/lib/api";
 
 interface PaymentWithClient {
   id: string;
@@ -40,14 +44,86 @@ interface Summary {
   totalPayments: number;
 }
 
+interface SimpleClient {
+  id: string;
+  name: string;
+  status: string;
+}
+
 export default function BillingPage() {
   const t = useT();
   const { locale } = useLocale();
+  const { toastSuccess, toastError } = useToast();
   const [filter, setFilter] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [clients, setClients] = useState<SimpleClient[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Payment form state
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [dueDate, setDueDate] = useState("");
+  const [method, setMethod] = useState("");
+  const [status, setStatus] = useState("paid");
+  const [period, setPeriod] = useState("");
+  const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const METHODS = [
+    { value: "cash", label: t.billing.cash },
+    { value: "bank_transfer", label: t.billing.bankTransfer },
+    { value: "card", label: t.billing.card },
+    { value: "venmo", label: t.billing.venmo },
+    { value: "zelle", label: t.billing.zelle },
+    { value: "other", label: t.billing.other },
+  ];
 
   const url = filter ? `/api/payments?status=${filter}` : "/api/payments";
-  const { data, loading } = useApi<{ payments: PaymentWithClient[]; summary: Summary }>(url);
+  const { data, loading, refresh } = useApi<{ payments: PaymentWithClient[]; summary: Summary }>(url);
+
+  useEffect(() => {
+    api.get<SimpleClient[]>("/api/clients").then(setClients).catch(() => {});
+  }, []);
+
+  function resetForm() {
+    setSelectedClientId("");
+    setAmount("");
+    setDate(new Date().toISOString().split("T")[0]);
+    setDueDate("");
+    setMethod("");
+    setStatus("paid");
+    setPeriod("");
+    setDescription("");
+    setNotes("");
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedClientId) return;
+    setSaving(true);
+    try {
+      await api.post(`/api/clients/${selectedClientId}/payments`, {
+        amount,
+        date,
+        dueDate: dueDate || null,
+        method: method || null,
+        status,
+        period: period || null,
+        description: description || null,
+        notes: notes || null,
+      });
+      toastSuccess(t.billing.paymentRecorded);
+      setShowForm(false);
+      resetForm();
+      refresh();
+    } catch {
+      toastError(t.billing.failedToSave);
+    } finally {
+      setSaving(false);
+    }
+  }
   const payments = data?.payments || [];
   const summary = data?.summary || { totalCollected: 0, totalPending: 0, totalOverdue: 0, totalPayments: 0 };
 
@@ -73,12 +149,170 @@ export default function BillingPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t.billing.title}</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {t.billing.subtitle}
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t.billing.title}</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {t.billing.subtitle}
+          </p>
+        </div>
+        {!showForm && (
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="btn-primary text-sm"
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            {t.billing.recordPayment}
+          </button>
+        )}
       </div>
+
+      {/* Record Payment Form */}
+      {showForm && (
+        <div className="card mb-6 border-2 border-brand-200">
+          <form onSubmit={handleSubmit}>
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-gray-900">{t.billing.recordPayment}</h4>
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); resetForm(); }}
+                className="rounded p-1 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700">
+                {t.billing.client} *
+              </label>
+              <select
+                required
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+                className="input mt-1"
+              >
+                <option value="">{t.billing.selectClient}</option>
+                {clients.filter((c) => c.status === "active").map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.billing.amount} *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder={t.billing.amountPlaceholder}
+                  className="input mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.common.status}
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="input mt-1"
+                >
+                  <option value="paid">{t.billing.paid}</option>
+                  <option value="pending">{t.billing.pending}</option>
+                  <option value="overdue">{t.billing.overdue}</option>
+                  <option value="cancelled">{t.billing.cancelled}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.billing.paymentDate}
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="input mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.billing.dueDate}
+                </label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="input mt-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.billing.method}
+                </label>
+                <select
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value)}
+                  className="input mt-1"
+                >
+                  <option value="">{t.billing.selectMethod}</option>
+                  {METHODS.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.billing.period}
+                </label>
+                <input
+                  type="text"
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  placeholder={t.billing.periodPlaceholder}
+                  className="input mt-1"
+                />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700">
+                {t.common.description}
+              </label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t.billing.descriptionPlaceholder}
+                className="input mt-1"
+              />
+            </div>
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700">
+                {t.common.notes}
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                placeholder={t.billing.notesPlaceholder}
+                className="input mt-1"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={saving || !selectedClientId}
+              className="btn-primary mt-4 w-full"
+            >
+              {saving ? t.common.saving : t.billing.recordPayment}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">

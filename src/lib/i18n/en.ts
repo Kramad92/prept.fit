@@ -41,6 +41,7 @@ export const en: Translations = {
     signInButton: "Sign In",
     signingIn: "Signing in...",
     invalidCredentials: "Invalid email or password",
+    portalDisabled: "Your portal access has been disabled. Please contact your coach.",
     password: "Password",
     email: "Email",
     dontHaveAccount: "Don't have an account?",
@@ -306,6 +307,14 @@ export const en: Translations = {
     aiGenerated: "AI Generated Plan",
     aiError: "Generation failed — please try again",
     includeVideo: "Include video links",
+    disable: "Disable",
+    enable: "Enable",
+    pause: "Pause",
+    resume: "Resume",
+    expired: "Expired",
+    disableDownload: "Disable Download",
+    enableDownload: "Enable Download",
+    daysLeft: "days left",
   },
 
   nutrition: {
@@ -519,6 +528,7 @@ export const en: Translations = {
     paymentRecorded: "Payment recorded",
     paymentUpdated: "Payment updated",
     paymentDeleted: "Payment deleted",
+    selectClient: "Select client...",
   },
 
   messages: {
@@ -749,7 +759,7 @@ export const en: Translations = {
     currentWeight: "Current Weight",
     trackJourney: "Track your transformation journey",
     history: "History",
-    noMeasurements: "No measurements recorded yet. Your coach will log your stats during sessions.",
+    noMeasurements: "No measurements recorded yet. Add your first measurement to start tracking!",
   },
 
   portalWorkouts: {

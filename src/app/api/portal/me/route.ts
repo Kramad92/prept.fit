@@ -74,6 +74,8 @@ export async function GET() {
   const activePlans = (client.assignedPlans || []).filter((plan) => {
     if (plan.accessPolicy === "unlimited") return true;
     if (plan.accessPolicy === "date_range" && plan.endDate) {
+      // Paused plans don't expire (time is frozen)
+      if (plan.pausedAt) return true;
       return new Date(plan.endDate) >= now;
     }
     if (plan.accessPolicy === "subscription_tied") {

@@ -319,7 +319,7 @@ export default function WorkoutDetailPage() {
       {/* Assign Modal */}
       {showAssign && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
+          <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">{t.workouts.assignToClient}</h2>
               <button

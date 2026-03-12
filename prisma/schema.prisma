@@ -49,6 +49,7 @@ model Tenant {
   trainingGroups     TrainingGroup[]
   groupSessions      GroupSession[]
   workoutPrograms    WorkoutProgram[]
+  pushTokens         PushToken[]
 
   @@map("tenants")
 }
@@ -78,6 +79,7 @@ model User {
   sentMessages     Message[] @relation("sender")
   notifications    Notification[]
   refreshTokens    RefreshToken[]
+  pushTokens       PushToken[]
 
   @@index([tenantId])
   @@map("users")
@@ -471,6 +473,22 @@ model Notification {
   @@index([userId, isRead])
   @@index([tenantId])
   @@map("notifications")
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // Expo push token (ExponentPushToken[xxx])
+  platform  String   // "ios" | "android"
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([tenantId])
+  @@map("push_tokens")
 }
 
 // ========== NUTRITION & MEAL PLANS ==========

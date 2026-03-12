@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { validateBody, checkInSubmitSchema } from "@/lib/validations";
+import { sendPushToUser } from "@/services/push-notifications";
 
 // Get check-ins (coach sees all, client sees own)
 export async function GET(req: NextRequest) {
@@ -57,16 +58,24 @@ export async function POST(req: NextRequest) {
   });
 
   if (coachUser) {
+    const notifBody = `${session.user.name} submitted a check-in`;
     await prisma.notification.create({
       data: {
         type: "check_in_submitted",
         title: "Check-in submitted",
-        body: `${session.user.name} submitted a check-in`,
+        body: notifBody,
         userId: coachUser.id,
         tenantId: session.user.tenantId,
         data: { checkInId: checkIn.id, clientId: session.user.clientProfileId },
       },
     });
+
+    // Send push notification
+    sendPushToUser(coachUser.id, {
+      title: "Check-in submitted",
+      body: notifBody,
+      data: { type: "check_in_submitted", clientId: session.user.clientProfileId || "" },
+    }).catch(() => {});
   }
 
   return NextResponse.json(checkIn, { status: 201 });

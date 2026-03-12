@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { UsersRound, Calendar, Plus, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -43,13 +46,13 @@ export default function GroupTrainingPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t.groupTraining.title}</h1>
           <p className="mt-1 text-sm text-gray-500">{t.groupTraining.subtitle}</p>
         </div>
-        <button
+        <Button
           onClick={() => tab === "groups" ? setShowNewGroup(true) : setShowNewSession(true)}
-          className="btn-primary flex items-center gap-2"
+          className="flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
           {tab === "groups" ? t.groupTraining.newGroup : t.groupTraining.newSession}
-        </button>
+        </Button>
       </div>
 
       {/* Tabs */}
@@ -75,19 +78,19 @@ export default function GroupTrainingPage() {
           <div className="space-y-3">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">{t.groupTraining.groupName}</label>
-              <input type="text" className="input" placeholder={t.groupTraining.groupNamePlaceholder} value={newGroup.name} onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })} />
+              <Input type="text" placeholder={t.groupTraining.groupNamePlaceholder} value={newGroup.name} onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })} />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">{t.common.description}</label>
-              <textarea className="input" rows={2} value={newGroup.description} onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })} />
+              <Textarea rows={2} value={newGroup.description} onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })} />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">{t.groupTraining.maxParticipants}</label>
-              <input type="number" className="input w-32" value={newGroup.maxParticipants} onChange={(e) => setNewGroup({ ...newGroup, maxParticipants: e.target.value })} />
+              <Input type="number" className="w-32" value={newGroup.maxParticipants} onChange={(e) => setNewGroup({ ...newGroup, maxParticipants: e.target.value })} />
             </div>
             <div className="flex gap-2">
-              <button onClick={handleCreateGroup} className="btn-primary">{t.common.create}</button>
-              <button onClick={() => setShowNewGroup(false)} className="btn-secondary">{t.common.cancel}</button>
+              <Button onClick={handleCreateGroup}>{t.common.create}</Button>
+              <Button variant="outline" onClick={() => setShowNewGroup(false)}>{t.common.cancel}</Button>
             </div>
           </div>
         </div>

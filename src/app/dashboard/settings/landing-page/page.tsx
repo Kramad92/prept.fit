@@ -16,7 +16,10 @@ import {
   Star,
   GripVertical,
 } from "lucide-react";
-import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import type { Certificate, Package as PackageType } from "@/types";
 
@@ -34,7 +37,6 @@ export default function LandingPageSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newSpecialty, setNewSpecialty] = useState("");
-  const { toastSuccess, toastError } = useToast();
   const t = useT();
 
   useEffect(() => {
@@ -48,9 +50,9 @@ export default function LandingPageSettingsPage() {
         setCertificates(Array.isArray(c) ? c : []);
         setPackages(Array.isArray(p) ? p : []);
       })
-      .catch(() => toastError(t.settings.failedToLoad))
+      .catch(() => toast.error(t.settings.failedToLoad))
       .finally(() => setLoading(false));
-  }, [toastError, t]);
+  }, [t]);
 
   async function saveSettings() {
     if (!settings) return;
@@ -61,10 +63,10 @@ export default function LandingPageSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
-      if (res.ok) toastSuccess(t.landingPage.settingsSaved);
-      else toastError(t.landingPage.failedToSave);
+      if (res.ok) toast.success(t.landingPage.settingsSaved);
+      else toast.error(t.landingPage.failedToSave);
     } catch {
-      toastError(t.landingPage.failedToSave);
+      toast.error(t.landingPage.failedToSave);
     } finally {
       setSaving(false);
     }
@@ -106,7 +108,7 @@ export default function LandingPageSettingsPage() {
         setSettings({ ...settings, coachPhoto: data.url });
       }
     } catch {
-      toastError("Upload failed");
+      toast.error("Upload failed");
     }
   }
 
@@ -123,7 +125,7 @@ export default function LandingPageSettingsPage() {
         setCertificates([...certificates, cert]);
       }
     } catch {
-      toastError(t.errors.failedToSave);
+      toast.error(t.errors.failedToSave);
     }
   }
 
@@ -139,7 +141,7 @@ export default function LandingPageSettingsPage() {
       });
       setCertificates(certificates.map((c) => (c.id === id ? updated : c)));
     } catch {
-      toastError(t.errors.failedToSave);
+      toast.error(t.errors.failedToSave);
     }
   }
 
@@ -148,7 +150,7 @@ export default function LandingPageSettingsPage() {
       await fetch(`/api/settings/certificates/${id}`, { method: "DELETE" });
       setCertificates(certificates.filter((c) => c.id !== id));
     } catch {
-      toastError(t.errors.failedToDelete);
+      toast.error(t.errors.failedToDelete);
     }
   }
 
@@ -169,7 +171,7 @@ export default function LandingPageSettingsPage() {
         setPackages([...packages, pkg]);
       }
     } catch {
-      toastError(t.errors.failedToSave);
+      toast.error(t.errors.failedToSave);
     }
   }
 
@@ -185,7 +187,7 @@ export default function LandingPageSettingsPage() {
       });
       setPackages(packages.map((p) => (p.id === id ? updated : p)));
     } catch {
-      toastError(t.errors.failedToSave);
+      toast.error(t.errors.failedToSave);
     }
   }
 
@@ -194,7 +196,7 @@ export default function LandingPageSettingsPage() {
       await fetch(`/api/settings/packages/${id}`, { method: "DELETE" });
       setPackages(packages.filter((p) => p.id !== id));
     } catch {
-      toastError(t.errors.failedToDelete);
+      toast.error(t.errors.failedToDelete);
     }
   }
 
@@ -292,16 +294,18 @@ export default function LandingPageSettingsPage() {
               </div>
             )}
             <div>
-              <label className="btn-secondary cursor-pointer inline-flex items-center gap-1 text-sm">
-                <Upload className="h-4 w-4" />
-                {t.landingPage.uploadPhoto}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                />
-              </label>
+              <Button variant="outline" asChild className="cursor-pointer gap-1 text-sm">
+                <label>
+                  <Upload className="h-4 w-4" />
+                  {t.landingPage.uploadPhoto}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                </label>
+              </Button>
               {settings.coachPhoto && (
                 <button
                   onClick={() => setSettings({ ...settings, coachPhoto: null })}
@@ -331,17 +335,17 @@ export default function LandingPageSettingsPage() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input
+            <Input
               type="text"
               value={newSpecialty}
               onChange={(e) => setNewSpecialty(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSpecialty())}
               placeholder={t.landingPage.specialtyPlaceholder}
-              className="input flex-1"
+              className="flex-1"
             />
-            <button onClick={addSpecialty} className="btn-secondary">
+            <Button variant="outline" onClick={addSpecialty}>
               <Plus className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -351,12 +355,12 @@ export default function LandingPageSettingsPage() {
           {["instagram", "facebook", "youtube", "tiktok", "twitter", "linkedin"].map((platform) => (
             <div key={platform} className="flex items-center gap-2">
               <label className="w-24 text-sm capitalize text-gray-600">{platform}</label>
-              <input
+              <Input
                 type="url"
                 value={settings.socialLinks?.[platform] || ""}
                 onChange={(e) => updateSocialLink(platform, e.target.value)}
                 placeholder={`https://${platform}.com/...`}
-                className="input flex-1"
+                className="flex-1"
               />
             </div>
           ))}
@@ -369,33 +373,33 @@ export default function LandingPageSettingsPage() {
               <Award className="h-4 w-4" />
               {t.landingPage.certificates}
             </h3>
-            <button onClick={addCertificate} className="btn-secondary text-xs">
+            <Button variant="outline" onClick={addCertificate} className="text-xs">
               <Plus className="mr-1 h-3 w-3" />
               {t.landingPage.addCertificate}
-            </button>
+            </Button>
           </div>
           {certificates.map((cert) => (
             <div key={cert.id} className="space-y-2 rounded-lg border border-gray-200 p-3">
               <div className="flex items-start justify-between gap-2">
                 <GripVertical className="mt-2 h-4 w-4 flex-shrink-0 text-gray-300" />
                 <div className="flex-1 space-y-2">
-                  <input
+                  <Input
                     type="text"
                     value={cert.name}
                     onChange={(e) => updateCertificate(cert.id, { name: e.target.value })}
                     onBlur={() => updateCertificate(cert.id, {})}
                     placeholder={t.landingPage.certificateName}
-                    className="input w-full text-sm"
+                    className="w-full text-sm"
                   />
                   <div className="grid grid-cols-2 gap-2">
-                    <input
+                    <Input
                       type="text"
                       value={cert.issuer || ""}
                       onChange={(e) => updateCertificate(cert.id, { issuer: e.target.value })}
                       placeholder={t.landingPage.certificateIssuer}
-                      className="input text-sm"
+                      className="text-sm"
                     />
-                    <input
+                    <Input
                       type="number"
                       value={cert.year || ""}
                       onChange={(e) =>
@@ -404,7 +408,7 @@ export default function LandingPageSettingsPage() {
                         })
                       }
                       placeholder={t.landingPage.certificateYear}
-                      className="input text-sm"
+                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -423,45 +427,45 @@ export default function LandingPageSettingsPage() {
               <Package className="h-4 w-4" />
               {t.landingPage.pricing}
             </h3>
-            <button onClick={addPackage} className="btn-secondary text-xs">
+            <Button variant="outline" onClick={addPackage} className="text-xs">
               <Plus className="mr-1 h-3 w-3" />
               {t.landingPage.addPackage}
-            </button>
+            </Button>
           </div>
           {packages.map((pkg) => (
             <div key={pkg.id} className="space-y-2 rounded-lg border border-gray-200 p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 space-y-2">
-                  <input
+                  <Input
                     type="text"
                     value={pkg.name}
                     onChange={(e) => updatePackage(pkg.id, { name: e.target.value })}
                     placeholder={t.landingPage.packageName}
-                    className="input w-full text-sm"
+                    className="w-full text-sm"
                   />
-                  <textarea
+                  <Textarea
                     value={pkg.description || ""}
                     onChange={(e) => updatePackage(pkg.id, { description: e.target.value })}
                     placeholder={t.landingPage.packageDescription}
                     rows={2}
-                    className="input w-full text-sm"
+                    className="w-full text-sm"
                   />
                   <div className="grid grid-cols-3 gap-2">
-                    <input
+                    <Input
                       type="number"
                       value={pkg.price || ""}
                       onChange={(e) =>
                         updatePackage(pkg.id, { price: parseFloat(e.target.value) || 0 })
                       }
                       placeholder={t.landingPage.packagePrice}
-                      className="input text-sm"
+                      className="text-sm"
                     />
-                    <input
+                    <Input
                       type="text"
                       value={pkg.duration || ""}
                       onChange={(e) => updatePackage(pkg.id, { duration: e.target.value })}
                       placeholder={t.landingPage.packageDuration}
-                      className="input text-sm"
+                      className="text-sm"
                     />
                     <label className="flex items-center gap-1.5 text-sm text-gray-600">
                       <input
@@ -481,7 +485,7 @@ export default function LandingPageSettingsPage() {
                     </label>
                     {(pkg.features || []).map((f, i) => (
                       <div key={i} className="flex items-center gap-1">
-                        <input
+                        <Input
                           type="text"
                           value={f}
                           onChange={(e) => {
@@ -489,7 +493,7 @@ export default function LandingPageSettingsPage() {
                             features[i] = e.target.value;
                             updatePackage(pkg.id, { features });
                           }}
-                          className="input flex-1 text-sm"
+                          className="flex-1 text-sm"
                         />
                         <button
                           onClick={() => {
@@ -522,10 +526,10 @@ export default function LandingPageSettingsPage() {
         </div>
 
         {/* Save Button */}
-        <button onClick={saveSettings} disabled={saving} className="btn-primary">
+        <Button onClick={saveSettings} disabled={saving}>
           <Save className="mr-2 h-4 w-4" />
           {saving ? t.common.saving : t.settings.saveSettings}
-        </button>
+        </Button>
       </div>
     </div>
   );

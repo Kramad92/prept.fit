@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus, Database, Star, Save, Loader2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 interface LibraryFood {
   id: string;
@@ -281,7 +282,11 @@ export function FoodPicker({
             if (query.trim().length >= 2) setOpen(true);
           }}
           onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
-          className={inputClassName || (isInline ? "input text-xs" : "input pl-10")}
+          className={cn(
+            "block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200",
+            isInline ? "text-xs" : "pl-10",
+            inputClassName
+          )}
         />
         {loading && (
           <Loader2 className={`absolute top-1/2 -translate-y-1/2 animate-spin text-gray-400 ${isInline ? "right-2 h-3 w-3" : "right-3 h-4 w-4"}`} />

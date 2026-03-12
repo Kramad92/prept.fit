@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -22,6 +22,9 @@ import {
   Globe,
   GlobeLock,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ClientWorkoutTab } from "@/components/client/client-workout-tab";
@@ -31,7 +34,7 @@ import { ClientPhotosTab } from "@/components/client/client-photos-tab";
 import { ClientHabitsTab } from "@/components/client/client-habits-tab";
 import { InviteModal } from "@/components/client/invite-modal";
 import { MeasurementModal } from "@/components/client/measurement-modal";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import type { ClientDetail } from "@/types";
@@ -48,65 +51,48 @@ export default function ClientDetailPage() {
     "overview" | "photos" | "workouts" | "nutrition" | "habits" | "payments" | "measurements"
   >("overview");
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { toastSuccess, toastError } = useToast();
   const router = useRouter();
-
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const loadClient = useCallback(() => {
     api.get<ClientDetail>(`/api/clients/${params.id}`)
       .then(setClient)
-      .catch(() => toastError(t.errors.failedToLoad));
-  }, [params.id, toastError]);
+      .catch(() => toast.error(t.errors.failedToLoad));
+  }, [params.id]);
 
   useEffect(() => {
     loadClient();
   }, [loadClient]);
 
-  // Close menu on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false);
-      }
-    }
-    if (showMenu) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showMenu]);
-
   async function handleStatusChange(status: string) {
     if (!client) return;
     try {
       await api.put(`/api/clients/${params.id}`, { name: client.name, status });
-      toastSuccess(t.clients.statusUpdated);
+      toast.success(t.clients.statusUpdated);
       loadClient();
     } catch {
-      toastError(t.errors.failedToSave);
+      toast.error(t.errors.failedToSave);
     }
-    setShowMenu(false);
   }
 
   async function handleArchive() {
     if (!client) return;
     try {
       await api.put(`/api/clients/${params.id}`, { name: client.name, status: "archived" });
-      toastSuccess(t.clients.clientArchived);
+      toast.success(t.clients.clientArchived);
       loadClient();
     } catch {
-      toastError(t.errors.failedToSave);
+      toast.error(t.errors.failedToSave);
     }
-    setShowMenu(false);
   }
 
   async function handleDelete() {
     try {
       await api.delete(`/api/clients/${params.id}`);
-      toastSuccess(t.clients.clientDeleted);
+      toast.success(t.clients.clientDeleted);
       router.push("/dashboard/clients");
     } catch {
-      toastError(t.errors.failedToDelete);
+      toast.error(t.errors.failedToDelete);
     }
     setShowDeleteConfirm(false);
   }
@@ -169,64 +155,50 @@ export default function ClientDetailPage() {
             )}
           </div>
           {/* Three-dot menu (always visible) */}
-          <div className="relative flex-shrink-0" ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </button>
-            {showMenu && (
-              <div className="absolute right-0 z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-                {client.status !== "active" && (
-                  <button
-                    onClick={() => handleStatusChange("active")}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <Power className="h-4 w-4 text-green-500" />
-                    {t.clients.activate}
-                  </button>
-                )}
-                {client.status !== "paused" && client.status !== "archived" && (
-                  <button
-                    onClick={() => handleStatusChange("paused")}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <Power className="h-4 w-4 text-yellow-500" />
-                    {t.clients.paused}
-                  </button>
-                )}
-                {client.status !== "archived" && (
-                  <button
-                    onClick={handleArchive}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <Archive className="h-4 w-4 text-gray-400" />
-                    {t.clients.archive}
-                  </button>
-                )}
-                <div className="my-1 border-t border-gray-100" />
-                <button
-                  onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t.clients.deleteClient}
-                </button>
-              </div>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50">
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {client.status !== "active" && (
+                <DropdownMenuItem onClick={() => handleStatusChange("active")}>
+                  <Power className="mr-2 h-4 w-4 text-green-500" />
+                  {t.clients.activate}
+                </DropdownMenuItem>
+              )}
+              {client.status !== "paused" && client.status !== "archived" && (
+                <DropdownMenuItem onClick={() => handleStatusChange("paused")}>
+                  <Power className="mr-2 h-4 w-4 text-yellow-500" />
+                  {t.clients.paused}
+                </DropdownMenuItem>
+              )}
+              {client.status !== "archived" && (
+                <DropdownMenuItem onClick={handleArchive}>
+                  <Archive className="mr-2 h-4 w-4 text-gray-400" />
+                  {t.clients.archive}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="text-red-600 focus:bg-red-50 focus:text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t.clients.deleteClient}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         {/* Action buttons row */}
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
           {!client.userId && client.email && (
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowInviteModal(true)}
-              className="btn-secondary text-sm"
+              className="text-sm"
             >
               <UserPlus className="mr-1 h-4 w-4" />
               {t.clients.inviteToPortal}
-            </button>
+            </Button>
           )}
           {client.status === "active" ? (
             <button
@@ -245,33 +217,32 @@ export default function ClientDetailPage() {
               {t.clients.activate}
             </button>
           ) : null}
-          <Link
-            href={`/dashboard/clients/${client.id}/edit`}
-            className="btn-secondary text-sm"
-          >
-            <Edit className="mr-1 h-4 w-4" />
-            {t.common.edit}
-          </Link>
+          <Button variant="outline" asChild className="text-sm">
+            <Link href={`/dashboard/clients/${client.id}/edit`}>
+              <Edit className="mr-1 h-4 w-4" />
+              {t.common.edit}
+            </Link>
+          </Button>
         </div>
       </div>
 
       {/* Delete confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900">{t.clients.deleteClient}</h3>
-            <p className="mt-2 text-sm text-gray-600">{t.clients.deleteClientConfirm}</p>
-            <div className="mt-4 flex gap-3">
-              <button onClick={handleDelete} className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
-                {t.common.delete}
-              </button>
-              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                {t.common.cancel}
-              </button>
-            </div>
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.clients.deleteClient}</DialogTitle>
+          </DialogHeader>
+          <p className="mt-2 text-sm text-gray-600">{t.clients.deleteClientConfirm}</p>
+          <div className="mt-4 flex gap-3">
+            <button onClick={handleDelete} className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+              {t.common.delete}
+            </button>
+            <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              {t.common.cancel}
+            </button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {inviteResult && (
         <div className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
@@ -408,13 +379,13 @@ export default function ClientDetailPage() {
               <h3 className="text-sm font-semibold text-gray-700">
                 {t.measurements.title} ({client.measurements.length})
               </h3>
-              <button
+              <Button
                 onClick={() => setShowMeasurementForm(true)}
-                className="btn-primary text-sm"
+                className="text-sm"
               >
                 <Plus className="mr-1 h-4 w-4" />
                 {t.measurements.addMeasurement}
-              </button>
+              </Button>
             </div>
 
             {client.measurements.length === 0 ? (

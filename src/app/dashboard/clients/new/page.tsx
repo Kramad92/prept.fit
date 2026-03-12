@@ -1,39 +1,56 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useT } from "@/lib/i18n";
+
+const clientFormSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  email: z.string().email("Invalid email").or(z.literal("")).optional(),
+  phone: z.string().max(50).optional(),
+  gender: z.string().optional(),
+  goals: z.string().max(2000).optional(),
+  notes: z.string().max(5000).optional(),
+  allergies: z.string().max(1000).optional(),
+  dietaryPrefs: z.string().max(1000).optional(),
+  injuries: z.string().max(1000).optional(),
+  fitnessLevel: z.string().optional(),
+  activityLevel: z.string().optional(),
+});
+
+type ClientFormValues = z.infer<typeof clientFormSchema>;
 
 export default function NewClientPage() {
   const t = useT();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [gender, setGender] = useState("");
-  const [fitnessLevel, setFitnessLevel] = useState("");
-  const [activityLevel, setActivityLevel] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
+  const form = useForm<ClientFormValues>({
+    resolver: zodResolver(clientFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      gender: "",
+      goals: "",
+      notes: "",
+      allergies: "",
+      dietaryPrefs: "",
+      injuries: "",
+      fitnessLevel: "",
+      activityLevel: "",
+    },
+  });
 
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      phone: formData.get("phone") as string,
-      gender,
-      goals: formData.get("goals") as string,
-      notes: formData.get("notes") as string,
-      allergies: formData.get("allergies") as string,
-      dietaryPrefs: formData.get("dietaryPrefs") as string,
-      injuries: formData.get("injuries") as string,
-      fitnessLevel,
-      activityLevel,
-    };
-
+  async function onSubmit(data: ClientFormValues) {
     try {
       const res = await fetch("/api/clients", {
         method: "POST",
@@ -45,8 +62,8 @@ export default function NewClientPage() {
         const client = await res.json();
         router.push(`/dashboard/clients/${client.id}`);
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      // handled by API
     }
   }
 
@@ -65,167 +82,189 @@ export default function NewClientPage() {
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="card max-w-lg space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.clients.clientName} *
-          </label>
-          <input
-            type="text"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="card max-w-lg space-y-5">
+          <FormField
+            control={form.control}
             name="name"
-            required
-            className="input mt-1"
-            placeholder={t.clients.clientName}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.clients.clientName} *</FormLabel>
+                <FormControl>
+                  <Input placeholder={t.clients.clientName} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.common.email}
-          </label>
-          <input
-            type="email"
+          <FormField
+            control={form.control}
             name="email"
-            className="input mt-1"
-            placeholder="john@example.com"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.common.email}</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="john@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.common.phone}
-          </label>
-          <input
-            type="tel"
+          <FormField
+            control={form.control}
             name="phone"
-            className="input mt-1"
-            placeholder="+1 (555) 000-0000"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.common.phone}</FormLabel>
+                <FormControl>
+                  <Input type="tel" placeholder="+1 (555) 000-0000" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.clients.gender}
-          </label>
-          <FilterSelect
-            value={gender}
-            onChange={setGender}
-            placeholder={t.photos.selectCategory}
-            className="mt-1"
-            options={[
-              { value: "male", label: t.clients.male },
-              { value: "female", label: t.clients.female },
-              { value: "other", label: t.clients.other },
-            ]}
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.clients.gender}</FormLabel>
+                <FilterSelect
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  placeholder={t.photos.selectCategory}
+                  options={[
+                    { value: "male", label: t.clients.male },
+                    { value: "female", label: t.clients.female },
+                    { value: "other", label: t.clients.other },
+                  ]}
+                />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.clients.goals}
-          </label>
-          <textarea
+          <FormField
+            control={form.control}
             name="goals"
-            rows={3}
-            className="input mt-1"
-            placeholder={t.clients.goalsPlaceholder}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.clients.goals}</FormLabel>
+                <FormControl>
+                  <Textarea rows={3} placeholder={t.clients.goalsPlaceholder} {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.clients.fitnessLevel}
-            </label>
-            <FilterSelect
-              value={fitnessLevel}
-              onChange={setFitnessLevel}
-              placeholder={t.clients.selectLevel}
-              className="mt-1"
-              options={[
-                { value: "beginner", label: t.clients.beginner },
-                { value: "intermediate", label: t.clients.intermediate },
-                { value: "advanced", label: t.clients.advanced },
-              ]}
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="fitnessLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.clients.fitnessLevel}</FormLabel>
+                  <FilterSelect
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder={t.clients.selectLevel}
+                    options={[
+                      { value: "beginner", label: t.clients.beginner },
+                      { value: "intermediate", label: t.clients.intermediate },
+                      { value: "advanced", label: t.clients.advanced },
+                    ]}
+                  />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="activityLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.clients.activityLevel}</FormLabel>
+                  <FilterSelect
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder={t.clients.selectLevel}
+                    options={[
+                      { value: "sedentary", label: t.clients.sedentary },
+                      { value: "light", label: t.clients.lightActivity },
+                      { value: "moderate", label: t.clients.moderateActivity },
+                      { value: "active", label: t.clients.activeLevel },
+                      { value: "very_active", label: t.clients.veryActive },
+                    ]}
+                  />
+                </FormItem>
+              )}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.clients.activityLevel}
-            </label>
-            <FilterSelect
-              value={activityLevel}
-              onChange={setActivityLevel}
-              placeholder={t.clients.selectLevel}
-              className="mt-1"
-              options={[
-                { value: "sedentary", label: t.clients.sedentary },
-                { value: "light", label: t.clients.lightActivity },
-                { value: "moderate", label: t.clients.moderateActivity },
-                { value: "active", label: t.clients.activeLevel },
-                { value: "very_active", label: t.clients.veryActive },
-              ]}
-            />
-          </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.clients.allergies}
-          </label>
-          <input
-            type="text"
+          <FormField
+            control={form.control}
             name="allergies"
-            className="input mt-1"
-            placeholder={t.clients.allergiesPlaceholder}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.clients.allergies}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t.clients.allergiesPlaceholder} {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.clients.dietaryPrefs}
-          </label>
-          <input
-            type="text"
+          <FormField
+            control={form.control}
             name="dietaryPrefs"
-            className="input mt-1"
-            placeholder={t.clients.dietaryPrefsPlaceholder}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.clients.dietaryPrefs}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t.clients.dietaryPrefsPlaceholder} {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.clients.injuries}
-          </label>
-          <input
-            type="text"
+          <FormField
+            control={form.control}
             name="injuries"
-            className="input mt-1"
-            placeholder={t.clients.injuriesPlaceholder}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.clients.injuries}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t.clients.injuriesPlaceholder} {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            {t.common.notes}
-          </label>
-          <textarea
+          <FormField
+            control={form.control}
             name="notes"
-            rows={3}
-            className="input mt-1"
-            placeholder={t.clients.notesPlaceholder}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.common.notes}</FormLabel>
+                <FormControl>
+                  <Textarea rows={3} placeholder={t.clients.notesPlaceholder} {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div className="flex gap-3 pt-2">
-          <button type="submit" disabled={loading} className="btn-primary flex-1">
-            {loading ? t.common.saving : t.clients.addClient}
-          </button>
-          <Link href="/dashboard/clients" className="btn-secondary">
-            {t.common.cancel}
-          </Link>
-        </div>
-      </form>
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" disabled={form.formState.isSubmitting} className="flex-1">
+              {form.formState.isSubmitting ? t.common.saving : t.clients.addClient}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/clients">
+                {t.common.cancel}
+              </Link>
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

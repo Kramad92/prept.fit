@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { ClipboardCheck, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import type { CheckInQuestion, CheckInAnswer } from "@/types";
 
 interface CheckInTemplate {
@@ -130,7 +132,7 @@ export default function PortalCheckInsPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="btn-primary text-xs">{t.portalCheckIns.fillOut}</span>
+                    <Button className="text-xs">{t.portalCheckIns.fillOut}</Button>
                   </button>
 
                   {isActive && (
@@ -163,9 +165,9 @@ export default function PortalCheckInsPage() {
                               ))}
                             </div>
                           ) : (
-                            <textarea
+                            <Textarea
                               rows={2}
-                              className="input mt-1"
+                              className="mt-1"
                               value={answers[q.id] || ""}
                               onChange={(e) =>
                                 setAnswers((prev) => ({
@@ -178,13 +180,13 @@ export default function PortalCheckInsPage() {
                           )}
                         </div>
                       ))}
-                      <button
+                      <Button
                         onClick={() => handleSubmit(template.id)}
                         disabled={submitting}
-                        className="btn-primary w-full"
+                        className="w-full"
                       >
                         {submitting ? t.portalCheckIns.submitting : t.portalCheckIns.submit}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

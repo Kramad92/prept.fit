@@ -1,12 +1,16 @@
 "use client";
 
 import { useRef } from "react";
-import { X, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { FoodPicker } from "@/components/client/food-picker";
 import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
 import { AIFillMacros } from "@/components/ai/ai-fill-macros";
 import { useT } from "@/lib/i18n";
 import { scalePortionFood } from "@/lib/portion-scaling";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Food } from "@/types";
 
 export interface MealRow {
@@ -106,28 +110,22 @@ export function NutritionPlanForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center md:p-4">
-      <div className="w-full max-w-2xl bg-white p-4 md:p-6 rounded-t-2xl md:rounded-2xl max-h-[95vh] md:max-h-[90vh] flex flex-col">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
               {editingPlanId ? t.nutrition.editMealPlan : t.nutrition.createMealPlan}
-            </h2>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1 hover:bg-gray-100"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+            </DialogTitle>
+          </DialogHeader>
 
           <form onSubmit={onSubmit} onKeyDown={(e) => { if (e.key === "Enter" && (e.target as HTMLElement).tagName !== "BUTTON") { e.preventDefault(); (e.target as HTMLElement).blur(); } }} className="mt-4 space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.nutrition.planName} *</label>
-              <input type="text" required value={form.name} onChange={(e) => onFormChange((prev) => ({ ...prev, name: e.target.value }))} className="input mt-1" placeholder={t.nutrition.planNamePlaceholder} />
+              <Input type="text" required value={form.name} onChange={(e) => onFormChange((prev) => ({ ...prev, name: e.target.value }))} className="mt-1" placeholder={t.nutrition.planNamePlaceholder} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.common.description}</label>
-              <input type="text" value={form.description} onChange={(e) => onFormChange((prev) => ({ ...prev, description: e.target.value }))} className="input mt-1" placeholder={t.nutrition.aiPromptPlaceholder} />
+              <Input type="text" value={form.description} onChange={(e) => onFormChange((prev) => ({ ...prev, description: e.target.value }))} className="mt-1" placeholder={t.nutrition.aiPromptPlaceholder} />
               <div className="mt-1.5">
                 <AIGenerateMealPlan
                   prompt={form.description}
@@ -149,19 +147,19 @@ export function NutritionPlanForm({
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700">{t.nutrition.calories}</label>
-                <input type="number" value={form.targetCalories} onChange={(e) => onFormChange((prev) => ({ ...prev, targetCalories: e.target.value }))} className="input mt-1" placeholder="1800" />
+                <Input type="number" value={form.targetCalories} onChange={(e) => onFormChange((prev) => ({ ...prev, targetCalories: e.target.value }))} className="mt-1" placeholder="1800" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700">{t.nutrition.proteinG}</label>
-                <input type="number" value={form.targetProtein} onChange={(e) => onFormChange((prev) => ({ ...prev, targetProtein: e.target.value }))} className="input mt-1" placeholder="150" />
+                <Input type="number" value={form.targetProtein} onChange={(e) => onFormChange((prev) => ({ ...prev, targetProtein: e.target.value }))} className="mt-1" placeholder="150" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700">{t.nutrition.carbsG}</label>
-                <input type="number" value={form.targetCarbs} onChange={(e) => onFormChange((prev) => ({ ...prev, targetCarbs: e.target.value }))} className="input mt-1" placeholder="180" />
+                <Input type="number" value={form.targetCarbs} onChange={(e) => onFormChange((prev) => ({ ...prev, targetCarbs: e.target.value }))} className="mt-1" placeholder="180" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700">{t.nutrition.fatG}</label>
-                <input type="number" value={form.targetFat} onChange={(e) => onFormChange((prev) => ({ ...prev, targetFat: e.target.value }))} className="input mt-1" placeholder="60" />
+                <Input type="number" value={form.targetFat} onChange={(e) => onFormChange((prev) => ({ ...prev, targetFat: e.target.value }))} className="mt-1" placeholder="60" />
               </div>
             </div>
 
@@ -193,20 +191,18 @@ export function NutritionPlanForm({
                 <div key={mi} className="mt-3 rounded-lg border border-gray-200 p-3">
                   <div className="flex gap-3">
                     <div className="flex-1">
-                      <input
+                      <Input
                         type="text"
                         value={meal.name}
                         onChange={(e) => updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, name: e.target.value } : m))}
-                        className="input"
                         placeholder={t.nutrition.mealNamePlaceholder}
                       />
                     </div>
                     <div className="w-24">
-                      <input
+                      <Input
                         type="time"
                         value={meal.time}
                         onChange={(e) => updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, time: e.target.value } : m))}
-                        className="input"
                       />
                     </div>
                     {form.meals.length > 1 && (
@@ -219,7 +215,7 @@ export function NutritionPlanForm({
                       </button>
                     )}
                   </div>
-                  <textarea
+                  <Textarea
                     value={meal.description}
                     onChange={(e) => {
                       updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, description: e.target.value } : m));
@@ -232,7 +228,7 @@ export function NutritionPlanForm({
                         el.style.height = Math.min(el.scrollHeight, 4.5 * 16) + "px";
                       }
                     }}
-                    className="input mt-2 text-xs resize-none overflow-hidden"
+                    className="mt-2 text-xs resize-none overflow-hidden"
                     rows={1}
                     placeholder={t.nutrition.mealDescriptionPlaceholder}
                   />
@@ -254,7 +250,7 @@ export function NutritionPlanForm({
                           <div className="col-span-2">
                             <FoodPicker
                               variant="inline"
-                              inputClassName="input text-xs"
+                              inputClassName="text-xs"
                               placeholder={t.nutrition.foodItem}
                               initialValue={food.name}
                               onSelect={(result) => {
@@ -284,11 +280,11 @@ export function NutritionPlanForm({
                               }}
                             />
                           </div>
-                          <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder={t.nutrition.portion} data-food-portion={`${mi}-${fi}`} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} />
-                          <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder={t.nutrition.cal} />
-                          <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder={t.nutrition.pG} />
+                          <Input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="text-xs" placeholder={t.nutrition.portion} data-food-portion={`${mi}-${fi}`} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} />
+                          <Input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="text-xs" placeholder={t.nutrition.cal} />
+                          <Input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="text-xs" placeholder={t.nutrition.pG} />
                           <div className="flex gap-1">
-                            <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder={t.nutrition.fG} />
+                            <Input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="text-xs" placeholder={t.nutrition.fG} />
                             <button type="button" onClick={() => {
                               updateMeals((prev) => prev.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
                             }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
@@ -300,7 +296,7 @@ export function NutritionPlanForm({
                             <div className="flex-1">
                               <FoodPicker
                                 variant="inline"
-                                inputClassName="input text-xs"
+                                inputClassName="text-xs"
                                 placeholder={t.nutrition.foodItem}
                                 initialValue={food.name}
                                 onSelect={(result) => {
@@ -335,10 +331,10 @@ export function NutritionPlanForm({
                             }} className="text-gray-400 hover:text-red-500 p-1"><Trash2 className="h-4 w-4" /></button>
                           </div>
                           <div className="grid grid-cols-2 gap-1.5">
-                            <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="input text-xs" placeholder={t.nutrition.portion} data-food-portion-m={`${mi}-${fi}`} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} />
-                            <input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder={t.nutrition.calories} />
-                            <input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder={t.nutrition.proteinG} />
-                            <input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder={t.nutrition.fatG} />
+                            <Input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} className="text-xs" placeholder={t.nutrition.portion} data-food-portion-m={`${mi}-${fi}`} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} />
+                            <Input type="number" value={food.calories ?? ""} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="text-xs" placeholder={t.nutrition.calories} />
+                            <Input type="number" value={food.protein ?? ""} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="text-xs" placeholder={t.nutrition.proteinG} />
+                            <Input type="number" value={food.fat ?? ""} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="text-xs" placeholder={t.nutrition.fatG} />
                           </div>
                         </div>
                       </div>
@@ -347,7 +343,7 @@ export function NutritionPlanForm({
                     <div data-add-food={mi}>
                       <FoodPicker
                         variant="inline"
-                        inputClassName="input text-xs"
+                        inputClassName="text-xs"
                         placeholder={t.nutrition.addFoodItem}
                         onSelect={(food) => {
                           updateMeals((prev) =>
@@ -394,11 +390,11 @@ export function NutritionPlanForm({
             </div>
 
             <div data-meal-end />
-            <button type="submit" disabled={saving} className="btn-primary w-full">
+            <Button type="submit" disabled={saving} className="w-full">
               {saving ? t.common.saving : editingPlanId ? t.workouts.saveChanges : t.nutrition.createMealPlan}
-            </button>
+            </Button>
           </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Save, Palette, Clock, ChevronRight, Globe, Mail } from "lucide-react";
-import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, type Locale } from "@/lib/i18n";
 
@@ -27,7 +30,6 @@ export default function SettingsPage() {
   const [localeVal, setLocaleVal] = useState("bs");
   const [units, setUnits] = useState("metric");
   const [currency, setCurrency] = useState("BAM");
-  const { toastSuccess, toastError } = useToast();
   const t = useT();
   const { setLocale } = useLocale();
 
@@ -41,9 +43,9 @@ export default function SettingsPage() {
         if (data.units) setUnits(data.units);
         if (data.currency) setCurrency(data.currency);
       })
-      .catch(() => toastError(t.settings.failedToLoad))
+      .catch(() => toast.error(t.settings.failedToLoad))
       .finally(() => setLoading(false));
-  }, [toastError]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -70,12 +72,12 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        toastSuccess(t.settings.settingsSaved);
+        toast.success(t.settings.settingsSaved);
       } else {
-        toastError(t.settings.failedToSave);
+        toast.error(t.settings.failedToSave);
       }
     } catch {
-      toastError(t.settings.failedToSave);
+      toast.error(t.settings.failedToSave);
     } finally {
       setSaving(false);
     }
@@ -165,11 +167,11 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.settings.businessName}
             </label>
-            <input
+            <Input
               type="text"
               name="name"
               defaultValue={settings?.name || ""}
-              className="input mt-1"
+              className="mt-1"
               placeholder={t.settings.businessNamePlaceholder}
             />
           </div>
@@ -178,11 +180,11 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.settings.bio}
             </label>
-            <textarea
+            <Textarea
               name="bio"
               rows={3}
               defaultValue={settings?.bio || ""}
-              className="input mt-1"
+              className="mt-1"
               placeholder={t.settings.bioPlaceholder}
             />
           </div>
@@ -199,11 +201,11 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.common.email}
             </label>
-            <input
+            <Input
               type="email"
               name="email"
               defaultValue={settings?.email || ""}
-              className="input mt-1"
+              className="mt-1"
               placeholder="vas@email.com"
             />
           </div>
@@ -212,11 +214,11 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.common.phone}
             </label>
-            <input
+            <Input
               type="tel"
               name="phone"
               defaultValue={settings?.phone || ""}
-              className="input mt-1"
+              className="mt-1"
               placeholder="+1 (555) 000-0000"
             />
           </div>
@@ -225,11 +227,11 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.settings.website}
             </label>
-            <input
+            <Input
               type="url"
               name="website"
               defaultValue={settings?.website || ""}
-              className="input mt-1"
+              className="mt-1"
               placeholder="https://yoursite.com"
             />
           </div>
@@ -320,10 +322,10 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button type="submit" disabled={saving} className="btn-primary">
+          <Button type="submit" disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
             {saving ? t.common.saving : t.settings.saveSettings}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

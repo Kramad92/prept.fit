@@ -12,11 +12,14 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useApi } from "@/hooks/use-api";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { api } from "@/lib/api";
 
@@ -54,7 +57,6 @@ interface SimpleClient {
 export default function BillingPage() {
   const t = useT();
   const { locale } = useLocale();
-  const { toastSuccess, toastError } = useToast();
   const [filter, setFilter] = useState<string>("");
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -115,12 +117,12 @@ export default function BillingPage() {
         description: description || null,
         notes: notes || null,
       });
-      toastSuccess(t.billing.paymentRecorded);
+      toast.success(t.billing.paymentRecorded);
       setShowForm(false);
       resetForm();
       refresh();
     } catch {
-      toastError(t.billing.failedToSave);
+      toast.error(t.billing.failedToSave);
     } finally {
       setSaving(false);
     }
@@ -158,13 +160,13 @@ export default function BillingPage() {
           </p>
         </div>
         {!showForm && (
-          <button
+          <Button
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="btn-primary text-sm"
+            className="text-sm"
           >
             <Plus className="mr-1 h-4 w-4" />
             {t.billing.recordPayment}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -201,14 +203,14 @@ export default function BillingPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.amount} *
                 </label>
-                <input
+                <Input
                   type="number"
                   step="0.01"
                   required
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder={t.billing.amountPlaceholder}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div>
               <div>
@@ -232,11 +234,11 @@ export default function BillingPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.paymentDate}
                 </label>
-                <input
+                <Input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div>
               {/* <div>
@@ -247,7 +249,7 @@ export default function BillingPage() {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div> */}
               {/* <div>
@@ -271,7 +273,7 @@ export default function BillingPage() {
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
                   placeholder={t.billing.periodPlaceholder}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div> */}
             </div>
@@ -279,33 +281,33 @@ export default function BillingPage() {
               <label className="block text-sm font-medium text-gray-700">
                 {t.common.description}
               </label>
-              <input
+              <Input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t.billing.descriptionPlaceholder}
-                className="input mt-1"
+                className="mt-1"
               />
             </div>
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700">
                 {t.common.notes}
               </label>
-              <textarea
+              <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder={t.billing.notesPlaceholder}
-                className="input mt-1"
+                className="mt-1"
               />
             </div>
-            <button
+            <Button
               type="submit"
               disabled={saving || !selectedClientId}
-              className="btn-primary mt-4 w-full"
+              className="mt-4 w-full"
             >
               {saving ? t.common.saving : t.billing.recordPayment}
-            </button>
+            </Button>
           </form>
         </div>
       )}
@@ -451,12 +453,12 @@ export default function BillingPage() {
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
+          <Input
             type="text"
             placeholder={t.billing.searchPayments}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="input pl-10"
+            className="pl-10"
           />
         </div>
       </div>

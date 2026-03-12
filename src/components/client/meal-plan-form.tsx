@@ -2,6 +2,9 @@
 
 import { useState, useRef } from "react";
 import { Plus, Trash2, X, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FoodPicker } from "./food-picker";
 import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
 import type { MealInput, Food, AssignedMealPlan } from "@/types";
@@ -138,20 +141,18 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
         <div key={meal.tempId} className="rounded-lg border border-gray-200 p-3">
           <div className="flex gap-3">
             <div className="flex-1">
-              <input
+              <Input
                 type="text"
                 value={meal.name}
                 onChange={(e) => setMeals(meals.map((m, i) => (i === mi ? { ...m, name: e.target.value } : m)))}
-                className="input"
                 placeholder={t.nutrition.mealNamePlaceholder}
               />
             </div>
             <div className="w-24">
-              <input
+              <Input
                 type="time"
                 value={meal.time}
                 onChange={(e) => setMeals(meals.map((m, i) => (i === mi ? { ...m, time: e.target.value } : m)))}
-                className="input"
               />
             </div>
             {meals.length > 1 && (
@@ -164,7 +165,7 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
               </button>
             )}
           </div>
-          <textarea
+          <Textarea
             value={meal.description}
             onChange={(e) => {
               setMeals(meals.map((m, i) => (i === mi ? { ...m, description: e.target.value } : m)));
@@ -177,7 +178,7 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
                 el.style.height = Math.min(el.scrollHeight, 4.5 * 16) + "px";
               }
             }}
-            className="input mt-2 text-xs resize-none overflow-hidden"
+            className="mt-2 text-xs resize-none overflow-hidden"
             rows={1}
             placeholder={t.nutrition.mealDescriptionPlaceholder}
           />
@@ -196,7 +197,7 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
                 <div className="col-span-2">
                   <FoodPicker
                     variant="inline"
-                    inputClassName="input text-xs"
+                    inputClassName="text-xs"
                     placeholder="Food"
                     initialValue={food.name}
                     onSelect={(result) => {
@@ -226,11 +227,11 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
                     }}
                   />
                 </div>
-                <input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} className="input text-xs" placeholder="Portion" />
-                <input type="number" value={food.calories} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="input text-xs" placeholder="Cal" />
-                <input type="number" value={food.protein} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="input text-xs" placeholder="P" />
+                <Input type="text" value={food.portion} onChange={(e) => updateFood(mi, fi, "portion", e.target.value)} onFocus={(e) => { handlePortionFocus(mi, fi, food.portion); e.target.select(); }} onBlur={() => handlePortionBlur(mi, fi)} className="text-xs" placeholder="Portion" />
+                <Input type="number" value={food.calories} onChange={(e) => updateFood(mi, fi, "calories", e.target.value)} className="text-xs" placeholder="Cal" />
+                <Input type="number" value={food.protein} onChange={(e) => updateFood(mi, fi, "protein", e.target.value)} className="text-xs" placeholder="P" />
                 <div className="flex gap-1">
-                  <input type="number" value={food.fat} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="input text-xs" placeholder="F" />
+                  <Input type="number" value={food.fat} onChange={(e) => updateFood(mi, fi, "fat", e.target.value)} className="text-xs" placeholder="F" />
                   <button type="button" onClick={() => {
                     setMeals(meals.map((m, i) => i === mi ? { ...m, foods: m.foods.filter((_, idx) => idx !== fi) } : m));
                   }} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
@@ -239,7 +240,7 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
             ))}
             <FoodPicker
               variant="inline"
-              inputClassName="input text-xs"
+              inputClassName="text-xs"
               placeholder={t.nutrition.addFoodItem}
               onSelect={(food) => {
                 setMeals(
@@ -290,10 +291,10 @@ interface MacroFieldsProps {
 function MacroFields({ form, updateFormField, t }: MacroFieldsProps) {
   return (
     <div className="grid grid-cols-4 gap-3">
-      <div><label className="text-xs text-gray-500">{t.nutrition.calories}</label><input type="number" value={form.calories} onChange={(e) => updateFormField("calories", e.target.value)} className="input mt-0.5" placeholder="1800" /></div>
-      <div><label className="text-xs text-gray-500">{t.nutrition.protein}</label><input type="number" value={form.protein} onChange={(e) => updateFormField("protein", e.target.value)} className="input mt-0.5" placeholder="150" /></div>
-      <div><label className="text-xs text-gray-500">{t.nutrition.carbs}</label><input type="number" value={form.carbs} onChange={(e) => updateFormField("carbs", e.target.value)} className="input mt-0.5" placeholder="180" /></div>
-      <div><label className="text-xs text-gray-500">{t.nutrition.fat}</label><input type="number" value={form.fat} onChange={(e) => updateFormField("fat", e.target.value)} className="input mt-0.5" placeholder="60" /></div>
+      <div><label className="text-xs text-gray-500">{t.nutrition.calories}</label><Input type="number" value={form.calories} onChange={(e) => updateFormField("calories", e.target.value)} className="mt-0.5" placeholder="1800" /></div>
+      <div><label className="text-xs text-gray-500">{t.nutrition.protein}</label><Input type="number" value={form.protein} onChange={(e) => updateFormField("protein", e.target.value)} className="mt-0.5" placeholder="150" /></div>
+      <div><label className="text-xs text-gray-500">{t.nutrition.carbs}</label><Input type="number" value={form.carbs} onChange={(e) => updateFormField("carbs", e.target.value)} className="mt-0.5" placeholder="180" /></div>
+      <div><label className="text-xs text-gray-500">{t.nutrition.fat}</label><Input type="number" value={form.fat} onChange={(e) => updateFormField("fat", e.target.value)} className="mt-0.5" placeholder="60" /></div>
     </div>
   );
 }
@@ -366,15 +367,15 @@ function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit
           </button>
         </div>
         <div className="mt-3">
-          <input type="text" required value={form.name} onChange={(e) => updateFormField("name", e.target.value)} placeholder={t.nutrition.planName} className="input" />
+          <Input type="text" required value={form.name} onChange={(e) => updateFormField("name", e.target.value)} placeholder={t.nutrition.planName} />
         </div>
         <div className="mt-2">
-          <input
+          <Input
             type="text"
             value={customDescription}
             onChange={(e) => setCustomDescription(e.target.value)}
             placeholder={t.nutrition.aiPromptPlaceholder}
-            className="input text-sm"
+            className="text-sm"
           />
           <div className="mt-1.5">
             <AIGenerateMealPlan
@@ -411,9 +412,9 @@ function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit
         <div className="mt-3">
           <MealEditor meals={form.meals} setMeals={setMeals} t={t} />
         </div>
-        <button type="submit" disabled={saving} className="btn-primary mt-4 w-full">
+        <Button type="submit" disabled={saving} className="mt-4 w-full">
           {saving ? t.nutrition.creating : t.nutrition.createMealPlan}
-        </button>
+        </Button>
       </form>
     </div>
   );
@@ -436,18 +437,18 @@ function EditForm({ form, updateFormField, setMeals, saving, onSave, onCancel, t
     <div className="mt-4 border-t border-gray-100 pt-4">
       <div className="mb-3">
         <label className="text-xs text-gray-500">{t.nutrition.planName}</label>
-        <input type="text" value={form.name} onChange={(e) => updateFormField("name", e.target.value)} className="input mt-0.5" />
+        <Input type="text" value={form.name} onChange={(e) => updateFormField("name", e.target.value)} className="mt-0.5" />
       </div>
       <div className="mb-3">
         <MacroFields form={form} updateFormField={updateFormField} t={t} />
       </div>
       <MealEditor meals={form.meals} setMeals={setMeals} t={t} />
       <div className="mt-4 flex gap-2">
-        <button onClick={onSave} disabled={saving} className="btn-primary text-sm">
+        <Button onClick={onSave} disabled={saving} className="text-sm">
           <Check className="mr-1 h-4 w-4" />
           {saving ? t.common.saving : t.workouts.saveChanges}
-        </button>
-        <button onClick={onCancel} className="btn-secondary text-sm">{t.common.cancel}</button>
+        </Button>
+        <Button variant="outline" onClick={onCancel} className="text-sm">{t.common.cancel}</Button>
       </div>
     </div>
   );

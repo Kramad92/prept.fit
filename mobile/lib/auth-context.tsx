@@ -58,7 +58,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setStoredUser(res.user);
 
     setUser(res.user);
-    router.replace("/(client)/(tabs)");
+    if (res.user.role === "COACH") {
+      router.replace("/(coach)/(tabs)");
+    } else {
+      router.replace("/(client)/(tabs)");
+    }
   }, []);
 
   const logout = useCallback(async () => {

@@ -17,5 +17,9 @@ export default function Index() {
     return <Redirect href="/login" />;
   }
 
+  if (user.role === "COACH") {
+    return <Redirect href="/(coach)/(tabs)" />;
+  }
+
   return <Redirect href="/(client)/(tabs)" />;
 }

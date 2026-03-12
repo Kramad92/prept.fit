@@ -341,3 +341,235 @@ export interface PaymentResponse {
     totalOverdue: number;
   };
 }
+
+// Phase 6: Coach types
+
+export interface CoachDashboard {
+  clientCount: number;
+  totalClients: number;
+  planCount: number;
+  mealPlanCount: number;
+  weekSessions: number;
+  todaySessions: CoachSession[];
+  recentClients: Array<{
+    id: string;
+    name: string;
+    status: string;
+    goals: string | null;
+  }>;
+  payments: {
+    pendingCount: number;
+    pendingTotal: number;
+    overdueCount: number;
+    overdueTotal: number;
+    monthCollected: number;
+    monthCount: number;
+    pendingList: CoachPaymentItem[];
+    overdueList: CoachPaymentItem[];
+  };
+  profileStats: {
+    incomplete: Array<{
+      id: string;
+      name: string;
+      filled: number;
+      total: number;
+      hasPortalAccess: boolean;
+    }>;
+    incompleteCount: number;
+    noPortalCount: number;
+    totalActive: number;
+  };
+  unreadMessages: {
+    total: number;
+    byClient: Array<{
+      clientId: string;
+      clientName: string;
+      count: number;
+      latest: string;
+    }>;
+  };
+  birthdays: Array<{
+    id: string;
+    name: string;
+    date: string;
+    daysUntil: number;
+    turningAge: number;
+  }>;
+  expiringPlans: Array<{
+    id: string;
+    clientName: string;
+    clientId: string;
+    planName: string;
+    endDate: string | null;
+  }>;
+  weeklyWorkoutCompletion: {
+    logged: number;
+    activePlans: number;
+  };
+  checkIns: Array<{
+    id: string;
+    clientName: string;
+    clientId: string;
+    submittedAt: string;
+  }>;
+  activityFeed: Array<{
+    type: "payment" | "workout" | "checkin" | "message";
+    text: string;
+    detail: string | null;
+    date: string;
+  }>;
+}
+
+export interface CoachSession {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  clientName: string;
+}
+
+export interface CoachPaymentItem {
+  id: string;
+  amount: number;
+  currency: string;
+  dueDate: string | null;
+  description: string | null;
+  clientName: string;
+  clientId: string;
+}
+
+export interface ClientListItem {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  gender: string | null;
+  status: string;
+  goals: string | null;
+  createdAt: string;
+  _count: {
+    progressPhotos: number;
+    assignedPlans: number;
+  };
+}
+
+export interface ClientDetail {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  gender: string | null;
+  status: string;
+  goals: string | null;
+  notes: string | null;
+  allergies: string | null;
+  dietaryPrefs: string | null;
+  injuries: string | null;
+  fitnessLevel: string | null;
+  activityLevel: string | null;
+  userId: string | null;
+  dateOfBirth: string | null;
+  createdAt: string;
+  progressPhotos: Array<{
+    id: string;
+    url: string;
+    takenAt: string;
+    notes: string | null;
+  }>;
+  measurements: MeasurementData[];
+  assignedPlans: AssignedWorkoutPlan[];
+  assignedMealPlans: AssignedMealPlan[];
+}
+
+export interface CoachScheduleItem {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  type: string;
+  notes: string | null;
+  clientId: string;
+  clientName: string;
+}
+
+export interface CoachPaymentsResponse {
+  payments: Array<{
+    id: string;
+    clientId: string;
+    amount: number;
+    currency: string;
+    status: string;
+    date: string;
+    dueDate: string | null;
+    description: string | null;
+    client: {
+      id: string;
+      name: string;
+      email: string | null;
+    };
+  }>;
+  summary: {
+    totalCollected: number;
+    totalPending: number;
+    totalOverdue: number;
+    totalPayments: number;
+  };
+}
+
+export interface CoachTrainingGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  maxParticipants: number;
+  createdAt: string;
+  _count: {
+    members: number;
+    sessions: number;
+  };
+}
+
+export interface CoachGroupSession {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string | null;
+  notes: string | null;
+  maxParticipants: number;
+  isOpen: boolean;
+  status: string;
+  group: { id: string; name: string } | null;
+  workoutPlan: { id: string; name: string } | null;
+  _count: { participants: number };
+}
+
+export interface CoachGroupSessionDetail extends CoachGroupSession {
+  participants: Array<{
+    id: string;
+    sessionId: string;
+    clientId: string;
+    status: string;
+    enrolledAt: string;
+    client: {
+      id: string;
+      name: string;
+      email: string | null;
+    };
+  }>;
+}
+
+export interface LatestMessagesMap {
+  [clientId: string]: {
+    content: string;
+    createdAt: string;
+  };
+}
+
+export interface UnreadCountsMap {
+  [clientId: string]: number;
+}

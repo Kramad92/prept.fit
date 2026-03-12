@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { validateBody, messageCreateSchema } from "@/lib/validations";
 import { getPusherServer, getChatChannel } from "@/lib/pusher";
+import { sendPushToUser } from "@/services/push-notifications";
 
 // Get messages for a specific client thread
 export async function GET(
@@ -97,16 +98,24 @@ export async function POST(
   });
 
   if (session.user.role === "COACH" && client?.userId) {
+    const notifBody = `${session.user.name}: ${(content || "").trim().slice(0, 100) || "Sent an attachment"}`;
     await prisma.notification.create({
       data: {
         type: "new_message",
         title: "New message",
-        body: `${session.user.name}: ${(content || "").trim().slice(0, 100) || "Sent an attachment"}`,
+        body: notifBody,
         userId: client.userId,
         tenantId: session.user.tenantId,
         data: { clientId: params.clientId },
       },
     });
+
+    // Send push notification
+    sendPushToUser(client.userId, {
+      title: "New message",
+      body: notifBody,
+      data: { type: "new_message", clientId: params.clientId },
+    }).catch(() => {});
   }
 
   return NextResponse.json(message, { status: 201 });

@@ -57,6 +57,12 @@
           "cameraPermission": "TrainerHub needs camera access to take progress photos."
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "color": "#059669"
+        }
+      ]
     ],
     "extra": {
       "eas": {

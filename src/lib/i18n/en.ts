@@ -59,6 +59,13 @@ export const en: Translations = {
     reenterPassword: "Re-enter your password",
     enterPassword: "Enter your password",
     registrationFailed: "Registration failed",
+    continueWithGoogle: "Continue with Google",
+    continueWithApple: "Continue with Apple",
+    signUpWithGoogle: "Sign up with Google",
+    signUpWithApple: "Sign up with Apple",
+    orContinueWith: "or continue with",
+    completeRegistration: "Complete registration",
+    oneMoreStep: "Just one more thing — your business name",
   },
 
   nav: {

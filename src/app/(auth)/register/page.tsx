@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -64,90 +65,103 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card space-y-4">
+        <div className="card space-y-4">
           {error && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
               {error}
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.yourName} *
-            </label>
-            <Input
-              type="text"
-              name="name"
-              required
-              className="mt-1"
-              placeholder="Ime Prezime"
-            />
+          <SocialAuthButtons mode="register" />
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-3 text-gray-500">{t.auth.orContinueWith}</span>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.businessName} *
-            </label>
-            <Input
-              type="text"
-              name="businessName"
-              required
-              className="mt-1"
-              placeholder="FitLife Coaching"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.yourName} *
+              </label>
+              <Input
+                type="text"
+                name="name"
+                required
+                className="mt-1"
+                placeholder="Ime Prezime"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.email} *
-            </label>
-            <Input
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              className="mt-1"
-              placeholder="vas@email.com"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.businessName} *
+              </label>
+              <Input
+                type="text"
+                name="businessName"
+                required
+                className="mt-1"
+                placeholder="FitLife Coaching"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.password} *
-            </label>
-            <Input
-              type="password"
-              name="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="mt-1"
-              placeholder={t.auth.minChars}
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.email} *
+              </label>
+              <Input
+                type="email"
+                name="email"
+                required
+                autoComplete="email"
+                className="mt-1"
+                placeholder="vas@email.com"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.confirmPassword} *
-            </label>
-            <Input
-              type="password"
-              name="confirmPassword"
-              required
-              autoComplete="new-password"
-              className="mt-1"
-              placeholder={t.auth.reenterPassword}
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.password} *
+              </label>
+              <Input
+                type="password"
+                name="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="mt-1"
+                placeholder={t.auth.minChars}
+              />
+            </div>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? t.auth.creatingAccount : t.auth.createAccount}
-          </Button>
-        </form>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.confirmPassword} *
+              </label>
+              <Input
+                type="password"
+                name="confirmPassword"
+                required
+                autoComplete="new-password"
+                className="mt-1"
+                placeholder={t.auth.reenterPassword}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? t.auth.creatingAccount : t.auth.createAccount}
+            </Button>
+          </form>
+        </div>
 
         <p className="mt-4 text-center text-sm text-gray-500">
           {t.auth.alreadyHaveAccount}{" "}

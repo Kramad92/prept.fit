@@ -61,7 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const profile = await getCoachProfile();
   if (!profile) {
     return {
-      title: "TrainerHub — Your personal training business, simplified",
+      title: "Prept — Your personal training business, simplified",
       description: "Manage clients, schedule sessions, build workout plans, and track progress — all in one place.",
     };
   }

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { Camera, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { api } from "@/lib/api";
@@ -24,40 +26,40 @@ export function ClientPhotosTab({ clientId, photos, onRefresh }: ClientPhotosTab
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const { toastSuccess, toastError } = useToast();
+
 
   const categories = ["front", "back", "side", "other"];
 
   async function handleUploaded(key: string) {
     try {
       await api.post(`/api/clients/${clientId}/photos`, { key, caption, category: category || null });
-      toastSuccess(t.photos.photoUploaded);
+      toast.success(t.photos.photoUploaded);
       setShowUpload(false);
       setCaption("");
       setCategory("");
       onRefresh();
     } catch {
-      toastError(t.photos.failedToSave);
+      toast.error(t.photos.failedToSave);
     }
   }
 
   async function handleDelete(photoId: string) {
     try {
       await api.delete(`/api/clients/${clientId}/photos?photoId=${photoId}`);
-      toastSuccess(t.photos.photoDeleted);
+      toast.success(t.photos.photoDeleted);
       onRefresh();
     } catch {
-      toastError(t.photos.failedToDelete);
+      toast.error(t.photos.failedToDelete);
     }
   }
 
   async function handleUpdate(photoId: string, data: { caption?: string; category?: string | null }) {
     try {
       await api.patch(`/api/clients/${clientId}/photos`, { photoId, ...data });
-      toastSuccess(t.photos.photoUpdated);
+      toast.success(t.photos.photoUpdated);
       onRefresh();
     } catch {
-      toastError(t.photos.failedToSave);
+      toast.error(t.photos.failedToSave);
     }
   }
 
@@ -68,10 +70,10 @@ export function ClientPhotosTab({ clientId, photos, onRefresh }: ClientPhotosTab
           {t.photos.title} ({photos.length})
         </h3>
         {!showUpload && (
-          <button onClick={() => setShowUpload(true)} className="btn-primary text-sm">
+          <Button onClick={() => setShowUpload(true)} className="text-sm">
             <Camera className="mr-1 h-4 w-4" />
             {t.photos.upload}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -101,12 +103,12 @@ export function ClientPhotosTab({ clientId, photos, onRefresh }: ClientPhotosTab
             </div>
             <div>
               <label className="text-xs text-gray-500">{t.photos.caption}</label>
-              <input
+              <Input
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder={t.photos.captionPlaceholder}
-                className="input mt-0.5 text-sm"
+                className="mt-0.5 text-sm"
               />
             </div>
           </div>

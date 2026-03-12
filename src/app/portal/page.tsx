@@ -6,6 +6,7 @@ import { Calendar, Dumbbell, Camera, CalendarPlus, Clock } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
 
 interface PortalData {
   name: string;
@@ -117,9 +118,9 @@ export default function PortalHomePage() {
             <p className="mt-3 text-sm text-gray-500">
               {t.portal.noUpcomingSessions}
             </p>
-            <Link href="/portal/book" className="btn-primary mt-4">
+            <Button asChild className="mt-4"><Link href="/portal/book">
               {t.portal.bookASession}
-            </Link>
+            </Link></Button>
           </div>
         ) : (
           <div className="mt-4 space-y-3">

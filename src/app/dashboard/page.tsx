@@ -20,6 +20,7 @@ import {
   Send,
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
@@ -276,7 +277,7 @@ function TodaysSessions({ data, t }: { data: DashboardData | null; t: ReturnType
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Calendar className="h-10 w-10 text-gray-300" />
             <p className="mt-3 text-sm text-gray-500">{t.dashboard.noSessionsToday}</p>
-            <Link href="/dashboard/schedule" className="btn-primary mt-4">{t.dashboard.scheduleSession}</Link>
+            <Button asChild className="mt-4"><Link href="/dashboard/schedule">{t.dashboard.scheduleSession}</Link></Button>
           </div>
         </div>
       ) : (
@@ -642,7 +643,7 @@ function RecentClients({ data, t }: { data: DashboardData | null; t: ReturnType<
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Users className="h-10 w-10 text-gray-300" />
             <p className="mt-3 text-sm text-gray-500">{t.dashboard.noClients}</p>
-            <Link href="/dashboard/clients/new" className="btn-primary mt-4">{t.dashboard.addClient}</Link>
+            <Button asChild className="mt-4"><Link href="/dashboard/clients/new">{t.dashboard.addClient}</Link></Button>
           </div>
         </div>
       ) : (

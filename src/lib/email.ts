@@ -12,7 +12,7 @@ function getResend() {
   return _resend;
 }
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "TrainerHub <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.EMAIL_FROM || "Prept <onboarding@resend.dev>";
 
 export async function sendInquiryNotification({
   to,
@@ -43,7 +43,7 @@ export async function sendInquiryNotification({
           <p style="margin: 0;"><strong>Message:</strong><br/>${inquiryMessage}</p>
         </div>
         <p style="color: #9ca3af; font-size: 13px; margin-top: 24px;">
-          Reply to this inquiry from your TrainerHub dashboard under Settings → Inquiries.
+          Reply to this inquiry from your Prept dashboard under Settings → Inquiries.
         </p>
       </div>
     `,
@@ -74,9 +74,9 @@ export async function sendInviteEmail({
           Hi ${clientName},
         </p>
         <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
-          <strong>${coachName}</strong> has invited you to join <strong>${businessName}</strong> on TrainerHub. You'll be able to view your workouts, meal plans, track habits, and more.
+          <strong>${coachName}</strong> has invited you to join <strong>${businessName}</strong> on Prept. You'll be able to view your workouts, meal plans, track habits, and more.
         </p>
-        <a href="${inviteUrl}" style="display: inline-block; background-color: #124559; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0;">
+        <a href="${inviteUrl}" style="display: inline-block; background-color: #84CC16; color: #0F172A; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0;">
           Set Up Your Account
         </a>
         <p style="color: #9ca3af; font-size: 13px; margin-top: 24px;">

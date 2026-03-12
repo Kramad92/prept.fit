@@ -49,7 +49,7 @@ export const en: Translations = {
     createAccount: "Create Account",
     creatingAccount: "Creating account...",
     createAccountTitle: "Create your account",
-    startManaging: "Start managing your clients with TrainerHub",
+    startManaging: "Start managing your clients with Prept",
     yourName: "Your Name",
     businessName: "Business Name",
     confirmPassword: "Confirm Password",
@@ -206,7 +206,7 @@ export const en: Translations = {
     sendInviteEmail: "Send Invite Email",
     createAccess: "Create Access",
     portalCreated: "Portal access created! Temp password:",
-    joinPlatform: "join on TrainerHub",
+    joinPlatform: "join on Prept",
     setPassword: "Set your password",
     joinNow: "Join Now",
     joining: "Joining...",
@@ -641,7 +641,7 @@ export const en: Translations = {
 
   settings: {
     title: "Settings",
-    subtitle: "Customize your TrainerHub profile",
+    subtitle: "Customize your Prept profile",
     branding: "Branding",
     businessName: "Business Name",
     businessNamePlaceholder: "Your Fitness Business",

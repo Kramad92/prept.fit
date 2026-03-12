@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Key, X } from "lucide-react";
+import { Mail, Key } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
 
 interface InviteModalProps {
@@ -53,29 +56,22 @@ export function InviteModal({ clientId, clientEmail, onClose, onResult }: Invite
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="card w-full max-w-md">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">{t.invite.title}</h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <p className="mt-2 text-sm text-gray-500">
-          {t.invite.sendTo} <strong>{clientEmail}</strong> {t.invite.soTheyCanAccess}
-        </p>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-bold text-gray-900">{t.invite.title}</DialogTitle>
+          <DialogDescription>
+            {t.invite.sendTo} <strong>{clientEmail}</strong> {t.invite.soTheyCanAccess}
+          </DialogDescription>
+        </DialogHeader>
 
         {error && (
-          <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
             {error}
           </div>
         )}
 
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           <label
             className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
               method === "email"
@@ -131,35 +127,34 @@ export function InviteModal({ clientId, clientEmail, onClose, onResult }: Invite
                 {t.invite.tempPasswordDesc}
               </p>
               {method === "password" && (
-                <input
+                <Input
                   type="text"
                   value={tempPassword}
                   onChange={(e) => setTempPassword(e.target.value)}
                   placeholder={t.invite.leaveEmptyDefault}
-                  className="input mt-2 text-sm"
+                  className="mt-2 text-sm"
                 />
               )}
             </div>
           </label>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className="btn-secondary">
+        <div className="mt-1 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
             {t.common.cancel}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleInvite}
             disabled={loading}
-            className="btn-primary"
           >
             {loading
               ? t.invite.sending
               : method === "email"
                 ? t.invite.sendInviteEmail
                 : t.invite.createAccess}
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

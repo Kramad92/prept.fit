@@ -11,8 +11,10 @@ import {
   Trash2,
   UserPlus,
   Users,
-  X,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { FilterSelect } from "@/components/ui/filter-select";
@@ -139,28 +141,28 @@ export default function ProgramDetailPage() {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link
-            href={`/dashboard/programs/${program.id}/edit`}
-            className="btn-secondary text-sm"
-          >
-            <Pencil className="mr-1.5 h-4 w-4" />
-            {t.common.edit}
-          </Link>
-          <button
+          <Button variant="outline" asChild className="text-sm">
+            <Link href={`/dashboard/programs/${program.id}/edit`}>
+              <Pencil className="mr-1.5 h-4 w-4" />
+              {t.common.edit}
+            </Link>
+          </Button>
+          <Button
             onClick={() => setShowAssign(true)}
-            className="btn-primary text-sm"
+            className="text-sm"
           >
             <UserPlus className="mr-1.5 h-4 w-4" />
             {t.programs.assignToClient}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleDelete}
             disabled={deleting}
-            className="btn-secondary text-sm !text-red-600 hover:!bg-red-50"
+            className="text-sm !text-red-600 hover:!bg-red-50"
           >
             <Trash2 className="mr-1.5 h-4 w-4" />
             {t.common.delete}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -229,13 +231,13 @@ export default function ProgramDetailPage() {
             <p className="mt-3 text-sm text-gray-500">
               {t.programs.notAssigned}
             </p>
-            <button
+            <Button
               onClick={() => setShowAssign(true)}
-              className="btn-primary mt-4"
+              className="mt-4"
             >
               <UserPlus className="mr-2 h-4 w-4" />
               {t.programs.assignToClient}
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="mt-4 space-y-2">
@@ -264,69 +266,58 @@ export default function ProgramDetailPage() {
       </div>
 
       {/* Assign Modal */}
-      {showAssign && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {t.programs.assignProgram}
-              </h2>
-              <button
-                onClick={() => setShowAssign(false)}
-                className="rounded-lg p-1 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      <Dialog open={showAssign} onOpenChange={setShowAssign}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.programs.assignProgram}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="label">{t.programs.client}</label>
+              <FilterSelect
+                value={assignClientId}
+                onChange={setAssignClientId}
+                placeholder={t.workouts.selectClient}
+                options={availableClients.map((c) => ({ value: c.id, label: c.name }))}
+              />
             </div>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="label">{t.programs.client}</label>
-                <FilterSelect
-                  value={assignClientId}
-                  onChange={setAssignClientId}
-                  placeholder={t.workouts.selectClient}
-                  options={availableClients.map((c) => ({ value: c.id, label: c.name }))}
-                />
-              </div>
-              <div>
-                <label className="label">{t.programs.startDate}</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label className="label">{t.programs.accessPolicy}</label>
-                <FilterSelect
-                  value={accessPolicy}
-                  onChange={setAccessPolicy}
-                  placeholder={t.programs.accessPolicy}
-                  options={[
-                    { value: "date_range", label: t.programs.dateRange },
-                    { value: "unlimited", label: t.programs.unlimited },
-                    { value: "subscription_tied", label: t.programs.subscriptionTied },
-                  ]}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  {accessPolicy === "date_range" && t.programs.dateRangeDesc}
-                  {accessPolicy === "unlimited" && t.programs.unlimitedDesc}
-                  {accessPolicy === "subscription_tied" &&
-                    t.programs.subscriptionTiedDesc}
-                </p>
-              </div>
-              <button
-                onClick={handleAssign}
-                disabled={!assignClientId || !startDate || assigning}
-                className="btn-primary w-full"
-              >
-                {assigning ? t.common.saving : t.programs.assignProgram}
-              </button>
+            <div>
+              <label className="label">{t.programs.startDate}</label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
+            <div>
+              <label className="label">{t.programs.accessPolicy}</label>
+              <FilterSelect
+                value={accessPolicy}
+                onChange={setAccessPolicy}
+                placeholder={t.programs.accessPolicy}
+                options={[
+                  { value: "date_range", label: t.programs.dateRange },
+                  { value: "unlimited", label: t.programs.unlimited },
+                  { value: "subscription_tied", label: t.programs.subscriptionTied },
+                ]}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                {accessPolicy === "date_range" && t.programs.dateRangeDesc}
+                {accessPolicy === "unlimited" && t.programs.unlimitedDesc}
+                {accessPolicy === "subscription_tied" &&
+                  t.programs.subscriptionTiedDesc}
+              </p>
+            </div>
+            <Button
+              onClick={handleAssign}
+              disabled={!assignClientId || !startDate || assigning}
+              className="w-full"
+            >
+              {assigning ? t.common.saving : t.programs.assignProgram}
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

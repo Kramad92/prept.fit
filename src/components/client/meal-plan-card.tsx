@@ -9,6 +9,7 @@ import {
   Power,
   Download,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Food, AssignedMealPlan, MealInput } from "@/types";
 import { MealPlanForm, type FormState } from "./meal-plan-form";
 
@@ -91,10 +92,10 @@ export function MealPlanCard({
       {isOpen && !isEditing && (
         <div className="mt-4 border-t border-gray-100 pt-4">
           <div className="mb-3 flex flex-wrap gap-2">
-            <button onClick={onStartEdit} className="btn-secondary text-xs">
+            <Button variant="outline" onClick={onStartEdit} className="text-xs">
               <Pencil className="mr-1 h-3 w-3" />
               {t.common.edit}
-            </button>
+            </Button>
             {onToggleActive && (
               <button
                 onClick={onToggleActive}

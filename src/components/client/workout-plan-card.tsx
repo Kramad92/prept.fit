@@ -15,6 +15,8 @@ import {
   Download,
   Clock,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ExerciseInput, AssignedWorkoutPlan } from "@/types";
 import type { Translations } from "@/lib/i18n/bs";
 import { ExerciseEditor } from "./exercise-editor";
@@ -125,10 +127,10 @@ export function WorkoutPlanCard({
       {isOpen && !isEditing && (
         <div className="mt-4 border-t border-gray-100 pt-4">
           <div className="mb-3 flex flex-wrap gap-2">
-            <button onClick={onStartEdit} className="btn-secondary text-xs">
+            <Button variant="outline" onClick={onStartEdit} className="text-xs">
               <Pencil className="mr-1 h-3 w-3" />
               {t.common.edit}
-            </button>
+            </Button>
             {onToggleActive && (
               <button
                 onClick={onToggleActive}
@@ -204,11 +206,11 @@ export function WorkoutPlanCard({
         <div className="mt-4 border-t border-gray-100 pt-4">
           <div className="mb-3">
             <label className="text-xs text-gray-500">{t.workouts.planName}</label>
-            <input
+            <Input
               type="text"
               value={editName}
               onChange={(e) => onEditNameChange(e.target.value)}
-              className="input mt-0.5"
+              className="mt-0.5"
             />
           </div>
           <ExerciseEditor
@@ -217,17 +219,17 @@ export function WorkoutPlanCard({
             t={t}
           />
           <div className="mt-4 flex gap-2">
-            <button
+            <Button
               onClick={onSaveEdit}
               disabled={saving}
-              className="btn-primary text-sm"
+              className="text-sm"
             >
               <Check className="mr-1 h-4 w-4" />
               {saving ? t.common.saving : t.workouts.saveChanges}
-            </button>
-            <button onClick={onCancelEdit} className="btn-secondary text-sm">
+            </Button>
+            <Button variant="outline" onClick={onCancelEdit} className="text-sm">
               {t.common.cancel}
-            </button>
+            </Button>
           </div>
         </div>
       )}

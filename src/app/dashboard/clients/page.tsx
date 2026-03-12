@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -38,21 +40,23 @@ export default function ClientsPage() {
             {t.clients.manageRoster}
           </p>
         </div>
-        <Link href="/dashboard/clients/new" className="btn-primary">
-          <Plus className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">{t.clients.addClient}</span>
-        </Link>
+        <Button asChild>
+          <Link href="/dashboard/clients/new">
+            <Plus className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">{t.clients.addClient}</span>
+          </Link>
+        </Button>
       </div>
 
       {/* Search */}
       <div className="relative mt-6">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
+        <Input
           type="text"
           placeholder={t.clients.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input pl-10"
+          className="pl-10"
         />
       </div>
 
@@ -64,10 +68,12 @@ export default function ClientsPage() {
             title={t.clients.noClients}
             description={t.clients.noClientsDesc}
             action={
-              <Link href="/dashboard/clients/new" className="btn-primary">
-                <Plus className="mr-2 h-4 w-4" />
-                {t.clients.addClient}
-              </Link>
+              <Button asChild>
+                <Link href="/dashboard/clients/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t.clients.addClient}
+                </Link>
+              </Button>
             }
           />
         </div>

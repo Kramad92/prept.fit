@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Dumbbell, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface InviteInfo {
   clientName: string;
@@ -156,11 +158,11 @@ export default function InvitePage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.auth.email}
             </label>
-            <input
+            <Input
               type="email"
               value={info!.email}
               disabled
-              className="input mt-1 bg-gray-50 text-gray-500"
+              className="mt-1 bg-gray-50 text-gray-500"
             />
           </div>
 
@@ -168,13 +170,13 @@ export default function InvitePage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.auth.password}
             </label>
-            <input
+            <Input
               type="password"
               name="password"
               required
               minLength={8}
               autoComplete="new-password"
-              className="input mt-1"
+              className="mt-1"
               placeholder={t.auth.minChars}
             />
           </div>
@@ -183,23 +185,23 @@ export default function InvitePage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.auth.confirmPassword}
             </label>
-            <input
+            <Input
               type="password"
               name="confirmPassword"
               required
               autoComplete="new-password"
-              className="input mt-1"
+              className="mt-1"
               placeholder={t.auth.reenterPassword}
             />
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={submitting}
-            className="btn-primary w-full"
+            className="w-full"
           >
             {submitting ? t.auth.creatingAccount : t.auth.createAccount}
-          </button>
+          </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">

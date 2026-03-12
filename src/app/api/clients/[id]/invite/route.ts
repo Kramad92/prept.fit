@@ -108,7 +108,7 @@ export async function POST(
       to: client.email,
       clientName: client.name,
       coachName: session.user.name || "Your coach",
-      businessName: tenant?.name || "TrainerHub",
+      businessName: tenant?.name || "Prept",
       inviteUrl,
     });
   } catch (error) {

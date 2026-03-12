@@ -49,7 +49,7 @@ export const sr = {
     createAccount: "Kreiraj račun",
     creatingAccount: "Kreiranje računa...",
     createAccountTitle: "Kreirajte svoj račun",
-    startManaging: "Počnite upravljati klijentima sa TrainerHub",
+    startManaging: "Počnite upravljati klijentima sa Prept",
     yourName: "Vaše ime",
     businessName: "Naziv biznisa",
     confirmPassword: "Potvrdi lozinku",
@@ -211,7 +211,7 @@ export const sr = {
     createAccess: "Kreiraj pristup",
     portalCreated: "Pristup portalu kreiran! Privremena lozinka:",
     // Invite acceptance page
-    joinPlatform: "se pridružite na platformi TrainerHub",
+    joinPlatform: "se pridružite na platformi Prept",
     setPassword: "Postavite lozinku",
     joinNow: "Pridruži se",
     joining: "Pridruživanje...",
@@ -655,7 +655,7 @@ export const sr = {
   // Settings
   settings: {
     title: "Postavke",
-    subtitle: "Prilagodite svoj TrainerHub profil",
+    subtitle: "Prilagodite svoj Prept profil",
     branding: "Brendiranje",
     businessName: "Naziv biznisa",
     businessNamePlaceholder: "Vaš fitnes biznis",

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { formatTime } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { FilterSelect } from "@/components/ui/filter-select";
@@ -129,21 +131,21 @@ export default function AvailabilityPage() {
           </div>
           <div>
             <label className="text-xs text-gray-500">{t.schedule.startTime}</label>
-            <input
+            <Input
               type="time"
               name="startTime"
               defaultValue="09:00"
-              className="input mt-0.5"
+              className="mt-0.5"
               required
             />
           </div>
           <div>
             <label className="text-xs text-gray-500">{t.schedule.endTime}</label>
-            <input
+            <Input
               type="time"
               name="endTime"
               defaultValue="17:00"
-              className="input mt-0.5"
+              className="mt-0.5"
               required
             />
           </div>
@@ -163,14 +165,14 @@ export default function AvailabilityPage() {
             />
           </div>
         </div>
-        <button
+        <Button
           type="submit"
           disabled={saving}
-          className="btn-primary mt-3 w-full"
+          className="mt-3 w-full"
         >
           <Plus className="mr-2 h-4 w-4" />
           {saving ? t.availability.adding : t.availability.addSlot}
-        </button>
+        </Button>
       </form>
 
       {/* Current Availability */}

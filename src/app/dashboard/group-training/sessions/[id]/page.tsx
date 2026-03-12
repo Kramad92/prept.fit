@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Dumbbell, CheckCircle2, Users, Plus, X, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
@@ -126,15 +127,15 @@ export default function SessionDetailPage() {
       {/* Action buttons */}
       {session.status === "scheduled" && (
         <div className="mb-6 flex flex-wrap gap-2">
-          <button onClick={() => setShowEnroll(true)} className="btn-secondary flex items-center gap-1 text-sm">
+          <Button variant="outline" onClick={() => setShowEnroll(true)} className="flex items-center gap-1 text-sm">
             <Plus className="h-4 w-4" />{t.groupTraining.enrolled}
-          </button>
-          <button onClick={() => setShowAssignWorkout(true)} className="btn-secondary flex items-center gap-1 text-sm">
+          </Button>
+          <Button variant="outline" onClick={() => setShowAssignWorkout(true)} className="flex items-center gap-1 text-sm">
             <Dumbbell className="h-4 w-4" />{t.groupTraining.assignWorkout}
-          </button>
-          <button onClick={handleMarkComplete} className="btn-primary flex items-center gap-1 text-sm">
+          </Button>
+          <Button onClick={handleMarkComplete} className="flex items-center gap-1 text-sm">
             <CheckCircle2 className="h-4 w-4" />{t.groupTraining.markComplete}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -185,8 +186,8 @@ export default function SessionDetailPage() {
             className="mb-3"
           />
           <div className="flex gap-2">
-            <button onClick={handleAssignWorkout} className="btn-primary text-sm">{t.workouts.assign}</button>
-            <button onClick={() => setShowAssignWorkout(false)} className="btn-secondary text-sm">{t.common.cancel}</button>
+            <Button onClick={handleAssignWorkout} className="text-sm">{t.workouts.assign}</Button>
+            <Button variant="outline" onClick={() => setShowAssignWorkout(false)} className="text-sm">{t.common.cancel}</Button>
           </div>
         </div>
       )}
@@ -199,9 +200,9 @@ export default function SessionDetailPage() {
             {t.groupTraining.participants} ({session._count?.participants}/{session.maxParticipants})
           </h2>
           {session.status === "scheduled" && session.participants.length > 0 && (
-            <button onClick={handleSaveAttendance} className="btn-secondary text-sm">
+            <Button variant="outline" onClick={handleSaveAttendance} className="text-sm">
               {t.groupTraining.markAttendance}
-            </button>
+            </Button>
           )}
         </div>
 

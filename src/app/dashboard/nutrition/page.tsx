@@ -2,11 +2,14 @@
 
 import { Suspense, useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { Plus, UtensilsCrossed, Search, X } from "lucide-react";
+import { Plus, UtensilsCrossed, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NutritionPlanCard } from "@/components/nutrition/nutrition-plan-card";
 import { NutritionPlanForm, type FormState, type MealRow } from "@/components/nutrition/nutrition-plan-form";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
@@ -41,7 +44,6 @@ export default function NutritionPage() {
 
 function NutritionContent() {
   const t = useT();
-  const { toastError } = useToast();
   const searchParams = useSearchParams();
   const [plans, setPlans] = useState<MealPlanSummary[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
@@ -63,7 +65,7 @@ function NutritionContent() {
       api.get<ClientOption[]>("/api/clients"),
     ])
       .then(([p, c]) => { setPlans(p); setClients(c); })
-      .catch(() => toastError(t.errors.failedToLoad))
+      .catch(() => toast.error(t.errors.failedToLoad))
       .finally(() => setLoading(false));
   }, []);
 
@@ -121,7 +123,7 @@ function NutritionContent() {
       setEditingPlanId(null);
       setForm(emptyForm());
     } catch {
-      toastError(t.errors.somethingWentWrong);
+      toast.error(t.errors.somethingWentWrong);
     }
     setSaving(false);
   }
@@ -133,7 +135,7 @@ function NutritionContent() {
       const updated = await api.get<MealPlanSummary[]>("/api/meal-plans");
       setPlans(updated);
     } catch {
-      toastError(t.errors.somethingWentWrong);
+      toast.error(t.errors.somethingWentWrong);
     }
     setDuplicating(null);
   }
@@ -147,7 +149,7 @@ function NutritionContent() {
         setPlanDetail(null);
       }
     } catch {
-      toastError(t.errors.somethingWentWrong);
+      toast.error(t.errors.somethingWentWrong);
     }
   }
 
@@ -190,7 +192,7 @@ function NutritionContent() {
       const updated = await api.get<MealPlanSummary[]>("/api/meal-plans");
       setPlans(updated);
     } catch {
-      toastError(t.errors.somethingWentWrong);
+      toast.error(t.errors.somethingWentWrong);
     }
     setAssignPlanId(null);
     setAssignClientId("");
@@ -227,20 +229,20 @@ function NutritionContent() {
           <h1 className="text-2xl font-bold text-gray-900">{t.nutrition.mealPlanTemplates}</h1>
           <p className="mt-1 text-sm text-gray-500">{t.nutrition.mealPlanTemplatesDesc}</p>
         </div>
-        <button onClick={() => { setForm(emptyForm()); setEditingPlanId(null); setShowCreate(true); }} className="btn-primary">
+        <Button onClick={() => { setForm(emptyForm()); setEditingPlanId(null); setShowCreate(true); }}>
           <Plus className="h-4 w-4 md:mr-2" />
           <span className="hidden md:inline">{t.nutrition.newMealPlan}</span>
-        </button>
+        </Button>
       </div>
 
       <div className="relative mt-6">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
+        <Input
           type="text"
           placeholder={t.nutrition.searchMealPlans}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input pl-10"
+          className="pl-10"
         />
       </div>
 
@@ -251,10 +253,10 @@ function NutritionContent() {
             title={t.nutrition.noMealPlans}
             description={t.nutrition.noMealPlansDesc}
             action={
-              <button onClick={() => { setForm(emptyForm()); setEditingPlanId(null); setShowCreate(true); }} className="btn-primary">
+              <Button onClick={() => { setForm(emptyForm()); setEditingPlanId(null); setShowCreate(true); }}>
                 <Plus className="mr-1 h-4 w-4" />
                 {t.nutrition.createPlan}
-              </button>
+              </Button>
             }
           />
         </div>
@@ -278,33 +280,28 @@ function NutritionContent() {
       )}
 
       {/* Assign Modal */}
-      {assignPlanId && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{t.nutrition.assignMealPlan}</h2>
-              <button onClick={() => setAssignPlanId(null)} className="rounded-lg p-1 hover:bg-gray-100">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="mt-4">
-              <FilterSelect
-                value={assignClientId}
-                onChange={setAssignClientId}
-                placeholder={t.nutrition.selectClient}
-                options={clients.map((c) => ({ value: c.id, label: c.name }))}
-              />
-              <button
-                onClick={handleAssign}
-                disabled={!assignClientId}
-                className="btn-primary mt-3 w-full"
-              >
-                {t.workouts.assign}
-              </button>
-            </div>
+      <Dialog open={!!assignPlanId} onOpenChange={(open) => { if (!open) { setAssignPlanId(null); setAssignClientId(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.nutrition.assignMealPlan}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <FilterSelect
+              value={assignClientId}
+              onChange={setAssignClientId}
+              placeholder={t.nutrition.selectClient}
+              options={clients.map((c) => ({ value: c.id, label: c.name }))}
+            />
+            <Button
+              onClick={handleAssign}
+              disabled={!assignClientId}
+              className="mt-3 w-full"
+            >
+              {t.workouts.assign}
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create / Edit Modal */}
       {showCreate && (

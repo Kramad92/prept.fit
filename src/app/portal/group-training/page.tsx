@@ -4,6 +4,7 @@ import { UsersRound, Calendar, MapPin, Dumbbell } from "lucide-react";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -201,13 +202,13 @@ export default function PortalGroupTrainingPage() {
                       </span>
                     </div>
                   </div>
-                  <button
+                  <Button
                     onClick={() => handleSignUp(session.id)}
                     disabled={isFull}
-                    className="btn-primary text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-sm"
                   >
                     {t.groupTraining.signUp}
-                  </button>
+                  </Button>
                 </div>
               );
             })}

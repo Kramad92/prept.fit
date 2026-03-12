@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Users, Calendar, Plus, X, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -79,10 +80,10 @@ export default function GroupDetailPage() {
             <Users className="mr-2 inline-block h-5 w-5" />
             {t.groupTraining.members} ({group._count?.members})
           </h2>
-          <button onClick={() => setShowAddMembers(true)} className="btn-primary flex items-center gap-1 text-sm">
+          <Button onClick={() => setShowAddMembers(true)} className="flex items-center gap-1 text-sm">
             <Plus className="h-4 w-4" />
             {t.groupTraining.addMembers}
-          </button>
+          </Button>
         </div>
 
         {showAddMembers && (
@@ -111,8 +112,8 @@ export default function GroupDetailPage() {
               )}
             </div>
             <div className="mt-3 flex gap-2">
-              <button onClick={handleAddMembers} className="btn-primary text-sm">{t.common.add}</button>
-              <button onClick={() => { setShowAddMembers(false); setSelectedClients([]); }} className="btn-secondary text-sm">{t.common.cancel}</button>
+              <Button onClick={handleAddMembers} className="text-sm">{t.common.add}</Button>
+              <Button variant="outline" onClick={() => { setShowAddMembers(false); setSelectedClients([]); }} className="text-sm">{t.common.cancel}</Button>
             </div>
           </div>
         )}

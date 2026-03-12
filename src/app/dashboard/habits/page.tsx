@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Sparkles, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 
 interface HabitTemplate {
   id: string;
@@ -25,7 +28,6 @@ export default function HabitsPage() {
     { name: t.habits.presetNoSugar, icon: "🚫" },
     { name: t.habits.presetTrackMeals, icon: "📝" },
   ];
-  const { toastSuccess, toastError } = useToast();
   const [habits, setHabits] = useState<HabitTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -65,9 +67,9 @@ export default function HabitsPage() {
     if (res.ok) {
       const updated = await res.json();
       setHabits((prev) => prev.map((h) => (h.id === id ? updated : h)));
-      toastSuccess(t.habits.habitUpdated);
+      toast.success(t.habits.habitUpdated);
     } else {
-      toastError(t.errors.failedToLoad);
+      toast.error(t.errors.failedToLoad);
     }
   }
 
@@ -75,9 +77,9 @@ export default function HabitsPage() {
     const res = await fetch(`/api/habits?id=${id}`, { method: "DELETE" });
     if (res.ok) {
       setHabits((prev) => prev.filter((h) => h.id !== id));
-      toastSuccess(t.habits.habitDeleted);
+      toast.success(t.habits.habitDeleted);
     } else {
-      toastError(t.errors.failedToLoad);
+      toast.error(t.errors.failedToLoad);
     }
   }
 
@@ -104,10 +106,10 @@ export default function HabitsPage() {
             {t.habits.createAndAssign}
           </p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary">
+        <Button onClick={() => setShowCreate(true)}>
           <Plus className="h-4 w-4 md:mr-2" />
           <span className="hidden md:inline">{t.habits.newHabit}</span>
-        </button>
+        </Button>
       </div>
 
       {/* Quick Add Presets */}
@@ -170,120 +172,120 @@ export default function HabitsPage() {
       </div>
 
       {/* Create Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <h2 className="text-lg font-semibold">{t.habits.createCustomHabit}</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (newName.trim()) {
-                  createHabit(newName.trim(), newIcon || "✅");
-                  setNewName("");
-                  setNewIcon("");
-                  setShowCreate(false);
-                }
-              }}
-              className="mt-4 space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.habits.habitName}
-                </label>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="input mt-1"
-                  placeholder={t.habits.walkMinutes}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.habits.iconEmoji}
-                </label>
-                <input
-                  type="text"
-                  value={newIcon}
-                  onChange={(e) => setNewIcon(e.target.value)}
-                  className="input mt-1"
-                  placeholder="🏃"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button type="submit" className="btn-primary flex-1">
-                  {t.common.create}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(false)}
-                  className="btn-secondary"
-                >
-                  {t.common.cancel}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Dialog open={showCreate} onOpenChange={(open) => { if (!open) { setNewName(""); setNewIcon(""); } setShowCreate(open); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.habits.createCustomHabit}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (newName.trim()) {
+                createHabit(newName.trim(), newIcon || "✅");
+                setNewName("");
+                setNewIcon("");
+                setShowCreate(false);
+              }
+            }}
+            className="mt-4 space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.habits.habitName}
+              </label>
+              <Input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="mt-1"
+                placeholder={t.habits.walkMinutes}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.habits.iconEmoji}
+              </label>
+              <Input
+                type="text"
+                value={newIcon}
+                onChange={(e) => setNewIcon(e.target.value)}
+                className="mt-1"
+                placeholder="🏃"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                {t.common.create}
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setShowCreate(false)}
+              >
+                {t.common.cancel}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal */}
-      {editingHabit && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <h2 className="text-lg font-semibold">{t.habits.editHabit}</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (editName.trim()) {
-                  updateHabit(editingHabit.id, editName.trim(), editIcon || "✅");
-                  setEditingHabit(null);
-                }
-              }}
-              className="mt-4 space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.habits.habitName}
-                </label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="input mt-1"
-                  placeholder={t.habits.walkMinutes}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.habits.iconEmoji}
-                </label>
-                <input
-                  type="text"
-                  value={editIcon}
-                  onChange={(e) => setEditIcon(e.target.value)}
-                  className="input mt-1"
-                  placeholder="🏃"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button type="submit" className="btn-primary flex-1">
-                  {t.common.save}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingHabit(null)}
-                  className="btn-secondary"
-                >
-                  {t.common.cancel}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Dialog open={!!editingHabit} onOpenChange={(open) => { if (!open) setEditingHabit(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.habits.editHabit}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (editingHabit && editName.trim()) {
+                updateHabit(editingHabit.id, editName.trim(), editIcon || "✅");
+                setEditingHabit(null);
+              }
+            }}
+            className="mt-4 space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.habits.habitName}
+              </label>
+              <Input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="mt-1"
+                placeholder={t.habits.walkMinutes}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.habits.iconEmoji}
+              </label>
+              <Input
+                type="text"
+                value={editIcon}
+                onChange={(e) => setEditIcon(e.target.value)}
+                className="mt-1"
+                placeholder="🏃"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                {t.common.save}
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setEditingHabit(null)}
+              >
+                {t.common.cancel}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -13,8 +13,10 @@ import {
   Pencil,
   Trash2,
   UserPlus,
-  X,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { FilterSelect } from "@/components/ui/filter-select";
@@ -174,38 +176,39 @@ export default function WorkoutDetailPage() {
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <button
+          <Button
+            variant="outline"
             onClick={handleDuplicate}
             disabled={duplicating}
-            className="btn-secondary text-sm"
+            className="text-sm"
             title={t.workouts.duplicate}
           >
             <Copy className="mr-1.5 h-4 w-4" />
             <span className="hidden sm:inline">{duplicating ? t.workouts.duplicating : t.workouts.duplicate}</span>
             <span className="sm:hidden">{duplicating ? "..." : t.workouts.copy}</span>
-          </button>
-          <Link
-            href={`/dashboard/workouts/${plan.id}/edit`}
-            className="btn-secondary text-sm"
-          >
-            <Pencil className="mr-1.5 h-4 w-4" />
-            {t.common.edit}
-          </Link>
-          <button
+          </Button>
+          <Button variant="outline" asChild className="text-sm">
+            <Link href={`/dashboard/workouts/${plan.id}/edit`}>
+              <Pencil className="mr-1.5 h-4 w-4" />
+              {t.common.edit}
+            </Link>
+          </Button>
+          <Button
             onClick={() => setShowAssign(true)}
-            className="btn-primary text-sm"
+            className="text-sm"
           >
             <UserPlus className="mr-1.5 h-4 w-4" />
             {t.workouts.assign}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleDelete}
             disabled={deleting}
-            className="btn-secondary text-sm !text-red-600 hover:!bg-red-50"
+            className="text-sm !text-red-600 hover:!bg-red-50"
           >
             <Trash2 className="mr-1.5 h-4 w-4" />
             {t.common.delete}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -286,13 +289,13 @@ export default function WorkoutDetailPage() {
               {t.workouts.notAssigned}
             </p>
             {availableClients.length > 0 && (
-              <button
+              <Button
                 onClick={() => setShowAssign(true)}
-                className="btn-primary mt-4"
+                className="mt-4"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 {t.workouts.assignToClient}
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -317,62 +320,53 @@ export default function WorkoutDetailPage() {
       </div>
 
       {/* Assign Modal */}
-      {showAssign && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{t.workouts.assignToClient}</h2>
-              <button
-                onClick={() => setShowAssign(false)}
-                className="rounded-lg p-1 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      <Dialog open={showAssign} onOpenChange={setShowAssign}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.workouts.assignToClient}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-3">
+            <div>
+              <FilterSelect
+                value={assignClientId}
+                onChange={setAssignClientId}
+                placeholder={t.workouts.selectClient}
+                options={availableClients.map((c) => ({ value: c.id, label: c.name }))}
+              />
             </div>
-            <div className="mt-4 space-y-3">
+            <div>
+              <label className="label">{t.programs.accessPolicy}</label>
+              <FilterSelect
+                value={assignAccessPolicy}
+                onChange={setAssignAccessPolicy}
+                placeholder={t.programs.accessPolicy}
+                options={[
+                  { value: "unlimited", label: t.programs.unlimited },
+                  { value: "date_range", label: t.programs.dateRange },
+                  { value: "subscription_tied", label: t.programs.subscriptionTied },
+                ]}
+              />
+            </div>
+            {assignAccessPolicy === "date_range" && (
               <div>
-                <FilterSelect
-                  value={assignClientId}
-                  onChange={setAssignClientId}
-                  placeholder={t.workouts.selectClient}
-                  options={availableClients.map((c) => ({ value: c.id, label: c.name }))}
+                <label className="label">End Date</label>
+                <Input
+                  type="date"
+                  value={assignEndDate}
+                  onChange={(e) => setAssignEndDate(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="label">{t.programs.accessPolicy}</label>
-                <FilterSelect
-                  value={assignAccessPolicy}
-                  onChange={setAssignAccessPolicy}
-                  placeholder={t.programs.accessPolicy}
-                  options={[
-                    { value: "unlimited", label: t.programs.unlimited },
-                    { value: "date_range", label: t.programs.dateRange },
-                    { value: "subscription_tied", label: t.programs.subscriptionTied },
-                  ]}
-                />
-              </div>
-              {assignAccessPolicy === "date_range" && (
-                <div>
-                  <label className="label">End Date</label>
-                  <input
-                    type="date"
-                    value={assignEndDate}
-                    onChange={(e) => setAssignEndDate(e.target.value)}
-                    className="input"
-                  />
-                </div>
-              )}
-              <button
-                onClick={handleAssign}
-                disabled={!assignClientId}
-                className="btn-primary w-full"
-              >
-                {t.workouts.assignPlan}
-              </button>
-            </div>
+            )}
+            <Button
+              onClick={handleAssign}
+              disabled={!assignClientId}
+              className="w-full"
+            >
+              {t.workouts.assignPlan}
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

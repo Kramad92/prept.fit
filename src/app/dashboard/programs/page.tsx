@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, CalendarRange, Search, Users, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
@@ -39,20 +41,22 @@ export default function ProgramsPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t.programs.title}</h1>
           <p className="mt-1 text-sm text-gray-500">{t.programs.subtitle}</p>
         </div>
-        <Link href="/dashboard/programs/new" className="btn-primary">
-          <Plus className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">{t.programs.newProgram}</span>
-        </Link>
+        <Button asChild>
+          <Link href="/dashboard/programs/new">
+            <Plus className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">{t.programs.newProgram}</span>
+          </Link>
+        </Button>
       </div>
 
       <div className="relative mt-6">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
+        <Input
           type="text"
           placeholder={t.programs.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input pl-10"
+          className="pl-10"
         />
       </div>
 
@@ -63,10 +67,12 @@ export default function ProgramsPage() {
             title={t.programs.noPrograms}
             description={t.programs.noProgramsDesc}
             action={
-              <Link href="/dashboard/programs/new" className="btn-primary">
-                <Plus className="mr-2 h-4 w-4" />
-                {t.programs.createProgram}
-              </Link>
+              <Button asChild>
+                <Link href="/dashboard/programs/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t.programs.createProgram}
+                </Link>
+              </Button>
             }
           />
         </div>

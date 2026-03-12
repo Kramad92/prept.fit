@@ -6,11 +6,12 @@ import {
   Plus,
   FileDown,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { MealPlanForm, emptyForm, mealsToPayload, planToFormState, type FormState } from "./meal-plan-form";
 import { MealPlanCard } from "./meal-plan-card";
 import type { AssignedMealPlan, MealInput } from "@/types";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { useLocale } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import { computeMealTotals } from "@/lib/portion-scaling";
@@ -22,7 +23,7 @@ interface ClientNutritionTabProps {
 }
 
 export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: ClientNutritionTabProps) {
-  const { toastSuccess, toastError } = useToast();
+
   const { t, locale } = useLocale();
   const [expanded, setExpanded] = useState<string | null>(
     assignedMealPlans.length > 0 ? assignedMealPlans[0].id : null
@@ -62,9 +63,9 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         aiAdjust: aiAdjust ?? false,
         locale,
       });
-      toastSuccess(t.nutrition.mealPlanAssigned);
+      toast.success(t.nutrition.mealPlanAssigned);
     } catch {
-      toastError(t.nutrition.failedToAssign);
+      toast.error(t.nutrition.failedToAssign);
     }
     setShowTemplatePicker(false);
     onRefresh();
@@ -82,12 +83,12 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         targetFat: form.fat ? parseInt(form.fat) : null,
         meals: mealsToPayload(form.meals),
       });
-      toastSuccess(t.nutrition.customMealPlanCreated);
+      toast.success(t.nutrition.customMealPlanCreated);
       setShowCustomForm(false);
       setForm(emptyForm(t));
       onRefresh();
     } catch {
-      toastError(t.nutrition.failedToCreate);
+      toast.error(t.nutrition.failedToCreate);
     }
     setSaving(false);
   }
@@ -108,11 +109,11 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
         targetFat: form.fat ? parseInt(form.fat) : null,
         meals: mealsToPayload(form.meals),
       });
-      toastSuccess(t.nutrition.mealPlanSaved);
+      toast.success(t.nutrition.mealPlanSaved);
       setEditingPlanId(null);
       onRefresh();
     } catch {
-      toastError(t.nutrition.failedToSave);
+      toast.error(t.nutrition.failedToSave);
     }
     setSaving(false);
   }
@@ -120,10 +121,10 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
   async function handleDelete(planId: string) {
     try {
       await api.delete(`/api/clients/${clientId}/nutrition/${planId}`);
-      toastSuccess(t.nutrition.mealPlanRemoved);
+      toast.success(t.nutrition.mealPlanRemoved);
       onRefresh();
     } catch {
-      toastError(t.nutrition.failedToRemove);
+      toast.error(t.nutrition.failedToRemove);
     }
   }
 
@@ -134,7 +135,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
       });
       onRefresh();
     } catch {
-      toastError(t.nutrition.failedToSave);
+      toast.error(t.nutrition.failedToSave);
     }
   }
 
@@ -145,7 +146,7 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
       });
       onRefresh();
     } catch {
-      toastError(t.nutrition.failedToSave);
+      toast.error(t.nutrition.failedToSave);
     }
   }
 
@@ -156,20 +157,20 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           <UtensilsCrossed className="h-10 w-10 text-gray-300" />
           <p className="mt-3 text-sm text-gray-500">{t.nutrition.noPlansAssigned}</p>
           <div className="mt-4 flex gap-2">
-            <button onClick={() => setShowTemplatePicker(true)} className="btn-primary">
+            <Button onClick={() => setShowTemplatePicker(true)}>
               <FileDown className="mr-2 h-4 w-4" />
               {t.nutrition.assignFromTemplate}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => {
                 setShowCustomForm(true);
                 setForm(emptyForm(t));
               }}
-              className="btn-secondary"
             >
               <Plus className="mr-2 h-4 w-4" />
               {t.nutrition.createCustomPlanBtn}
-            </button>
+            </Button>
           </div>
         </div>
         {showTemplatePicker && (
@@ -186,20 +187,20 @@ export function ClientNutritionTab({ clientId, assignedMealPlans, onRefresh }: C
           {t.nutrition.mealPlans} ({assignedMealPlans.length})
         </h3>
         <div className="flex gap-2">
-          <button onClick={() => setShowTemplatePicker(true)} className="btn-secondary text-sm">
+          <Button variant="outline" onClick={() => setShowTemplatePicker(true)} className="text-sm">
             <FileDown className="mr-1 h-4 w-4" />
             {t.nutrition.fromTemplate}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => {
               setShowCustomForm(true);
               setForm(emptyForm(t));
             }}
-            className="btn-primary text-sm"
+            className="text-sm"
           >
             <Plus className="mr-1 h-4 w-4" />
             {t.nutrition.customPlanLabel}
-          </button>
+          </Button>
         </div>
       </div>
 

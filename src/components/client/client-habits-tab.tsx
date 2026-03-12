@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Plus, X, Sparkles, Trash2 } from "lucide-react";
-import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import type { AssignedHabit, HabitTemplate } from "@/types";
@@ -27,7 +28,7 @@ export function ClientHabitsTab({ clientId }: ClientHabitsTabProps) {
   const [allHabits, setAllHabits] = useState<HabitTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAssign, setShowAssign] = useState(false);
-  const { toastSuccess, toastError } = useToast();
+
 
   function loadHabits() {
     Promise.all([
@@ -38,7 +39,7 @@ export function ClientHabitsTab({ clientId }: ClientHabitsTabProps) {
         setAssignedHabits(assigned);
         setAllHabits(all);
       })
-      .catch(() => toastError(t.errors.failedToLoad))
+      .catch(() => toast.error(t.errors.failedToLoad))
       .finally(() => setLoading(false));
   }
 
@@ -50,20 +51,20 @@ export function ClientHabitsTab({ clientId }: ClientHabitsTabProps) {
   async function assignHabit(habitId: string) {
     try {
       await api.post("/api/habits/assign", { clientId, habitIds: [habitId] });
-      toastSuccess(t.habits.habitAssigned);
+      toast.success(t.habits.habitAssigned);
       loadHabits();
     } catch {
-      toastError(t.errors.failedToLoad);
+      toast.error(t.errors.failedToLoad);
     }
   }
 
   async function removeHabit(clientHabitId: string) {
     try {
       await api.delete(`/api/habits/assign?id=${clientHabitId}`);
-      toastSuccess(t.habits.habitRemoved);
+      toast.success(t.habits.habitRemoved);
       loadHabits();
     } catch {
-      toastError(t.errors.failedToLoad);
+      toast.error(t.errors.failedToLoad);
     }
   }
 
@@ -82,10 +83,10 @@ export function ClientHabitsTab({ clientId }: ClientHabitsTabProps) {
           {t.habits.assignedHabits} ({assignedHabits.length})
         </h3>
         {!showAssign && unassigned.length > 0 && (
-          <button onClick={() => setShowAssign(true)} className="btn-primary text-sm">
+          <Button onClick={() => setShowAssign(true)} className="text-sm">
             <Plus className="mr-1 h-4 w-4" />
             {t.habits.assignHabit}
-          </button>
+          </Button>
         )}
       </div>
 

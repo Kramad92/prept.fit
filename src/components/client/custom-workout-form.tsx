@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { X, User, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { AIGenerateWorkout } from "@/components/ai/ai-generate-workout";
 import { ExerciseEditor } from "./exercise-editor";
 import type { ExerciseInput } from "@/types";
@@ -48,22 +50,21 @@ export function CustomWorkoutForm({
           </button>
         </div>
         <div className="mt-3">
-          <input
+          <Input
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t.workouts.planName}
-            className="input"
           />
         </div>
         <div className="mt-2">
-          <input
+          <Input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t.workouts.aiPromptPlaceholder}
-            className="input text-sm"
+            className="text-sm"
           />
           <div className="mt-1.5">
             <AIGenerateWorkout
@@ -94,9 +95,9 @@ export function CustomWorkoutForm({
             t={t}
           />
         </div>
-        <button type="submit" disabled={saving} className="btn-primary mt-4 w-full">
+        <Button type="submit" disabled={saving} className="mt-4 w-full">
           {saving ? t.workouts.creating : t.workouts.createPlan}
-        </button>
+        </Button>
       </form>
     </div>
   );

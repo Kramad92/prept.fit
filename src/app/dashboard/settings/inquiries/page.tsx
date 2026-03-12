@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Mail, Trash2, Clock } from "lucide-react";
 import { FilterSelect } from "@/components/ui/filter-select";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import type { Inquiry } from "@/types";
 
@@ -17,7 +17,6 @@ const STATUS_COLORS: Record<string, string> = {
 export default function InquiriesPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toastSuccess, toastError } = useToast();
   const t = useT();
 
   useEffect(() => {
@@ -26,9 +25,9 @@ export default function InquiriesPage() {
       .then((data) => {
         if (Array.isArray(data)) setInquiries(data);
       })
-      .catch(() => toastError(t.errors.failedToLoad))
+      .catch(() => toast.error(t.errors.failedToLoad))
       .finally(() => setLoading(false));
-  }, [toastError, t]);
+  }, [t]);
 
   async function updateStatus(id: string, status: string) {
     try {
@@ -41,7 +40,7 @@ export default function InquiriesPage() {
         setInquiries(inquiries.map((inq) => (inq.id === id ? { ...inq, status } : inq)));
       }
     } catch {
-      toastError(t.errors.failedToSave);
+      toast.error(t.errors.failedToSave);
     }
   }
 
@@ -49,9 +48,9 @@ export default function InquiriesPage() {
     try {
       await fetch(`/api/settings/inquiries/${id}`, { method: "DELETE" });
       setInquiries(inquiries.filter((inq) => inq.id !== id));
-      toastSuccess(t.common.delete);
+      toast.success(t.common.delete);
     } catch {
-      toastError(t.errors.failedToDelete);
+      toast.error(t.errors.failedToDelete);
     }
   }
 

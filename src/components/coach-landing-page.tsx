@@ -238,7 +238,7 @@ export function CoachLandingPage({ profile }: { profile: CoachPublicProfile }) {
             </div>
           )}
           <p className="text-sm text-gray-400">
-            {profile.name} &mdash; Powered by TrainerHub
+            {profile.name} &mdash; Powered by Prept
           </p>
         </div>
       </footer>

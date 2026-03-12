@@ -1,14 +1,21 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { ToastProvider } from "@/components/ui/toast";
 import { I18nProvider } from "@/lib/i18n";
+import { Toaster } from "sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <I18nProvider>
-        <ToastProvider>{children}</ToastProvider>
+        {children}
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            className: "text-sm",
+            duration: 5000,
+          }}
+        />
       </I18nProvider>
     </SessionProvider>
   );

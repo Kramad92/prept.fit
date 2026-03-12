@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Dumbbell, UtensilsCrossed, Search, User, Users, Sparkles } from "lucide-react";
+import { Dumbbell, UtensilsCrossed, Search, User, Users, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
 
 interface Template {
@@ -45,19 +47,16 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
   const iconColor = type === "workout" ? "text-brand-600" : "text-orange-600";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto top-auto bottom-0 translate-y-0 rounded-t-2xl rounded-b-none md:top-[50%] md:translate-y-[-50%] md:bottom-auto md:rounded-xl">
+        <DialogHeader>
+          <DialogTitle>
             {type === "workout" ? t.assign.assignWorkoutTemplate : t.assign.assignMealTemplate}
-          </h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-gray-100">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
         {type === "workout" && (
-          <div className="mt-4 flex gap-2">
+          <div className="flex gap-2">
             <button onClick={() => setMode("solo")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${mode === "solo" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
               <User className="h-4 w-4" /> {t.workouts.solo}
             </button>
@@ -67,18 +66,18 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
           </div>
         )}
 
-        <div className="relative mt-4">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
+          <Input
             type="text"
             placeholder={t.assign.searchTemplates}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="input pl-10"
+            className="pl-10"
           />
         </div>
 
-        <label className="mt-3 flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 cursor-pointer">
+        <label className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 cursor-pointer">
           <input
             type="checkbox"
             checked={aiAdjust}
@@ -89,7 +88,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
           <span className="text-sm font-medium text-brand-700">{t.assign.aiAdjustForClient}</span>
         </label>
 
-        <div className="mt-4 max-h-80 space-y-2 overflow-y-auto">
+        <div className="max-h-80 space-y-2 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
@@ -121,7 +120,7 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
             ))
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

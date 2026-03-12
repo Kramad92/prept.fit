@@ -15,6 +15,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { ExpandableNotes } from "@/components/ui/expandable-notes";
 import { useT } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
 import type { Exercise } from "@/types";
 
 interface AssignedPlan {
@@ -333,13 +334,12 @@ export default function PortalWorkoutsPage() {
                         {t.portalWorkouts.liveWithCoach}
                       </div>
                     ) : (
-                      <Link
+                      <Button asChild className="mt-4 w-full"><Link
                         href={`/portal/workouts/${plan.workoutPlan.id}/log`}
-                        className="btn-primary mt-4 w-full"
                       >
                         <Play className="mr-2 h-4 w-4" />
                         {t.portalWorkouts.startWorkout}
-                      </Link>
+                      </Link></Button>
                     )}
                   </div>
                 )}

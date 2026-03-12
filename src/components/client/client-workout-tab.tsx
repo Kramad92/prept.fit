@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Dumbbell, Plus, FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { TemplatePickerModal } from "./template-picker-modal";
 import { WorkoutPlanCard } from "./workout-plan-card";
 import { CustomWorkoutForm } from "./custom-workout-form";
 import type { Exercise, ExerciseInput, AssignedWorkoutPlan } from "@/types";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { useLocale } from "@/lib/i18n";
 import { api } from "@/lib/api";
 
@@ -17,7 +18,7 @@ interface ClientWorkoutTabProps {
 }
 
 export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientWorkoutTabProps) {
-  const { toastSuccess, toastError } = useToast();
+
   const { t, locale } = useLocale();
   const [expanded, setExpanded] = useState<string | null>(
     assignedPlans.length > 0 ? assignedPlans[0].id : null
@@ -47,9 +48,9 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
         startDate: opts?.startDate || null,
         endDate: opts?.endDate || null,
       });
-      toastSuccess(t.workouts.templateAssigned);
+      toast.success(t.workouts.templateAssigned);
     } catch {
-      toastError(t.workouts.failedToAssign);
+      toast.error(t.workouts.failedToAssign);
     }
     setShowTemplatePicker(false);
     setAssigning(false);
@@ -63,7 +64,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
       });
       onRefresh();
     } catch {
-      toastError(t.workouts.failedToSave);
+      toast.error(t.workouts.failedToSave);
     }
   }
 
@@ -74,7 +75,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
       });
       onRefresh();
     } catch {
-      toastError(t.workouts.failedToSave);
+      toast.error(t.workouts.failedToSave);
     }
   }
 
@@ -85,7 +86,7 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
       });
       onRefresh();
     } catch {
-      toastError(t.workouts.failedToSave);
+      toast.error(t.workouts.failedToSave);
     }
   }
 
@@ -113,12 +114,12 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
             orderIndex: i,
           })),
       });
-      toastSuccess(t.workouts.customPlanCreated);
+      toast.success(t.workouts.customPlanCreated);
       setShowCustomForm(false);
       setCustomExercises([]);
       onRefresh();
     } catch {
-      toastError(t.workouts.failedToCreate);
+      toast.error(t.workouts.failedToCreate);
     }
     setSaving(false);
   }
@@ -159,11 +160,11 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
             orderIndex: i,
           })),
       });
-      toastSuccess(t.workouts.workoutPlanSaved);
+      toast.success(t.workouts.workoutPlanSaved);
       setEditingPlanId(null);
       onRefresh();
     } catch {
-      toastError(t.workouts.failedToSave);
+      toast.error(t.workouts.failedToSave);
     }
     setSaving(false);
   }
@@ -171,10 +172,10 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
   async function handleDelete(planId: string) {
     try {
       await api.delete(`/api/clients/${clientId}/workouts/${planId}`);
-      toastSuccess(t.assign.planRemoved);
+      toast.success(t.assign.planRemoved);
       onRefresh();
     } catch {
-      toastError(t.workouts.failedToRemove);
+      toast.error(t.workouts.failedToRemove);
     }
   }
 
@@ -185,20 +186,20 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
           <Dumbbell className="h-10 w-10 text-gray-300" />
           <p className="mt-3 text-sm text-gray-500">{t.workouts.noPlansAssigned}</p>
           <div className="mt-4 flex gap-2">
-            <button onClick={() => setShowTemplatePicker(true)} className="btn-primary">
+            <Button onClick={() => setShowTemplatePicker(true)}>
               <FileDown className="mr-2 h-4 w-4" />
               {t.workouts.assignFromTemplate}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => {
                 setShowCustomForm(true);
                 setCustomExercises([]);
               }}
-              className="btn-secondary"
             >
               <Plus className="mr-2 h-4 w-4" />
               {t.workouts.createCustomPlan}
-            </button>
+            </Button>
           </div>
         </div>
         {showTemplatePicker && (
@@ -219,20 +220,20 @@ export function ClientWorkoutTab({ clientId, assignedPlans, onRefresh }: ClientW
           {t.workouts.workoutPlans} ({assignedPlans.length})
         </h3>
         <div className="flex gap-2">
-          <button onClick={() => setShowTemplatePicker(true)} className="btn-secondary text-sm">
+          <Button variant="outline" onClick={() => setShowTemplatePicker(true)} className="text-sm">
             <FileDown className="mr-1 h-4 w-4" />
             {t.workouts.fromTemplate}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => {
               setShowCustomForm(true);
               setCustomExercises([]);
             }}
-            className="btn-primary text-sm"
+            className="text-sm"
           >
             <Plus className="mr-1 h-4 w-4" />
             {t.workouts.customPlan}
-          </button>
+          </Button>
         </div>
       </div>
 

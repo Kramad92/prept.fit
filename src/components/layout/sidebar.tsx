@@ -51,8 +51,8 @@ export function Sidebar() {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
       <div className="flex flex-1 flex-col border-r border-gray-200 bg-white">
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
-          <Dumbbell className="h-7 w-7 text-brand-600" />
-          <span className="text-xl font-bold text-gray-900">TrainerHub</span>
+          <img src="/logo.png" alt="Prept" className="h-8" />
+          <span className="text-lg font-bold text-gray-900">Prept</span>
         </div>
 
         <div className="px-3 pt-3">

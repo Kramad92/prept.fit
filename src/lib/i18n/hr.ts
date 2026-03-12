@@ -59,6 +59,13 @@ export const hr = {
     reenterPassword: "Ponovite lozinku",
     enterPassword: "Unesite lozinku",
     registrationFailed: "Registracija neuspješna",
+    continueWithGoogle: "Nastavi s Google",
+    continueWithApple: "Nastavi s Apple",
+    signUpWithGoogle: "Registriraj se s Google",
+    signUpWithApple: "Registriraj se s Apple",
+    orContinueWith: "ili nastavi s",
+    completeRegistration: "Završite registraciju",
+    oneMoreStep: "Samo još naziv vaše tvrtke",
   },
 
   // Navigation

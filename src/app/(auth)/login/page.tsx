@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Dumbbell } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,10 +49,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600">
-            <Dumbbell className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">TrainerHub</h1>
+          <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
+          <h2 className="mt-2 text-xl font-bold text-gray-900">Prept</h2>
           <p className="mt-1 text-sm text-gray-500">
             {t.auth.signInTitle}
           </p>
@@ -68,12 +67,12 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.auth.email}
             </label>
-            <input
+            <Input
               type="email"
               name="email"
               required
               autoComplete="email"
-              className="input mt-1"
+              className="mt-1"
               placeholder="vas@email.com"
             />
           </div>
@@ -82,23 +81,23 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.auth.password}
             </label>
-            <input
+            <Input
               type="password"
               name="password"
               required
               autoComplete="current-password"
-              className="input mt-1"
+              className="mt-1"
               placeholder={t.auth.enterPassword}
             />
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full"
+            className="w-full"
           >
             {loading ? t.auth.signingIn : t.auth.signInButton}
-          </button>
+          </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">

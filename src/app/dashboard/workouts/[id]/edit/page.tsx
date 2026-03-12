@@ -4,19 +4,21 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, GripVertical, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ExercisePicker } from "@/components/client/exercise-picker";
 import { ExerciseNameInput } from "@/components/client/exercise-name-input";
+import { Textarea } from "@/components/ui/textarea";
 import { AIGenerateWorkout } from "@/components/ai/ai-generate-workout";
 import type { ExerciseInput } from "@/types";
 import { createEmptyExercise } from "@/lib/utils";
-import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
 export default function EditWorkoutPage() {
   const t = useT();
   const params = useParams();
   const router = useRouter();
-  const { toastError } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
@@ -45,7 +47,7 @@ export default function EditWorkoutPage() {
         );
       })
       .catch(() => {
-        toastError(t.workouts.failedToLoad);
+        toast.error(t.workouts.failedToLoad);
         router.push("/dashboard/workouts");
       })
       .finally(() => setLoading(false));
@@ -115,10 +117,10 @@ export default function EditWorkoutPage() {
         router.push(`/dashboard/workouts/${params.id}`);
       } else {
         const err = await res.json().catch(() => null);
-        toastError(err?.error || t.workouts.failedToSave);
+        toast.error(err?.error || t.workouts.failedToSave);
       }
     } catch {
-      toastError(t.workouts.failedToSave);
+      toast.error(t.workouts.failedToSave);
     }
     setSaving(false);
   }
@@ -152,12 +154,12 @@ export default function EditWorkoutPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.workouts.planName} *
             </label>
-            <input
+            <Input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="input mt-1"
+              className="mt-1"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -170,11 +172,11 @@ export default function EditWorkoutPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.common.description}
             </label>
-            <textarea
+            <Textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input mt-1"
+              className="mt-1"
               placeholder={t.workouts.aiPromptPlaceholder}
             />
             <div className="mt-1.5">
@@ -225,7 +227,7 @@ export default function EditWorkoutPage() {
                       <ExerciseNameInput
                         value={ex.name}
                         onChange={(v) => updateExercise(ex.tempId, "name", v)}
-                        className="input flex-1"
+                        className="flex-1"
                         data-ex-name={ex.tempId}
                         onKeyDown={(e: React.KeyboardEvent) => {
                           if (e.key === "Enter") {
@@ -245,28 +247,28 @@ export default function EditWorkoutPage() {
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                       <div>
                         <label className="text-xs text-gray-500">{t.workouts.sets}</label>
-                        <input type="number" value={ex.sets} onChange={(e) => updateExercise(ex.tempId, "sets", e.target.value)} placeholder="3" className="input mt-0.5" data-ex-sets={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-reps="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
+                        <Input type="number" value={ex.sets} onChange={(e) => updateExercise(ex.tempId, "sets", e.target.value)} placeholder="3" className="mt-0.5" data-ex-sets={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-reps="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">{t.workouts.reps}</label>
-                        <input type="text" value={ex.reps} onChange={(e) => updateExercise(ex.tempId, "reps", e.target.value)} placeholder="8-12" className="input mt-0.5" data-ex-reps={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-weight="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
+                        <Input type="text" value={ex.reps} onChange={(e) => updateExercise(ex.tempId, "reps", e.target.value)} placeholder="8-12" className="mt-0.5" data-ex-reps={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-weight="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">{t.workouts.weight}</label>
-                        <input type="text" value={ex.weight} onChange={(e) => updateExercise(ex.tempId, "weight", e.target.value)} placeholder="—" className="input mt-0.5" data-ex-weight={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-rest="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
+                        <Input type="text" value={ex.weight} onChange={(e) => updateExercise(ex.tempId, "weight", e.target.value)} placeholder="—" className="mt-0.5" data-ex-weight={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (document.querySelector(`[data-ex-rest="${ex.tempId}"]`) as HTMLInputElement)?.focus(); }}} />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500">{t.workouts.restSec}</label>
-                        <input type="number" value={ex.restSeconds} onChange={(e) => updateExercise(ex.tempId, "restSeconds", e.target.value)} placeholder="60" className="input mt-0.5" data-ex-rest={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }}} />
+                        <Input type="number" value={ex.restSeconds} onChange={(e) => updateExercise(ex.tempId, "restSeconds", e.target.value)} placeholder="60" className="mt-0.5" data-ex-rest={ex.tempId} onFocus={(e) => e.target.select()} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }}} />
                       </div>
                     </div>
                     <div>
                       <label className="text-xs text-gray-500">{t.common.notes}</label>
-                      <input type="text" value={ex.notes} onChange={(e) => updateExercise(ex.tempId, "notes", e.target.value)} placeholder={t.workouts.formCues} className="input mt-0.5" />
+                      <Input type="text" value={ex.notes} onChange={(e) => updateExercise(ex.tempId, "notes", e.target.value)} placeholder={t.workouts.formCues} className="mt-0.5" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-500">{t.workouts.videoUrl}</label>
-                      <input type="url" value={ex.videoUrl} onChange={(e) => updateExercise(ex.tempId, "videoUrl", e.target.value)} placeholder="https://youtube.com/watch?v=..." className="input mt-0.5" />
+                      <Input type="url" value={ex.videoUrl} onChange={(e) => updateExercise(ex.tempId, "videoUrl", e.target.value)} placeholder="https://youtube.com/watch?v=..." className="mt-0.5" />
                     </div>
                   </div>
                 </div>
@@ -275,19 +277,21 @@ export default function EditWorkoutPage() {
           </div>
 
           <div data-exercise-end />
-          <button type="button" onClick={addExercise} className="btn-secondary mt-3 w-full">
+          <Button type="button" variant="outline" onClick={addExercise} className="mt-3 w-full">
             <Plus className="mr-2 h-4 w-4" />
             {t.workouts.addManually}
-          </button>
+          </Button>
         </div>
 
         <div className="flex gap-3">
-          <button type="submit" disabled={saving} className="btn-primary">
+          <Button type="submit" disabled={saving}>
             {saving ? t.common.saving : t.workouts.saveChanges}
-          </button>
-          <Link href={`/dashboard/workouts/${params.id}`} className="btn-secondary">
-            {t.common.cancel}
-          </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/dashboard/workouts/${params.id}`}>
+              {t.common.cancel}
+            </Link>
+          </Button>
         </div>
       </form>
     </div>

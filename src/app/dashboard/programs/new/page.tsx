@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
@@ -182,21 +185,19 @@ export default function NewProgramPage() {
         <div className="card space-y-4">
           <div>
             <label className="label">{t.programs.programName}</label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.programs.programNamePlaceholder}
-              className="input"
             />
           </div>
           <div>
             <label className="label">{t.common.description}</label>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.programs.descriptionPlaceholder}
-              className="input"
               rows={2}
             />
             <div className="mt-2">
@@ -308,16 +309,17 @@ export default function NewProgramPage() {
 
         {/* Save */}
         <div className="flex gap-3">
-          <button
+          <Button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="btn-primary"
           >
             {saving ? t.common.saving : t.programs.createProgram}
-          </button>
-          <Link href="/dashboard/programs" className="btn-secondary">
-            {t.common.cancel}
-          </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/programs">
+              {t.common.cancel}
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

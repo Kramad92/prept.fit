@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Check, Play, Youtube } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ExpandableNotes } from "@/components/ui/expandable-notes";
 
 interface Exercise {
@@ -245,23 +248,23 @@ export default function WorkoutLogPage() {
                   <span className="text-sm font-medium text-gray-500">
                     {setIdx + 1}
                   </span>
-                  <input
+                  <Input
                     type="text"
                     value={entry.repsCompleted}
                     onChange={(e) =>
                       updateEntry(ex.id, setIdx, "repsCompleted", e.target.value)
                     }
                     placeholder={ex.reps || "—"}
-                    className="input py-2 text-sm"
+                    className="py-2 text-sm"
                   />
-                  <input
+                  <Input
                     type="text"
                     value={entry.weightUsed}
                     onChange={(e) =>
                       updateEntry(ex.id, setIdx, "weightUsed", e.target.value)
                     }
                     placeholder={ex.weight || "—"}
-                    className="input py-2 text-sm"
+                    className="py-2 text-sm"
                   />
                   <button
                     onClick={() =>
@@ -286,22 +289,22 @@ export default function WorkoutLogPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.workoutLog.workoutNotes}
           </label>
-          <textarea
+          <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            className="input mt-1"
+            className="mt-1"
             placeholder={t.workoutLog.howDidItFeel}
           />
         </div>
 
-        <button
+        <Button
           onClick={handleFinish}
           disabled={saving}
-          className="btn-primary w-full py-3 text-base"
+          className="w-full py-3 text-base"
         >
           {saving ? t.common.saving : t.workoutLog.finishWorkout}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
@@ -199,19 +202,17 @@ export default function EditProgramPage() {
         <div className="card space-y-4">
           <div>
             <label className="label">{t.programs.programName}</label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="input"
             />
           </div>
           <div>
             <label className="label">{t.common.description}</label>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input"
               rows={2}
             />
           </div>
@@ -302,19 +303,17 @@ export default function EditProgramPage() {
         </div>
 
         <div className="flex gap-3">
-          <button
+          <Button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="btn-primary"
           >
             {saving ? t.common.saving : t.workouts.saveChanges}
-          </button>
-          <Link
-            href={`/dashboard/programs/${params.id}`}
-            className="btn-secondary"
-          >
-            {t.common.cancel}
-          </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/dashboard/programs/${params.id}`}>
+              {t.common.cancel}
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

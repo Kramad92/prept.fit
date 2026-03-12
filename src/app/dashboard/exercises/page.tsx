@@ -20,7 +20,11 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale } from "@/lib/i18n";
 
@@ -369,43 +373,42 @@ function ExerciseLibraryContent() {
         </div>
         <div className="flex flex-wrap gap-2">
           {exercises.length === 0 && (
-            <button onClick={handleSeed} disabled={seeding} className="btn-secondary">
+            <Button variant="outline" onClick={handleSeed} disabled={seeding}>
               <Download className="mr-2 h-4 w-4" />
               {seeding ? t.common.loading : t.exerciseLibrary.loadDefaults}
-            </button>
+            </Button>
           )}
           {exercises.length > 0 && exercises.length < 50 && (
-            <button onClick={handleSeed} disabled={seeding} className="btn-secondary text-sm">
+            <Button variant="outline" onClick={handleSeed} disabled={seeding} className="text-sm">
               <Download className="mr-1 h-4 w-4" />
               {seeding ? t.exerciseLibrary.adding : t.exerciseLibrary.addDefaults}
-            </button>
+            </Button>
           )}
           {exercises.length > 0 && !selectMode && (
-            <button
+            <Button
+              variant="outline"
               onClick={() => setSelectMode(true)}
-              className="btn-secondary"
               title="Batch select"
             >
               <CheckSquare className="h-4 w-4" />
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="outline"
             onClick={() => setShowManage(true)}
-            className="btn-secondary"
             title={t.exerciseLibrary.manageOptions}
           >
             <Settings className="h-4 w-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => {
               resetForm();
               setShowAdd(true);
             }}
-            className="btn-primary"
           >
             <Plus className="h-4 w-4 md:mr-2" />
             <span className="hidden md:inline">{t.exerciseLibrary.addExercise}</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -413,12 +416,12 @@ function ExerciseLibraryContent() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
+            <Input
               type="text"
               placeholder={t.exerciseLibrary.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pl-10"
+              className="pl-10"
             />
           </div>
           <FilterSelect
@@ -469,10 +472,10 @@ function ExerciseLibraryContent() {
             title={t.exerciseLibrary.noExercises}
             description={t.exerciseLibrary.noExercisesDesc}
             action={
-              <button onClick={handleSeed} disabled={seeding} className="btn-primary">
+              <Button onClick={handleSeed} disabled={seeding}>
                 <Download className="mr-2 h-4 w-4" />
                 {seeding ? t.common.loading : t.exerciseLibrary.loadDefaultsCount}
-              </button>
+              </Button>
             }
           />
         </div>
@@ -574,83 +577,73 @@ function ExerciseLibraryContent() {
       )}
 
       {/* Exercise Detail Modal */}
-      {detailExercise && (
-        <ExerciseDetailModal
-          exercise={detailExercise}
-          locale={locale}
-          onClose={() => setDetailExercise(null)}
-          onEdit={(ex) => { setDetailExercise(null); startEdit(ex); }}
-          onDelete={(id) => { setDetailExercise(null); handleDelete(id); }}
-        />
-      )}
+      <Dialog open={!!detailExercise} onOpenChange={(open) => { if (!open) setDetailExercise(null); }}>
+        {detailExercise && (
+          <ExerciseDetailModal
+            exercise={detailExercise}
+            locale={locale}
+            onEdit={(ex) => { setDetailExercise(null); startEdit(ex); }}
+            onDelete={(id) => { setDetailExercise(null); handleDelete(id); }}
+          />
+        )}
+      </Dialog>
 
       {/* Add/Edit Exercise Modal */}
-      {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {editingId ? t.exerciseLibrary.editExercise : t.exerciseLibrary.addExercise}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowAdd(false);
-                  resetForm();
-                }}
-                className="rounded-lg p-1 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      <Dialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) resetForm(); }}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingId ? t.exerciseLibrary.editExercise : t.exerciseLibrary.addExercise}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSave} className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.exerciseName} *</label>
+              <Input type="text" required value={formName} onChange={(e) => setFormName(e.target.value)} className="mt-1" placeholder={t.exerciseLibrary.namePlaceholder} />
             </div>
-            <form onSubmit={handleSave} className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.exerciseName} *</label>
-                <input type="text" required value={formName} onChange={(e) => setFormName(e.target.value)} className="input mt-1" placeholder={t.exerciseLibrary.namePlaceholder} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.category}</label>
-                  <FilterSelect
-                    value={formCategory}
-                    onChange={setFormCategory}
-                    placeholder={t.exerciseLibrary.select}
-                    className="mt-1"
-                    options={categories.map((c) => ({ value: c.name, label: c.name }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.equipment}</label>
-                  <FilterSelect
-                    value={formEquipment}
-                    onChange={setFormEquipment}
-                    placeholder={t.exerciseLibrary.select}
-                    className="mt-1"
-                    options={equipmentTypes.map((e) => ({ value: e.name, label: e.name }))}
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.category}</label>
+                <FilterSelect
+                  value={formCategory}
+                  onChange={setFormCategory}
+                  placeholder={t.exerciseLibrary.select}
+                  className="mt-1"
+                  options={categories.map((c) => ({ value: c.name, label: c.name }))}
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.muscleGroup}</label>
-                <input type="text" value={formMuscleGroup} onChange={(e) => setFormMuscleGroup(e.target.value)} className="input mt-1" placeholder={t.exerciseLibrary.selectMuscle} />
+                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.equipment}</label>
+                <FilterSelect
+                  value={formEquipment}
+                  onChange={setFormEquipment}
+                  placeholder={t.exerciseLibrary.select}
+                  className="mt-1"
+                  options={equipmentTypes.map((e) => ({ value: e.name, label: e.name }))}
+                />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t.workouts.videoUrl}</label>
-                <input type="url" value={formVideoUrl} onChange={(e) => setFormVideoUrl(e.target.value)} className="input mt-1" placeholder="https://youtube.com/watch?v=..." />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.instructions}</label>
-                <textarea value={formInstructions} onChange={(e) => setFormInstructions(e.target.value)} rows={2} className="input mt-1" placeholder={t.exerciseLibrary.instructionsPlaceholder} />
-              </div>
-              <button type="submit" disabled={saving} className="btn-primary w-full">
-                {saving ? t.common.saving : editingId ? t.workouts.saveChanges : t.exerciseLibrary.addExercise}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.muscleGroup}</label>
+              <Input type="text" value={formMuscleGroup} onChange={(e) => setFormMuscleGroup(e.target.value)} className="mt-1" placeholder={t.exerciseLibrary.selectMuscle} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">{t.workouts.videoUrl}</label>
+              <Input type="url" value={formVideoUrl} onChange={(e) => setFormVideoUrl(e.target.value)} className="mt-1" placeholder="https://youtube.com/watch?v=..." />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">{t.exerciseLibrary.instructions}</label>
+              <Textarea value={formInstructions} onChange={(e) => setFormInstructions(e.target.value)} rows={2} className="mt-1" placeholder={t.exerciseLibrary.instructionsPlaceholder} />
+            </div>
+            <Button type="submit" disabled={saving} className="w-full">
+              {saving ? t.common.saving : editingId ? t.workouts.saveChanges : t.exerciseLibrary.addExercise}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Manage Categories & Equipment Modal */}
-      {showManage && (
+      <Dialog open={showManage} onOpenChange={setShowManage}>
         <ManageOptionsModal
           categories={categories}
           equipmentTypes={equipmentTypes}
@@ -659,11 +652,10 @@ function ExerciseLibraryContent() {
           hiddenEquipment={hiddenEquipment}
           onToggleCategory={toggleHiddenCategory}
           onToggleEquipment={toggleHiddenEquipment}
-          onClose={() => setShowManage(false)}
           onCategoriesChange={() => { loadCategories(); loadExercises(); }}
           onEquipmentChange={() => { loadEquipmentTypes(); loadExercises(); }}
         />
-      )}
+      </Dialog>
     </div>
   );
 }
@@ -691,13 +683,11 @@ function getYouTubeEmbedUrl(url: string): string | null {
 function ExerciseDetailModal({
   exercise: ex,
   locale,
-  onClose,
   onEdit,
   onDelete,
 }: {
   exercise: ExerciseItem;
   locale: string;
-  onClose: () => void;
   onEdit: (ex: ExerciseItem) => void;
   onDelete: (id: string) => void;
 }) {
@@ -712,15 +702,11 @@ function ExerciseDetailModal({
     "bg-red-50 text-red-700";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black/50 p-0 md:items-center md:p-4" onClick={onClose}>
-      <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
+    <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogHeader>
+        <div className="flex items-start justify-between gap-3 pr-8">
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold text-gray-900">{displayName}</h2>
+            <DialogTitle>{displayName}</DialogTitle>
             {locale !== "en" && ex.nameBs && (
               <p className="text-sm text-gray-400">{ex.name}</p>
             )}
@@ -740,117 +726,114 @@ function ExerciseDetailModal({
             >
               <Trash2 className="h-4 w-4" />
             </button>
-            <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-gray-100">
-              <X className="h-4 w-4" />
-            </button>
           </div>
         </div>
+      </DialogHeader>
 
-        {/* Video Player */}
-        {embedUrl && (
-          <div className="mt-4 overflow-hidden rounded-xl bg-black">
-            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-              <iframe
-                src={embedUrl}
-                className="absolute inset-0 h-full w-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title={displayName}
-              />
-            </div>
+      {/* Video Player */}
+      {embedUrl && (
+        <div className="mt-4 overflow-hidden rounded-xl bg-black">
+          <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+            <iframe
+              src={embedUrl}
+              className="absolute inset-0 h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title={displayName}
+            />
           </div>
+        </div>
+      )}
+
+      {/* Badges */}
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {ex.difficulty && (
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${difficultyColor}`}>
+            {ex.difficulty}
+          </span>
         )}
-
-        {/* Badges */}
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {ex.difficulty && (
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${difficultyColor}`}>
-              {ex.difficulty}
-            </span>
-          )}
-          {ex.bodyRegion && (
-            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-              {ex.bodyRegion}
-            </span>
-          )}
-          {ex.mechanics && (
-            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
-              {ex.mechanics}
-            </span>
-          )}
-          {ex.forceType && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-              {ex.forceType}
-            </span>
-          )}
-          {ex.laterality && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-              {ex.laterality}
-            </span>
-          )}
-          {ex.classification && (
-            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
-              {ex.classification}
-            </span>
-          )}
-        </div>
-
-        {/* Details Grid */}
-        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          {ex.category && (
-            <div>
-              <p className="text-xs font-medium text-gray-400">Target Muscle Group</p>
-              <p className="text-gray-900">{ex.category}</p>
-            </div>
-          )}
-          {ex.muscleGroup && (
-            <div>
-              <p className="text-xs font-medium text-gray-400">Prime Mover</p>
-              <p className="text-gray-900">{ex.muscleGroup}</p>
-            </div>
-          )}
-          {ex.secondaryMuscles && (
-            <div className="col-span-2">
-              <p className="text-xs font-medium text-gray-400">Secondary Muscles</p>
-              <p className="text-gray-900">{ex.secondaryMuscles}</p>
-            </div>
-          )}
-          {ex.equipment && (
-            <div>
-              <p className="text-xs font-medium text-gray-400">Equipment</p>
-              <p className="text-gray-900">{ex.equipment}</p>
-            </div>
-          )}
-          {ex.movementPattern && (
-            <div>
-              <p className="text-xs font-medium text-gray-400">Movement Pattern</p>
-              <p className="text-gray-900">{ex.movementPattern}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Instructions */}
-        {ex.instructions && (
-          <div className="mt-4">
-            <p className="text-xs font-medium text-gray-400">Instructions</p>
-            <p className="mt-1 text-sm text-gray-700">{ex.instructions}</p>
-          </div>
+        {ex.bodyRegion && (
+          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+            {ex.bodyRegion}
+          </span>
         )}
-
-        {/* External link */}
-        {ex.videoUrl && !embedUrl && (
-          <a
-            href={ex.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700"
-          >
-            <Play className="h-3.5 w-3.5" />
-            Watch video
-          </a>
+        {ex.mechanics && (
+          <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
+            {ex.mechanics}
+          </span>
+        )}
+        {ex.forceType && (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            {ex.forceType}
+          </span>
+        )}
+        {ex.laterality && (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            {ex.laterality}
+          </span>
+        )}
+        {ex.classification && (
+          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+            {ex.classification}
+          </span>
         )}
       </div>
-    </div>
+
+      {/* Details Grid */}
+      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        {ex.category && (
+          <div>
+            <p className="text-xs font-medium text-gray-400">Target Muscle Group</p>
+            <p className="text-gray-900">{ex.category}</p>
+          </div>
+        )}
+        {ex.muscleGroup && (
+          <div>
+            <p className="text-xs font-medium text-gray-400">Prime Mover</p>
+            <p className="text-gray-900">{ex.muscleGroup}</p>
+          </div>
+        )}
+        {ex.secondaryMuscles && (
+          <div className="col-span-2">
+            <p className="text-xs font-medium text-gray-400">Secondary Muscles</p>
+            <p className="text-gray-900">{ex.secondaryMuscles}</p>
+          </div>
+        )}
+        {ex.equipment && (
+          <div>
+            <p className="text-xs font-medium text-gray-400">Equipment</p>
+            <p className="text-gray-900">{ex.equipment}</p>
+          </div>
+        )}
+        {ex.movementPattern && (
+          <div>
+            <p className="text-xs font-medium text-gray-400">Movement Pattern</p>
+            <p className="text-gray-900">{ex.movementPattern}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Instructions */}
+      {ex.instructions && (
+        <div className="mt-4">
+          <p className="text-xs font-medium text-gray-400">Instructions</p>
+          <p className="mt-1 text-sm text-gray-700">{ex.instructions}</p>
+        </div>
+      )}
+
+      {/* External link */}
+      {ex.videoUrl && !embedUrl && (
+        <a
+          href={ex.videoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700"
+        >
+          <Play className="h-3.5 w-3.5" />
+          Watch video
+        </a>
+      )}
+    </DialogContent>
   );
 }
 
@@ -864,7 +847,6 @@ function ManageOptionsModal({
   hiddenEquipment,
   onToggleCategory,
   onToggleEquipment,
-  onClose,
   onCategoriesChange,
   onEquipmentChange,
 }: {
@@ -875,7 +857,6 @@ function ManageOptionsModal({
   hiddenEquipment: Set<string>;
   onToggleCategory: (name: string) => void;
   onToggleEquipment: (name: string) => void;
-  onClose: () => void;
   onCategoriesChange: () => void;
   onEquipmentChange: () => void;
 }) {
@@ -883,64 +864,59 @@ function ManageOptionsModal({
   const [tab, setTab] = useState<"categories" | "equipment">("categories");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t.exerciseLibrary.manageOptions}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-gray-100">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>{t.exerciseLibrary.manageOptions}</DialogTitle>
+      </DialogHeader>
 
-        {/* Tabs */}
-        <div className="mt-4 flex gap-1 rounded-lg bg-gray-100 p-1">
-          <button
-            onClick={() => setTab("categories")}
-            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              tab === "categories" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {t.exerciseLibrary.categories}
-          </button>
-          <button
-            onClick={() => setTab("equipment")}
-            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              tab === "equipment" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {t.exerciseLibrary.equipmentTypes}
-          </button>
-        </div>
-
-        <div className="mt-4">
-          {tab === "categories" ? (
-            <OptionList
-              items={categories}
-              exercises={exercises}
-              field="category"
-              addLabel={t.exerciseLibrary.addCategory}
-              placeholder={t.exerciseLibrary.categoryName}
-              apiPath="/api/exercise-categories"
-              onChange={onCategoriesChange}
-              hiddenSet={hiddenCategories}
-              onToggleHidden={onToggleCategory}
-            />
-          ) : (
-            <OptionList
-              items={equipmentTypes}
-              exercises={exercises}
-              field="equipment"
-              addLabel={t.exerciseLibrary.addEquipment}
-              placeholder={t.exerciseLibrary.equipmentName}
-              apiPath="/api/equipment-types"
-              onChange={onEquipmentChange}
-              hiddenSet={hiddenEquipment}
-              onToggleHidden={onToggleEquipment}
-            />
-          )}
-        </div>
+      {/* Tabs */}
+      <div className="mt-4 flex gap-1 rounded-lg bg-gray-100 p-1">
+        <button
+          onClick={() => setTab("categories")}
+          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            tab === "categories" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          {t.exerciseLibrary.categories}
+        </button>
+        <button
+          onClick={() => setTab("equipment")}
+          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            tab === "equipment" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          {t.exerciseLibrary.equipmentTypes}
+        </button>
       </div>
-    </div>
+
+      <div className="mt-4">
+        {tab === "categories" ? (
+          <OptionList
+            items={categories}
+            exercises={exercises}
+            field="category"
+            addLabel={t.exerciseLibrary.addCategory}
+            placeholder={t.exerciseLibrary.categoryName}
+            apiPath="/api/exercise-categories"
+            onChange={onCategoriesChange}
+            hiddenSet={hiddenCategories}
+            onToggleHidden={onToggleCategory}
+          />
+        ) : (
+          <OptionList
+            items={equipmentTypes}
+            exercises={exercises}
+            field="equipment"
+            addLabel={t.exerciseLibrary.addEquipment}
+            placeholder={t.exerciseLibrary.equipmentName}
+            apiPath="/api/equipment-types"
+            onChange={onEquipmentChange}
+            hiddenSet={hiddenEquipment}
+            onToggleHidden={onToggleEquipment}
+          />
+        )}
+      </div>
+    </DialogContent>
   );
 }
 
@@ -1026,17 +1002,17 @@ function OptionList({
     <div>
       {/* Add new */}
       <form onSubmit={handleAdd} className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={newName}
           onChange={(e) => { setNewName(e.target.value); setError(""); }}
           placeholder={placeholder}
-          className="input flex-1"
+          className="flex-1"
         />
-        <button type="submit" disabled={adding || !newName.trim()} className="btn-primary whitespace-nowrap">
+        <Button type="submit" disabled={adding || !newName.trim()} className="whitespace-nowrap">
           <Plus className="mr-1 h-4 w-4" />
           {addLabel}
-        </button>
+        </Button>
       </form>
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
 
@@ -1051,11 +1027,11 @@ function OptionList({
           <div key={item.id} className="flex items-center gap-2 rounded-lg border border-gray-100 px-3 py-2">
             {editingId === item.id ? (
               <>
-                <input
+                <Input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="input flex-1 py-1 text-sm"
+                  className="flex-1 py-1 text-sm"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") { e.preventDefault(); handleRename(item.id); }

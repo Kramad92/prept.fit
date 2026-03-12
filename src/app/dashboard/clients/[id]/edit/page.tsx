@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 
@@ -112,12 +115,12 @@ export default function EditClientPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.common.name} *
           </label>
-          <input
+          <Input
             type="text"
             name="name"
             required
             defaultValue={client.name}
-            className="input mt-1"
+            className="mt-1"
           />
         </div>
 
@@ -126,22 +129,22 @@ export default function EditClientPage() {
             <label className="block text-sm font-medium text-gray-700">
               {t.common.email}
             </label>
-            <input
+            <Input
               type="email"
               name="email"
               defaultValue={client.email || ""}
-              className="input mt-1"
+              className="mt-1"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               {t.common.phone}
             </label>
-            <input
+            <Input
               type="tel"
               name="phone"
               defaultValue={client.phone || ""}
-              className="input mt-1"
+              className="mt-1"
             />
           </div>
         </div>
@@ -167,11 +170,11 @@ export default function EditClientPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.clients.goals}
           </label>
-          <textarea
+          <Textarea
             name="goals"
             rows={2}
             defaultValue={client.goals || ""}
-            className="input mt-1"
+            className="mt-1"
             placeholder={t.clients.goalsPlaceholder}
           />
         </div>
@@ -217,11 +220,11 @@ export default function EditClientPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.clients.allergies}
           </label>
-          <input
+          <Input
             type="text"
             name="allergies"
             defaultValue={client.allergies || ""}
-            className="input mt-1"
+            className="mt-1"
             placeholder={t.clients.allergiesPlaceholder}
           />
         </div>
@@ -230,11 +233,11 @@ export default function EditClientPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.clients.dietaryPrefs}
           </label>
-          <input
+          <Input
             type="text"
             name="dietaryPrefs"
             defaultValue={client.dietaryPrefs || ""}
-            className="input mt-1"
+            className="mt-1"
             placeholder={t.clients.dietaryPrefsPlaceholder}
           />
         </div>
@@ -243,11 +246,11 @@ export default function EditClientPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.clients.injuries}
           </label>
-          <input
+          <Input
             type="text"
             name="injuries"
             defaultValue={client.injuries || ""}
-            className="input mt-1"
+            className="mt-1"
             placeholder={t.clients.injuriesPlaceholder}
           />
         </div>
@@ -256,29 +259,28 @@ export default function EditClientPage() {
           <label className="block text-sm font-medium text-gray-700">
             {t.common.notes}
           </label>
-          <textarea
+          <Textarea
             name="notes"
             rows={3}
             defaultValue={client.notes || ""}
-            className="input mt-1"
+            className="mt-1"
             placeholder={t.clients.notesPlaceholder}
           />
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button
+          <Button
             type="submit"
             disabled={saving}
-            className="btn-primary flex-1"
+            className="flex-1"
           >
             {saving ? t.common.saving : t.clients.saveChanges}
-          </button>
-          <Link
-            href={`/dashboard/clients/${params.id}`}
-            className="btn-secondary"
-          >
-            {t.common.cancel}
-          </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/dashboard/clients/${params.id}`}>
+              {t.common.cancel}
+            </Link>
+          </Button>
         </div>
       </form>
     </div>

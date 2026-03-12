@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Camera, Loader2, Upload, X } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
 
 interface ImageUploaderProps {
   folder: string;
@@ -144,13 +145,13 @@ export function ImageUploader({ folder, onUploaded, onCancel, className }: Image
       )}
 
       {selectedFile && !uploading && (
-        <button
+        <Button
           onClick={handleUpload}
-          className="btn-primary mt-3 w-full text-sm"
+          className="mt-3 w-full text-sm"
         >
           <Upload className="mr-1.5 h-4 w-4" />
           {t.photos.uploadPhoto}
-        </button>
+        </Button>
       )}
     </div>
   );

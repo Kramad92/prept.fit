@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
-import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import type { Measurement } from "@/types";
@@ -16,7 +19,7 @@ interface MeasurementModalProps {
 
 export function MeasurementModal({ clientId, lastMeasurement, onClose, onSaved }: MeasurementModalProps) {
   const [saving, setSaving] = useState(false);
-  const { toastSuccess, toastError } = useToast();
+
   const t = useT();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -30,81 +33,75 @@ export function MeasurementModal({ clientId, lastMeasurement, onClose, onSaved }
 
     try {
       await api.post(`/api/clients/${clientId}/measurements`, data);
-      toastSuccess(t.measurements.saved);
+      toast.success(t.measurements.saved);
       onSaved();
       onClose();
     } catch {
-      toastError(t.measurements.failedToSave);
+      toast.error(t.measurements.failedToSave);
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t.measurements.addMeasurement}</h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 hover:bg-gray-100"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto top-auto bottom-0 translate-y-0 rounded-t-2xl rounded-b-none md:top-[50%] md:translate-y-[-50%] md:bottom-auto md:rounded-xl">
+        <DialogHeader>
+          <DialogTitle>{t.measurements.addMeasurement}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">{t.common.date}</label>
-            <input
+            <Input
               type="date"
               name="date"
               defaultValue={new Date().toISOString().split("T")[0]}
-              className="input mt-1"
+              className="mt-1"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.weight} ({t.measurements.kg})</label>
-              <input type="number" name="weight" step="0.1" className="input mt-1" placeholder="75.0" defaultValue={lastMeasurement?.weight ?? undefined} />
+              <Input type="number" name="weight" step="0.1" className="mt-1" placeholder="75.0" defaultValue={lastMeasurement?.weight ?? undefined} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.bodyFat} (%)</label>
-              <input type="number" name="bodyFat" step="0.1" className="input mt-1" placeholder="18.0" defaultValue={lastMeasurement?.bodyFat ?? undefined} />
+              <Input type="number" name="bodyFat" step="0.1" className="mt-1" placeholder="18.0" defaultValue={lastMeasurement?.bodyFat ?? undefined} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.chest} ({t.measurements.cm})</label>
-              <input type="number" name="chest" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.chest ?? undefined} />
+              <Input type="number" name="chest" step="0.1" className="mt-1" placeholder="95.0" defaultValue={lastMeasurement?.chest ?? undefined} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.waist} ({t.measurements.cm})</label>
-              <input type="number" name="waist" step="0.1" className="input mt-1" placeholder="80.0" defaultValue={lastMeasurement?.waist ?? undefined} />
+              <Input type="number" name="waist" step="0.1" className="mt-1" placeholder="80.0" defaultValue={lastMeasurement?.waist ?? undefined} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.hips} ({t.measurements.cm})</label>
-              <input type="number" name="hips" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.hips ?? undefined} />
+              <Input type="number" name="hips" step="0.1" className="mt-1" placeholder="95.0" defaultValue={lastMeasurement?.hips ?? undefined} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">{t.measurements.arms} ({t.measurements.cm})</label>
-              <input type="number" name="arms" step="0.1" className="input mt-1" placeholder="35.0" defaultValue={lastMeasurement?.arms ?? undefined} />
+              <Input type="number" name="arms" step="0.1" className="mt-1" placeholder="35.0" defaultValue={lastMeasurement?.arms ?? undefined} />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">{t.measurements.thighs} ({t.measurements.cm})</label>
-            <input type="number" name="thighs" step="0.1" className="input mt-1" placeholder="55.0" defaultValue={lastMeasurement?.thighs ?? undefined} />
+            <Input type="number" name="thighs" step="0.1" className="mt-1" placeholder="55.0" defaultValue={lastMeasurement?.thighs ?? undefined} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">{t.common.notes}</label>
-            <textarea name="notes" rows={2} className="input mt-1" placeholder={t.measurements.observations} />
+            <Textarea name="notes" rows={2} className="mt-1" placeholder={t.measurements.observations} />
           </div>
-          <button type="submit" disabled={saving} className="btn-primary w-full">
+          <Button type="submit" disabled={saving} className="w-full">
             {saving ? t.common.saving : t.measurements.saveMeasurement}
-          </button>
+          </Button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

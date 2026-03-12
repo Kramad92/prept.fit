@@ -12,7 +12,10 @@ import {
   Clock,
 } from "lucide-react";
 import type { Payment } from "@/types";
-import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
@@ -23,7 +26,7 @@ interface ClientPaymentsTabProps {
 }
 
 export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
-  const { toastSuccess, toastError } = useToast();
+
   const t = useT();
 
   const METHODS = [
@@ -57,7 +60,7 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
         setLoading(false);
       })
       .catch(() => {
-        toastError(t.billing.failedToLoad);
+        toast.error(t.billing.failedToLoad);
         setLoading(false);
       });
   }
@@ -112,12 +115,12 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
       } else {
         await api.post(`/api/clients/${clientId}/payments`, payload);
       }
-      toastSuccess(editingId ? t.billing.paymentUpdated : t.billing.paymentRecorded);
+      toast.success(editingId ? t.billing.paymentUpdated : t.billing.paymentRecorded);
       setShowForm(false);
       resetForm();
       loadPayments();
     } catch {
-      toastError(t.billing.failedToSave);
+      toast.error(t.billing.failedToSave);
     } finally {
       setSaving(false);
     }
@@ -126,10 +129,10 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
   async function handleDelete(paymentId: string) {
     try {
       await api.delete(`/api/clients/${clientId}/payments/${paymentId}`);
-      toastSuccess(t.billing.paymentDeleted);
+      toast.success(t.billing.paymentDeleted);
       loadPayments();
     } catch {
-      toastError(t.billing.failedToDelete);
+      toast.error(t.billing.failedToDelete);
     }
   }
 
@@ -198,16 +201,16 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
         <h3 className="text-sm font-semibold text-gray-700">
           {t.billing.paymentHistory} ({payments.length})
         </h3>
-        <button
+        <Button
           onClick={() => {
             resetForm();
             setShowForm(true);
           }}
-          className="btn-primary text-sm"
+          className="text-sm"
         >
           <Plus className="mr-1 h-4 w-4" />
           {t.billing.recordPayment}
-        </button>
+        </Button>
       </div>
 
       {/* Payment Form */}
@@ -235,14 +238,14 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.amount} *
                 </label>
-                <input
+                <Input
                   type="number"
                   step="0.01"
                   required
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder={t.billing.amountPlaceholder}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div>
               <div>
@@ -266,22 +269,22 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.paymentDate}
                 </label>
-                <input
+                <Input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div>
               {/* <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.dueDate}
                 </label>
-                <input
+                <Input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div> */}
               {/* <div>
@@ -300,12 +303,12 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.billing.period}
                 </label>
-                <input
+                <Input
                   type="text"
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
                   placeholder={t.billing.periodPlaceholder}
-                  className="input mt-1"
+                  className="mt-1"
                 />
               </div> */}
             </div>
@@ -313,37 +316,37 @@ export function ClientPaymentsTab({ clientId }: ClientPaymentsTabProps) {
               <label className="block text-sm font-medium text-gray-700">
                 {t.common.description}
               </label>
-              <input
+              <Input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t.billing.descriptionPlaceholder}
-                className="input mt-1"
+                className="mt-1"
               />
             </div>
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700">
                 {t.common.notes}
               </label>
-              <textarea
+              <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder={t.billing.notesPlaceholder}
-                className="input mt-1"
+                className="mt-1"
               />
             </div>
-            <button
+            <Button
               type="submit"
               disabled={saving}
-              className="btn-primary mt-4 w-full"
+              className="mt-4 w-full"
             >
               {saving
                 ? t.common.saving
                 : editingId
                   ? t.billing.updatePayment
                   : t.billing.recordPayment}
-            </button>
+            </Button>
           </form>
         </div>
       )}

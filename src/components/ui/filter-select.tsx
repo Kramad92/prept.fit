@@ -86,7 +86,7 @@ export function FilterSelect(props: FilterSelectProps) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="input flex items-center justify-between gap-2 text-left"
+        className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 flex items-center justify-between gap-2 text-left"
       >
         <span className={`truncate ${selected.length > 0 ? "text-gray-900" : "text-gray-400"}`}>
           {label}

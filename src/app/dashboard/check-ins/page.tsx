@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, ClipboardCheck, MessageSquare, Copy, Pencil, Trash2, X, Check } from "lucide-react";
+import { Plus, ClipboardCheck, MessageSquare, Copy, Pencil, Trash2, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/lib/i18n";
 import { FilterSelect } from "@/components/ui/filter-select";
 import type { CheckInQuestion, CheckInAnswer } from "@/types";
@@ -183,10 +187,10 @@ export default function CheckInsPage() {
             {t.checkIns.subtitle}
           </p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary">
+        <Button onClick={() => setShowCreate(true)}>
           <Plus className="h-4 w-4 md:mr-2" />
           <span className="hidden md:inline">{t.checkIns.newTemplate}</span>
-        </button>
+        </Button>
       </div>
 
       {/* Templates */}
@@ -198,11 +202,10 @@ export default function CheckInsPage() {
               <div key={tmpl.id} className="card">
                 {editingTemplate === tmpl.id ? (
                   <div className="space-y-3">
-                    <input
+                    <Input
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="input"
                       placeholder={t.checkIns.templateName}
                     />
                     <FilterSelect
@@ -215,28 +218,28 @@ export default function CheckInsPage() {
                         { value: "monthly", label: t.checkIns.monthly },
                       ]}
                     />
-                    <textarea
+                    <Textarea
                       value={editQuestions}
                       onChange={(e) => setEditQuestions(e.target.value)}
                       rows={4}
-                      className="input"
                       placeholder={t.checkIns.oneQuestionPerLine}
                     />
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         onClick={() => saveEdit(tmpl.id)}
                         disabled={savingEdit}
-                        className="btn-primary text-xs"
+                        className="text-xs"
                       >
                         <Check className="mr-1 h-3 w-3" />
                         {savingEdit ? t.common.saving : t.common.save}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={() => setEditingTemplate(null)}
-                        className="btn-secondary text-xs"
+                        className="text-xs"
                       >
                         {t.common.cancel}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -354,27 +357,27 @@ export default function CheckInsPage() {
 
                   {respondingTo === ci.id ? (
                     <div className="mt-3 space-y-2">
-                      <textarea
+                      <Textarea
                         value={coachNote}
                         onChange={(e) => setCoachNote(e.target.value)}
                         placeholder={t.checkIns.writeFeedback}
                         rows={2}
-                        className="input"
                         autoFocus
                       />
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           onClick={() => saveCoachNote(ci.id)}
-                          className="btn-primary text-xs"
+                          className="text-xs"
                         >
                           {t.common.save}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
                           onClick={() => setRespondingTo(null)}
-                          className="btn-secondary text-xs"
+                          className="text-xs"
                         >
                           {t.common.cancel}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -397,72 +400,67 @@ export default function CheckInsPage() {
       </div>
 
       {/* Create Template Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{t.checkIns.newCheckInTemplate}</h2>
-              <button onClick={() => setShowCreate(false)} className="rounded-lg p-1 hover:bg-gray-100">
-                <X className="h-5 w-5" />
-              </button>
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t.checkIns.newCheckInTemplate}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={createTemplate} className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.checkIns.templateName}
+              </label>
+              <Input
+                type="text"
+                name="name"
+                required
+                className="mt-1"
+                placeholder={t.checkIns.templateNamePlaceholder}
+              />
             </div>
-            <form onSubmit={createTemplate} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.checkIns.templateName}
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className="input mt-1"
-                  placeholder={t.checkIns.templateNamePlaceholder}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.checkIns.frequency}
-                </label>
-                <FilterSelect
-                  value={createFreq}
-                  onChange={setCreateFreq}
-                  placeholder={t.checkIns.frequency}
-                  className="mt-1"
-                  options={[
-                    { value: "weekly", label: t.checkIns.weekly },
-                    { value: "biweekly", label: t.checkIns.biweekly },
-                    { value: "monthly", label: t.checkIns.monthly },
-                  ]}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.checkIns.questionsPerLine}
-                </label>
-                <textarea
-                  name="questions"
-                  rows={5}
-                  required
-                  className="input mt-1"
-                  placeholder={t.checkIns.questionsPlaceholder}
-                />
-              </div>
-              <div className="flex gap-2">
-                <button type="submit" className="btn-primary flex-1">
-                  {t.checkIns.createTemplate}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(false)}
-                  className="btn-secondary"
-                >
-                  {t.common.cancel}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.checkIns.frequency}
+              </label>
+              <FilterSelect
+                value={createFreq}
+                onChange={setCreateFreq}
+                placeholder={t.checkIns.frequency}
+                className="mt-1"
+                options={[
+                  { value: "weekly", label: t.checkIns.weekly },
+                  { value: "biweekly", label: t.checkIns.biweekly },
+                  { value: "monthly", label: t.checkIns.monthly },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.checkIns.questionsPerLine}
+              </label>
+              <Textarea
+                name="questions"
+                rows={5}
+                required
+                className="mt-1"
+                placeholder={t.checkIns.questionsPlaceholder}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                {t.checkIns.createTemplate}
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setShowCreate(false)}
+              >
+                {t.common.cancel}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

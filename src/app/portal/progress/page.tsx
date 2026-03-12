@@ -7,6 +7,9 @@ import { ImageUploader } from "@/components/ui/image-uploader";
 import { PhotoLightbox, CategoryChip } from "@/components/ui/photo-lightbox";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ProgressPhoto {
   id: string;
@@ -135,10 +138,10 @@ export default function PortalProgressPage() {
             {t.portal.trackJourney}
           </p>
         </div>
-        <Link href="/portal/progress/charts" className="btn-secondary">
+        <Button variant="outline" asChild><Link href="/portal/progress/charts">
           <BarChart3 className="mr-1.5 h-4 w-4" />
           {t.nav.charts}
-        </Link>
+        </Link></Button>
       </div>
 
       {/* Tabs */}
@@ -172,10 +175,10 @@ export default function PortalProgressPage() {
           <>
             <div className="mb-4 flex justify-end">
               {!showUpload && (
-                <button onClick={() => setShowUpload(true)} className="btn-primary text-sm">
+                <Button onClick={() => setShowUpload(true)} className="text-sm">
                   <Plus className="mr-1 h-4 w-4" />
                   {t.photos.upload}
-                </button>
+                </Button>
               )}
             </div>
 
@@ -208,7 +211,7 @@ export default function PortalProgressPage() {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">{t.photos.caption}</label>
-                    <input type="text" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder={t.photos.captionPlaceholder} className="input mt-0.5 text-sm" />
+                    <Input type="text" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder={t.photos.captionPlaceholder} className="mt-0.5 text-sm" />
                   </div>
                 </div>
               </div>
@@ -276,10 +279,10 @@ export default function PortalProgressPage() {
           <>
             <div className="mb-4 flex justify-end">
               {!showMeasurementForm && (
-                <button onClick={() => setShowMeasurementForm(true)} className="btn-primary text-sm">
+                <Button onClick={() => setShowMeasurementForm(true)} className="text-sm">
                   <Plus className="mr-1 h-4 w-4" />
                   {t.measurements.addMeasurement}
-                </button>
+                </Button>
               )}
             </div>
 
@@ -294,49 +297,49 @@ export default function PortalProgressPage() {
                 <form onSubmit={handleMeasurementSubmit} className="mt-4 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.common.date}</label>
-                    <input type="date" name="date" defaultValue={new Date().toISOString().split("T")[0]} className="input mt-1" />
+                    <Input type="date" name="date" defaultValue={new Date().toISOString().split("T")[0]} className="mt-1" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t.measurements.weight} ({t.measurements.kg})</label>
-                      <input type="number" name="weight" step="0.1" className="input mt-1" placeholder="75.0" defaultValue={lastMeasurement?.weight ?? undefined} />
+                      <Input type="number" name="weight" step="0.1" className="mt-1" placeholder="75.0" defaultValue={lastMeasurement?.weight ?? undefined} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t.measurements.bodyFat} (%)</label>
-                      <input type="number" name="bodyFat" step="0.1" className="input mt-1" placeholder="18.0" defaultValue={lastMeasurement?.bodyFat ?? undefined} />
+                      <Input type="number" name="bodyFat" step="0.1" className="mt-1" placeholder="18.0" defaultValue={lastMeasurement?.bodyFat ?? undefined} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t.measurements.chest} ({t.measurements.cm})</label>
-                      <input type="number" name="chest" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.chest ?? undefined} />
+                      <Input type="number" name="chest" step="0.1" className="mt-1" placeholder="95.0" defaultValue={lastMeasurement?.chest ?? undefined} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t.measurements.waist} ({t.measurements.cm})</label>
-                      <input type="number" name="waist" step="0.1" className="input mt-1" placeholder="80.0" defaultValue={lastMeasurement?.waist ?? undefined} />
+                      <Input type="number" name="waist" step="0.1" className="mt-1" placeholder="80.0" defaultValue={lastMeasurement?.waist ?? undefined} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t.measurements.hips} ({t.measurements.cm})</label>
-                      <input type="number" name="hips" step="0.1" className="input mt-1" placeholder="95.0" defaultValue={lastMeasurement?.hips ?? undefined} />
+                      <Input type="number" name="hips" step="0.1" className="mt-1" placeholder="95.0" defaultValue={lastMeasurement?.hips ?? undefined} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">{t.measurements.arms} ({t.measurements.cm})</label>
-                      <input type="number" name="arms" step="0.1" className="input mt-1" placeholder="35.0" defaultValue={lastMeasurement?.arms ?? undefined} />
+                      <Input type="number" name="arms" step="0.1" className="mt-1" placeholder="35.0" defaultValue={lastMeasurement?.arms ?? undefined} />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.measurements.thighs} ({t.measurements.cm})</label>
-                    <input type="number" name="thighs" step="0.1" className="input mt-1" placeholder="55.0" defaultValue={lastMeasurement?.thighs ?? undefined} />
+                    <Input type="number" name="thighs" step="0.1" className="mt-1" placeholder="55.0" defaultValue={lastMeasurement?.thighs ?? undefined} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{t.common.notes}</label>
-                    <textarea name="notes" rows={2} className="input mt-1" placeholder={t.measurements.observations} />
+                    <Textarea name="notes" rows={2} className="mt-1" placeholder={t.measurements.observations} />
                   </div>
-                  <button type="submit" disabled={savingMeasurement} className="btn-primary w-full">
+                  <Button type="submit" disabled={savingMeasurement} className="w-full">
                     {savingMeasurement ? t.common.saving : t.measurements.saveMeasurement}
-                  </button>
+                  </Button>
                 </form>
               </div>
             )}

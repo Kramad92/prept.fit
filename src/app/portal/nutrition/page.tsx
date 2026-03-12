@@ -9,12 +9,16 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { FoodPicker } from "@/components/client/food-picker";
 import { format } from "date-fns";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { Food, NutritionLog } from "@/types";
 
 interface AssignedPlan {
@@ -139,10 +143,10 @@ export default function PortalNutritionPage() {
             {t.portalNutrition.mealPlansAndLog}
           </p>
         </div>
-        <button onClick={() => setShowLog(true)} className="btn-primary">
+        <Button onClick={() => setShowLog(true)}>
           <Plus className="mr-2 h-4 w-4" />
           {t.portalNutrition.logMeal}
-        </button>
+        </Button>
       </div>
 
       {saved && (
@@ -301,10 +305,10 @@ export default function PortalNutritionPage() {
                 title={t.portalNutrition.noMealsLogged}
                 description={t.portalNutrition.startLogging}
                 action={
-                  <button onClick={() => setShowLog(true)} className="btn-primary">
+                  <Button onClick={() => setShowLog(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     {t.portalNutrition.logMeal}
-                  </button>
+                  </Button>
                 }
               />
             ) : (
@@ -363,18 +367,11 @@ export default function PortalNutritionPage() {
       </div>
 
       {/* Log Meal Modal */}
-      {showLog && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{t.portalNutrition.logMeal}</h2>
-              <button
-                onClick={() => setShowLog(false)}
-                className="rounded-lg p-1 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <Dialog open={showLog} onOpenChange={setShowLog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t.portalNutrition.logMeal}</DialogTitle>
+            </DialogHeader>
             <form onSubmit={handleLogMeal} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -431,10 +428,10 @@ export default function PortalNutritionPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.portalNutrition.additionalFoods}
                 </label>
-                <textarea
+                <Textarea
                   name="foods"
                   rows={2}
-                  className="input mt-1"
+                  className="mt-1"
                   placeholder={t.portalNutrition.additionalFoodsPlaceholder}
                 />
               </div>
@@ -443,10 +440,10 @@ export default function PortalNutritionPage() {
                   <label className="block text-xs font-medium text-gray-700">
                     {t.portalNutrition.cal}
                   </label>
-                  <input
+                  <Input
                     type="number"
                     name="calories"
-                    className="input mt-1"
+                    className="mt-1"
                     placeholder="450"
                   />
                 </div>
@@ -454,10 +451,10 @@ export default function PortalNutritionPage() {
                   <label className="block text-xs font-medium text-gray-700">
                     {t.nutrition.protein}
                   </label>
-                  <input
+                  <Input
                     type="number"
                     name="protein"
-                    className="input mt-1"
+                    className="mt-1"
                     placeholder="30"
                   />
                 </div>
@@ -465,10 +462,10 @@ export default function PortalNutritionPage() {
                   <label className="block text-xs font-medium text-gray-700">
                     {t.nutrition.carbs}
                   </label>
-                  <input
+                  <Input
                     type="number"
                     name="carbs"
-                    className="input mt-1"
+                    className="mt-1"
                     placeholder="40"
                   />
                 </div>
@@ -476,10 +473,10 @@ export default function PortalNutritionPage() {
                   <label className="block text-xs font-medium text-gray-700">
                     {t.nutrition.fat}
                   </label>
-                  <input
+                  <Input
                     type="number"
                     name="fat"
-                    className="input mt-1"
+                    className="mt-1"
                     placeholder="20"
                   />
                 </div>
@@ -488,24 +485,23 @@ export default function PortalNutritionPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   {t.common.notes}
                 </label>
-                <input
+                <Input
                   type="text"
                   name="notes"
-                  className="input mt-1"
+                  className="mt-1"
                   placeholder={t.portalNutrition.notesPlaceholder}
                 />
               </div>
-              <button
+              <Button
                 type="submit"
                 disabled={saving}
-                className="btn-primary w-full"
+                className="w-full"
               >
                 {saving ? t.common.saving : t.portalNutrition.logMeal}
-              </button>
+              </Button>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

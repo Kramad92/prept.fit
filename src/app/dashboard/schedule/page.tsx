@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Plus, Clock, X } from "lucide-react";
+import { Plus, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Calendar, CalendarEvent } from "@/components/schedule/calendar";
+import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatTime } from "@/lib/utils";
@@ -52,13 +56,12 @@ export default function SchedulePage() {
             {t.schedule.subtitle}
           </p>
         </div>
-        <button
+        <Button
           onClick={() => setShowNewForm(true)}
-          className="btn-primary"
         >
           <Plus className="h-4 w-4 md:mr-2" />
           <span className="hidden md:inline">{t.schedule.newSession}</span>
-        </button>
+        </Button>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -83,13 +86,13 @@ export default function SchedulePage() {
               <p className="mt-2 text-sm text-gray-500">
                 {t.schedule.noSessionsOnDay}
               </p>
-              <button
+              <Button
                 onClick={() => setShowNewForm(true)}
-                className="btn-primary mt-3 w-full"
+                className="mt-3 w-full"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 {t.schedule.addSession}
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="mt-4 space-y-3">
@@ -118,143 +121,135 @@ export default function SchedulePage() {
       </div>
 
       {/* New Session Modal */}
-      {showNewForm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 md:rounded-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{t.schedule.newSession}</h2>
-              <button
-                onClick={() => setShowNewForm(false)}
-                className="rounded-lg p-1 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
+      <Dialog open={showNewForm} onOpenChange={(open) => { if (!open) { setFormClientId(""); setFormType("session"); } setShowNewForm(open); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.schedule.newSession}</DialogTitle>
+          </DialogHeader>
+
+          <form
+            className="mt-4 space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const data = {
+                title: formData.get("title"),
+                date: formData.get("date"),
+                startTime: formData.get("startTime"),
+                endTime: formData.get("endTime"),
+                clientId: formClientId,
+                type: formType,
+                notes: formData.get("notes"),
+              };
+
+              await fetch("/api/schedules", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              });
+
+              setShowNewForm(false);
+              setFormClientId("");
+              setFormType("session");
+              const updated = await fetch("/api/schedules").then((r) => r.json());
+              setEvents(updated);
+            }}
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.schedule.sessionTitle} *
+              </label>
+              <Input
+                type="text"
+                name="title"
+                required
+                className="mt-1"
+                placeholder={t.schedule.titlePlaceholder}
+              />
             </div>
-
-            <form
-              className="mt-4 space-y-4"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const data = {
-                  title: formData.get("title"),
-                  date: formData.get("date"),
-                  startTime: formData.get("startTime"),
-                  endTime: formData.get("endTime"),
-                  clientId: formClientId,
-                  type: formType,
-                  notes: formData.get("notes"),
-                };
-
-                await fetch("/api/schedules", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(data),
-                });
-
-                setShowNewForm(false);
-                setFormClientId("");
-                setFormType("session");
-                const updated = await fetch("/api/schedules").then((r) => r.json());
-                setEvents(updated);
-              }}
-            >
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.common.date} *
+              </label>
+              <Input
+                type="date"
+                name="date"
+                required
+                defaultValue={selectedDateStr}
+                className="mt-1"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  {t.schedule.sessionTitle} *
+                  {t.schedule.startTime} *
                 </label>
-                <input
-                  type="text"
-                  name="title"
+                <Input
+                  type="time"
+                  name="startTime"
                   required
-                  className="input mt-1"
-                  placeholder={t.schedule.titlePlaceholder}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.common.date} *
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  required
-                  defaultValue={selectedDateStr}
-                  className="input mt-1"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    {t.schedule.startTime} *
-                  </label>
-                  <input
-                    type="time"
-                    name="startTime"
-                    required
-                    defaultValue="09:00"
-                    className="input mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    {t.schedule.endTime} *
-                  </label>
-                  <input
-                    type="time"
-                    name="endTime"
-                    required
-                    defaultValue="10:00"
-                    className="input mt-1"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.schedule.client} *
-                </label>
-                <FilterSelect
-                  value={formClientId}
-                  onChange={setFormClientId}
-                  placeholder={t.schedule.selectClient}
-                  options={clients.map((c) => ({ value: c.id, label: c.name }))}
+                  defaultValue="09:00"
                   className="mt-1"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  {t.schedule.type}
+                  {t.schedule.endTime} *
                 </label>
-                <FilterSelect
-                  value={formType}
-                  onChange={setFormType}
-                  placeholder={t.schedule.type}
-                  options={[
-                    { value: "session", label: t.schedule.trainingSession },
-                    { value: "assessment", label: t.schedule.assessment },
-                    { value: "consultation", label: t.schedule.consultation },
-                  ]}
+                <Input
+                  type="time"
+                  name="endTime"
+                  required
+                  defaultValue="10:00"
                   className="mt-1"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t.common.notes}
-                </label>
-                <textarea
-                  name="notes"
-                  rows={2}
-                  className="input mt-1"
-                  placeholder={t.schedule.sessionNotes}
-                />
-              </div>
-              <button type="submit" className="btn-primary w-full">
-                {t.schedule.createSession}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.schedule.client} *
+              </label>
+              <FilterSelect
+                value={formClientId}
+                onChange={setFormClientId}
+                placeholder={t.schedule.selectClient}
+                options={clients.map((c) => ({ value: c.id, label: c.name }))}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.schedule.type}
+              </label>
+              <FilterSelect
+                value={formType}
+                onChange={setFormType}
+                placeholder={t.schedule.type}
+                options={[
+                  { value: "session", label: t.schedule.trainingSession },
+                  { value: "assessment", label: t.schedule.assessment },
+                  { value: "consultation", label: t.schedule.consultation },
+                ]}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.common.notes}
+              </label>
+              <Textarea
+                name="notes"
+                rows={2}
+                className="mt-1"
+                placeholder={t.schedule.sessionNotes}
+              />
+            </div>
+            <Button type="submit" className="w-full">
+              {t.schedule.createSession}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

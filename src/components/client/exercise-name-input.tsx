@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { LibraryExercise } from "@/types";
 import { useT } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 interface ExerciseNameInputProps {
   value: string;
@@ -57,7 +58,10 @@ export function ExerciseNameInput({ value, onChange, placeholder, className, onK
         }}
         onKeyDown={onKeyDown}
         placeholder={placeholder || t.workouts.exerciseName}
-        className={className || "input flex-1"}
+        className={cn(
+          "block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 flex-1",
+          className
+        )}
         {...rest}
       />
       {open && results.length > 0 && (

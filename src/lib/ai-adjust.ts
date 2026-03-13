@@ -97,7 +97,7 @@ export async function adjustMealPlanForClient(
     targetFat: number | null;
     meals: MealData[];
   },
-  locale: string = "bs"
+  locale: string = "en"
 ): Promise<AdjustedMealPlan> {
   const ctx = await getClientContext(clientId);
   const clientInfo = buildClientPrompt(ctx);
@@ -287,7 +287,7 @@ export async function adjustWorkoutPlanForClient(
     name: string;
     exercises: ExerciseData[];
   },
-  locale: string = "bs"
+  locale: string = "en"
 ): Promise<AdjustedWorkoutPlan> {
   const ctx = await getClientContext(clientId);
   const clientInfo = buildClientPrompt(ctx);

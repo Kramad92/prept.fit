@@ -46,7 +46,11 @@ export async function POST(
 
   const body = await req.json();
   const aiAdjust = body.aiAdjust === true;
-  const locale = body.locale || "bs";
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: session.user.tenantId },
+    select: { locale: true },
+  });
+  const locale = body.locale || tenant?.locale || "en";
 
   if (body.mealPlanId) {
     const result = await prisma.$transaction(async (tx) => {

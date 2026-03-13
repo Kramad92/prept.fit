@@ -32,11 +32,33 @@ function loadExercises(): RawExercise[] {
   return cachedExercises!;
 }
 
-// GET — return available filters + counts (no auth needed for preview)
-export async function GET() {
-  const exercises = loadExercises();
+// GET — return available filters + counts, scoped by other active filters
+export async function GET(req: NextRequest) {
+  const allExercises = loadExercises();
+  const url = req.nextUrl;
 
-  const count = (key: keyof RawExercise) => {
+  const paramToArray = (key: string): string[] => {
+    const val = url.searchParams.get(key);
+    return val ? val.split(",").filter(Boolean) : [];
+  };
+
+  const selDifficulties = paramToArray("difficulties");
+  const selEquipment = paramToArray("equipment");
+  const selBodyRegions = paramToArray("bodyRegions");
+  const selClassifications = paramToArray("classifications");
+
+  // Filter exercises excluding the dimension we're counting
+  function filteredExcluding(exclude: string) {
+    return allExercises.filter((e) => {
+      if (exclude !== "difficulties" && selDifficulties.length && (!e.difficulty || !selDifficulties.includes(e.difficulty))) return false;
+      if (exclude !== "equipment" && selEquipment.length && (!e.equipment || !selEquipment.includes(e.equipment))) return false;
+      if (exclude !== "bodyRegions" && selBodyRegions.length && (!e.bodyRegion || !selBodyRegions.includes(e.bodyRegion))) return false;
+      if (exclude !== "classifications" && selClassifications.length && (!e.classification || !selClassifications.includes(e.classification))) return false;
+      return true;
+    });
+  }
+
+  function count(exercises: RawExercise[], key: keyof RawExercise) {
     const map: Record<string, number> = {};
     for (const e of exercises) {
       const val = e[key];
@@ -45,15 +67,23 @@ export async function GET() {
     return Object.entries(map)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-  };
+  }
+
+  // Each filter dimension shows options available given the OTHER active filters
+  const matchAll = allExercises.filter((e) => {
+    if (selDifficulties.length && (!e.difficulty || !selDifficulties.includes(e.difficulty))) return false;
+    if (selEquipment.length && (!e.equipment || !selEquipment.includes(e.equipment))) return false;
+    if (selBodyRegions.length && (!e.bodyRegion || !selBodyRegions.includes(e.bodyRegion))) return false;
+    if (selClassifications.length && (!e.classification || !selClassifications.includes(e.classification))) return false;
+    return true;
+  });
 
   return NextResponse.json({
-    total: exercises.length,
-    difficulties: count("difficulty"),
-    equipment: count("equipment"),
-    bodyRegions: count("bodyRegion"),
-    classifications: count("classification"),
-    targetMuscleGroups: count("targetMuscleGroup"),
+    total: matchAll.length,
+    difficulties: count(filteredExcluding("difficulties"), "difficulty"),
+    equipment: count(filteredExcluding("equipment"), "equipment"),
+    bodyRegions: count(filteredExcluding("bodyRegions"), "bodyRegion"),
+    classifications: count(filteredExcluding("classifications"), "classification"),
   });
 }
 

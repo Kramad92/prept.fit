@@ -85,17 +85,30 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
   const [selectedBodyRegions, setSelectedBodyRegions] = useState<Set<string>>(new Set());
   const [selectedClassifications, setSelectedClassifications] = useState<Set<string>>(new Set());
 
+  function buildQueryString() {
+    const params = new URLSearchParams();
+    if (selectedDifficulties.size > 0) params.set("difficulties", Array.from(selectedDifficulties).join(","));
+    if (selectedEquipment.size > 0) params.set("equipment", Array.from(selectedEquipment).join(","));
+    if (selectedBodyRegions.size > 0) params.set("bodyRegions", Array.from(selectedBodyRegions).join(","));
+    if (selectedClassifications.size > 0) params.set("classifications", Array.from(selectedClassifications).join(","));
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }
+
+  // Fetch filters on open and whenever selections change
   useEffect(() => {
     if (!open) return;
     setResult(null);
-    setLoading(true);
-    fetch("/api/exercise-library/import")
+    const isInitial = !filters;
+    if (isInitial) setLoading(true);
+    fetch(`/api/exercise-library/import${buildQueryString()}`)
       .then((r) => r.json())
       .then((data) => {
         setFilters(data);
         setLoading(false);
       });
-  }, [open]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, selectedDifficulties, selectedEquipment, selectedBodyRegions, selectedClassifications]);
 
   function toggle(set: Set<string>, setFn: (s: Set<string>) => void, name: string) {
     const next = new Set(set);
@@ -103,40 +116,8 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
     setFn(next);
   }
 
-  // Calculate estimated count based on selections
-  function getEstimatedCount(): number {
-    if (!filters) return 0;
-    // If nothing is selected, show total
-    if (
-      selectedDifficulties.size === 0 &&
-      selectedEquipment.size === 0 &&
-      selectedBodyRegions.size === 0 &&
-      selectedClassifications.size === 0
-    ) {
-      return filters.total;
-    }
-    // Rough estimate: use the smallest selected filter group count
-    // (actual count is computed server-side, this is just for UX)
-    let estimate = filters.total;
-    if (selectedDifficulties.size > 0) {
-      const sum = filters.difficulties
-        .filter((d) => selectedDifficulties.has(d.name))
-        .reduce((a, b) => a + b.count, 0);
-      estimate = Math.min(estimate, sum);
-    }
-    if (selectedEquipment.size > 0) {
-      const sum = filters.equipment
-        .filter((d) => selectedEquipment.has(d.name))
-        .reduce((a, b) => a + b.count, 0);
-      estimate = Math.min(estimate, sum);
-    }
-    if (selectedBodyRegions.size > 0) {
-      const sum = filters.bodyRegions
-        .filter((d) => selectedBodyRegions.has(d.name))
-        .reduce((a, b) => a + b.count, 0);
-      estimate = Math.min(estimate, sum);
-    }
-    return estimate;
+  function getMatchCount(): number {
+    return filters?.total ?? 0;
   }
 
   async function handleImport() {
@@ -224,7 +205,7 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
 
             <div className="flex items-center justify-between border-t pt-4">
               <span className="text-sm text-gray-500">
-                ~{getEstimatedCount().toLocaleString()} exercises
+                {getMatchCount().toLocaleString()} exercises
               </span>
               <Button onClick={handleImport} disabled={importing}>
                 <Download className="mr-2 h-4 w-4" />

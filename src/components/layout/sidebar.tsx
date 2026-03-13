@@ -28,7 +28,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const t = useT();
   const openSearch = () => {
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "/" }));
   };
 
   const navItems = [
@@ -63,7 +63,7 @@ export function Sidebar() {
             <Search className="h-4 w-4" />
             <span className="flex-1 text-left">{t.common.search}...</span>
             <kbd className="hidden rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 lg:inline-block">
-              Ctrl K
+              /
             </kbd>
           </button>
         </div>

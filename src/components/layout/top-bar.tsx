@@ -20,7 +20,7 @@ export function TopBar() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+            onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "/" }))}
             className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           >
             <Search className="h-5 w-5" />

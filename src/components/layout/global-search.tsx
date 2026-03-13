@@ -35,10 +35,10 @@ export function GlobalSearch() {
   const t = useT();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Cmd+K / Ctrl+K to open
+  // Press "/" to open search (only when not typing in an input)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement).tagName)) {
         e.preventDefault();
         setOpen((prev) => !prev);
       }
@@ -176,7 +176,7 @@ export function GlobalSearch() {
             value={query}
             onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder={`${t.common.search}... (Ctrl+K)`}
+            placeholder={`${t.common.search}... (press /)`}
             className="flex-1 py-3.5 text-sm bg-transparent outline-none placeholder:text-gray-400"
           />
           {query && (

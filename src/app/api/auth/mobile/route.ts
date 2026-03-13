@@ -85,6 +85,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // Block unverified coaches
+    if (user.role === "COACH" && !user.emailVerified) {
+      return NextResponse.json(
+        { error: "EMAIL_NOT_VERIFIED" },
+        { status: 403 }
+      );
+    }
+
     const userPayload = {
       id: user.id,
       email: user.email,

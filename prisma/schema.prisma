@@ -67,6 +67,7 @@ model User {
   name          String
   role          UserRole  @default(CLIENT)
   avatar        String?
+  emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -76,10 +77,11 @@ model User {
   // If role is CLIENT, linked client profile
   clientProfile Client?
 
-  sentMessages     Message[] @relation("sender")
-  notifications    Notification[]
-  refreshTokens    RefreshToken[]
-  pushTokens       PushToken[]
+  sentMessages       Message[] @relation("sender")
+  notifications      Notification[]
+  refreshTokens      RefreshToken[]
+  pushTokens         PushToken[]
+  verificationTokens EmailVerificationToken[]
 
   @@index([tenantId])
   @@map("users")
@@ -299,6 +301,23 @@ model InviteToken {
   @@index([token])
   @@index([clientId])
   @@map("invite_tokens")
+}
+
+// ========== EMAIL VERIFICATION ==========
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("email_verification_tokens")
 }
 
 // ========== IN-APP MESSAGING ==========

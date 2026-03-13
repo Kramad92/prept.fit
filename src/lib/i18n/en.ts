@@ -59,6 +59,11 @@ export const en: Translations = {
     reenterPassword: "Re-enter your password",
     enterPassword: "Enter your password",
     registrationFailed: "Registration failed",
+    emailNotVerified: "Please verify your email before signing in.",
+    verificationEmailSent: "We've sent a verification link to your email. Check your inbox.",
+    resendVerification: "Resend verification email",
+    resendingVerification: "Sending...",
+    resendVerificationSent: "Verification email sent!",
   },
 
   nav: {

@@ -2,26 +2,34 @@
 
 import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
   const t = useT();
+
+  const registered = searchParams.get("registered") === "true";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    setResendStatus("idle");
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    setEmailInput(email);
 
     const result = await signIn("credentials", {
-      email: formData.get("email") as string,
+      email,
       password: formData.get("password") as string,
       redirect: false,
     });
@@ -29,11 +37,13 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError(
-        result.error === "PORTAL_DISABLED"
-          ? t.auth.portalDisabled
-          : t.auth.invalidCredentials
-      );
+      if (result.error === "EMAIL_NOT_VERIFIED") {
+        setError(t.auth.emailNotVerified);
+      } else if (result.error === "PORTAL_DISABLED") {
+        setError(t.auth.portalDisabled);
+      } else {
+        setError(t.auth.invalidCredentials);
+      }
     } else {
       // Redirect based on role
       const session = await getSession();
@@ -43,6 +53,16 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     }
+  }
+
+  async function handleResend() {
+    setResendStatus("sending");
+    await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailInput }),
+    });
+    setResendStatus("sent");
   }
 
   return (
@@ -56,10 +76,30 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {registered && (
+          <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+            {t.auth.verificationEmailSent}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="card space-y-4">
           {error && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              {error}
+              <p>{error}</p>
+              {error === t.auth.emailNotVerified && (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendStatus !== "idle"}
+                  className="mt-2 font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+                >
+                  {resendStatus === "sending"
+                    ? t.auth.resendingVerification
+                    : resendStatus === "sent"
+                      ? t.auth.resendVerificationSent
+                      : t.auth.resendVerification}
+                </button>
+              )}
             </div>
           )}
 

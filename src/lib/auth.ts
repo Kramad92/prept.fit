@@ -43,6 +43,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("PORTAL_DISABLED");
         }
 
+        // Block unverified coaches
+        if (user.role === "COACH" && !user.emailVerified) {
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
         return {
           id: user.id,
           email: user.email,

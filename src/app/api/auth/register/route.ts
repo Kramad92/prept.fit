@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const { name, businessName, email, password } = await req.json();
@@ -60,6 +62,29 @@ export async function POST(req: NextRequest) {
     },
     include: { users: true },
   });
+
+  // Send verification email
+  const user = tenant.users[0];
+  const token = randomBytes(32).toString("hex");
+
+  await prisma.emailVerificationToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    },
+  });
+
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  try {
+    await sendVerificationEmail({
+      to: email,
+      name,
+      verificationUrl: `${baseUrl}/verify-email/${token}`,
+    });
+  } catch (err) {
+    console.error("Failed to send verification email:", err);
+  }
 
   return NextResponse.json(
     { id: tenant.id, slug: tenant.slug },

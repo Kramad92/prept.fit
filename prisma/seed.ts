@@ -80,6 +80,7 @@ async function main() {
       email: "coach@demo.com",
       passwordHash: hash,
       role: "COACH",
+      emailVerified: new Date(),
       tenantId: tenant.id,
     },
   });

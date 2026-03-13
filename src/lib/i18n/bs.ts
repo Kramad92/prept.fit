@@ -59,6 +59,11 @@ export const bs = {
     reenterPassword: "Ponovite lozinku",
     enterPassword: "Unesite lozinku",
     registrationFailed: "Registracija neuspješna",
+    emailNotVerified: "Potvrdite vaš email prije prijave.",
+    verificationEmailSent: "Poslali smo link za potvrdu na vaš email. Provjerite inbox.",
+    resendVerification: "Ponovo pošalji email za potvrdu",
+    resendingVerification: "Slanje...",
+    resendVerificationSent: "Email za potvrdu poslan!",
   },
 
   // Navigation

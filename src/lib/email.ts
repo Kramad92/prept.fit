@@ -50,6 +50,39 @@ export async function sendInquiryNotification({
   });
 }
 
+export async function sendVerificationEmail({
+  to,
+  name,
+  verificationUrl,
+}: {
+  to: string;
+  name: string;
+  verificationUrl: string;
+}) {
+  await getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: "Verify your Prept account",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <h2 style="color: #111827; margin-bottom: 8px;">Verify your email</h2>
+        <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
+          Hi ${name},
+        </p>
+        <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
+          Thanks for signing up for Prept! Please verify your email address to get started.
+        </p>
+        <a href="${verificationUrl}" style="display: inline-block; background-color: #84CC16; color: #0F172A; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0;">
+          Verify Email
+        </a>
+        <p style="color: #9ca3af; font-size: 13px; margin-top: 24px;">
+          This link expires in 24 hours. If you didn't create this account, you can ignore this email.
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendInviteEmail({
   to,
   clientName,

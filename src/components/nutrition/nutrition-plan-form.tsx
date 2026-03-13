@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { FoodPicker } from "@/components/client/food-picker";
 import { AIGenerateMealPlan } from "@/components/ai/ai-generate-meal-plan";
@@ -49,6 +49,8 @@ export function NutritionPlanForm({
 }: NutritionPlanFormProps) {
   const t = useT();
   const portionBeforeEdit = useRef<{ mi: number; fi: number; portion: string } | null>(null);
+  const [aiDescription, setAiDescription] = useState("");
+  const [prompt, setPrompt] = useState(form.description);
 
   function updateMeals(updater: (meals: MealRow[]) => MealRow[]) {
     onFormChange((prev) => ({ ...prev, meals: updater(prev.meals) }));
@@ -124,15 +126,17 @@ export function NutritionPlanForm({
               <Input type="text" required value={form.name} onChange={(e) => onFormChange((prev) => ({ ...prev, name: e.target.value }))} className="mt-1" placeholder={t.nutrition.planNamePlaceholder} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">{t.common.description}</label>
-              <Input type="text" value={form.description} onChange={(e) => onFormChange((prev) => ({ ...prev, description: e.target.value }))} className="mt-1" placeholder={t.nutrition.aiPromptPlaceholder} />
+              <label className="block text-sm font-medium text-gray-700">{aiDescription ? (t.common.aiPromptLabel || "AI Prompt") : t.common.description}</label>
+              <Input type="text" value={prompt} onChange={(e) => { setPrompt(e.target.value); if (!aiDescription) onFormChange((prev) => ({ ...prev, description: e.target.value })); }} className="mt-1" placeholder={t.nutrition.aiPromptPlaceholder} />
               <div className="mt-1.5">
                 <AIGenerateMealPlan
-                  prompt={form.description}
+                  prompt={prompt}
                   onGenerate={(data) => {
+                    setAiDescription(data.description || "");
                     onFormChange((prev) => ({
                       ...prev,
                       name: prev.name || data.name || prev.name,
+                      description: data.description || prev.description,
                       targetCalories: data.targetCalories,
                       targetProtein: data.targetProtein,
                       targetCarbs: data.targetCarbs,
@@ -143,6 +147,12 @@ export function NutritionPlanForm({
                 />
               </div>
             </div>
+            {aiDescription && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">{t.common.clientDescription || "Client description"}</label>
+                <Input type="text" value={aiDescription} onChange={(e) => { setAiDescription(e.target.value); onFormChange((prev) => ({ ...prev, description: e.target.value })); }} className="mt-1" />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
               <div>

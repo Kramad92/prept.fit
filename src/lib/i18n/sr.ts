@@ -27,6 +27,8 @@ export const sr = {
     notes: "Beleške",
     notesPlaceholder: "Beleške...",
     description: "Opis",
+    aiPromptLabel: "AI Prompt",
+    clientDescription: "Opis za klijenta",
     date: "Datum",
     name: "Ime",
     email: "Email",

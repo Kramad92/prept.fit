@@ -356,10 +356,11 @@ interface CreateFormInternalProps {
 
 function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit, onClose, t }: CreateFormInternalProps) {
   const [customDescription, setCustomDescription] = useState("");
+  const [aiDescription, setAiDescription] = useState("");
 
   return (
     <div className="card mb-4 border-2 border-orange-200">
-      <form onSubmit={onSubmit}>
+      <form onSubmit={(e) => { if (aiDescription) updateFormField("description" as keyof FormState, aiDescription); onSubmit(e); }}>
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-gray-900">{t.nutrition.newCustomMealPlan}</h4>
           <button type="button" onClick={onClose} className="rounded p-1 hover:bg-gray-100">
@@ -370,17 +371,19 @@ function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit
           <Input type="text" required value={form.name} onChange={(e) => updateFormField("name", e.target.value)} placeholder={t.nutrition.planName} />
         </div>
         <div className="mt-2">
+          <label className="text-xs text-gray-500">{aiDescription ? (t.common.aiPromptLabel || "AI Prompt") : t.common.description}</label>
           <Input
             type="text"
             value={customDescription}
             onChange={(e) => setCustomDescription(e.target.value)}
             placeholder={t.nutrition.aiPromptPlaceholder}
-            className="text-sm"
+            className="text-sm mt-0.5"
           />
           <div className="mt-1.5">
             <AIGenerateMealPlan
               prompt={customDescription}
               onGenerate={(data) => {
+                setAiDescription(data.description || "");
                 setForm({
                   name: form.name || data.name || form.name,
                   calories: data.targetCalories,
@@ -405,6 +408,12 @@ function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit
               }}
             />
           </div>
+          {aiDescription && (
+            <div className="mt-1.5">
+              <label className="text-xs text-gray-500">{t.common.clientDescription || "Client description"}</label>
+              <Input type="text" value={aiDescription} onChange={(e) => setAiDescription(e.target.value)} className="text-sm mt-0.5" />
+            </div>
+          )}
         </div>
         <div className="mt-3">
           <MacroFields form={form} updateFormField={updateFormField} t={t} />

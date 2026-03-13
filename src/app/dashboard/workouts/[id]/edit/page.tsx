@@ -25,6 +25,7 @@ export default function EditWorkoutPage() {
   const [description, setDescription] = useState("");
   const [isTemplate, setIsTemplate] = useState(false);
   const [exercises, setExercises] = useState<ExerciseInput[]>([]);
+  const [aiDescription, setAiDescription] = useState("");
 
   useEffect(() => {
     fetch(`/api/workouts/${params.id}`)
@@ -91,7 +92,7 @@ export default function EditWorkoutPage() {
 
     const data = {
       name,
-      description: description || null,
+      description: aiDescription || description || null,
       isTemplate,
       exercises: exercises
         .filter((ex) => ex.name.trim())
@@ -170,7 +171,7 @@ export default function EditWorkoutPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              {t.common.description}
+              {aiDescription ? (t.common.aiPromptLabel || "AI Prompt") : t.common.description}
             </label>
             <Textarea
               rows={2}
@@ -184,11 +185,18 @@ export default function EditWorkoutPage() {
                 prompt={description}
                 onGenerate={(data) => {
                   if (!name) setName(data.name);
+                  setAiDescription(data.description || "");
                   setExercises(data.exercises);
                 }}
               />
             </div>
           </div>
+          {aiDescription && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">{t.common.clientDescription || "Client description"}</label>
+              <Textarea rows={2} value={aiDescription} onChange={(e) => setAiDescription(e.target.value)} className="mt-1 text-sm" />
+            </div>
+          )}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"

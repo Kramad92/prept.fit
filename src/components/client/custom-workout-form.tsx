@@ -33,11 +33,12 @@ export function CustomWorkoutForm({
 }: CustomWorkoutFormProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [aiDescription, setAiDescription] = useState("");
   const [assignMode, setAssignMode] = useState<"solo" | "live">("solo");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit({ name, description, mode: assignMode, exercises });
+    onSubmit({ name, description: aiDescription || description, mode: assignMode, exercises });
   }
 
   return (
@@ -71,10 +72,17 @@ export function CustomWorkoutForm({
               prompt={description}
               onGenerate={(data) => {
                 if (!name && data.name) setName(data.name);
+                setAiDescription(data.description || "");
                 onExercisesChange(data.exercises);
               }}
             />
           </div>
+          {aiDescription && (
+            <div className="mt-1.5">
+              <label className="text-xs text-gray-500">{t.common.clientDescription || "Client description"}</label>
+              <Input type="text" value={aiDescription} onChange={(e) => setAiDescription(e.target.value)} className="mt-0.5 text-sm" />
+            </div>
+          )}
         </div>
         <div className="mt-3">
           <label className="text-xs text-gray-500">{t.workouts.workoutMode}</label>

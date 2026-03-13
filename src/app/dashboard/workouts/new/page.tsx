@@ -21,6 +21,7 @@ export default function NewWorkoutPage() {
   const [loading, setLoading] = useState(false);
   const [exercises, setExercises] = useState<ExerciseInput[]>([]);
   const [description, setDescription] = useState("");
+  const [aiDescription, setAiDescription] = useState("");
 
   function addExercise() {
     const ex = createEmptyExercise();
@@ -65,7 +66,7 @@ export default function NewWorkoutPage() {
     const formData = new FormData(e.currentTarget);
     const data = {
       name: formData.get("name") as string,
-      description: formData.get("description") as string,
+      description: aiDescription || (formData.get("description") as string),
       isTemplate: formData.get("isTemplate") === "on",
       exercises: exercises
         .filter((ex) => ex.name.trim())
@@ -139,7 +140,7 @@ export default function NewWorkoutPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              {t.common.description}
+              {aiDescription ? (t.common.aiPromptLabel || "AI Prompt") : t.common.description}
             </label>
             <Textarea
               name="description"
@@ -155,11 +156,18 @@ export default function NewWorkoutPage() {
                 onGenerate={(data) => {
                   const nameInput = document.querySelector<HTMLInputElement>("input[name=name]");
                   if (nameInput && !nameInput.value) nameInput.value = data.name;
+                  setAiDescription(data.description || "");
                   setExercises(data.exercises);
                 }}
               />
             </div>
           </div>
+          {aiDescription && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">{t.common.clientDescription || "Client description"}</label>
+              <Textarea rows={2} value={aiDescription} onChange={(e) => setAiDescription(e.target.value)} className="mt-1 text-sm" />
+            </div>
+          )}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"

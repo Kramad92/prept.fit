@@ -27,6 +27,8 @@ export const hr = {
     notes: "Bilješke",
     notesPlaceholder: "Bilješke...",
     description: "Opis",
+    aiPromptLabel: "AI Prompt",
+    clientDescription: "Opis za klijenta",
     date: "Datum",
     name: "Ime",
     email: "Email",

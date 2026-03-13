@@ -47,6 +47,7 @@ export default function NewProgramPage() {
   const [days, setDays] = useState<DaySlot[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutOption[]>([]);
   const [saving, setSaving] = useState(false);
+  const [aiDescription, setAiDescription] = useState("");
 
   useEffect(() => {
     api.get<WorkoutOption[]>("/api/workouts").then(setWorkouts).catch(() => {});
@@ -108,7 +109,7 @@ export default function NewProgramPage() {
     }[];
   }) {
     if (!name) setName(data.name);
-    if (!description) setDescription(data.description);
+    setAiDescription(data.description || "");
 
     // Merge AI-generated days into the current grid
     setDays((prev) =>
@@ -135,7 +136,7 @@ export default function NewProgramPage() {
     try {
       const payload = {
         name,
-        description: description || null,
+        description: aiDescription || description || null,
         durationWeeks,
         daysPerWeek,
         days: days
@@ -193,7 +194,7 @@ export default function NewProgramPage() {
             />
           </div>
           <div>
-            <label className="label">{t.common.description}</label>
+            <label className="label">{aiDescription ? (t.common.aiPromptLabel || "AI Prompt") : t.common.description}</label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -209,6 +210,12 @@ export default function NewProgramPage() {
               />
             </div>
           </div>
+          {aiDescription && (
+            <div>
+              <label className="label">{t.common.clientDescription || "Client description"}</label>
+              <Textarea value={aiDescription} onChange={(e) => setAiDescription(e.target.value)} rows={2} />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">{t.programs.durationWeeks}</label>

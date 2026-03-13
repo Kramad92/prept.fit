@@ -28,6 +28,8 @@ export const en: Translations = {
     notes: "Notes",
     notesPlaceholder: "Notes...",
     description: "Description",
+    aiPromptLabel: "AI Prompt",
+    clientDescription: "Client description",
     date: "Date",
     name: "Name",
     email: "Email",

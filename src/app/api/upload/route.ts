@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { uploadFile, generateKey, getFileUrl } from "@/lib/s3";
+import { logStorageUsage } from "@/lib/usage";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,10 +16,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "file is required" }, { status: 400 });
     }
 
+    if (!session.user.tenantId) {
+      return NextResponse.json({ error: "No tenant context" }, { status: 400 });
+    }
+
     const key = generateKey(session.user.tenantId, folder, file.name);
     const buffer = Buffer.from(await file.arrayBuffer());
 
     await uploadFile(key, buffer, file.type);
+
+    logStorageUsage({ tenantId: session.user.tenantId, fileKey: key, sizeBytes: buffer.length, folder });
 
     const url = await getFileUrl(key);
 

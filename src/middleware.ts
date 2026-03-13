@@ -11,6 +11,7 @@ const JWT_SECRET = new TextEncoder().encode(
 const protectedPatterns = [
   "/dashboard",
   "/portal",
+  "/admin",
   "/api/clients",
   "/api/schedules",
   "/api/workouts",
@@ -34,6 +35,7 @@ const protectedPatterns = [
   "/api/training-groups",
   "/api/group-sessions",
   "/api/search",
+  "/api/admin",
 ];
 
 function isProtectedRoute(pathname: string): boolean {
@@ -77,6 +79,19 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Role-based path guards
+  const role = nextAuthToken.role as string;
+
+  // Admin can only access /admin and /api/admin
+  if (role === "ADMIN" && !pathname.startsWith("/admin") && !pathname.startsWith("/api/admin")) {
+    return NextResponse.redirect(new URL("/admin", req.url));
+  }
+
+  // Coach/Client cannot access /admin
+  if (role !== "ADMIN" && (pathname.startsWith("/admin") || pathname.startsWith("/api/admin"))) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   return NextResponse.next();
 }
 
@@ -84,6 +99,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/portal/:path*",
+    "/admin/:path*",
     "/api/clients/:path*",
     "/api/schedules/:path*",
     "/api/workouts/:path*",
@@ -107,5 +123,6 @@ export const config = {
     "/api/training-groups/:path*",
     "/api/group-sessions/:path*",
     "/api/search/:path*",
+    "/api/admin/:path*",
   ],
 };

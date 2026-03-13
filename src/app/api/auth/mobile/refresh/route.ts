@@ -60,8 +60,8 @@ export async function POST(req: Request) {
       email: user.email,
       name: user.name,
       role: user.role,
-      tenantId: user.tenantId,
-      tenantSlug: user.tenant.slug,
+      tenantId: user.tenantId || "",
+      tenantSlug: user.tenant?.slug || "",
       clientProfileId: user.clientProfile?.id || null,
     };
 
@@ -71,8 +71,8 @@ export async function POST(req: Request) {
       email: user.email,
       name: user.name,
       role: user.role,
-      tenantId: user.tenantId,
-      tenantSlug: user.tenant.slug,
+      tenantId: user.tenantId || "",
+      tenantSlug: user.tenant?.slug || "",
       clientProfileId: user.clientProfile?.id || null,
     })
       .setProtectedHeader({ alg: "HS256" })

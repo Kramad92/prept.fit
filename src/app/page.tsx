@@ -82,6 +82,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootPage() {
   const session = await getSession();
   if (session) {
+    if (session.user.role === "ADMIN") redirect("/admin");
     redirect(session.user.role === "CLIENT" ? "/portal" : "/dashboard");
   }
 

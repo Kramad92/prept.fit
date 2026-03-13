@@ -38,11 +38,25 @@ async function main() {
   await prisma.exerciseCategory.deleteMany();
   await prisma.equipmentType.deleteMany();
   await prisma.client.deleteMany();
+  await prisma.aiUsageLog.deleteMany();
+  await prisma.storageUsageLog.deleteMany();
+  await prisma.platformSubscription.deleteMany();
   await prisma.user.deleteMany();
   await prisma.tenant.deleteMany();
 
   const hash = await bcrypt.hash("password123", 12);
   const today = startOfDay(new Date());
+
+  // ========== ADMIN USER (no tenant) ==========
+  await prisma.user.create({
+    data: {
+      name: "Platform Admin",
+      email: "admin@prept.com",
+      passwordHash: hash,
+      role: "ADMIN",
+      tenantId: null,
+    },
+  });
 
   // ========== TENANT ==========
   const tenant = await prisma.tenant.create({
@@ -663,6 +677,10 @@ async function main() {
 
   console.log("\n✅ Seed complete!\n");
   console.log("┌──────────────────────────────────────────────────────────┐");
+  console.log("│  ADMIN LOGIN                                            │");
+  console.log("│  Email: admin@prept.com                                 │");
+  console.log("│  Password: password123                                  │");
+  console.log("│                                                         │");
   console.log("│  COACH LOGIN                                            │");
   console.log("│  Email: coach@demo.com                                  │");
   console.log("│  Password: password123                                  │");

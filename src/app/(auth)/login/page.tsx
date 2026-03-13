@@ -41,13 +41,17 @@ function LoginForm() {
         setError(t.auth.emailNotVerified);
       } else if (result.error === "PORTAL_DISABLED") {
         setError(t.auth.portalDisabled);
+      } else if (result.error === "TENANT_DEACTIVATED") {
+        setError("Your account has been deactivated. Please contact support.");
       } else {
         setError(t.auth.invalidCredentials);
       }
     } else {
       // Redirect based on role
       const session = await getSession();
-      if (session?.user?.role === "CLIENT") {
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else if (session?.user?.role === "CLIENT") {
         router.push("/portal");
       } else {
         router.push("/dashboard");

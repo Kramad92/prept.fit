@@ -34,6 +34,19 @@ export const authOptions: NextAuthOptions = {
 
         if (!isValid) return null;
 
+        // Admin users don't belong to a tenant — empty string sentinel
+        if (user.role === "ADMIN") {
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            tenantId: "",
+            tenantSlug: "",
+            clientProfileId: null,
+          };
+        }
+
         // Block inactive clients from logging in
         if (
           user.role === "CLIENT" &&
@@ -48,13 +61,18 @@ export const authOptions: NextAuthOptions = {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
+        // Block deactivated tenants
+        if (user.tenant && !user.tenant.isActive) {
+          throw new Error("TENANT_DEACTIVATED");
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          tenantId: user.tenantId,
-          tenantSlug: user.tenant.slug,
+          tenantId: user.tenantId || "",
+          tenantSlug: user.tenant?.slug || "",
           clientProfileId: user.clientProfile?.id || null,
         };
       },

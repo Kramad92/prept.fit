@@ -39,9 +39,17 @@ export async function getSession() {
   return session;
 }
 
+export async function requireAdmin() {
+  const session = await getSession();
+  if (!session || session.user.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+  return session;
+}
+
 export async function requireCoach() {
   const session = await getSession();
-  if (!session || session.user.role !== "COACH") {
+  if (!session || session.user.role !== "COACH" || !session.user.tenantId) {
     throw new Error("Unauthorized");
   }
   return session;
@@ -49,7 +57,7 @@ export async function requireCoach() {
 
 export async function requireClient() {
   const session = await getSession();
-  if (!session || session.user.role !== "CLIENT" || !session.user.clientProfileId) {
+  if (!session || session.user.role !== "CLIENT" || !session.user.clientProfileId || !session.user.tenantId) {
     throw new Error("Unauthorized");
   }
   return session;

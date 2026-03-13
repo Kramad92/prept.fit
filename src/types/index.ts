@@ -193,6 +193,67 @@ export interface AssignedWorkoutProgram {
   clientWorkoutPlans: AssignedWorkoutPlan[];
 }
 
+export interface NutritionProgramDay {
+  id: string;
+  weekNumber: number;
+  dayNumber: number;
+  label: string | null;
+  mealPlanId: string | null;
+  mealPlan: { id: string; name: string; description: string | null } | null;
+}
+
+export interface NutritionProgramSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  durationWeeks: number;
+  mealsPerDay: number;
+  isTemplate: boolean;
+  dayCount: number;
+  assignedCount: number;
+}
+
+export interface NutritionProgramDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  durationWeeks: number;
+  mealsPerDay: number;
+  isTemplate: boolean;
+  createdAt: string;
+  days: NutritionProgramDay[];
+  assignments: Array<{
+    id: string;
+    startDate: string;
+    endDate: string | null;
+    accessPolicy: string;
+    isActive: boolean;
+    currentWeek: number;
+    currentDay: number;
+    client: { id: string; name: string; status: string };
+  }>;
+}
+
+export interface AssignedNutritionProgram {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  accessPolicy: string;
+  isActive: boolean;
+  currentWeek: number;
+  currentDay: number;
+  notes: string | null;
+  program: {
+    id: string;
+    name: string;
+    description: string | null;
+    durationWeeks: number;
+    mealsPerDay: number;
+    days: NutritionProgramDay[];
+  };
+  clientMealPlans: AssignedMealPlan[];
+}
+
 export interface AssignedMealPlan {
   id: string;
   customName: string | null;

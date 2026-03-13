@@ -1185,5 +1185,22 @@ export const hr = {
     sunday: "Nedjelja",
     selectDay: "Odaberite dan...",
     noWorkoutsAvailable: "Prvo kreirajte treninge za korištenje AI generiranja.",
+    // Tabs
+    workoutTab: "Trening",
+    nutritionTab: "Prehrana",
+    // Nutrition programs
+    newNutritionProgram: "Novi program prehrane",
+    noNutritionPrograms: "Nema programa prehrane",
+    noNutritionProgramsDesc: "Kreirajte prvi program prehrane za raspored planova prehrane kroz tjedne.",
+    nutritionProgramName: "Naziv programa",
+    nutritionProgramNamePlaceholder: "npr. 4-tjedni program prehrane",
+    nutritionProgramDescPlaceholder: "Opišite ovaj program prehrane...",
+    editNutritionProgram: "Uredi program prehrane",
+    selectMealPlan: "Odaberite plan prehrane...",
+    mealsPerDay: "obroka/dan",
+    mealPlansCount: "planova prehrane",
+    nutritionSchedule: "Tjedni raspored",
+    nutritionScheduleDesc: "Dodijelite plan prehrane svakom danu. Dani bez plana su dani odmora.",
+    noMealPlansAdded: "Još nema planova prehrane dodanih u ovaj program.",
   },
 };

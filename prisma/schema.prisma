@@ -26,6 +26,9 @@ model Tenant {
   socialLinks Json?    // { instagram?, facebook?, tiktok?, youtube?, twitter?, linkedin? }
   specialties Json?    // string[] e.g. ["Weight Loss", "HIIT"]
   landingPageEnabled Boolean @default(false)
+  isActive       Boolean  @default(true)
+  deactivatedAt  DateTime?
+  planTier       String   @default("free")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -49,7 +52,11 @@ model Tenant {
   trainingGroups     TrainingGroup[]
   groupSessions      GroupSession[]
   workoutPrograms    WorkoutProgram[]
+  nutritionPrograms  NutritionProgram[]
   pushTokens         PushToken[]
+  aiUsageLogs        AiUsageLog[]
+  storageUsageLogs   StorageUsageLog[]
+  platformSubscription PlatformSubscription?
 
   @@map("tenants")
 }
@@ -71,8 +78,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  tenantId      String
-  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String?
+  tenant        Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // If role is CLIENT, linked client profile
   clientProfile Client?
@@ -129,6 +136,7 @@ model Client {
   trainingGroupMemberships TrainingGroupMember[]
   groupSessionParticipations GroupSessionParticipant[]
   assignedPrograms  ClientWorkoutProgram[]
+  assignedNutritionPrograms ClientNutritionProgram[]
 
   @@index([tenantId])
   @@map("clients")
@@ -533,6 +541,7 @@ model MealPlan {
 
   meals       Meal[]
   assignedTo  ClientMealPlan[]
+  programDays NutritionProgramDay[]
 
   @@index([tenantId])
   @@index([sourceTemplateId])
@@ -568,10 +577,14 @@ model ClientMealPlan {
   mealPlanId  String
   mealPlan    MealPlan  @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
 
+  clientNutritionProgramId String?
+  clientNutritionProgram   ClientNutritionProgram? @relation(fields: [clientNutritionProgramId], references: [id], onDelete: SetNull)
+
   clientMeals ClientMeal[]
 
   @@index([clientId])
   @@index([mealPlanId])
+  @@index([clientNutritionProgramId])
   @@map("client_meal_plans")
 }
 
@@ -969,6 +982,123 @@ model ClientWorkoutProgram {
   @@index([clientId])
   @@index([programId])
   @@map("client_workout_programs")
+}
+
+// ========== NUTRITION PROGRAMS ==========
+
+model NutritionProgram {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  durationWeeks   Int      @default(4)
+  mealsPerDay     Int      @default(3)
+  isTemplate      Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sourceTemplateId String?
+  sourceTemplate   NutritionProgram? @relation("nutritionProgramClones", fields: [sourceTemplateId], references: [id], onDelete: SetNull)
+  clones           NutritionProgram[] @relation("nutritionProgramClones")
+
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  days        NutritionProgramDay[]
+  assignments ClientNutritionProgram[]
+
+  @@index([tenantId])
+  @@index([sourceTemplateId])
+  @@map("nutrition_programs")
+}
+
+model NutritionProgramDay {
+  id          String  @id @default(cuid())
+  weekNumber  Int     // 1-based
+  dayNumber   Int     // 1-based within week
+  label       String? // "High Carb Day", "Rest Day", etc.
+
+  programId   String
+  program     NutritionProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  mealPlanId  String?
+  mealPlan    MealPlan? @relation(fields: [mealPlanId], references: [id], onDelete: SetNull)
+
+  @@index([programId])
+  @@map("nutrition_program_days")
+}
+
+model ClientNutritionProgram {
+  id              String   @id @default(cuid())
+  startDate       DateTime
+  endDate         DateTime?
+  accessPolicy    String   @default("date_range")
+  isActive        Boolean  @default(true)
+  currentWeek     Int      @default(1)
+  currentDay      Int      @default(1)
+  notes           String?
+  assignedAt      DateTime @default(now())
+
+  clientId  String
+  client    Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  programId String
+  program   NutritionProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  clientMealPlans ClientMealPlan[]
+
+  @@index([clientId])
+  @@index([programId])
+  @@map("client_nutrition_programs")
+}
+
+// ========== USAGE TRACKING ==========
+
+model AiUsageLog {
+  id        String   @id @default(cuid())
+  endpoint  String   // e.g. "generate-workout-plan", "generate-meal-plan"
+  tokensIn  Int      @default(0)
+  tokensOut Int      @default(0)
+  provider  String   @default("unknown") // "groq", "gemini", "claude"
+  createdAt DateTime @default(now())
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("ai_usage_logs")
+}
+
+model StorageUsageLog {
+  id        String   @id @default(cuid())
+  fileKey   String
+  sizeBytes Int
+  folder    String   @default("uploads")
+  createdAt DateTime @default(now())
+
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("storage_usage_logs")
+}
+
+model PlatformSubscription {
+  id           String   @id @default(cuid())
+  status       String   @default("active") // "active", "past_due", "cancelled", "trialing"
+  planTier     String   @default("free")
+  priceMonthly Float    @default(0)
+  currency     String   @default("USD")
+  periodStart  DateTime @default(now())
+  periodEnd    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenantId     String   @unique
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("platform_subscriptions")
 }
 
 // ========== MOBILE AUTH ==========

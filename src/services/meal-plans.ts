@@ -18,6 +18,7 @@ export async function deepCopyMealPlan(
     originalPlanId: string;
     clientId: string;
     tenantId: string;
+    clientNutritionProgramId?: string | null;
   }
 ) {
   const original = await tx.mealPlan.findFirst({
@@ -56,6 +57,7 @@ export async function deepCopyMealPlan(
       clientId: opts.clientId,
       mealPlanId: clone.id,
       isActive: true,
+      clientNutritionProgramId: opts.clientNutritionProgramId || null,
     },
   });
 

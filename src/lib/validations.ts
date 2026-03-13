@@ -332,6 +332,29 @@ export const workoutProgramAssignSchema = z.object({
   notes: z.string().max(2000).nullable().optional(),
 });
 
+const nutritionProgramDaySchema = z.object({
+  weekNumber: z.number().min(1),
+  dayNumber: z.number().min(1),
+  label: z.string().max(100).nullable().optional(),
+  mealPlanId: z.string().nullable().optional(),
+});
+
+export const nutritionProgramSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  description: z.string().nullable().optional(),
+  durationWeeks: z.number().min(1).max(52).optional().default(4),
+  mealsPerDay: z.number().min(1).max(10).optional().default(3),
+  days: z.array(nutritionProgramDaySchema).optional().default([]),
+});
+
+export const nutritionProgramAssignSchema = z.object({
+  clientId: z.string().min(1),
+  programId: z.string().min(1),
+  startDate: z.string().min(1),
+  accessPolicy: z.enum(["unlimited", "date_range", "subscription_tied"]).optional().default("date_range"),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
 export const mealPlanAssignSchema = z.object({
   clientId: z.string().min(1),
   mealPlanId: z.string().min(1),

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   UtensilsCrossed,
+  CalendarRange,
   Plus,
   ChevronDown,
   ChevronUp,
@@ -53,12 +54,40 @@ interface AssignedPlan {
   }>;
 }
 
+interface NutritionProgramDay {
+  id: string;
+  weekNumber: number;
+  dayNumber: number;
+  label: string | null;
+  mealPlan: { id: string; name: string; description: string | null } | null;
+}
+
+interface AssignedNutritionProgram {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  currentWeek: number;
+  currentDay: number;
+  program: {
+    id: string;
+    name: string;
+    description: string | null;
+    durationWeeks: number;
+    mealsPerDay: number;
+    days: NutritionProgramDay[];
+  };
+  clientMealPlans: AssignedPlan[];
+}
+
 export default function PortalNutritionPage() {
   const t = useT();
   const [plans, setPlans] = useState<AssignedPlan[]>([]);
+  const [nutritionPrograms, setNutritionPrograms] = useState<AssignedNutritionProgram[]>([]);
   const [logs, setLogs] = useState<NutritionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -72,10 +101,17 @@ export default function PortalNutritionPage() {
       api.get<NutritionLog[]>("/api/nutrition-logs?days=14"),
     ])
       .then(([data, logData]) => {
-        setPlans(data.assignedMealPlans || []);
+        // Standalone plans (not part of a nutrition program)
+        const standalone = (data.assignedMealPlans || []).filter(
+          (p: AssignedPlan & { clientNutritionProgramId?: string | null }) => !p.clientNutritionProgramId
+        );
+        setPlans(standalone);
+        setNutritionPrograms(data.assignedNutritionPrograms || []);
         setLogs(logData);
-        if (data.assignedMealPlans?.length > 0) {
-          setExpanded(data.assignedMealPlans[0].id);
+        if (data.assignedNutritionPrograms?.length > 0) {
+          setExpandedProgram(data.assignedNutritionPrograms[0].id);
+        } else if (standalone.length > 0) {
+          setExpanded(standalone[0].id);
         }
       })
       .catch(() => {})
@@ -183,7 +219,7 @@ export default function PortalNutritionPage() {
       <div className="mt-6">
         {tab === "plans" && (
           <>
-            {plans.length === 0 ? (
+            {plans.length === 0 && nutritionPrograms.length === 0 ? (
               <EmptyState
                 icon={UtensilsCrossed}
                 title={t.portalNutrition.noMealPlans}
@@ -191,6 +227,100 @@ export default function PortalNutritionPage() {
               />
             ) : (
               <div className="space-y-4">
+                {/* Nutrition Programs */}
+                {nutritionPrograms.map((prog) => {
+                  const isOpen = expandedProgram === prog.id;
+                  const weekGroups: Record<number, NutritionProgramDay[]> = {};
+                  for (const d of prog.program.days) {
+                    if (!weekGroups[d.weekNumber]) weekGroups[d.weekNumber] = [];
+                    weekGroups[d.weekNumber].push(d);
+                  }
+                  const now = new Date();
+                  const startDate = new Date(prog.startDate);
+                  const currentWeekNum = Math.max(
+                    1,
+                    Math.ceil(
+                      (now.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)
+                    )
+                  );
+
+                  return (
+                    <div key={prog.id} className="card">
+                      <button
+                        onClick={() =>
+                          setExpandedProgram(isOpen ? null : prog.id)
+                        }
+                        className="flex w-full items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
+                            <CalendarRange className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-semibold text-gray-900">
+                              {prog.program.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {prog.program.durationWeeks} {t.programs.weeks} &middot;{" "}
+                              {prog.clientMealPlans.length} {t.programs.mealPlansCount} &middot;{" "}
+                              {t.programs.week} {Math.min(currentWeekNum, prog.program.durationWeeks)}
+                            </p>
+                          </div>
+                        </div>
+                        {isOpen ? (
+                          <ChevronUp className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+
+                      {isOpen && (
+                        <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
+                          {prog.program.description && (
+                            <p className="text-sm text-gray-500">{prog.program.description}</p>
+                          )}
+                          {Object.entries(weekGroups).map(([weekStr, weekDays]) => {
+                            const week = Number(weekStr);
+                            const isCurrent = week === Math.min(currentWeekNum, prog.program.durationWeeks);
+                            return (
+                              <div key={weekStr}>
+                                <h4
+                                  className={`text-sm font-semibold ${isCurrent ? "text-brand-700" : "text-gray-600"}`}
+                                >
+                                  {t.programs.week} {week}
+                                  {isCurrent && " (current)"}
+                                </h4>
+                                <div className="mt-1 space-y-1">
+                                  {weekDays.map((day) => (
+                                    <div
+                                      key={day.id}
+                                      className="flex items-center gap-2 rounded-lg bg-gray-50 p-2"
+                                    >
+                                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
+                                        {day.dayNumber}
+                                      </span>
+                                      <span className="flex-1 text-sm text-gray-700">
+                                        {day.label || day.mealPlan?.name || t.programs.restDay}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Standalone label */}
+                {plans.length > 0 && nutritionPrograms.length > 0 && (
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {t.portalNutrition.mealPlans}
+                  </h2>
+                )}
+
                 {plans.map((plan) => {
                   const isOpen = expanded === plan.id;
                   return (

@@ -1155,5 +1155,22 @@ export const en: Translations = {
     sunday: "Sunday",
     selectDay: "Select day...",
     noWorkoutsAvailable: "Create some workouts first to use AI generation.",
+    // Tabs
+    workoutTab: "Workout",
+    nutritionTab: "Nutrition",
+    // Nutrition programs
+    newNutritionProgram: "New Nutrition Program",
+    noNutritionPrograms: "No nutrition programs yet",
+    noNutritionProgramsDesc: "Create your first nutrition program to schedule meal plans across weeks.",
+    nutritionProgramName: "Program Name",
+    nutritionProgramNamePlaceholder: "e.g. 4-Week Meal Prep Program",
+    nutritionProgramDescPlaceholder: "Describe this nutrition program...",
+    editNutritionProgram: "Edit Nutrition Program",
+    selectMealPlan: "Select a meal plan...",
+    mealsPerDay: "meals/day",
+    mealPlansCount: "meal plans",
+    nutritionSchedule: "Weekly Schedule",
+    nutritionScheduleDesc: "Assign a meal plan to each day. Days without a plan are rest days.",
+    noMealPlansAdded: "No meal plans have been added to this program yet.",
   },
 };

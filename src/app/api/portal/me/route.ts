@@ -66,6 +66,27 @@ export async function GET() {
           },
         },
       },
+      assignedNutritionPrograms: {
+        where: { isActive: true },
+        include: {
+          program: {
+            include: {
+              days: {
+                orderBy: [{ weekNumber: "asc" }, { dayNumber: "asc" }],
+                include: { mealPlan: { select: { id: true, name: true, description: true } } },
+              },
+            },
+          },
+          clientMealPlans: {
+            include: {
+              mealPlan: {
+                include: { meals: { orderBy: { orderIndex: "asc" } } },
+              },
+              clientMeals: { orderBy: { orderIndex: "asc" } },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -99,10 +120,23 @@ export async function GET() {
     return true;
   });
 
+  // Filter expired nutrition programs
+  const activeNutritionPrograms = (client.assignedNutritionPrograms || []).filter((prog) => {
+    if (prog.accessPolicy === "unlimited") return true;
+    if (prog.accessPolicy === "date_range" && prog.endDate) {
+      return new Date(prog.endDate) >= now;
+    }
+    if (prog.accessPolicy === "subscription_tied") {
+      return client.status === "active";
+    }
+    return true;
+  });
+
   return NextResponse.json({
     ...client,
     progressPhotos: photos,
     assignedPlans: activePlans,
     assignedPrograms: activePrograms,
+    assignedNutritionPrograms: activeNutritionPrograms,
   });
 }

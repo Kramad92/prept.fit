@@ -15,7 +15,7 @@ model Tenant {
   logo        String?  // Logo URL
   brandColor  String   @default("#124559")
   timezone    String   @default("Europe/Sarajevo")
-  locale      String   @default("bs") // "bs", "sr", "hr", or "en"
+  locale      String   @default("en") // "en", "bs", "sr", or "hr"
   units       String   @default("metric") // "metric" or "imperial"
   currency    String   @default("BAM")
   bio         String?

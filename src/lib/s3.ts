@@ -6,32 +6,41 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const s3Client = new S3Client({
-  region: process.env.S3_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
-  },
-  requestChecksumCalculation: "WHEN_REQUIRED",
-  responseChecksumValidation: "WHEN_REQUIRED",
-  ...(process.env.S3_ENDPOINT
-    ? { endpoint: process.env.S3_ENDPOINT, forcePathStyle: true }
-    : {}),
-});
+let _s3: S3Client | null = null;
 
-const BUCKET = process.env.S3_BUCKET_NAME || "";
+function getS3(): S3Client {
+  if (!_s3) {
+    _s3 = new S3Client({
+      region: process.env.S3_REGION || "us-east-1",
+      credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
+      },
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
+      ...(process.env.S3_ENDPOINT
+        ? { endpoint: process.env.S3_ENDPOINT, forcePathStyle: true }
+        : {}),
+    });
+  }
+  return _s3;
+}
+
+function getBucket(): string {
+  return process.env.S3_BUCKET_NAME || "";
+}
 
 export async function getUploadUrl(
   key: string,
   contentType: string
 ): Promise<string> {
   const command = new PutObjectCommand({
-    Bucket: BUCKET,
+    Bucket: getBucket(),
     Key: key,
     ContentType: contentType,
   });
 
-  const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  const url = await getSignedUrl(getS3(), command, { expiresIn: 3600 });
 
   // Strip checksum params that AWS SDK v3 adds — R2 doesn't support them
   // and they cause CORS preflight failures
@@ -47,31 +56,31 @@ export async function uploadFile(
   contentType: string
 ): Promise<void> {
   const command = new PutObjectCommand({
-    Bucket: BUCKET,
+    Bucket: getBucket(),
     Key: key,
     Body: body,
     ContentType: contentType,
   });
 
-  await s3Client.send(command);
+  await getS3().send(command);
 }
 
 export async function deleteFile(key: string): Promise<void> {
   const command = new DeleteObjectCommand({
-    Bucket: BUCKET,
+    Bucket: getBucket(),
     Key: key,
   });
 
-  await s3Client.send(command);
+  await getS3().send(command);
 }
 
 export async function getFileUrl(key: string): Promise<string> {
   const command = new GetObjectCommand({
-    Bucket: BUCKET,
+    Bucket: getBucket(),
     Key: key,
   });
 
-  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  return getSignedUrl(getS3(), command, { expiresIn: 3600 });
 }
 
 export function generateKey(

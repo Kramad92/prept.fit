@@ -39,4 +39,6 @@ claude.md
 
 # local docs
 CHANGELOG.md
+DEPLOYMENT.md
+.env.example
 

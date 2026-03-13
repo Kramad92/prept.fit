@@ -8,8 +8,10 @@ import {
   UserCheck,
   ClipboardList,
   BarChart3,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Home" },
@@ -45,6 +47,13 @@ export function AdminMobileNav() {
             </Link>
           );
         })}
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex flex-col items-center gap-1 px-3 py-2 text-xs text-gray-500 transition-colors hover:text-gray-700"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Logout</span>
+        </button>
       </div>
     </nav>
   );

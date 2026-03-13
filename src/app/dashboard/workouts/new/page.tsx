@@ -155,7 +155,6 @@ export default function NewWorkoutPage() {
                 onGenerate={(data) => {
                   const nameInput = document.querySelector<HTMLInputElement>("input[name=name]");
                   if (nameInput && !nameInput.value) nameInput.value = data.name;
-                  setDescription(data.description || description);
                   setExercises(data.exercises);
                 }}
               />

@@ -382,7 +382,7 @@ function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit
               prompt={customDescription}
               onGenerate={(data) => {
                 setForm({
-                  name: data.name || form.name,
+                  name: form.name || data.name || form.name,
                   calories: data.targetCalories,
                   protein: data.targetProtein,
                   carbs: data.targetCarbs,

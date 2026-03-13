@@ -184,7 +184,6 @@ export default function EditWorkoutPage() {
                 prompt={description}
                 onGenerate={(data) => {
                   if (!name) setName(data.name);
-                  setDescription(data.description || description);
                   setExercises(data.exercises);
                 }}
               />

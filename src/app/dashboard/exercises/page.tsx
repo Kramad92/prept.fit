@@ -432,7 +432,11 @@ function ExerciseLibraryContent() {
             value={filterDifficulty}
             onChange={setFilterDifficulty}
             placeholder="All Difficulty"
-            options={["Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Master", "Grand Master", "Legendary"].map((d) => ({ value: d, label: d }))}
+            options={(() => {
+              const order = ["Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Master", "Grand Master", "Legendary"];
+              const existing = new Set(exercises.map((e) => e.difficulty).filter(Boolean));
+              return order.filter((d) => existing.has(d)).map((d) => ({ value: d, label: d }));
+            })()}
             className="w-full sm:w-48"
           />
           <FilterSelect

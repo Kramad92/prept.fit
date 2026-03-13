@@ -42,3 +42,6 @@ CHANGELOG.md
 DEPLOYMENT.md
 .env.example
 
+# source CSV (exercises.json is the clean parsed version)
+prisma/exercises.csv
+

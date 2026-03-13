@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
+import { ExerciseImportModal } from "@/components/exercise-import-modal";
 import { useT, useLocale } from "@/lib/i18n";
 
 interface ExerciseItem {
@@ -86,6 +87,7 @@ function ExerciseLibraryContent() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchDeleting, setBatchDeleting] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set<string>());
+  const [showImport, setShowImport] = useState(false);
 
   function toggleCollapsed(category: string) {
     setCollapsedCategories((prev) => {
@@ -372,18 +374,10 @@ function ExerciseLibraryContent() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {exercises.length === 0 && (
-            <Button variant="outline" onClick={handleSeed} disabled={seeding}>
-              <Download className="mr-2 h-4 w-4" />
-              {seeding ? t.common.loading : t.exerciseLibrary.loadDefaults}
-            </Button>
-          )}
-          {exercises.length > 0 && exercises.length < 50 && (
-            <Button variant="outline" onClick={handleSeed} disabled={seeding} className="text-sm">
-              <Download className="mr-1 h-4 w-4" />
-              {seeding ? t.exerciseLibrary.adding : t.exerciseLibrary.addDefaults}
-            </Button>
-          )}
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Download className="mr-2 h-4 w-4" />
+            Import Database
+          </Button>
           {exercises.length > 0 && !selectMode && (
             <Button
               variant="outline"
@@ -472,9 +466,9 @@ function ExerciseLibraryContent() {
             title={t.exerciseLibrary.noExercises}
             description={t.exerciseLibrary.noExercisesDesc}
             action={
-              <Button onClick={handleSeed} disabled={seeding}>
+              <Button onClick={() => setShowImport(true)}>
                 <Download className="mr-2 h-4 w-4" />
-                {seeding ? t.common.loading : t.exerciseLibrary.loadDefaultsCount}
+                Import Exercise Database
               </Button>
             }
           />
@@ -656,6 +650,12 @@ function ExerciseLibraryContent() {
           onEquipmentChange={() => { loadEquipmentTypes(); loadExercises(); }}
         />
       </Dialog>
+
+      <ExerciseImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onImported={() => { loadExercises(); loadCategories(); loadEquipmentTypes(); }}
+      />
     </div>
   );
 }

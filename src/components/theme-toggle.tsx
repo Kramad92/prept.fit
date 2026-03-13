@@ -1,27 +1,64 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { Moon, Sun } from "lucide-react";
 
+type Theme = "light" | "dark" | "system";
+
+function resolveTheme(theme: Theme): boolean {
+  if (theme === "dark") return true;
+  if (theme === "light") return false;
+  return typeof window !== "undefined"
+    ? window.matchMedia("(prefers-color-scheme: dark)").matches
+    : false;
+}
+
 export function ThemeToggle({ className }: { className?: string }) {
+  const { data: session } = useSession();
   const [dark, setDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem("theme");
-    const isDark =
-      stored === "dark" ||
-      (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const applyTheme = useCallback((isDark: boolean) => {
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
 
+  // Initial mount — use localStorage for instant render (no flash)
+  useEffect(() => {
+    setMounted(true);
+    const stored = localStorage.getItem("theme") as Theme | null;
+    applyTheme(resolveTheme(stored || "system"));
+  }, [applyTheme]);
+
+  // Once session loads — fetch user's DB preference and apply
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    fetch("/api/user/preferences")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data?.theme) return;
+        const isDark = resolveTheme(data.theme);
+        applyTheme(isDark);
+        localStorage.setItem("theme", data.theme);
+      })
+      .catch(() => {});
+  }, [session?.user?.id, applyTheme]);
+
   function toggle() {
     const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
+    const theme: Theme = next ? "dark" : "light";
+    applyTheme(next);
+    localStorage.setItem("theme", theme);
+
+    // Persist to DB
+    if (session?.user?.id) {
+      fetch("/api/user/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme }),
+      }).catch(() => {});
+    }
   }
 
   if (!mounted) return null;

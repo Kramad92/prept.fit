@@ -74,6 +74,7 @@ model User {
   name          String
   role          UserRole  @default(CLIENT)
   avatar        String?
+  theme         String    @default("system") // "light", "dark", or "system"
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

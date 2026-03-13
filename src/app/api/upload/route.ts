@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     await uploadFile(key, buffer, file.type);
 
-    const url = getFileUrl(key);
+    const url = await getFileUrl(key);
 
     return NextResponse.json({ key, url });
   } catch (err) {

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { getFileUrl } from "@/lib/s3";
-
 // Client uploads their own progress photo
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -16,11 +14,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "File key is required" }, { status: 400 });
   }
 
-  const url = getFileUrl(key);
-
   const photo = await prisma.progressPhoto.create({
     data: {
-      url,
+      url: key,
       caption: caption || null,
       category: category || null,
       clientId: session.user.clientProfileId,

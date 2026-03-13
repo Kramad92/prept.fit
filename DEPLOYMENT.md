@@ -1,6 +1,6 @@
-# TrainerHub Deployment Guide — Free Tier
+# Prept Deployment Guide — Free Tier
 
-This guide walks you through deploying TrainerHub for $0/month using Vercel, Neon, and Cloudflare R2.
+This guide walks you through deploying Prept for $0/month using Vercel, Neon, and Cloudflare R2.
 
 ---
 
@@ -8,7 +8,7 @@ This guide walks you through deploying TrainerHub for $0/month using Vercel, Neo
 
 - A GitHub account (to push the repo)
 - Node.js 18+ installed locally
-- The TrainerHub project running locally
+- The Prept project running locally
 
 ---
 
@@ -17,12 +17,12 @@ This guide walks you through deploying TrainerHub for $0/month using Vercel, Neo
 If your repo isn't on GitHub yet:
 
 1. Go to github.com → **New repository**
-2. Name it `trainerhub` (or whatever you want), set it to **Private**
+2. Name it `prept` (or whatever you want), set it to **Private**
 3. Don't initialize with README (you already have one)
 4. Push:
 
 ```bash
-git remote add origin git@github.com:YOUR_USERNAME/trainerhub.git
+git remote add origin git@github.com:YOUR_USERNAME/prept.git
 git branch -M main
 git push -u origin main
 ```
@@ -33,7 +33,7 @@ git push -u origin main
 
 1. Go to **neon.tech** and sign up (GitHub login works)
 2. Click **Create Project**
-   - Name: `trainerhub`
+   - Name: `prept`
    - Region: pick the closest to you (e.g. `us-east-1`)
 3. Once created, you'll see a **Connection string** like:
    ```
@@ -64,12 +64,12 @@ This is for progress photos. If you don't need photos yet, skip this step and le
 1. Go to **dash.cloudflare.com** and sign up
 2. In the sidebar, click **R2 Object Storage**
 3. Click **Create bucket**
-   - Name: `trainerhub-uploads`
+   - Name: `prept-uploads`
    - Location: **Automatic**
 4. Go to **R2 → Overview → Manage R2 API Tokens**
 5. Click **Create API token**
    - Permissions: **Object Read & Write**
-   - Specify bucket: `trainerhub-uploads`
+   - Specify bucket: `prept-uploads`
 6. Copy these values:
    - **Access Key ID**
    - **Secret Access Key**
@@ -90,7 +90,7 @@ Note: Your `getFileUrl` function in `src/lib/s3.ts` builds URLs using the S3_END
 
 1. Go to **vercel.com** and sign up with GitHub
 2. Click **Add New → Project**
-3. **Import** your `trainerhub` repository
+3. **Import** your `prept` repository
 4. Vercel will auto-detect it's a Next.js project
 5. Before clicking Deploy, expand **Environment Variables** and add:
 
@@ -99,7 +99,7 @@ Note: Your `getFileUrl` function in `src/lib/s3.ts` builds URLs using the S3_END
 | `DATABASE_URL` | Your Neon connection string from Step 2 |
 | `NEXTAUTH_URL` | Leave blank for now (Vercel sets this automatically) |
 | `NEXTAUTH_SECRET` | Generate one (see below) |
-| `S3_BUCKET_NAME` | `trainerhub-uploads` (or skip if no photos) |
+| `S3_BUCKET_NAME` | `prept-uploads` (or skip if no photos) |
 | `S3_REGION` | `auto` |
 | `S3_ACCESS_KEY_ID` | From Cloudflare R2 Step 3 |
 | `S3_SECRET_ACCESS_KEY` | From Cloudflare R2 Step 3 |
@@ -117,7 +117,7 @@ Copy the output and paste it as the `NEXTAUTH_SECRET` value.
 
 6. Click **Deploy**
 
-Vercel will run `npm run build` which triggers `prisma generate` automatically (Prisma's postinstall hook handles this). Your app will be live at `https://trainerhub-xxxxx.vercel.app`.
+Vercel will run `npm run build` which triggers `prisma generate` automatically (Prisma's postinstall hook handles this). Your app will be live at `https://prept-xxxxx.vercel.app`.
 
 ---
 
@@ -126,7 +126,7 @@ Vercel will run `npm run build` which triggers `prisma generate` automatically (
 After your first deploy:
 
 1. Go to your Vercel project → **Settings → Domains**
-2. Copy your production URL (e.g. `https://trainerhub.vercel.app`)
+2. Copy your production URL (e.g. `https://prept.vercel.app`)
 3. Go to **Settings → Environment Variables**
 4. Set `NEXTAUTH_URL` to your production URL
 5. **Redeploy** (Deployments tab → click the three dots on the latest → Redeploy)
@@ -171,7 +171,7 @@ If builds fail with Prisma errors, this is why. The postinstall hook ensures the
 
 1. Buy a domain from **Cloudflare Registrar** or **Namecheap**
 2. In Vercel → **Settings → Domains → Add**
-3. Enter your domain (e.g. `app.trainerhub.com`)
+3. Enter your domain (e.g. `app.prept.com`)
 4. Vercel will give you DNS records to add at your registrar
 5. Update `NEXTAUTH_URL` to your custom domain and redeploy
 

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "TrainerHub",
-    "slug": "trainerhub",
+    "name": "Prept",
+    "slug": "prept",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "trainerhub",
+    "scheme": "prept",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.trainerhub.app",
+      "bundleIdentifier": "com.prept.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "TrainerHub needs camera access to take progress photos.",
-        "NSPhotoLibraryUsageDescription": "TrainerHub needs photo library access to upload progress photos."
+        "NSCameraUsageDescription": "Prept needs camera access to take progress photos.",
+        "NSPhotoLibraryUsageDescription": "Prept needs photo library access to upload progress photos."
       }
     },
     "android": {
@@ -28,7 +28,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#10b981"
       },
-      "package": "com.trainerhub.app",
+      "package": "com.prept.app",
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -40,7 +40,7 @@
           "autoVerify": true,
           "data": [
             {
-              "scheme": "trainerhub"
+              "scheme": "prept"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
@@ -53,8 +53,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "TrainerHub needs photo library access to upload progress photos.",
-          "cameraPermission": "TrainerHub needs camera access to take progress photos."
+          "photosPermission": "Prept needs photo library access to upload progress photos.",
+          "cameraPermission": "Prept needs camera access to take progress photos."
         }
       ],
       [

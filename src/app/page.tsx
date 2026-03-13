@@ -1,6 +1,8 @@
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getTenantFromHost } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import { HomePage } from "@/components/home-page";
 import { CoachLandingPage } from "@/components/coach-landing-page";
 import type { CoachPublicProfile } from "@/types";
@@ -78,6 +80,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootPage() {
+  const session = await getSession();
+  if (session) {
+    redirect(session.user.role === "CLIENT" ? "/portal" : "/dashboard");
+  }
+
   const profile = await getCoachProfile();
 
   if (profile) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { resolvePhotoUrls } from "@/lib/s3";
 
 // Get the logged-in client's full profile
 export async function GET() {
@@ -70,6 +71,8 @@ export async function GET() {
 
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const photos = await resolvePhotoUrls(client.progressPhotos);
+
   // Filter out expired plans based on access policy
   const activePlans = (client.assignedPlans || []).filter((plan) => {
     if (plan.accessPolicy === "unlimited") return true;
@@ -98,6 +101,7 @@ export async function GET() {
 
   return NextResponse.json({
     ...client,
+    progressPhotos: photos,
     assignedPlans: activePlans,
     assignedPrograms: activePrograms,
   });

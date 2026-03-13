@@ -1,8 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 
-const ACCESS_TOKEN_KEY = "trainerhub_access_token";
-const REFRESH_TOKEN_KEY = "trainerhub_refresh_token";
-const USER_KEY = "trainerhub_user";
+const ACCESS_TOKEN_KEY = "prept_access_token";
+const REFRESH_TOKEN_KEY = "prept_refresh_token";
+const USER_KEY = "prept_user";
 
 export async function getAccessToken(): Promise<string | null> {
   return SecureStore.getItemAsync(ACCESS_TOKEN_KEY);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { validateBody, clientUpdateSchema } from "@/lib/validations";
+import { resolvePhotoUrls } from "@/lib/s3";
 
 export async function GET(
   _req: NextRequest,
@@ -49,7 +50,9 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(client, {
+  const photos = await resolvePhotoUrls(client.progressPhotos);
+
+  return NextResponse.json({ ...client, progressPhotos: photos }, {
     headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
   });
 }

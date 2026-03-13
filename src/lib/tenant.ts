@@ -5,7 +5,7 @@ export async function getTenantFromHost() {
   const headersList = await headers();
   const host = headersList.get("host") || "";
 
-  // Extract subdomain: coach-name.trainerhub.com → coach-name
+  // Extract subdomain: coach-name.prept.fit → coach-name
   // In development: use query param or default tenant
   const parts = host.split(".");
 

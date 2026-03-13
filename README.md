@@ -1,4 +1,4 @@
-# TrainerHub
+# Prept
 
 A multi-tenant SaaS platform for fitness coaches to manage their clients, workouts, nutrition plans, scheduling, and billing — all in one place.
 

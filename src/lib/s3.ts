@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -64,14 +65,13 @@ export async function deleteFile(key: string): Promise<void> {
   await s3Client.send(command);
 }
 
-export function getFileUrl(key: string): string {
-  if (process.env.S3_PUBLIC_URL) {
-    return `${process.env.S3_PUBLIC_URL}/${key}`;
-  }
-  if (process.env.S3_ENDPOINT) {
-    return `${process.env.S3_ENDPOINT}/${BUCKET}/${key}`;
-  }
-  return `https://${BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com/${key}`;
+export async function getFileUrl(key: string): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+  });
+
+  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
 export function generateKey(
@@ -82,4 +82,16 @@ export function generateKey(
   const timestamp = Date.now();
   const ext = filename.split(".").pop();
   return `${tenantId}/${folder}/${timestamp}-${Math.random().toString(36).slice(2)}.${ext}`;
+}
+
+// Resolve S3 keys to signed URLs for an array of photos
+export async function resolvePhotoUrls<T extends { url: string }>(
+  photos: T[]
+): Promise<T[]> {
+  return Promise.all(
+    photos.map(async (photo) => ({
+      ...photo,
+      url: await getFileUrl(photo.url),
+    }))
+  );
 }

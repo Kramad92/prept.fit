@@ -29,15 +29,28 @@ function FilterSection({
   options,
   selected,
   onToggle,
+  onSelectAll,
+  onDeselectAll,
 }: {
   title: string;
   options: FilterOption[];
   selected: Set<string>;
   onToggle: (name: string) => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
 }) {
+  const allSelected = options.length > 0 && options.every((o) => selected.has(o.name));
   return (
     <div>
-      <h4 className="mb-2 text-sm font-semibold text-gray-700">{title}</h4>
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-gray-700">{title}</h4>
+        <button
+          onClick={allSelected ? onDeselectAll : onSelectAll}
+          className="text-xs text-brand-600 hover:text-brand-700"
+        >
+          {allSelected ? "Deselect all" : "Select all"}
+        </button>
+      </div>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => {
           const isSelected = selected.has(opt.name);
@@ -171,6 +184,8 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
               options={filters.difficulties}
               selected={selectedDifficulties}
               onToggle={(n) => toggle(selectedDifficulties, setSelectedDifficulties, n)}
+              onSelectAll={() => setSelectedDifficulties(new Set(filters.difficulties.map((o) => o.name)))}
+              onDeselectAll={() => setSelectedDifficulties(new Set())}
             />
 
             <FilterSection
@@ -178,6 +193,8 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
               options={filters.equipment}
               selected={selectedEquipment}
               onToggle={(n) => toggle(selectedEquipment, setSelectedEquipment, n)}
+              onSelectAll={() => setSelectedEquipment(new Set(filters.equipment.map((o) => o.name)))}
+              onDeselectAll={() => setSelectedEquipment(new Set())}
             />
 
             <FilterSection
@@ -185,6 +202,8 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
               options={filters.bodyRegions}
               selected={selectedBodyRegions}
               onToggle={(n) => toggle(selectedBodyRegions, setSelectedBodyRegions, n)}
+              onSelectAll={() => setSelectedBodyRegions(new Set(filters.bodyRegions.map((o) => o.name)))}
+              onDeselectAll={() => setSelectedBodyRegions(new Set())}
             />
 
             <FilterSection
@@ -192,6 +211,8 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
               options={filters.classifications}
               selected={selectedClassifications}
               onToggle={(n) => toggle(selectedClassifications, setSelectedClassifications, n)}
+              onSelectAll={() => setSelectedClassifications(new Set(filters.classifications.map((o) => o.name)))}
+              onDeselectAll={() => setSelectedClassifications(new Set())}
             />
 
             {result && (

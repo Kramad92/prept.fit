@@ -5,6 +5,7 @@ import { z } from "zod";
 import { validateBody } from "@/lib/validations";
 import { getAILanguageInstruction } from "@/lib/ai-locale";
 import { logAiUsage } from "@/lib/usage";
+import { rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   foods: z.array(
@@ -28,6 +29,9 @@ interface FoodMacros {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rl = await rateLimit("ai", session.user.tenantId);
+  if (rl) return rl;
 
   const parsed = await validateBody(req, schema);
   if ("error" in parsed) return parsed.error;

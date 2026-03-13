@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, availabilitySchema } from "@/lib/validations";
 
 export async function GET() {
   const session = await getSession();
@@ -20,14 +21,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const parsed = await validateBody(req, availabilitySchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const slot = await prisma.availability.create({
     data: {
       dayOfWeek: body.dayOfWeek,
       startTime: body.startTime,
       endTime: body.endTime,
-      slotMinutes: body.slotMinutes || 60,
       tenantId: session.user.tenantId,
     },
   });

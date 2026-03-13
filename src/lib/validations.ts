@@ -1,6 +1,48 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 
+// Shared password validation: min 10 chars, at least one letter and one number
+export const passwordSchema = z
+  .string()
+  .min(10, "Password must be at least 10 characters")
+  .max(128)
+  .regex(/[a-zA-Z]/, "Password must contain at least one letter")
+  .regex(/[0-9]/, "Password must contain at least one number");
+
+export const registerSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  businessName: z.string().min(1, "Business name is required").max(200),
+  email: z.string().email(),
+  password: passwordSchema,
+});
+
+export const inviteAcceptSchema = z.object({
+  password: passwordSchema,
+});
+
+export const clientInviteSchema = z.object({
+  method: z.enum(["email", "password"]).optional().default("email"),
+  password: z.string().min(10).max(128).optional(),
+});
+
+export const mobileLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1),
+});
+
+export const resendVerificationSchema = z.object({
+  email: z.string().email(),
+});
+
+export const adminTenantUpdateSchema = z.object({
+  isActive: z.boolean().optional(),
+  planTier: z.enum(["free", "starter", "pro", "enterprise"]).optional(),
+});
+
 export async function validateBody<T>(
   req: Request,
   schema: z.ZodSchema<T>

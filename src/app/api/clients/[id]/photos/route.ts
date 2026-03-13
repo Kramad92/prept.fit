@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, photoCreateSchema, photoUpdateSchema } from "@/lib/validations";
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -16,11 +17,9 @@ export async function POST(
     return NextResponse.json({ error: "Client not found" }, { status: 404 });
   }
 
-  const { key, caption, category } = await req.json();
-
-  if (!key) {
-    return NextResponse.json({ error: "File key is required" }, { status: 400 });
-  }
+  const parsed = await validateBody(req, photoCreateSchema);
+  if ("error" in parsed) return parsed.error;
+  const { key, caption, category } = parsed.data;
 
   const photo = await prisma.progressPhoto.create({
     data: {
@@ -41,11 +40,9 @@ export async function PATCH(
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { photoId, caption, category } = await req.json();
-
-  if (!photoId) {
-    return NextResponse.json({ error: "photoId required" }, { status: 400 });
-  }
+  const parsed = await validateBody(req, photoUpdateSchema);
+  if ("error" in parsed) return parsed.error;
+  const { photoId, caption, category } = parsed.data;
 
   const photo = await prisma.progressPhoto.updateMany({
     where: {

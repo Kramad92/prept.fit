@@ -18,9 +18,13 @@ export async function PUT(
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const pkg = await prisma.package.update({
-    where: { id: params.id },
+  await prisma.package.updateMany({
+    where: { id: params.id, tenantId: session.user.tenantId },
     data: parsed.data,
+  });
+
+  const pkg = await prisma.package.findFirst({
+    where: { id: params.id, tenantId: session.user.tenantId },
   });
 
   return NextResponse.json(pkg);
@@ -38,6 +42,6 @@ export async function DELETE(
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.package.delete({ where: { id: params.id } });
+  await prisma.package.deleteMany({ where: { id: params.id, tenantId: session.user.tenantId } });
   return NextResponse.json({ ok: true });
 }

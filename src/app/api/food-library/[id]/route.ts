@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, foodLibrarySchema } from "@/lib/validations";
 
 export async function PUT(
   req: NextRequest,
@@ -15,19 +16,27 @@ export async function PUT(
 
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, foodLibrarySchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
-  const food = await prisma.foodLibrary.update({
-    where: { id: params.id },
+  const updated = await prisma.foodLibrary.updateMany({
+    where: { id: params.id, tenantId: session.user.tenantId },
     data: {
       name: body.name,
-      defaultPortion: body.defaultPortion,
-      calories: body.calories ? parseInt(body.calories) : null,
-      protein: body.protein ? parseInt(body.protein) : null,
-      carbs: body.carbs ? parseInt(body.carbs) : null,
-      fat: body.fat ? parseInt(body.fat) : null,
+      defaultPortion: body.portion || null,
+      calories: body.calories,
+      protein: body.protein,
+      carbs: body.carbs,
+      fat: body.fat,
       category: body.category,
     },
+  });
+
+  if (updated.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const food = await prisma.foodLibrary.findFirst({
+    where: { id: params.id, tenantId: session.user.tenantId },
   });
 
   return NextResponse.json(food);

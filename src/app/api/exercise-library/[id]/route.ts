@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, exerciseLibrarySchema } from "@/lib/validations";
 
 export async function PUT(
   req: NextRequest,
@@ -15,10 +16,12 @@ export async function PUT(
 
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, exerciseLibrarySchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
-  const exercise = await prisma.exerciseLibrary.update({
-    where: { id: params.id },
+  const updated = await prisma.exerciseLibrary.updateMany({
+    where: { id: params.id, tenantId: session.user.tenantId },
     data: {
       name: body.name,
       nameBs: body.nameBs ?? null,
@@ -28,6 +31,12 @@ export async function PUT(
       videoUrl: body.videoUrl,
       instructions: body.instructions,
     },
+  });
+
+  if (updated.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const exercise = await prisma.exerciseLibrary.findFirst({
+    where: { id: params.id, tenantId: session.user.tenantId },
   });
 
   return NextResponse.json(exercise);

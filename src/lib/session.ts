@@ -3,9 +3,10 @@ import { headers } from "next/headers";
 import { jwtVerify } from "jose";
 import { authOptions } from "./auth";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret"
-);
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET environment variable is required");
+}
+const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 export async function getSession() {
   // Check for Bearer token first (mobile) — verify JWT directly
@@ -17,7 +18,7 @@ export async function getSession() {
     try {
       const token = authHeader.slice(7);
       const { payload } = await jwtVerify(token, JWT_SECRET);
-      console.log("[session] Bearer token verified for user:", payload.sub);
+      // Token verified — proceed with session
       return {
         user: {
           id: payload.sub as string,

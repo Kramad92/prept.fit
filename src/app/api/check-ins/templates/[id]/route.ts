@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, checkInTemplateSchema } from "@/lib/validations";
 
 export async function PUT(
   req: NextRequest,
@@ -9,7 +10,9 @@ export async function PUT(
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, checkInTemplateSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const template = await prisma.checkInTemplate.updateMany({
     where: { id: params.id, tenantId: session.user.tenantId },
@@ -17,7 +20,6 @@ export async function PUT(
       name: body.name,
       questions: body.questions,
       frequency: body.frequency,
-      isActive: body.isActive,
     },
   });
 

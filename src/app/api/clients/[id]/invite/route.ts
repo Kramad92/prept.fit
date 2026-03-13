@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { sendInviteEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Coach invites a client — email invite (primary) or temp password (secondary)
 export async function POST(
@@ -14,6 +15,10 @@ export async function POST(
   if (!session || session.user.role !== "COACH") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit email sending per tenant
+  const rl = await rateLimit("email", session.user.tenantId);
+  if (rl) return rl;
 
   const client = await prisma.client.findFirst({
     where: { id: params.id, tenantId: session.user.tenantId },
@@ -53,7 +58,10 @@ export async function POST(
 
   if (method === "password") {
     // Secondary: create account with temp password
-    const tempPassword = body.password || "changeme123";
+    const tempPassword = body.password || crypto.randomBytes(16).toString("base64url");
+    if (tempPassword.length < 10) {
+      return NextResponse.json({ error: "Password must be at least 10 characters" }, { status: 400 });
+    }
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
     await prisma.user.create({
@@ -81,7 +89,7 @@ export async function POST(
   // Invalidate any existing tokens for this client
   await prisma.inviteToken.updateMany({
     where: { clientId: client.id, usedAt: null },
-    data: { expiresAt: new Date() },
+    data: { expiresAt: new Date(0) },
   });
 
   const token = crypto.randomBytes(32).toString("hex");

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, bookingCreateSchema } from "@/lib/validations";
 
 // Client books a session
 export async function POST(req: NextRequest) {
@@ -9,14 +10,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
-
-  if (!body.date || !body.startTime || !body.endTime) {
-    return NextResponse.json(
-      { error: "date, startTime, and endTime are required" },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(req, bookingCreateSchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   // Verify the slot isn't already booked
   const existing = await prisma.schedule.findFirst({
@@ -37,11 +33,10 @@ export async function POST(req: NextRequest) {
 
   const schedule = await prisma.schedule.create({
     data: {
-      title: body.title || "Training Session",
+      title: "Training Session",
       date: new Date(body.date),
       startTime: body.startTime,
       endTime: body.endTime,
-      type: body.type || "session",
       notes: body.notes || null,
       status: "scheduled",
       clientId: session.user.clientProfileId,

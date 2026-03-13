@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { validateBody, foodLibrarySchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -25,16 +26,18 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const parsed = await validateBody(req, foodLibrarySchema);
+  if ("error" in parsed) return parsed.error;
+  const body = parsed.data;
 
   const food = await prisma.foodLibrary.create({
     data: {
       name: body.name,
-      defaultPortion: body.defaultPortion || null,
-      calories: body.calories ? parseInt(body.calories) : null,
-      protein: body.protein ? parseInt(body.protein) : null,
-      carbs: body.carbs ? parseInt(body.carbs) : null,
-      fat: body.fat ? parseInt(body.fat) : null,
+      defaultPortion: body.portion || null,
+      calories: body.calories,
+      protein: body.protein,
+      carbs: body.carbs,
+      fat: body.fat,
       category: body.category || null,
       tenantId: session.user.tenantId,
     },

@@ -17,7 +17,16 @@ export async function GET(req: NextRequest) {
   if (session.user.role === "CLIENT" && session.user.clientProfileId) {
     where.clientId = session.user.clientProfileId;
   } else if (clientId) {
+    // Verify the client belongs to this coach's tenant
+    const client = await prisma.client.findFirst({
+      where: { id: clientId, tenantId: session.user.tenantId },
+      select: { id: true },
+    });
+    if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
     where.clientId = clientId;
+  } else {
+    // Coach with no clientId filter — scope to tenant's clients
+    where.client = { tenantId: session.user.tenantId };
   }
 
   const checkIns = await prisma.checkIn.findMany({

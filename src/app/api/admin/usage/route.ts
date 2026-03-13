@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     await requireAdmin();
 
     const url = new URL(req.url);
-    const days = parseInt(url.searchParams.get("days") || "30");
+    const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get("days") || "30") || 30));
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const [

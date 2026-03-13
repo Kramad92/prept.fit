@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json();
+  const rl = await rateLimit("email", getClientIp(req));
+  if (rl) return rl;
+  let body;
+  try { body = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   if (!email) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
@@ -33,7 +40,7 @@ export async function POST(req: NextRequest) {
   // Invalidate existing tokens
   await prisma.emailVerificationToken.updateMany({
     where: { userId: user.id, usedAt: null },
-    data: { expiresAt: new Date() },
+    data: { expiresAt: new Date(0) },
   });
 
   const token = randomBytes(32).toString("hex");

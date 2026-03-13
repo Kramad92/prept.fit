@@ -3,9 +3,10 @@ import { createHash, randomBytes } from "crypto";
 import { SignJWT } from "jose";
 import { prisma } from "@/lib/prisma";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret"
-);
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET environment variable is required");
+}
+const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 const ACCESS_TOKEN_EXPIRY = 15 * 60;
 const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60;
 
@@ -15,8 +16,12 @@ function hashToken(token: string): string {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { refreshToken } = body;
+    let body;
+    try { body = await req.json(); } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const refreshToken = typeof body.refreshToken === "string" ? body.refreshToken : "";
 
     if (!refreshToken) {
       return NextResponse.json(

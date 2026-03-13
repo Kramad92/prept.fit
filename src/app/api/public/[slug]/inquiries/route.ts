@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateBody, inquiryCreateSchema } from "@/lib/validations";
 import { sendInquiryNotification } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
+  // Rate limit public form submissions by IP
+  const rl = await rateLimit("public", getClientIp(req));
+  if (rl) return rl;
+
   const tenant = await prisma.tenant.findUnique({
     where: { slug: params.slug },
     select: { id: true, landingPageEnabled: true, email: true, name: true },

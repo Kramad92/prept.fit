@@ -21,7 +21,7 @@ export async function PUT(
   // Update the category and rename on all exercises that used the old name
   const [category] = await prisma.$transaction([
     prisma.exerciseCategory.update({
-      where: { id: params.id },
+      where: { id: existing.id },
       data: { name: parsed.data.name },
     }),
     prisma.exerciseLibrary.updateMany({
@@ -51,7 +51,7 @@ export async function DELETE(
       where: { tenantId: session.user.tenantId, category: existing.name },
       data: { category: null },
     }),
-    prisma.exerciseCategory.delete({ where: { id: params.id } }),
+    prisma.exerciseCategory.deleteMany({ where: { id: params.id, tenantId: session.user.tenantId } }),
   ]);
 
   return NextResponse.json({ ok: true });

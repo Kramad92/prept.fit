@@ -18,9 +18,13 @@ export async function PUT(
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const certificate = await prisma.certificate.update({
-    where: { id: params.id },
+  await prisma.certificate.updateMany({
+    where: { id: params.id, tenantId: session.user.tenantId },
     data: parsed.data,
+  });
+
+  const certificate = await prisma.certificate.findFirst({
+    where: { id: params.id, tenantId: session.user.tenantId },
   });
 
   return NextResponse.json(certificate);
@@ -38,6 +42,6 @@ export async function DELETE(
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.certificate.delete({ where: { id: params.id } });
+  await prisma.certificate.deleteMany({ where: { id: params.id, tenantId: session.user.tenantId } });
   return NextResponse.json({ ok: true });
 }

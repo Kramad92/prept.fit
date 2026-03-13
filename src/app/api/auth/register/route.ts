@@ -3,23 +3,16 @@ import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
+import { validateBody, registerSchema } from "@/lib/validations";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
-  const { name, businessName, email, password } = await req.json();
+  const rl = await rateLimit("auth", getClientIp(req));
+  if (rl) return rl;
 
-  if (!name || !businessName || !email || !password) {
-    return NextResponse.json(
-      { error: "All fields are required" },
-      { status: 400 }
-    );
-  }
-
-  if (password.length < 8) {
-    return NextResponse.json(
-      { error: "Password must be at least 8 characters" },
-      { status: 400 }
-    );
-  }
+  const parsed = await validateBody(req, registerSchema);
+  if ("error" in parsed) return parsed.error;
+  const { name, businessName, email, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {

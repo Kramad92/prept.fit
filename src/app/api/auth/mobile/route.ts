@@ -3,10 +3,12 @@ import bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "crypto";
 import { SignJWT } from "jose";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret"
-);
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET environment variable is required");
+}
+const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 // Access token: 15 minutes
 const ACCESS_TOKEN_EXPIRY = 15 * 60;
@@ -43,8 +45,16 @@ async function generateAccessToken(user: {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, password } = body;
+    const rl = await rateLimit("auth", getClientIp(req));
+    if (rl) return rl;
+
+    let body;
+    try { body = await req.json(); } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
       return NextResponse.json(

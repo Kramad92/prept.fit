@@ -84,11 +84,21 @@ export async function POST(
     );
   }
 
-  const { password } = await req.json();
+  let body;
+  try { body = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-  if (!password || password.length < 8) {
+  const { password } = body;
+  if (!password || typeof password !== "string" || password.length < 10) {
     return NextResponse.json(
-      { error: "Password must be at least 8 characters" },
+      { error: "Password must be at least 10 characters" },
+      { status: 400 }
+    );
+  }
+  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+    return NextResponse.json(
+      { error: "Password must contain at least one letter and one number" },
       { status: 400 }
     );
   }

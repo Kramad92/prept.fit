@@ -58,7 +58,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const updated = await prisma.habitTemplate.findUnique({ where: { id } });
+  const updated = await prisma.habitTemplate.findFirst({ where: { id, tenantId: session.user.tenantId } });
   return NextResponse.json(updated);
 }
 

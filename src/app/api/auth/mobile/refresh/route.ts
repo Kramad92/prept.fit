@@ -3,10 +3,11 @@ import { createHash, randomBytes } from "crypto";
 import { SignJWT } from "jose";
 import { prisma } from "@/lib/prisma";
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET environment variable is required");
+function getJwtSecret() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("NEXTAUTH_SECRET environment variable is required");
+  return new TextEncoder().encode(secret);
 }
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 const ACCESS_TOKEN_EXPIRY = 15 * 60;
 const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60;
 
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime(`${ACCESS_TOKEN_EXPIRY}s`)
-      .sign(JWT_SECRET);
+      .sign(getJwtSecret());
 
     // Rotate refresh token: delete old, create new
     await prisma.refreshToken.delete({ where: { id: storedToken.id } });

@@ -5,10 +5,11 @@ import { SignJWT } from "jose";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET environment variable is required");
+function getJwtSecret() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("NEXTAUTH_SECRET environment variable is required");
+  return new TextEncoder().encode(secret);
 }
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 // Access token: 15 minutes
 const ACCESS_TOKEN_EXPIRY = 15 * 60;
@@ -40,7 +41,7 @@ async function generateAccessToken(user: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${ACCESS_TOKEN_EXPIRY}s`)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function POST(req: Request) {

@@ -3,10 +3,11 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { jwtVerify } from "jose";
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET environment variable is required");
+function getJwtSecret() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("NEXTAUTH_SECRET environment variable is required");
+  return new TextEncoder().encode(secret);
 }
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 // Routes that require authentication
 const protectedPatterns = [
@@ -59,7 +60,7 @@ export async function middleware(req: NextRequest) {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     try {
-      await jwtVerify(token, JWT_SECRET);
+      await jwtVerify(token, getJwtSecret());
       return NextResponse.next();
     } catch {
       if (pathname.startsWith("/api/")) {

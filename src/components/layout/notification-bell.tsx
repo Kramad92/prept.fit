@@ -105,7 +105,7 @@ export function NotificationBell() {
                   key={n.id}
                   className={cn(
                     "border-b border-gray-50 px-4 py-3 last:border-0",
-                    !n.isRead && "bg-blue-50/50"
+                    !n.isRead && "bg-blue-50"
                   )}
                 >
                   <div className="flex items-start justify-between">

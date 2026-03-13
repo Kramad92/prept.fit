@@ -127,7 +127,7 @@ export function CoachLandingPage({ profile }: { profile: CoachPublicProfile }) {
         <section id="certificates" className="border-t border-gray-100 px-4 py-16">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-2xl font-bold text-gray-900">Credentials & Certificates</h2>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {profile.certificates.map((cert) => (
                 <div key={cert.id} className="rounded-xl border border-gray-200 bg-white p-5">
                   {cert.imageUrl && (
@@ -168,7 +168,7 @@ export function CoachLandingPage({ profile }: { profile: CoachPublicProfile }) {
             <h2 className="text-center text-2xl font-bold text-gray-900">
               Packages & Pricing
             </h2>
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {profile.packages.map((pkg) => (
                 <div
                   key={pkg.id}

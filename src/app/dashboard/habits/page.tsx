@@ -143,7 +143,7 @@ export default function HabitsPage() {
             />
           </div>
         ) : (
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             {habits.map((habit) => (
               <div
                 key={habit.id}

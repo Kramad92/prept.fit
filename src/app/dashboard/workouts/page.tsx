@@ -200,7 +200,7 @@ export default function WorkoutsPage() {
           />
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 stagger-in">
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 stagger-in">
           {filtered.map((plan) => (
             <div key={plan.id} className="card">
               <div className="flex items-center justify-between">

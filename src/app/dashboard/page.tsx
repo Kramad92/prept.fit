@@ -187,7 +187,7 @@ export default function DashboardPage() {
       )}
 
       {/* Two-column cascading layout */}
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Left column */}
         <div className="space-y-8">
           <TodaysSessions data={data} t={t} />
@@ -246,7 +246,7 @@ function QuickActions({ t }: { t: ReturnType<typeof useT> }) {
 function UnreadMessagesBanner({ messages, t }: { messages: DashboardData["unreadMessages"]; t: ReturnType<typeof useT> }) {
   return (
     <Link href="/dashboard/messages" className="mt-6 block">
-      <div className="card flex items-center gap-4 border-blue-200 bg-blue-50/50 transition-shadow hover:shadow-md">
+      <div className="card flex items-center gap-4 border-blue-200 bg-blue-50 transition-shadow hover:shadow-md">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
           <MessageSquare className="h-5 w-5 text-blue-600" />
         </div>
@@ -335,7 +335,7 @@ function PaymentsOverview({ data, t, fmt }: { data: DashboardData | null; t: Ret
 
         {/* Overdue */}
         {data && data.payments.overdueCount > 0 && (
-          <div className="card border-red-200 bg-red-50/50">
+          <div className="card border-red-200 bg-red-50">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -348,7 +348,7 @@ function PaymentsOverview({ data, t, fmt }: { data: DashboardData | null; t: Ret
             </div>
             <div className="mt-3 space-y-1 border-t border-red-200 pt-3">
               {data.payments.overdueList.slice(0, 3).map((p) => (
-                <Link key={p.id} href={`/dashboard/clients/${p.clientId}`} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-red-100/50">
+                <Link key={p.id} href={`/dashboard/clients/${p.clientId}`} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-red-100">
                   <span className="text-red-800">{p.clientName}</span>
                   <span className="font-medium text-red-700">{fmt(p.amount, p.currency)}</span>
                 </Link>
@@ -359,7 +359,7 @@ function PaymentsOverview({ data, t, fmt }: { data: DashboardData | null; t: Ret
 
         {/* Pending */}
         {data && data.payments.pendingCount > 0 && (
-          <div className="card border-amber-200 bg-amber-50/50">
+          <div className="card border-amber-200 bg-amber-50">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
                 <DollarSign className="h-5 w-5 text-amber-600" />
@@ -372,7 +372,7 @@ function PaymentsOverview({ data, t, fmt }: { data: DashboardData | null; t: Ret
             </div>
             <div className="mt-3 space-y-1 border-t border-amber-200 pt-3">
               {data.payments.pendingList.slice(0, 3).map((p) => (
-                <Link key={p.id} href={`/dashboard/clients/${p.clientId}`} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-amber-100/50">
+                <Link key={p.id} href={`/dashboard/clients/${p.clientId}`} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-amber-100">
                   <span className="text-amber-800">{p.clientName}</span>
                   <span className="font-medium text-amber-700">{fmt(p.amount, p.currency)}</span>
                 </Link>

@@ -197,7 +197,7 @@ export default function CheckInsPage() {
       {templates.length > 0 && (
         <div className="mt-6">
           <h2 className="text-sm font-semibold text-gray-700">{t.checkIns.templates}</h2>
-          <div className="mt-2 grid gap-3 md:grid-cols-2">
+          <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
             {templates.map((tmpl) => (
               <div key={tmpl.id} className="card">
                 {editingTemplate === tmpl.id ? (

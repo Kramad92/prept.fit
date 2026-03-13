@@ -226,7 +226,7 @@ export default function CoachDetailPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((s) => (
           <div key={s.label} className="rounded-xl border border-gray-200 bg-white p-4 text-center">
             <s.icon className="mx-auto h-5 w-5 text-gray-400" />

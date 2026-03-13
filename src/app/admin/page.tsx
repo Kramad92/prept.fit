@@ -113,7 +113,7 @@ export default function AdminDashboard() {
       <p className="mt-1 text-sm text-gray-500">Platform overview and metrics</p>
 
       {/* Stat cards */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {statCards.map((card) => (
           <Link key={card.label} href={card.href} className="group rounded-xl border border-gray-200 bg-white p-5 transition hover:border-indigo-200 hover:shadow-sm">
             <div className="flex items-center gap-3">
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* AI Usage by Endpoint */}
         {data.aiByEndpoint.length > 0 && (
           <div>

@@ -27,7 +27,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [timezone, setTimezone] = useState("Europe/Sarajevo");
-  const [localeVal, setLocaleVal] = useState("bs");
+  const [localeVal, setLocaleVal] = useState("en");
   const [units, setUnits] = useState("metric");
   const [currency, setCurrency] = useState("BAM");
   const t = useT();
@@ -269,13 +269,7 @@ export default function SettingsPage() {
               value={localeVal}
               onChange={(v) => {
                 setLocaleVal(v);
-                const newLocale = v as Locale;
-                setLocale(newLocale);
-                fetch("/api/settings", {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ locale: newLocale }),
-                });
+                setLocale(v as Locale);
               }}
               placeholder="Jezik / Language"
               className="mt-1"

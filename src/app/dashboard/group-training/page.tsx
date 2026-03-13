@@ -110,7 +110,7 @@ export default function GroupTrainingPage() {
         !groups?.length ? (
           <EmptyState icon={UsersRound} title={t.groupTraining.noGroups} description={t.groupTraining.noGroupsDesc} />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (
               <Link key={group.id} href={`/dashboard/group-training/groups/${group.id}`} className="card transition-shadow hover:shadow-md">
                 <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>

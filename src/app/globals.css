@@ -2,9 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  overflow-x: hidden;
+html {
+  overflow-x: clip;
+}
+body {
+  overflow-x: clip;
   width: 100%;
+  max-width: 100dvw;
 }
 
 @layer base {
@@ -195,14 +199,38 @@ html, body {
   html.dark .bg-blue-50 {
     background-color: rgb(30 58 138 / 0.25) !important;
   }
+  html.dark .bg-blue-100 {
+    background-color: rgb(30 58 138 / 0.3) !important;
+  }
   html.dark .bg-green-50 {
     background-color: rgb(20 83 45 / 0.25) !important;
+  }
+  html.dark .bg-green-100 {
+    background-color: rgb(20 83 45 / 0.3) !important;
   }
   html.dark .bg-red-50 {
     background-color: rgb(127 29 29 / 0.25) !important;
   }
+  html.dark .bg-red-100 {
+    background-color: rgb(127 29 29 / 0.3) !important;
+  }
+  html.dark .bg-orange-50 {
+    background-color: rgb(124 45 18 / 0.2) !important;
+  }
   html.dark .bg-orange-100 {
     background-color: rgb(124 45 18 / 0.25) !important;
+  }
+  html.dark .bg-amber-50 {
+    background-color: rgb(120 53 15 / 0.25) !important;
+  }
+  html.dark .bg-amber-100 {
+    background-color: rgb(120 53 15 / 0.3) !important;
+  }
+  html.dark .bg-pink-50 {
+    background-color: rgb(131 24 67 / 0.2) !important;
+  }
+  html.dark .bg-purple-50 {
+    background-color: rgb(88 28 135 / 0.2) !important;
   }
   html.dark .bg-purple-100 {
     background-color: rgb(88 28 135 / 0.25) !important;
@@ -210,12 +238,52 @@ html, body {
   html.dark .bg-yellow-50 {
     background-color: rgb(113 63 18 / 0.25) !important;
   }
-  html.dark .bg-purple-50 {
-    background-color: rgb(88 28 135 / 0.2) !important;
-  }
   html.dark .bg-indigo-50 {
     background-color: rgb(49 46 129 / 0.25) !important;
   }
+  html.dark .bg-indigo-100 {
+    background-color: rgb(49 46 129 / 0.3) !important;
+  }
+
+  /* Colored text — lighten for dark backgrounds */
+  html.dark .text-blue-900 { color: rgb(191 219 254) !important; }  /* blue-200 */
+  html.dark .text-blue-800 { color: rgb(191 219 254) !important; }
+  html.dark .text-blue-700 { color: rgb(147 197 253) !important; }  /* blue-300 */
+  html.dark .text-blue-600 { color: rgb(96 165 250) !important; }   /* blue-400 */
+  html.dark .text-blue-400 { color: rgb(96 165 250) !important; }
+
+  html.dark .text-red-900 { color: rgb(254 202 202) !important; }   /* red-200 */
+  html.dark .text-red-800 { color: rgb(252 165 165) !important; }   /* red-300 */
+  html.dark .text-red-700 { color: rgb(252 165 165) !important; }
+  html.dark .text-red-600 { color: rgb(248 113 113) !important; }   /* red-400 */
+
+  html.dark .text-amber-900 { color: rgb(253 230 138) !important; } /* amber-200 */
+  html.dark .text-amber-800 { color: rgb(252 211 77) !important; }  /* amber-300 */
+  html.dark .text-amber-700 { color: rgb(252 211 77) !important; }
+  html.dark .text-amber-600 { color: rgb(251 191 36) !important; }  /* amber-400 */
+
+  html.dark .text-green-700 { color: rgb(134 239 172) !important; } /* green-300 */
+  html.dark .text-green-600 { color: rgb(74 222 128) !important; }  /* green-400 */
+  html.dark .text-green-400 { color: rgb(74 222 128) !important; }
+
+  html.dark .text-purple-700 { color: rgb(216 180 254) !important; } /* purple-300 */
+  html.dark .text-purple-600 { color: rgb(192 132 252) !important; } /* purple-400 */
+
+  html.dark .text-orange-600 { color: rgb(251 146 60) !important; }  /* orange-400 */
+
+  html.dark .text-pink-500 { color: rgb(244 114 182) !important; }   /* pink-400 */
+
+  html.dark .text-indigo-700 { color: rgb(165 180 252) !important; } /* indigo-300 */
+  html.dark .text-indigo-600 { color: rgb(129 140 248) !important; } /* indigo-400 */
+
+  /* Colored borders — soften for dark mode */
+  html.dark .border-blue-200 { border-color: rgb(30 58 138 / 0.4) !important; }
+  html.dark .border-blue-500 { border-color: rgb(59 130 246 / 0.5) !important; }
+  html.dark .border-red-200 { border-color: rgb(127 29 29 / 0.4) !important; }
+  html.dark .border-red-300 { border-color: rgb(127 29 29 / 0.5) !important; }
+  html.dark .border-amber-200 { border-color: rgb(120 53 15 / 0.4) !important; }
+  html.dark .border-purple-500 { border-color: rgb(147 51 234 / 0.5) !important; }
+  html.dark .border-indigo-200 { border-color: rgb(49 46 129 / 0.4) !important; }
 
   /* Modal / overlay backgrounds */
   html.dark .bg-black\/50 {

@@ -19,13 +19,13 @@ interface I18nContextValue {
 }
 
 const I18nContext = createContext<I18nContextValue>({
-  locale: "bs",
-  t: bs,
+  locale: "en",
+  t: en,
   setLocale: () => {},
 });
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("bs");
+  const [locale, setLocaleState] = useState<Locale>("en");
 
   // Hydrate from localStorage after mount to avoid SSR mismatch
   useEffect(() => {
@@ -39,6 +39,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocaleState(l);
     if (typeof window !== "undefined") {
       localStorage.setItem("locale", l);
+      // Persist to database so it survives refresh
+      fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locale: l }),
+      }).catch(() => {});
     }
   }
 
@@ -80,7 +86,7 @@ const DATE_LOCALES: Record<Locale, string> = {
 };
 
 export function getDateLocale(locale: Locale): string {
-  return DATE_LOCALES[locale] || "bs-BA";
+  return DATE_LOCALES[locale] || "en-US";
 }
 
 export { type Translations };

@@ -505,7 +505,7 @@ function ExerciseLibraryContent() {
                   <span className="text-gray-400">({exs.length})</span>
                 </button>
                 {!collapsedCategories.has(category) && (
-                <div className="mt-2 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
                   {exs.map((ex) => (
                     <div
                       key={ex.id}

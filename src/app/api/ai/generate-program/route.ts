@@ -5,10 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
 import { getAILanguageInstruction } from "@/lib/ai-locale";
+import { logAiUsage } from "@/lib/usage";
 
 const schema = z.object({
   prompt: z.string().min(3).max(1000),
-  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("bs"),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("en"),
   durationWeeks: z.number().min(1).max(52),
   daysPerWeek: z.number().min(1).max(7),
 });
@@ -53,14 +54,16 @@ export async function POST(req: NextRequest) {
     .map((w) => `- "${w.name}"${w.description ? ` — ${w.description}` : ""} (${w._count.exercises} exercises)`)
     .join("\n");
 
-  const langInstruction = getAILanguageInstruction(locale || "bs");
+  const langInstruction = getAILanguageInstruction(locale || "en");
 
   try {
-    const result = await aiJSON<GeneratedProgram>({
+    const result = await aiJSON<GeneratedProgram & { error?: string }>({
       messages: [
         {
           role: "system",
           content: `You are an expert fitness coach. Generate a workout program schedule by selecting from the coach's EXISTING workouts.
+
+SCOPE: You ONLY handle requests related to fitness, exercise programming, and workout scheduling. If the user's request is clearly unrelated (e.g. coding, math homework, general knowledge, writing essays), return ONLY this JSON: {"error": "off_topic"}. Do NOT attempt to answer off-topic requests.
 
 AVAILABLE WORKOUTS:
 ${workoutList}
@@ -99,6 +102,10 @@ Include ALL ${durationWeeks * daysPerWeek} day slots in the response.`,
       temperature: 0.3,
     });
 
+    if (result.error === "off_topic") {
+      return NextResponse.json({ error: "Please provide a fitness or exercise related request." }, { status: 400 });
+    }
+
     // Build a lookup map from workout name to ID (case-insensitive)
     const workoutLookup = new Map<string, string>();
     for (const w of workouts) {
@@ -116,6 +123,10 @@ Include ALL ${durationWeeks * daysPerWeek} day slots in the response.`,
         workoutName: workoutId ? day.workoutName : null,
       };
     });
+
+    if (session.user.tenantId) {
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-program", provider: process.env.AI_PROVIDER || "groq" });
+    }
 
     return NextResponse.json({
       name: result.name,

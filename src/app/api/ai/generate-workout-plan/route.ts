@@ -5,11 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
 import { getAILanguageInstruction, getAIExerciseNameInstruction } from "@/lib/ai-locale";
+import { logAiUsage } from "@/lib/usage";
 
 const schema = z.object({
   prompt: z.string().min(3).max(1000),
   preferences: z.string().max(500).optional(),
-  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("bs"),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("en"),
   includeVideos: z.boolean().optional().default(false),
 });
 
@@ -53,15 +54,17 @@ export async function POST(req: NextRequest) {
     ? `Additional preferences/constraints: ${preferences}`
     : "";
 
-  const langInstruction = getAILanguageInstruction(locale || "bs");
-  const exerciseNameInstruction = getAIExerciseNameInstruction(locale || "bs");
+  const langInstruction = getAILanguageInstruction(locale || "en");
+  const exerciseNameInstruction = getAIExerciseNameInstruction(locale || "en");
 
   try {
-    const result = await aiJSON<GeneratedWorkoutPlan>({
+    const result = await aiJSON<GeneratedWorkoutPlan & { error?: string }>({
       messages: [
         {
           role: "system",
           content: `You are an expert fitness coach and exercise programmer. Generate a complete workout plan based on the user's request.
+
+SCOPE: You ONLY handle requests related to fitness, exercise, workout programming, and physical training. If the user's request is clearly unrelated (e.g. coding, math homework, general knowledge, writing essays), return ONLY this JSON: {"error": "off_topic"}. Do NOT attempt to answer off-topic requests.
 ${libraryContext}
 Rules:
 - Each exercise must have: name, nameEn (English name for reference), sets (number), reps (string like "8-12" or "10"), weight (string like "bodyweight", "moderate", or leave empty ""), restSeconds (number), notes (string with detailed form cues)
@@ -100,6 +103,10 @@ Return a JSON object with this exact structure:
       temperature: 0.3,
     });
 
+    if (result.error === "off_topic") {
+      return NextResponse.json({ error: "Please provide a fitness or exercise related request." }, { status: 400 });
+    }
+
     // Build a lookup from exercise library for videoUrl matching
     const libraryLookup = new Map<string, string>();
     for (const ex of libraryExercises) {
@@ -122,6 +129,10 @@ Return a JSON object with this exact structure:
 
       return { ...ex, videoUrl };
     });
+
+    if (session.user.tenantId) {
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-workout-plan", provider: process.env.AI_PROVIDER || "groq" });
+    }
 
     return NextResponse.json({ ...result, exercises });
   } catch (e) {

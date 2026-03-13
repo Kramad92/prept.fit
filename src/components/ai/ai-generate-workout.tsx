@@ -37,6 +37,8 @@ export function AIGenerateWorkout({ prompt, onGenerate }: AIGenerateWorkoutProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [includeVideos, setIncludeVideos] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [refinement, setRefinement] = useState("");
 
   async function handleGenerate() {
     if (!prompt.trim() || loading) return;
@@ -44,13 +46,20 @@ export function AIGenerateWorkout({ prompt, onGenerate }: AIGenerateWorkoutProps
     setError("");
 
     try {
+      const fullPrompt = refinement.trim()
+        ? `${prompt.trim()}\n\nAdditional instructions: ${refinement.trim()}`
+        : prompt.trim();
+
       const res = await fetch("/api/ai/generate-workout-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), locale, includeVideos }),
+        body: JSON.stringify({ prompt: fullPrompt, locale, includeVideos }),
       });
 
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed");
+      }
 
       const plan: GeneratedPlan = await res.json();
 
@@ -70,43 +79,58 @@ export function AIGenerateWorkout({ prompt, onGenerate }: AIGenerateWorkoutProps
         description: plan.description,
         exercises,
       });
-    } catch {
-      setError(t.workouts.aiError);
+
+      setHasGenerated(true);
+      setRefinement("");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg && msg !== "Failed" ? msg : t.workouts.aiError);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={handleGenerate}
-        disabled={!prompt.trim() || loading}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {t.workouts.generating}
-          </>
-        ) : (
-          <>
-            <Sparkles className="h-3.5 w-3.5" />
-            {t.workouts.generateWithAI}
-          </>
-        )}
-      </button>
-      <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={!prompt.trim() || loading}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {t.workouts.generating}
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-3.5 w-3.5" />
+              {hasGenerated ? t.workouts.regenerateWithAI || "Regenerate" : t.workouts.generateWithAI}
+            </>
+          )}
+        </button>
+        <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={includeVideos}
+            onChange={(e) => setIncludeVideos(e.target.checked)}
+            className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 h-3.5 w-3.5"
+          />
+          {t.workouts.includeVideo}
+        </label>
+        {error && <span className="text-xs text-red-500">{error}</span>}
+      </div>
+      {hasGenerated && (
         <input
-          type="checkbox"
-          checked={includeVideos}
-          onChange={(e) => setIncludeVideos(e.target.checked)}
-          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 h-3.5 w-3.5"
+          type="text"
+          value={refinement}
+          onChange={(e) => setRefinement(e.target.value)}
+          placeholder={t.workouts.refinePromptPlaceholder || "Refine: e.g. 'add more leg exercises', 'reduce rest times'..."}
+          className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring-1 focus:ring-brand-200"
         />
-        {t.workouts.includeVideo}
-      </label>
-      {error && <span className="text-xs text-red-500">{error}</span>}
+      )}
     </div>
   );
 }

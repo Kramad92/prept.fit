@@ -4,13 +4,14 @@ import { aiJSON } from "@/lib/ai";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
 import { getAILanguageInstruction } from "@/lib/ai-locale";
+import { logAiUsage } from "@/lib/usage";
 
 const schema = z.object({
   prompt: z.string().min(3).max(1000),
   targetCalories: z.number().min(500).max(10000).optional(),
   numMeals: z.number().min(1).max(10).optional(),
   preferences: z.string().max(500).optional(),
-  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("bs"),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("en"),
 });
 
 interface GeneratedFood {
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   const { prompt, targetCalories, numMeals, preferences, locale } = parsed.data;
 
-  const langInstruction = getAILanguageInstruction(locale || "bs");
+  const langInstruction = getAILanguageInstruction(locale || "en");
 
   const calorieInstruction = targetCalories
     ? `The TOTAL daily calories MUST be exactly ${targetCalories} kcal. Distribute them across all meals.`
@@ -63,11 +64,13 @@ export async function POST(req: NextRequest) {
     : "";
 
   try {
-    const result = await aiJSON<GeneratedPlan>({
+    const result = await aiJSON<GeneratedPlan & { error?: string }>({
       messages: [
         {
           role: "system",
           content: `You are an expert fitness nutrition coach. Generate a complete daily meal plan based on the user's request.
+
+SCOPE: You ONLY handle requests related to fitness, nutrition, meal planning, diet, and health. If the user's request is clearly unrelated (e.g. coding, math homework, general knowledge, writing essays), return ONLY this JSON: {"error": "off_topic"}. Do NOT attempt to answer off-topic requests.
 
 CRITICAL RULES — you MUST follow these exactly:
 1. Each meal represents a MEAL TIME (breakfast, lunch, dinner, snack). Give it a descriptive name (e.g. "Breakfast — Eggs & Oatmeal", "Lunch — Steak & Potatoes", "Dinner — Pasta Bolognese").
@@ -122,6 +125,10 @@ Return a JSON object with this exact structure:
       temperature: 0.3,
     });
 
+    if (result.error === "off_topic") {
+      return NextResponse.json({ error: "Please provide a fitness or nutrition related request." }, { status: 400 });
+    }
+
     // Recalculate totals from actual food items — AI math is unreliable
     let totalCalories = 0;
     let totalProtein = 0;
@@ -167,6 +174,10 @@ Return a JSON object with this exact structure:
           }
         }
       }
+    }
+
+    if (session.user.tenantId) {
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-meal-plan", provider: process.env.AI_PROVIDER || "groq" });
     }
 
     return NextResponse.json({

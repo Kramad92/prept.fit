@@ -4,6 +4,7 @@ import { aiJSON } from "@/lib/ai";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
 import { getAILanguageInstruction } from "@/lib/ai-locale";
+import { logAiUsage } from "@/lib/usage";
 
 const schema = z.object({
   foods: z.array(
@@ -12,7 +13,7 @@ const schema = z.object({
       portion: z.string().optional().default("100g"),
     })
   ).min(1).max(30),
-  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("bs"),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("en"),
 });
 
 interface FoodMacros {
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const { foods, locale } = parsed.data;
 
-  const langNote = getAILanguageInstruction(locale || "bs");
+  const langNote = getAILanguageInstruction(locale || "en");
 
   const foodList = foods
     .map((f, i) => `${i + 1}. ${f.name} — ${f.portion}`)
@@ -68,6 +69,11 @@ Rules:
     if (!Array.isArray(result) || result.length === 0) {
       return NextResponse.json({ error: "Invalid AI response" }, { status: 502 });
     }
+
+    if (session.user.tenantId) {
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "fill-macros", provider: process.env.AI_PROVIDER || "groq" });
+    }
+
     return NextResponse.json(result);
   } catch (e) {
     console.error("AI fill-macros error:", e);

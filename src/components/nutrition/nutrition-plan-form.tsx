@@ -132,7 +132,7 @@ export function NutritionPlanForm({
                   onGenerate={(data) => {
                     onFormChange((prev) => ({
                       ...prev,
-                      name: data.name || prev.name,
+                      name: prev.name || data.name || prev.name,
                       targetCalories: data.targetCalories,
                       targetProtein: data.targetProtein,
                       targetCarbs: data.targetCarbs,

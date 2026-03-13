@@ -107,8 +107,8 @@ export default function NewProgramPage() {
       workoutName: string | null;
     }[];
   }) {
-    setName(data.name);
-    setDescription(data.description);
+    if (!name) setName(data.name);
+    if (!description) setDescription(data.description);
 
     // Merge AI-generated days into the current grid
     setDays((prev) =>

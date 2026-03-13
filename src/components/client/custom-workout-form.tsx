@@ -71,7 +71,6 @@ export function CustomWorkoutForm({
               prompt={description}
               onGenerate={(data) => {
                 if (!name && data.name) setName(data.name);
-                setDescription(data.description || description);
                 onExercisesChange(data.exercises);
               }}
             />

@@ -39,7 +39,7 @@ Use standard Croatian vocabulary and spelling:
 };
 
 export function getAILanguageInstruction(locale: string): string {
-  return LANGUAGE_INSTRUCTIONS[locale as AILocale] || LANGUAGE_INSTRUCTIONS.bs;
+  return LANGUAGE_INSTRUCTIONS[locale as AILocale] || LANGUAGE_INSTRUCTIONS.en;
 }
 
 /** Exercise-name format instruction per locale (for workout generation) */
@@ -52,7 +52,8 @@ export function getAIExerciseNameInstruction(locale: string): string {
     case "en":
       return "ALL text output must be in English.";
     case "bs":
-    default:
       return 'Exercise names MUST be in Bosnian with the English name in parentheses. Format: "Bosnian Name (English Name)". Example: "Potisak s klupe (Bench Press)", "Čučanj (Squat)", "Mrtvo dizanje (Deadlift)". Workout name, description, and notes must also be in Bosnian.';
+    default:
+      return "ALL text output must be in English.";
   }
 }

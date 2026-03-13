@@ -56,6 +56,8 @@ export function AIGenerateMealPlan({ prompt, onGenerate }: AIGenerateMealPlanPro
   const { t, locale } = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [refinement, setRefinement] = useState("");
 
   async function handleGenerate() {
     if (!prompt.trim() || loading) return;
@@ -63,7 +65,11 @@ export function AIGenerateMealPlan({ prompt, onGenerate }: AIGenerateMealPlanPro
     setError("");
 
     try {
-      const body: Record<string, unknown> = { prompt: prompt.trim(), locale };
+      const fullPrompt = refinement.trim()
+        ? `${prompt.trim()}\n\nAdditional instructions: ${refinement.trim()}`
+        : prompt.trim();
+
+      const body: Record<string, unknown> = { prompt: fullPrompt, locale };
 
       // Extract calorie target from prompt (e.g. "2200 calories", "2200 cal", "2200 kcal")
       const calMatch = prompt.match(/(\d{3,5})\s*(?:cal(?:ories?)?|kcal)/i);
@@ -79,7 +85,10 @@ export function AIGenerateMealPlan({ prompt, onGenerate }: AIGenerateMealPlanPro
         body: JSON.stringify(body),
       });
 
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed");
+      }
 
       const plan: GeneratedPlan = await res.json();
 
@@ -106,34 +115,49 @@ export function AIGenerateMealPlan({ prompt, onGenerate }: AIGenerateMealPlanPro
         targetFat: plan.targetFat?.toString() || "",
         meals,
       });
-    } catch {
-      setError(t.nutrition.aiError);
+
+      setHasGenerated(true);
+      setRefinement("");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(msg && msg !== "Failed" ? msg : t.nutrition.aiError);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={handleGenerate}
-        disabled={!prompt.trim() || loading}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {t.nutrition.generating}
-          </>
-        ) : (
-          <>
-            <Sparkles className="h-3.5 w-3.5" />
-            {t.nutrition.generateWithAI}
-          </>
-        )}
-      </button>
-      {error && <span className="text-xs text-red-500">{error}</span>}
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={!prompt.trim() || loading}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {t.nutrition.generating}
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-3.5 w-3.5" />
+              {hasGenerated ? t.nutrition.regenerateWithAI || "Regenerate" : t.nutrition.generateWithAI}
+            </>
+          )}
+        </button>
+        {error && <span className="text-xs text-red-500">{error}</span>}
+      </div>
+      {hasGenerated && (
+        <input
+          type="text"
+          value={refinement}
+          onChange={(e) => setRefinement(e.target.value)}
+          placeholder={t.nutrition.refinePromptPlaceholder || "Refine: e.g. 'swap chicken for fish', 'add more protein'..."}
+          className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700 placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring-1 focus:ring-brand-200"
+        />
+      )}
     </div>
   );
 }

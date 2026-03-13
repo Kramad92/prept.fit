@@ -8,10 +8,10 @@ export default function PortalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gray-50">
+    <div className="min-h-screen w-full overflow-x-hidden bg-gray-50">
       <PortalDesktopNav />
       <TopBar />
-      <main className="pb-20 md:pb-0 md:pl-64">
+      <main className="overflow-x-hidden pb-20 md:pb-0 md:pl-64">
         <div className="mx-auto max-w-4xl px-4 py-6 md:px-8 md:py-8">
           {children}
         </div>

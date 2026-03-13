@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, Dumbbell, UtensilsCrossed, Cpu, HardDrive } from "lucide-react";
+import { ArrowLeft, Users, Dumbbell, UtensilsCrossed, Cpu, HardDrive, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TenantDetail {
@@ -40,10 +40,67 @@ interface TenantDetail {
   }[];
 }
 
+interface UsageData {
+  period: { days: number };
+  ai: {
+    logs: {
+      id: string;
+      endpoint: string;
+      tokensIn: number;
+      tokensOut: number;
+      provider: string;
+      createdAt: string;
+    }[];
+    totalCalls: number;
+    tokensIn: number;
+    tokensOut: number;
+    byEndpoint: {
+      endpoint: string;
+      calls: number;
+      tokensIn: number;
+      tokensOut: number;
+    }[];
+  };
+  storage: {
+    totalBytes: number;
+    totalFiles: number;
+  };
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+function formatEndpoint(ep: string): string {
+  return ep.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+function timeAgo(date: string): string {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export default function CoachDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
+  const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
   const [planTier, setPlanTier] = useState("");
@@ -51,11 +108,14 @@ export default function CoachDetailPage() {
   const id = params.id as string;
 
   useEffect(() => {
-    fetch(`/api/admin/tenants/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setTenant(data);
-        setPlanTier(data.planTier);
+    Promise.all([
+      fetch(`/api/admin/tenants/${id}`).then((r) => r.json()),
+      fetch(`/api/admin/tenants/${id}/usage?days=30`).then((r) => r.json()),
+    ])
+      .then(([tenantData, usageData]) => {
+        setTenant(tenantData);
+        setPlanTier(tenantData.planTier);
+        setUsage(usageData);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -117,6 +177,7 @@ export default function CoachDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
+      {/* Coach profile card */}
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -164,6 +225,7 @@ export default function CoachDetailPage() {
         </div>
       </div>
 
+      {/* Stats grid */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((s) => (
           <div key={s.label} className="rounded-xl border border-gray-200 bg-white p-4 text-center">
@@ -174,9 +236,108 @@ export default function CoachDetailPage() {
         ))}
       </div>
 
+      {/* Usage section */}
+      {usage && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900">Usage (Last 30 Days)</h2>
+
+          {/* Token summary */}
+          <div className="mt-3 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center gap-2">
+                <Cpu className="h-4 w-4 text-amber-500" />
+                <span className="text-sm text-gray-500">AI Calls</span>
+              </div>
+              <p className="mt-1 text-xl font-bold text-gray-900">{usage.ai.totalCalls}</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-purple-500" />
+                <span className="text-sm text-gray-500">Tokens Used</span>
+              </div>
+              <p className="mt-1 text-xl font-bold text-gray-900">{formatTokens(usage.ai.tokensIn + usage.ai.tokensOut)}</p>
+              <p className="text-xs text-gray-400">{formatTokens(usage.ai.tokensIn)} in / {formatTokens(usage.ai.tokensOut)} out</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center gap-2">
+                <HardDrive className="h-4 w-4 text-sky-500" />
+                <span className="text-sm text-gray-500">Storage</span>
+              </div>
+              <p className="mt-1 text-xl font-bold text-gray-900">{formatBytes(usage.storage.totalBytes)}</p>
+              <p className="text-xs text-gray-400">{usage.storage.totalFiles} files</p>
+            </div>
+          </div>
+
+          {/* Usage by endpoint */}
+          {usage.ai.byEndpoint.length > 0 && (
+            <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Endpoint</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Calls</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Tokens In</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Tokens Out</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {usage.ai.byEndpoint
+                    .sort((a, b) => b.calls - a.calls)
+                    .map((e) => (
+                      <tr key={e.endpoint} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{formatEndpoint(e.endpoint)}</td>
+                        <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-700">{e.calls}</td>
+                        <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-500">{formatTokens(e.tokensIn)}</td>
+                        <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-500">{formatTokens(e.tokensOut)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Recent AI logs */}
+          {usage.ai.logs.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-700">Recent Activity</h3>
+              <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Endpoint</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Provider</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">Tokens</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">When</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {usage.ai.logs.slice(0, 15).map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm text-gray-900">{formatEndpoint(log.endpoint)}</td>
+                        <td className="px-4 py-2">
+                          <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{log.provider}</span>
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm tabular-nums text-gray-500">
+                          {log.tokensIn + log.tokensOut > 0 ? (
+                            <span>{formatTokens(log.tokensIn)} / {formatTokens(log.tokensOut)}</span>
+                          ) : (
+                            <span className="text-gray-300">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm text-gray-400">{timeAgo(log.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Coach users */}
       {tenant.users.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-8">
           <h2 className="text-lg font-semibold text-gray-900">Coach Users</h2>
           <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white">
             <table className="min-w-full divide-y divide-gray-200">
@@ -202,7 +363,7 @@ export default function CoachDetailPage() {
       )}
 
       {/* Clients */}
-      <div className="mt-6">
+      <div className="mt-8">
         <h2 className="text-lg font-semibold text-gray-900">Clients ({tenant.clients.length})</h2>
         {tenant.clients.length === 0 ? (
           <p className="mt-2 text-sm text-gray-400">No clients yet</p>

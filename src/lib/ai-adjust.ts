@@ -106,7 +106,7 @@ export async function adjustMealPlanForClient(
 
   const originalCalories = plan.targetCalories || 0;
 
-  const result = await aiJSON<AdjustedMealPlan>({
+  const { data: result } = await aiJSON<AdjustedMealPlan>({
     messages: [
       {
         role: "system",
@@ -294,7 +294,7 @@ export async function adjustWorkoutPlanForClient(
 
   const langInstruction = getAILanguageInstruction(locale);
 
-  return aiJSON<AdjustedWorkoutPlan>({
+  const { data } = await aiJSON<AdjustedWorkoutPlan>({
     messages: [
       {
         role: "system",
@@ -335,4 +335,5 @@ Return a JSON object:
     maxTokens: 3000,
     temperature: 0.3,
   });
+  return data;
 }

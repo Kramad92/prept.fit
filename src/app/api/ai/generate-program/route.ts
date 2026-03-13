@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   const langInstruction = getAILanguageInstruction(locale || "en");
 
   try {
-    const result = await aiJSON<GeneratedProgram & { error?: string }>({
+    const { data: result, usage } = await aiJSON<GeneratedProgram & { error?: string }>({
       messages: [
         {
           role: "system",
@@ -125,7 +125,7 @@ Include ALL ${durationWeeks * daysPerWeek} day slots in the response.`,
     });
 
     if (session.user.tenantId) {
-      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-program", provider: process.env.AI_PROVIDER || "groq" });
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-program", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
     }
 
     return NextResponse.json({

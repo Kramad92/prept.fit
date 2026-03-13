@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     : "";
 
   try {
-    const result = await aiJSON<GeneratedPlan & { error?: string }>({
+    const { data: result, usage } = await aiJSON<GeneratedPlan & { error?: string }>({
       messages: [
         {
           role: "system",
@@ -177,7 +177,7 @@ Return a JSON object with this exact structure:
     }
 
     if (session.user.tenantId) {
-      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-meal-plan", provider: process.env.AI_PROVIDER || "groq" });
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-meal-plan", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
     }
 
     return NextResponse.json({

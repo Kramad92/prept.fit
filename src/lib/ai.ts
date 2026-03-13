@@ -16,8 +16,19 @@ export interface AICompletionOptions {
   temperature?: number;
 }
 
+export interface AIUsage {
+  tokensIn: number;
+  tokensOut: number;
+  provider: string;
+}
+
+export interface AIResult {
+  text: string;
+  usage: AIUsage;
+}
+
 export interface AIProvider {
-  complete(options: AICompletionOptions): Promise<string>;
+  complete(options: AICompletionOptions): Promise<AIResult>;
 }
 
 // --- Groq Provider (free, fast — uses Llama 3.3 70B) ---
@@ -55,7 +66,14 @@ function createGroqProvider(apiKey: string): AIProvider {
       const data = await res.json();
       const text = data?.choices?.[0]?.message?.content;
       if (!text) throw new Error("Empty response from Groq");
-      return text;
+      return {
+        text,
+        usage: {
+          tokensIn: data?.usage?.prompt_tokens || 0,
+          tokensOut: data?.usage?.completion_tokens || 0,
+          provider: "groq",
+        },
+      };
     },
   };
 }
@@ -113,7 +131,14 @@ function createGeminiProvider(apiKey: string): AIProvider {
         || parts.find((p: Record<string, unknown>) => p.text);
       const text = textPart?.text;
       if (!text) throw new Error("Empty response from Gemini");
-      return text;
+      return {
+        text,
+        usage: {
+          tokensIn: data?.usageMetadata?.promptTokenCount || 0,
+          tokensOut: data?.usageMetadata?.candidatesTokenCount || 0,
+          provider: "gemini",
+        },
+      };
     },
   };
 }
@@ -159,7 +184,14 @@ function createClaudeProvider(apiKey: string): AIProvider {
       const data = await res.json();
       const text = data?.content?.[0]?.text;
       if (!text) throw new Error("Empty response from Claude");
-      return text;
+      return {
+        text,
+        usage: {
+          tokensIn: data?.usage?.input_tokens || 0,
+          tokensOut: data?.usage?.output_tokens || 0,
+          provider: "claude",
+        },
+      };
     },
   };
 }
@@ -224,15 +256,20 @@ export function getAI(): AIProvider {
 
 // --- Helper for structured JSON responses ---
 
-export async function aiJSON<T>(options: Omit<AICompletionOptions, "json">): Promise<T> {
+export interface AIJSONResult<T> {
+  data: T;
+  usage: AIUsage;
+}
+
+export async function aiJSON<T>(options: Omit<AICompletionOptions, "json">): Promise<AIJSONResult<T>> {
   const ai = getAI();
-  const raw = await ai.complete({ ...options, json: true });
+  const { text: raw, usage } = await ai.complete({ ...options, json: true });
 
   // Strip markdown code fences if present
   const cleaned = raw.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
   try {
-    return JSON.parse(cleaned) as T;
+    return { data: JSON.parse(cleaned) as T, usage };
   } catch {
     throw new Error(`Failed to parse AI JSON response: ${cleaned.slice(0, 200)}`);
   }

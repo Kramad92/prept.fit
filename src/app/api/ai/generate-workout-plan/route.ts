@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   const exerciseNameInstruction = getAIExerciseNameInstruction(locale || "en");
 
   try {
-    const result = await aiJSON<GeneratedWorkoutPlan & { error?: string }>({
+    const { data: result, usage } = await aiJSON<GeneratedWorkoutPlan & { error?: string }>({
       messages: [
         {
           role: "system",
@@ -131,7 +131,7 @@ Return a JSON object with this exact structure:
     });
 
     if (session.user.tenantId) {
-      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-workout-plan", provider: process.env.AI_PROVIDER || "groq" });
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "generate-workout-plan", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
     }
 
     return NextResponse.json({ ...result, exercises });

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     .join("\n");
 
   try {
-    const raw = await aiJSON<FoodMacros[] | { foods: FoodMacros[] }>({
+    const { data: raw, usage } = await aiJSON<FoodMacros[] | { foods: FoodMacros[] }>({
       messages: [
         {
           role: "system",
@@ -71,7 +71,7 @@ Rules:
     }
 
     if (session.user.tenantId) {
-      logAiUsage({ tenantId: session.user.tenantId, endpoint: "fill-macros", provider: process.env.AI_PROVIDER || "groq" });
+      logAiUsage({ tenantId: session.user.tenantId, endpoint: "fill-macros", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
     }
 
     return NextResponse.json(result);

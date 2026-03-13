@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   UserCheck,
+  ClipboardList,
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Home" },
   { href: "/admin/coaches", icon: Users, label: "Coaches" },
-  { href: "/admin/clients", icon: UserCheck, label: "Clients" },
+  { href: "/admin/templates", icon: ClipboardList, label: "Templates" },
   { href: "/admin/usage", icon: BarChart3, label: "Usage" },
 ];
 

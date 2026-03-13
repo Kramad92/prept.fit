@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
@@ -66,89 +66,99 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
-          <h2 className="mt-2 text-xl font-bold text-gray-900">Prept</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            {t.auth.signInTitle}
-          </p>
-        </div>
+    <>
+      <div className="mb-8 text-center">
+        <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
+        <h2 className="mt-2 text-xl font-bold text-gray-900">Prept</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          {t.auth.signInTitle}
+        </p>
+      </div>
 
-        {registered && (
-          <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-            {t.auth.verificationEmailSent}
+      {registered && (
+        <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+          {t.auth.verificationEmailSent}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="card space-y-4">
+        {error && (
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <p>{error}</p>
+            {error === t.auth.emailNotVerified && (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendStatus !== "idle"}
+                className="mt-2 font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+              >
+                {resendStatus === "sending"
+                  ? t.auth.resendingVerification
+                  : resendStatus === "sent"
+                    ? t.auth.resendVerificationSent
+                    : t.auth.resendVerification}
+              </button>
+            )}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="card space-y-4">
-          {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              <p>{error}</p>
-              {error === t.auth.emailNotVerified && (
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={resendStatus !== "idle"}
-                  className="mt-2 font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
-                >
-                  {resendStatus === "sending"
-                    ? t.auth.resendingVerification
-                    : resendStatus === "sent"
-                      ? t.auth.resendVerificationSent
-                      : t.auth.resendVerification}
-                </button>
-              )}
-            </div>
-          )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.auth.email}
+          </label>
+          <Input
+            type="email"
+            name="email"
+            required
+            autoComplete="email"
+            className="mt-1"
+            placeholder="vas@email.com"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.email}
-            </label>
-            <Input
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              className="mt-1"
-              placeholder="vas@email.com"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.auth.password}
+          </label>
+          <Input
+            type="password"
+            name="password"
+            required
+            autoComplete="current-password"
+            className="mt-1"
+            placeholder={t.auth.enterPassword}
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.password}
-            </label>
-            <Input
-              type="password"
-              name="password"
-              required
-              autoComplete="current-password"
-              className="mt-1"
-              placeholder={t.auth.enterPassword}
-            />
-          </div>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+        >
+          {loading ? t.auth.signingIn : t.auth.signInButton}
+        </Button>
+      </form>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? t.auth.signingIn : t.auth.signInButton}
-          </Button>
-        </form>
+      <p className="mt-4 text-center text-sm text-gray-500">
+        {t.auth.dontHaveAccount}{" "}
+        <a
+          href="/register"
+          className="font-medium text-brand-600 hover:text-brand-700"
+        >
+          {t.auth.getStarted}
+        </a>
+      </p>
+    </>
+  );
+}
 
-        <p className="mt-4 text-center text-sm text-gray-500">
-          {t.auth.dontHaveAccount}{" "}
-          <a
-            href="/register"
-            className="font-medium text-brand-600 hover:text-brand-700"
-          >
-            {t.auth.getStarted}
-          </a>
-        </p>
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-sm">
+        <Suspense>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );

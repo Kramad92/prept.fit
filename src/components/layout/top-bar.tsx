@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Search } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -14,10 +15,10 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white md:hidden">
       <div className="flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <img src="/logo.png" alt="Prept" className="h-7" />
           <span className="text-base font-bold text-gray-900">Prept</span>
-        </div>
+        </Link>
         <div className="flex items-center gap-2">
           <button
             onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "/" }))}

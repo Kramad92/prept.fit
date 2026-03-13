@@ -18,9 +18,11 @@ import {
   Settings,
   CalendarRange,
   Library,
+  LogOut,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 import { useT } from "@/lib/i18n";
 
 export function MobileNav() {
@@ -114,6 +116,16 @@ export function MobileNav() {
                   </Link>
                 );
               })}
+            </div>
+
+            <div className="mt-3 border-t border-gray-100 px-3 pt-3">
+              <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                <LogOut className="h-4 w-4" />
+                {t.common.signOut}
+              </button>
             </div>
           </div>
         )}

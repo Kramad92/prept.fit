@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { NutritionPlanCard } from "@/components/nutrition/nutrition-plan-card";
 import { NutritionPlanForm, type FormState, type MealRow } from "@/components/nutrition/nutrition-plan-form";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
@@ -58,6 +59,8 @@ function NutritionContent() {
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -140,26 +143,23 @@ function NutritionContent() {
     setDuplicating(null);
   }
 
-  function handleDelete(planId: string) {
-    toast(t.workouts.deleteConfirm, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          try {
-            await api.delete(`/api/meal-plans/${planId}`);
-          } catch (err: any) {
-            if (err?.status !== 404) {
-              toast.error(err?.message || t.errors.somethingWentWrong);
-            }
-          }
-          setPlans((prev) => prev.filter((p) => p.id !== planId));
-          if (expandedPlan === planId) {
-            setExpandedPlan(null);
-            setPlanDetail(null);
-          }
-        },
-      },
-    });
+  async function confirmDelete() {
+    if (!deletingId) return;
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/api/meal-plans/${deletingId}`);
+    } catch (err: any) {
+      if (err?.status !== 404) {
+        toast.error(err?.message || t.errors.somethingWentWrong);
+      }
+    }
+    setPlans((prev) => prev.filter((p) => p.id !== deletingId));
+    if (expandedPlan === deletingId) {
+      setExpandedPlan(null);
+      setPlanDetail(null);
+    }
+    setDeleteLoading(false);
+    setDeletingId(null);
   }
 
   async function handleEdit(planId: string) {
@@ -282,7 +282,7 @@ function NutritionContent() {
               onEdit={handleEdit}
               onDuplicate={handleDuplicate}
               onAssign={setAssignPlanId}
-              onDelete={handleDelete}
+              onDelete={setDeletingId}
             />
           ))}
         </div>
@@ -323,6 +323,17 @@ function NutritionContent() {
           onClose={() => { setShowCreate(false); setForm(emptyForm()); setEditingPlanId(null); }}
         />
       )}
+
+      <ConfirmDialog
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={confirmDelete}
+        title={t.workouts.deleteConfirm}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
     </div>
   );
 }

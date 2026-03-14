@@ -7,6 +7,7 @@ import { Plus, Dumbbell, Search, Zap, Pencil, Copy, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
@@ -97,6 +98,8 @@ export default function WorkoutsPage() {
   const { data: plans, loading, refresh } = useApi<WorkoutPlan[]>("/api/workouts");
   const [creating, setCreating] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   async function createFromPreset(preset: (typeof PRESET_TEMPLATES)[0]) {
     setCreating(preset.name);
@@ -109,23 +112,19 @@ export default function WorkoutsPage() {
     setCreating(null);
   }
 
-  function handleDelete(id: string) {
-    toast(t.workouts.deleteConfirm, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          try {
-            await api.delete(`/api/workouts/${id}`);
-          } catch (err: any) {
-            // 404 means already deleted — not an error
-            if (err?.status !== 404) {
-              toast.error(err?.message || t.errors.somethingWentWrong);
-            }
-          }
-          refresh();
-        },
-      },
-    });
+  async function confirmDelete() {
+    if (!deletingId) return;
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/api/workouts/${deletingId}`);
+    } catch (err: any) {
+      if (err?.status !== 404) {
+        toast.error(err?.message || t.errors.somethingWentWrong);
+      }
+    }
+    setDeletingId(null);
+    setDeleteLoading(false);
+    refresh();
   }
 
   async function handleDuplicate(id: string) {
@@ -253,7 +252,7 @@ export default function WorkoutsPage() {
                     <Copy className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(plan.id)}
+                    onClick={() => setDeletingId(plan.id)}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
                     title={t.common.delete}
                   >
@@ -265,6 +264,17 @@ export default function WorkoutsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={confirmDelete}
+        title={t.workouts.deleteConfirm}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
     </div>
   );
 }

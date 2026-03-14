@@ -16,6 +16,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
@@ -71,6 +72,8 @@ export default function WorkoutDetailPage() {
   const [assignEndDate, setAssignEndDate] = useState("");
   const [duplicating, setDuplicating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -100,25 +103,20 @@ export default function WorkoutDetailPage() {
     setDuplicating(false);
   }
 
-  function handleDelete() {
-    toast(t.workouts.deleteConfirm, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          setDeleting(true);
-          try {
-            await api.delete(`/api/workouts/${params.id}`);
-          } catch (err: any) {
-            if (err?.status !== 404) {
-              toast.error(err?.message || t.errors.somethingWentWrong);
-              setDeleting(false);
-              return;
-            }
-          }
-          router.push("/dashboard/workouts");
-        },
-      },
-    });
+  async function confirmDelete() {
+    setDeleteLoading(true);
+    setDeleting(true);
+    try {
+      await api.delete(`/api/workouts/${params.id}`);
+    } catch (err: any) {
+      if (err?.status !== 404) {
+        toast.error(err?.message || t.errors.somethingWentWrong);
+        setDeleteLoading(false);
+        setDeleting(false);
+        return;
+      }
+    }
+    router.push("/dashboard/workouts");
   }
 
   async function handleAssign() {
@@ -213,7 +211,7 @@ export default function WorkoutDetailPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={deleting}
             className="text-sm !text-red-600 hover:!bg-red-50"
           >
@@ -329,6 +327,18 @@ export default function WorkoutDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title={t.workouts.deleteConfirm}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
 
       {/* Assign Modal */}
       <Dialog open={showAssign} onOpenChange={setShowAssign}>

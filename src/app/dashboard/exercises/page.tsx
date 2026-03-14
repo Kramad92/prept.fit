@@ -29,6 +29,7 @@ import { FilterSelect } from "@/components/ui/filter-select";
 import { ExerciseImportModal } from "@/components/exercise-import-modal";
 import { toast } from "sonner";
 import { useT, useLocale, useTV, getExerciseDisplayName } from "@/lib/i18n";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface ExerciseItem {
   id: string;
@@ -91,6 +92,7 @@ function ExerciseLibraryContent() {
   const [batchDeleting, setBatchDeleting] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set<string>());
   const [showImport, setShowImport] = useState(false);
+  const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
 
   function toggleCollapsed(category: string) {
     setCollapsedCategories((prev) => {
@@ -266,26 +268,24 @@ function ExerciseLibraryContent() {
 
   function handleBatchDelete() {
     if (selected.size === 0) return;
-    toast(`Delete ${selected.size} exercises? This cannot be undone.`, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          setBatchDeleting(true);
-          const ids = Array.from(selected);
-          for (let i = 0; i < ids.length; i += 500) {
-            await fetch("/api/exercise-library/batch", {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ids: ids.slice(i, i + 500) }),
-            });
-          }
-          setSelected(new Set());
-          setSelectMode(false);
-          setBatchDeleting(false);
-          loadExercises();
-        },
-      },
-    });
+    setShowBatchDeleteConfirm(true);
+  }
+
+  async function confirmBatchDelete() {
+    setBatchDeleting(true);
+    const ids = Array.from(selected);
+    for (let i = 0; i < ids.length; i += 500) {
+      await fetch("/api/exercise-library/batch", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: ids.slice(i, i + 500) }),
+      });
+    }
+    setSelected(new Set());
+    setSelectMode(false);
+    setBatchDeleting(false);
+    setShowBatchDeleteConfirm(false);
+    loadExercises();
   }
 
   function toggleSelect(id: string) {
@@ -669,6 +669,17 @@ function ExerciseLibraryContent() {
         onClose={() => setShowImport(false)}
         onImported={() => { loadExercises(); loadCategories(); loadEquipmentTypes(); }}
       />
+
+      <ConfirmDialog
+        open={showBatchDeleteConfirm}
+        onClose={() => setShowBatchDeleteConfirm(false)}
+        onConfirm={confirmBatchDelete}
+        title={`Delete ${selected.size} exercise${selected.size === 1 ? "" : "s"}?`}
+        description="This cannot be undone."
+        confirmLabel={t.common.delete}
+        loading={batchDeleting}
+        destructive
+      />
     </div>
   );
 }
@@ -706,6 +717,7 @@ function ExerciseDetailModal({
 }) {
   const t = useT();
   const tv = useTV();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const displayName = getExerciseDisplayName(ex, locale);
   const embedUrl = ex.videoUrl ? getYouTubeEmbedUrl(ex.videoUrl) : null;
 
@@ -735,7 +747,7 @@ function ExerciseDetailModal({
               <Pencil className="h-4 w-4" />
             </button>
             <button
-              onClick={() => toast("Delete this exercise?", { action: { label: t.common.delete, onClick: () => onDelete(ex.id) } })}
+              onClick={() => setShowDeleteConfirm(true)}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
               title="Delete"
             >
@@ -848,6 +860,16 @@ function ExerciseDetailModal({
           Watch video
         </a>
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => { onDelete(ex.id); setShowDeleteConfirm(false); }}
+        title="Delete this exercise?"
+        description="This cannot be undone."
+        confirmLabel={t.common.delete}
+        destructive
+      />
     </DialogContent>
   );
 }
@@ -964,6 +986,7 @@ function OptionList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [error, setError] = useState("");
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
   function countUsage(name: string) {
     return exercises.filter((ex) => ex[field] === name).length;
@@ -1008,15 +1031,14 @@ function OptionList({
   }
 
   function handleDeleteItem(id: string) {
-    toast(t.exerciseLibrary.deleteConfirm, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          await fetch(`${apiPath}/${id}`, { method: "DELETE" });
-          onChange();
-        },
-      },
-    });
+    setDeletingItemId(id);
+  }
+
+  async function confirmDeleteItem() {
+    if (!deletingItemId) return;
+    await fetch(`${apiPath}/${deletingItemId}`, { method: "DELETE" });
+    setDeletingItemId(null);
+    onChange();
   }
 
   return (
@@ -1096,6 +1118,15 @@ function OptionList({
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={deletingItemId !== null}
+        onClose={() => setDeletingItemId(null)}
+        onConfirm={confirmDeleteItem}
+        title={t.exerciseLibrary.deleteConfirm}
+        confirmLabel={t.common.delete}
+        destructive
+      />
     </div>
   );
 }

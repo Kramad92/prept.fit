@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, Dumbbell, CheckCircle2, Users, Plus, X, Trash2 } fro
 import { Button } from "@/components/ui/button";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -30,6 +31,8 @@ export default function SessionDetailPage() {
   const [showAssignWorkout, setShowAssignWorkout] = useState(false);
   const [selectedWorkout, setSelectedWorkout] = useState("");
   const [attendance, setAttendance] = useState<Record<string, string>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { data: session, loading, refresh } = useApi<GroupSessionDetail>(`/api/group-sessions/${id}`);
   const { data: clients } = useApi<ClientOption[]>(showEnroll ? "/api/clients" : null);
@@ -72,20 +75,20 @@ export default function SessionDetailPage() {
     refresh();
   };
 
-  const handleDelete = () => {
-    toast(t.common.delete + "?", {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          try {
-            await api.delete(`/api/group-sessions/${id}`);
-            router.push("/dashboard/group-training");
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
-          }
-        },
-      },
-    });
+  const confirmDelete = async () => {
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/api/group-sessions/${id}`);
+      router.push("/dashboard/group-training");
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      if (status !== 404) {
+        toast.error(t.errors.somethingWentWrong);
+      }
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   if (loading || !session) return <PageSkeleton />;
@@ -130,7 +133,7 @@ export default function SessionDetailPage() {
           </div>
           {session.notes && <p className="mt-2 text-sm text-gray-500">{session.notes}</p>}
         </div>
-        <button onClick={handleDelete} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+        <button onClick={() => setShowDeleteConfirm(true)} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
           <Trash2 className="h-5 w-5" />
         </button>
       </div>
@@ -202,6 +205,17 @@ export default function SessionDetailPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title={t.common.delete + "?"}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
 
       {/* Participants */}
       <div>

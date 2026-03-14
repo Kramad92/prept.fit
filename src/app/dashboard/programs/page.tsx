@@ -7,6 +7,7 @@ import { Plus, CalendarRange, UtensilsCrossed, Search, Users, Pencil, Trash2 } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
@@ -18,43 +19,41 @@ export default function ProgramsPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"workout" | "nutrition">("workout");
   const [search, setSearch] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingType, setDeletingType] = useState<"workout" | "nutrition">("workout");
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const { data: programs, loading, refresh } = useApi<WorkoutProgramSummary[]>("/api/programs");
   const { data: nutritionPrograms, loading: nLoading, refresh: nRefresh } = useApi<NutritionProgramSummary[]>("/api/nutrition-programs");
 
   function handleDeleteWorkout(id: string) {
-    toast(t.programs.deleteConfirm, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          try {
-            await api.delete(`/api/programs/${id}`);
-          } catch (err: any) {
-            if (err?.status !== 404) {
-              toast.error(err?.message || t.errors.somethingWentWrong);
-            }
-          }
-          refresh();
-        },
-      },
-    });
+    setDeletingId(id);
+    setDeletingType("workout");
   }
 
   function handleDeleteNutrition(id: string) {
-    toast(t.programs.deleteConfirm, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          try {
-            await api.delete(`/api/nutrition-programs/${id}`);
-          } catch (err: any) {
-            if (err?.status !== 404) {
-              toast.error(err?.message || t.errors.somethingWentWrong);
-            }
-          }
-          nRefresh();
-        },
-      },
-    });
+    setDeletingId(id);
+    setDeletingType("nutrition");
+  }
+
+  async function confirmDelete() {
+    if (!deletingId) return;
+    setDeleteLoading(true);
+    try {
+      if (deletingType === "workout") {
+        await api.delete(`/api/programs/${deletingId}`);
+        refresh();
+      } else {
+        await api.delete(`/api/nutrition-programs/${deletingId}`);
+        nRefresh();
+      }
+    } catch (err: any) {
+      if (err?.status !== 404) {
+        toast.error(err?.message || t.errors.somethingWentWrong);
+      }
+    } finally {
+      setDeleteLoading(false);
+      setDeletingId(null);
+    }
   }
 
   const filteredWorkouts = (programs || []).filter((p) =>
@@ -262,6 +261,16 @@ export default function ProgramsPage() {
           )}
         </>
       )}
+      <ConfirmDialog
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={confirmDelete}
+        title={t.programs.deleteConfirm}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
     </div>
   );
 }

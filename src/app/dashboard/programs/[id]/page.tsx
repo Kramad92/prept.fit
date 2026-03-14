@@ -13,6 +13,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,8 @@ export default function ProgramDetailPage() {
   const [accessPolicy, setAccessPolicy] = useState("date_range");
   const [assigning, setAssigning] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -79,25 +82,18 @@ export default function ProgramDetailPage() {
     setAssigning(false);
   }
 
-  function handleDelete() {
-    toast(t.programs.deleteConfirm, {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          setDeleting(true);
-          try {
-            await api.delete(`/api/programs/${params.id}`);
-          } catch (err: any) {
-            if (err?.status !== 404) {
-              toast.error(err?.message || t.errors.somethingWentWrong);
-              setDeleting(false);
-              return;
-            }
-          }
-          router.push("/dashboard/programs");
-        },
-      },
-    });
+  async function confirmDelete() {
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/api/programs/${params.id}`);
+    } catch (err: any) {
+      if (err?.status !== 404) {
+        toast.error(err?.message || t.errors.somethingWentWrong);
+        setDeleteLoading(false);
+        return;
+      }
+    }
+    router.push("/dashboard/programs");
   }
 
   if (loading || !program) {
@@ -167,7 +163,7 @@ export default function ProgramDetailPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={deleting}
             className="text-sm !text-red-600 hover:!bg-red-50"
           >
@@ -275,6 +271,17 @@ export default function ProgramDetailPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title={t.programs.deleteConfirm}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
 
       {/* Assign Modal */}
       <Dialog open={showAssign} onOpenChange={setShowAssign}>

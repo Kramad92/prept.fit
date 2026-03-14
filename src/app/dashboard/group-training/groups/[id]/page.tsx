@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Users, Calendar, Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -25,6 +26,8 @@ export default function GroupDetailPage() {
   const t = useT();
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { data: group, loading, refresh } = useApi<TrainingGroupDetail>(`/api/training-groups/${id}`);
   const { data: clients } = useApi<ClientOption[]>(showAddMembers ? "/api/clients" : null);
@@ -45,20 +48,20 @@ export default function GroupDetailPage() {
     refresh();
   };
 
-  const handleDelete = () => {
-    toast(t.common.delete + "?", {
-      action: {
-        label: t.common.delete,
-        onClick: async () => {
-          try {
-            await api.delete(`/api/training-groups/${id}`);
-            router.push("/dashboard/group-training");
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
-          }
-        },
-      },
-    });
+  const confirmDelete = async () => {
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/api/training-groups/${id}`);
+      router.push("/dashboard/group-training");
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      if (status !== 404) {
+        toast.error(t.errors.somethingWentWrong);
+      }
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   if (loading || !group) return <PageSkeleton />;
@@ -79,10 +82,21 @@ export default function GroupDetailPage() {
             <span>{group._count?.sessions} {t.groupTraining.sessions.toLowerCase()}</span>
           </div>
         </div>
-        <button onClick={handleDelete} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+        <button onClick={() => setShowDeleteConfirm(true)} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
           <Trash2 className="h-5 w-5" />
         </button>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title={t.common.delete + "?"}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
 
       {/* Members */}
       <div className="mb-8">
@@ -176,6 +190,17 @@ export default function GroupDetailPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title={t.common.delete + "?"}
+        confirmLabel={t.common.delete}
+        cancelLabel={t.common.cancel}
+        loading={deleteLoading}
+        destructive
+      />
     </div>
   );
 }

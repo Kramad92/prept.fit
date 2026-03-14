@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { TenantSwitcher } from "@/components/portal/tenant-switcher";
 import { useT, useLocale, type Locale } from "@/lib/i18n";
 
 const LOCALE_LABELS: Record<Locale, string> = { bs: "BHS", sr: "SRP", hr: "HRV", en: "ENG" };
@@ -112,7 +113,11 @@ export function PortalMobileNav() {
               })}
             </div>
 
-            <div className="mt-3 flex items-center justify-between border-t border-gray-100 px-3 pt-3">
+            <div className="mt-3 border-t border-gray-100 px-3 pt-3">
+              <TenantSwitcher />
+            </div>
+
+            <div className="mt-2 flex items-center justify-between px-3 pt-1">
               <div className="flex items-center gap-1.5">
                 {(Object.keys(LOCALE_LABELS) as Locale[]).map((l) => (
                   <button
@@ -208,6 +213,10 @@ export function PortalDesktopNav() {
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
           <Dumbbell className="h-7 w-7 text-brand-600" />
           <span className="text-xl font-bold text-gray-900">{t.nav.myPortal}</span>
+        </div>
+
+        <div className="px-3 pt-3">
+          <TenantSwitcher />
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">

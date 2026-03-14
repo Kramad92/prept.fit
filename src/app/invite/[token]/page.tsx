@@ -12,6 +12,7 @@ interface InviteInfo {
   email: string;
   businessName: string;
   brandColor: string;
+  hasExistingAccount?: boolean;
 }
 
 export default function InvitePage() {
@@ -38,6 +39,29 @@ export default function InvitePage() {
       .catch(() => setError(t.invite.somethingWentWrong))
       .finally(() => setLoading(false));
   }, [params.token]);
+
+  async function handleLinkAccount() {
+    setSubmitting(true);
+    setFormError("");
+    try {
+      const res = await fetch(`/api/invite/${params.token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess(true);
+        setTimeout(() => router.push("/login"), 2000);
+      } else {
+        setFormError(data.error);
+      }
+    } catch {
+      setFormError(t.invite.somethingWentWrong);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -147,62 +171,83 @@ export default function InvitePage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card space-y-4">
-          {formError && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              {formError}
+        {info!.hasExistingAccount ? (
+          <div className="card space-y-4">
+            {formError && (
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {formError}
+              </div>
+            )}
+            <p className="text-sm text-gray-600">
+              {t.invite.existingAccountDesc}{" "}
+              <span className="font-medium text-gray-900">{info!.businessName}</span>.
+            </p>
+            <Button
+              onClick={handleLinkAccount}
+              disabled={submitting}
+              className="w-full"
+            >
+              {submitting ? "..." : t.invite.linkAccount}
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="card space-y-4">
+            {formError && (
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {formError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.email}
+              </label>
+              <Input
+                type="email"
+                value={info!.email}
+                disabled
+                className="mt-1 bg-gray-50 text-gray-500"
+              />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.email}
-            </label>
-            <Input
-              type="email"
-              value={info!.email}
-              disabled
-              className="mt-1 bg-gray-50 text-gray-500"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.password}
+              </label>
+              <Input
+                type="password"
+                name="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="mt-1"
+                placeholder={t.auth.minChars}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.password}
-            </label>
-            <Input
-              type="password"
-              name="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="mt-1"
-              placeholder={t.auth.minChars}
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                {t.auth.confirmPassword}
+              </label>
+              <Input
+                type="password"
+                name="confirmPassword"
+                required
+                autoComplete="new-password"
+                className="mt-1"
+                placeholder={t.auth.reenterPassword}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.confirmPassword}
-            </label>
-            <Input
-              type="password"
-              name="confirmPassword"
-              required
-              autoComplete="new-password"
-              className="mt-1"
-              placeholder={t.auth.reenterPassword}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="w-full"
-          >
-            {submitting ? t.auth.creatingAccount : t.auth.createAccount}
-          </Button>
-        </form>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full"
+            >
+              {submitting ? t.auth.creatingAccount : t.auth.createAccount}
+            </Button>
+          </form>
+        )}
 
         <p className="mt-4 text-center text-sm text-gray-500">
           {t.auth.alreadyHaveAccount}{" "}

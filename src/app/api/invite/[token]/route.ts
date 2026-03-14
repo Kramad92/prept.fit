@@ -41,11 +41,17 @@ export async function GET(
     );
   }
 
+  // Check if a user account already exists with this email (multi-coach scenario)
+  const existingUser = invite.client.email
+    ? await prisma.user.findUnique({ where: { email: invite.client.email } })
+    : null;
+
   return NextResponse.json({
     clientName: invite.client.name,
     email: invite.client.email,
     businessName: invite.client.tenant.name,
     brandColor: invite.client.tenant.brandColor,
+    hasExistingAccount: !!existingUser,
   });
 }
 
@@ -84,6 +90,39 @@ export async function POST(
     );
   }
 
+  // Check if user already exists with this email (multi-coach scenario)
+  const existingUser = invite.client.email
+    ? await prisma.user.findUnique({ where: { email: invite.client.email } })
+    : null;
+
+  if (existingUser) {
+    // Only allow linking if existing user is a CLIENT
+    if (existingUser.role !== "CLIENT") {
+      return NextResponse.json(
+        { error: "An account with this email already exists with a different role" },
+        { status: 409 }
+      );
+    }
+
+    // Link existing user to this client profile + mark invite used
+    await prisma.$transaction([
+      prisma.client.update({
+        where: { id: invite.client.id },
+        data: { userId: existingUser.id },
+      }),
+      prisma.inviteToken.update({
+        where: { id: invite.id },
+        data: { usedAt: new Date() },
+      }),
+    ]);
+
+    return NextResponse.json(
+      { message: "Coach added to your account. You can switch coaches in your portal." },
+      { status: 201 }
+    );
+  }
+
+  // New user — require password
   let body;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -106,22 +145,25 @@ export async function POST(
   const passwordHash = await bcrypt.hash(password, 12);
 
   // Create user + link to client + mark token used in a transaction
-  await prisma.$transaction([
-    prisma.user.create({
+  await prisma.$transaction(async (tx) => {
+    const newUser = await tx.user.create({
       data: {
         email: invite.client.email!,
         name: invite.client.name,
         passwordHash,
         role: "CLIENT",
         tenantId: invite.client.tenantId,
-        clientProfile: { connect: { id: invite.client.id } },
       },
-    }),
-    prisma.inviteToken.update({
+    });
+    await tx.client.update({
+      where: { id: invite.client.id },
+      data: { userId: newUser.id },
+    });
+    await tx.inviteToken.update({
       where: { id: invite.id },
       data: { usedAt: new Date() },
-    }),
-  ]);
+    });
+  });
 
   return NextResponse.json(
     { message: "Account created. You can now sign in." },

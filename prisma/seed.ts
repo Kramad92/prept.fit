@@ -127,7 +127,7 @@ async function main() {
           passwordHash: hash,
           role: "CLIENT",
           tenantId: tenant.id,
-          clientProfile: { connect: { id: client.id } },
+          clientProfiles: { connect: { id: client.id } },
         },
       });
       clientUsers.push(user);

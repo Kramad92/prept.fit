@@ -233,6 +233,8 @@ export const en: Translations = {
     setupAccountFor: "Set up your account for",
     passwordMinChars: "Password must be at least 8 characters",
     somethingWentWrong: "Something went wrong. Please try again.",
+    existingAccountDesc: "You already have a portal account. Click below to add this coach to your account:",
+    linkAccount: "Add Coach to My Account",
   },
 
   schedule: {
@@ -790,6 +792,8 @@ export const en: Translations = {
     trackJourney: "Track your transformation journey",
     history: "History",
     noMeasurements: "No measurements recorded yet. Add your first measurement to start tracking!",
+    switchCoach: "Switch Coach",
+    currentCoach: "Current",
   },
 
   portalWorkouts: {

@@ -66,7 +66,7 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { tenant: true, clientProfile: true },
+      include: { tenant: true, clientProfiles: true },
     });
 
     if (!user || !user.passwordHash) {
@@ -84,11 +84,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Block inactive clients from logging in
+    // Block inactive clients — only if ALL profiles are inactive
     if (
       user.role === "CLIENT" &&
-      user.clientProfile &&
-      user.clientProfile.status !== "active"
+      user.clientProfiles.length > 0 &&
+      !user.clientProfiles.some((cp) => cp.status === "active")
     ) {
       return NextResponse.json(
         { error: "PORTAL_DISABLED" },
@@ -104,14 +104,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // Find active client profile for current tenant
+    const activeProfile = user.role === "CLIENT"
+      ? user.clientProfiles.find((cp) => cp.tenantId === user.tenantId && cp.status === "active")
+        || user.clientProfiles.find((cp) => cp.status === "active")
+      : null;
+
     const userPayload = {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
-      tenantId: user.tenantId || "",
+      tenantId: activeProfile?.tenantId || user.tenantId || "",
       tenantSlug: user.tenant?.slug || "",
-      clientProfileId: user.clientProfile?.id || null,
+      clientProfileId: activeProfile?.id || null,
     };
 
     // Generate access token (JWT)

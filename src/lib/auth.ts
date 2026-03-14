@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-          include: { tenant: true, clientProfile: true },
+          include: { tenant: true, clientProfiles: true },
         });
 
         if (!user || !user.passwordHash) return null;
@@ -74,13 +74,12 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        // Block inactive clients from logging in
-        if (
-          user.role === "CLIENT" &&
-          user.clientProfile &&
-          user.clientProfile.status !== "active"
-        ) {
-          throw new Error("PORTAL_DISABLED");
+        // Block inactive clients — only if ALL profiles are inactive
+        if (user.role === "CLIENT" && user.clientProfiles.length > 0) {
+          const hasActive = user.clientProfiles.some((cp) => cp.status === "active");
+          if (!hasActive) {
+            throw new Error("PORTAL_DISABLED");
+          }
         }
 
         // Block unverified coaches
@@ -93,14 +92,33 @@ export const authOptions: NextAuthOptions = {
           throw new Error("TENANT_DEACTIVATED");
         }
 
+        // For CLIENT users, find the active client profile for their current tenant
+        const activeProfile = user.role === "CLIENT"
+          ? user.clientProfiles.find((cp) => cp.tenantId === user.tenantId && cp.status === "active")
+            || user.clientProfiles.find((cp) => cp.status === "active")
+          : null;
+
+        // If client's stored tenantId doesn't match any active profile, update it
+        if (user.role === "CLIENT" && activeProfile && activeProfile.tenantId !== user.tenantId) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { tenantId: activeProfile.tenantId },
+          });
+        }
+
+        const effectiveTenantId = activeProfile?.tenantId || user.tenantId || "";
+        const effectiveTenant = effectiveTenantId === user.tenantId
+          ? user.tenant
+          : await prisma.tenant.findUnique({ where: { id: effectiveTenantId } });
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          tenantId: user.tenantId || "",
-          tenantSlug: user.tenant?.slug || "",
-          clientProfileId: user.clientProfile?.id || null,
+          tenantId: effectiveTenantId,
+          tenantSlug: effectiveTenant?.slug || "",
+          clientProfileId: activeProfile?.id || null,
         };
       },
     }),
@@ -116,7 +134,7 @@ export const authOptions: NextAuthOptions = {
 
       const existingUser = await prisma.user.findUnique({
         where: { email },
-        include: { clientProfile: true },
+        include: { clientProfiles: true },
       });
 
       if (existingUser) {
@@ -144,11 +162,11 @@ export const authOptions: NextAuthOptions = {
           });
         }
 
-        // Block inactive clients
+        // Block inactive clients — only if ALL profiles are inactive
         if (
           existingUser.role === "CLIENT" &&
-          existingUser.clientProfile &&
-          existingUser.clientProfile.status !== "active"
+          existingUser.clientProfiles.length > 0 &&
+          !existingUser.clientProfiles.some((cp) => cp.status === "active")
         ) {
           return "/login?error=PORTAL_DISABLED";
         }
@@ -160,27 +178,54 @@ export const authOptions: NextAuthOptions = {
       return `/register/complete?provider=${account!.provider}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(user.name || "")}`;
     },
 
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session: updateData }) {
       if (user && account?.provider !== "credentials") {
         // OAuth login — fetch full user from DB
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email! },
-          include: { tenant: true, clientProfile: true },
+          include: { tenant: true, clientProfiles: true },
         });
         if (dbUser) {
           token.sub = dbUser.id;
           token.role = dbUser.role;
           token.tenantId = dbUser.tenantId || "";
           token.tenantSlug = dbUser.tenant?.slug || "";
-          token.clientProfileId = dbUser.clientProfile?.id || null;
+          // Find active client profile for current tenant
+          const activeProfile = dbUser.clientProfiles.find(
+            (cp) => cp.tenantId === dbUser.tenantId && cp.status === "active"
+          ) || dbUser.clientProfiles.find((cp) => cp.status === "active");
+          token.clientProfileId = activeProfile?.id || null;
         }
       } else if (user) {
-        // Credentials login — same as before
+        // Credentials login
         token.role = (user as any).role;
         token.tenantId = (user as any).tenantId;
         token.tenantSlug = (user as any).tenantSlug;
         token.clientProfileId = (user as any).clientProfileId;
       }
+
+      // Handle tenant switch via useSession().update()
+      if (trigger === "update" && updateData?.tenantId) {
+        const newTenantId = updateData.tenantId as string;
+        const clientProfile = await prisma.client.findFirst({
+          where: { userId: token.sub, tenantId: newTenantId, status: "active" },
+        });
+        if (clientProfile) {
+          const tenant = await prisma.tenant.findUnique({
+            where: { id: newTenantId },
+            select: { slug: true },
+          });
+          token.tenantId = newTenantId;
+          token.tenantSlug = tenant?.slug || "";
+          token.clientProfileId = clientProfile.id;
+          // Persist the switch
+          await prisma.user.update({
+            where: { id: token.sub },
+            data: { tenantId: newTenantId },
+          });
+        }
+      }
+
       return token;
     },
 

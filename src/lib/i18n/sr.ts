@@ -238,6 +238,8 @@ export const sr = {
     setupAccountFor: "Postavite svoj račun za",
     passwordMinChars: "Lozinka mora imati najmanje 8 karaktera",
     somethingWentWrong: "Nešto je pošlo naopako. Pokušajte ponovo.",
+    existingAccountDesc: "Već imate portal nalog. Kliknite ispod da dodate ovog trenera na vaš nalog:",
+    linkAccount: "Dodaj trenera na moj nalog",
   },
 
   // Schedule
@@ -808,6 +810,8 @@ export const sr = {
     trackJourney: "Pratite svoju transformaciju",
     history: "Istorija",
     noMeasurements: "Još nema evidentiranih merenja. Dodajte prvo merenje da započnete praćenje!",
+    switchCoach: "Promeni trenera",
+    currentCoach: "Trenutni",
   },
 
   // Portal workouts

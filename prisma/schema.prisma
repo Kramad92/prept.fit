@@ -82,8 +82,8 @@ model User {
   tenantId      String?
   tenant        Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  // If role is CLIENT, linked client profile
-  clientProfile Client?
+  // If role is CLIENT, linked client profiles (supports multi-coach)
+  clientProfiles Client[]
 
   sentMessages       Message[] @relation("sender")
   notifications      Notification[]
@@ -132,8 +132,10 @@ model Client {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Optional link to user account (for client portal access)
-  userId      String?  @unique
+  userId      String?
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
 
   progressPhotos ProgressPhoto[]
   schedules      Schedule[]

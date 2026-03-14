@@ -46,33 +46,50 @@ export async function POST(
     where: { email: client.email },
   });
 
-  if (existingUser) {
-    return NextResponse.json(
-      { error: "A user with this email already exists" },
-      { status: 409 }
-    );
-  }
-
   const body = await req.json();
   const method = body.method || "email"; // "email" or "password"
 
   if (method === "password") {
-    // Secondary: create account with temp password
+    if (existingUser) {
+      // Multi-coach: link existing user to this client
+      if (existingUser.role !== "CLIENT") {
+        return NextResponse.json(
+          { error: "A user with this email already exists with a different role" },
+          { status: 409 }
+        );
+      }
+      await prisma.client.update({
+        where: { id: client.id },
+        data: { userId: existingUser.id },
+      });
+      return NextResponse.json(
+        {
+          method: "password",
+          message: "Client already has a portal account. They have been linked to your account.",
+        },
+        { status: 201 }
+      );
+    }
+
+    // New user: create account with temp password
     const tempPassword = body.password || crypto.randomBytes(16).toString("base64url");
     if (tempPassword.length < 10) {
       return NextResponse.json({ error: "Password must be at least 10 characters" }, { status: 400 });
     }
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         email: client.email,
         name: client.name,
         passwordHash,
         role: "CLIENT",
         tenantId: session.user.tenantId,
-        clientProfile: { connect: { id: client.id } },
       },
+    });
+    await prisma.client.update({
+      where: { id: client.id },
+      data: { userId: newUser.id },
     });
 
     return NextResponse.json(

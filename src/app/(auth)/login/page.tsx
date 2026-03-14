@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,6 +18,8 @@ function LoginForm() {
   const t = useT();
 
   const registered = searchParams.get("registered") === "true";
+  // Show error from OAuth redirect (e.g. PORTAL_DISABLED)
+  const oauthError = searchParams.get("error");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -85,10 +88,10 @@ function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="card space-y-4">
-        {error && (
+      <div className="card space-y-4">
+        {(error || oauthError === "PORTAL_DISABLED") && (
           <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-            <p>{error}</p>
+            <p>{error || t.auth.portalDisabled}</p>
             {error === t.auth.emailNotVerified && (
               <button
                 type="button"
@@ -106,6 +109,18 @@ function LoginForm() {
           </div>
         )}
 
+        <SocialAuthButtons mode="login" />
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-3 text-gray-500">{t.auth.orContinueWith}</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">
             {t.auth.email}
@@ -141,7 +156,8 @@ function LoginForm() {
         >
           {loading ? t.auth.signingIn : t.auth.signInButton}
         </Button>
-      </form>
+        </form>
+      </div>
 
       <p className="mt-4 text-center text-sm text-gray-500">
         {t.auth.dontHaveAccount}{" "}

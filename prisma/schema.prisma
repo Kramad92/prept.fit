@@ -90,9 +90,24 @@ model User {
   refreshTokens      RefreshToken[]
   pushTokens         PushToken[]
   verificationTokens EmailVerificationToken[]
+  accounts           Account[]
 
   @@index([tenantId])
   @@map("users")
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String   // "google", "apple"
+  providerAccountId String   // Provider's unique user ID
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
 }
 
 model Client {

@@ -1,17 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
-export default function RegisterPage() {
+export default function CompleteRegistrationPage() {
+  return (
+    <Suspense>
+      <CompleteRegistrationContent />
+    </Suspense>
+  );
+}
+
+function CompleteRegistrationContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const t = useT();
+
+  const provider = searchParams.get("provider") || "";
+  const email = searchParams.get("email") || "";
+  const name = searchParams.get("name") || "";
+
+  // If no provider/email, they shouldn't be here
+  if (!provider || !email) {
+    router.push("/register");
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,34 +38,33 @@ export default function RegisterPage() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (password !== confirmPassword) {
-      setError(t.auth.passwordsDoNotMatch);
-      setLoading(false);
-      return;
-    }
+    const businessName = formData.get("businessName") as string;
+    const finalName = formData.get("name") as string;
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/register/social", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.get("name") as string,
-          businessName: formData.get("businessName") as string,
-          email: formData.get("email") as string,
-          password,
+          email,
+          name: finalName,
+          businessName,
+          provider,
         }),
       });
 
-      if (res.ok) {
-        router.push("/login?registered=true");
-      } else {
+      if (!res.ok) {
         const data = await res.json();
         setError(data.error || t.auth.registrationFailed);
+        setLoading(false);
+        return;
       }
-    } finally {
+
+      // Account created — now sign in with the OAuth provider
+      // This time the signIn callback will find the user and succeed
+      await signIn(provider, { callbackUrl: "/dashboard" });
+    } catch {
+      setError(t.auth.registrationFailed);
       setLoading(false);
     }
   }
@@ -58,32 +76,32 @@ export default function RegisterPage() {
           <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
           <h2 className="mt-2 text-xl font-bold text-gray-900">Prept</h2>
           <h2 className="mt-3 text-xl font-semibold text-gray-900">
-            {t.auth.createAccountTitle}
+            {t.auth.completeRegistration}
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            {t.auth.startManaging}
+            {t.auth.oneMoreStep}
           </p>
         </div>
 
-        <div className="card space-y-4">
+        <form onSubmit={handleSubmit} className="card space-y-4">
           {error && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
               {error}
             </div>
           )}
 
-          <SocialAuthButtons mode="register" />
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-3 text-gray-500">{t.auth.orContinueWith}</span>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t.auth.email}
+            </label>
+            <Input
+              type="email"
+              value={email}
+              disabled
+              className="mt-1 bg-gray-50"
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
               {t.auth.yourName} *
@@ -92,6 +110,7 @@ export default function RegisterPage() {
               type="text"
               name="name"
               required
+              defaultValue={name}
               className="mt-1"
               placeholder="Ime Prezime"
             />
@@ -110,49 +129,6 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.email} *
-            </label>
-            <Input
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              className="mt-1"
-              placeholder="vas@email.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.password} *
-            </label>
-            <Input
-              type="password"
-              name="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="mt-1"
-              placeholder={t.auth.minChars}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {t.auth.confirmPassword} *
-            </label>
-            <Input
-              type="password"
-              name="confirmPassword"
-              required
-              autoComplete="new-password"
-              className="mt-1"
-              placeholder={t.auth.reenterPassword}
-            />
-          </div>
-
           <Button
             type="submit"
             disabled={loading}
@@ -160,8 +136,7 @@ export default function RegisterPage() {
           >
             {loading ? t.auth.creatingAccount : t.auth.createAccount}
           </Button>
-          </form>
-        </div>
+        </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
           {t.auth.alreadyHaveAccount}{" "}

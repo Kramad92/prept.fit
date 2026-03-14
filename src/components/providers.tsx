@@ -10,7 +10,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <I18nProvider>
         {children}
         <Toaster
-          position="top-center"
+          position="bottom-right"
           closeButton
           toastOptions={{
             className: "text-sm",

@@ -17,6 +17,9 @@ interface MealPlanOption {
   name: string;
   description: string | null;
   mealCount: number;
+  targetCalories: number | null;
+  targetProtein: number | null;
+  targetFat: number | null;
 }
 
 interface DaySlot {
@@ -338,7 +341,7 @@ export default function NewNutritionProgramPage() {
                                 <option value="">{t.programs.selectMealPlan}</option>
                                 {mealPlans.map((m) => (
                                   <option key={m.id} value={m.id}>
-                                    {m.name} ({m.mealCount} {t.nutrition.meals_count})
+                                    {m.name} ({m.mealCount} {t.nutrition.meals_count}{m.targetCalories ? ` · ${m.targetCalories} cal` : ""}{m.targetProtein ? ` · ${m.targetProtein}p` : ""}{m.targetFat ? ` · ${m.targetFat}f` : ""})
                                   </option>
                                 ))}
                               </select>

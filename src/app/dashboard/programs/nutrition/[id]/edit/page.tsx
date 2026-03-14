@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { NumberStepper } from "@/components/ui/number-stepper";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 
@@ -214,31 +215,23 @@ export default function EditNutritionProgramPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">{t.programs.durationWeeks}</label>
-              <select
+              <NumberStepper
                 value={durationWeeks}
-                onChange={(e) => setDurationWeeks(Number(e.target.value))}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {i + 1} {t.programs.weeks}
-                  </option>
-                ))}
-              </select>
+                onChange={setDurationWeeks}
+                min={1}
+                max={12}
+                suffix={t.programs.weeks}
+              />
             </div>
             <div>
               <label className="label">{t.programs.mealsPerDay}</label>
-              <select
+              <NumberStepper
                 value={mealsPerDay}
-                onChange={(e) => setMealsPerDay(Number(e.target.value))}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
-              >
-                {Array.from({ length: 8 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {i + 1} {t.nutrition.meals_count}
-                  </option>
-                ))}
-              </select>
+                onChange={setMealsPerDay}
+                min={1}
+                max={8}
+                suffix={t.nutrition.meals_count}
+              />
             </div>
           </div>
         </div>

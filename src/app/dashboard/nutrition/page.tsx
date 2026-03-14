@@ -141,6 +141,7 @@ function NutritionContent() {
   }
 
   async function handleDelete(planId: string) {
+    if (!confirm(t.workouts.deleteConfirm)) return;
     try {
       await api.delete(`/api/meal-plans/${planId}`);
       setPlans((prev) => prev.filter((p) => p.id !== planId));

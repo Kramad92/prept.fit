@@ -138,6 +138,8 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
       if (res.ok) {
         setResult(data);
         if (data.imported > 0) onImported();
+        // Auto-close modal after a short delay so user sees the result
+        setTimeout(() => onClose(), 1500);
       }
     } finally {
       setImporting(false);

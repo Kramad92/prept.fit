@@ -99,15 +99,29 @@ export async function DELETE(
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { id } = params;
+
   const toDelete = await prisma.workoutPlan.findFirst({
-    where: { id: params.id, tenantId: session.user.tenantId },
+    where: { id, tenantId: session.user.tenantId },
     select: { id: true },
   });
-  if (!toDelete) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.workoutPlan.delete({
-    where: { id: params.id },
-  });
+  if (!toDelete) {
+    // Check if plan exists at all (wrong tenant?) for debugging
+    const exists = await prisma.workoutPlan.findUnique({
+      where: { id },
+      select: { id: true, tenantId: true },
+    });
+    console.error(`[DELETE /api/workouts/${id}] Not found for tenant ${session.user.tenantId}. Exists: ${!!exists}, plan tenant: ${exists?.tenantId}`);
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  try {
+    await prisma.workoutPlan.delete({ where: { id } });
+  } catch (err: any) {
+    console.error(`[DELETE /api/workouts/${id}] Delete failed:`, err.message);
+    return NextResponse.json({ error: "Failed to delete plan" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -117,8 +117,8 @@ export default function WorkoutsPage() {
           try {
             await api.delete(`/api/workouts/${id}`);
             refresh();
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
+          } catch (err: any) {
+            toast.error(err?.message || t.errors.somethingWentWrong);
           }
         },
       },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getSession } from "@/lib/session";
 import { validateBody, exerciseLibrarySchema } from "@/lib/validations";
 
@@ -24,7 +25,7 @@ export async function PUT(
     where: { id: params.id, tenantId: session.user.tenantId },
     data: {
       name: body.name,
-      nameBs: body.nameBs ?? null,
+      nameI18n: body.nameI18n ?? Prisma.JsonNull,
       category: body.category,
       muscleGroup: body.muscleGroup,
       equipment: body.equipment,

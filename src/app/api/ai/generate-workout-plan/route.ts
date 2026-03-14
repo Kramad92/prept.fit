@@ -46,12 +46,16 @@ export async function POST(req: NextRequest) {
   // Fetch existing exercise library for matching
   const libraryExercises = await prisma.exerciseLibrary.findMany({
     where: { tenantId: session.user.tenantId },
-    select: { name: true, nameBs: true, videoUrl: true, instructions: true, category: true },
+    select: { name: true, nameI18n: true, videoUrl: true, instructions: true, category: true },
     take: 200,
   });
 
   const libraryContext = libraryExercises.length > 0
-    ? `\nYou have access to the coach's exercise library. If an exercise matches one from this list, use the EXACT same name:\n${libraryExercises.map((e) => `- ${e.name}${e.nameBs ? ` / ${e.nameBs}` : ""}${e.category ? ` (${e.category})` : ""}`).join("\n")}\n`
+    ? `\nYou have access to the coach's exercise library. If an exercise matches one from this list, use the EXACT same name:\n${libraryExercises.map((e) => {
+        const i18n = e.nameI18n as Record<string, string> | null;
+        const altName = i18n ? Object.values(i18n)[0] : null;
+        return `- ${e.name}${altName ? ` / ${altName}` : ""}${e.category ? ` (${e.category})` : ""}`;
+      }).join("\n")}\n`
     : "";
 
   const prefInstruction = preferences

@@ -32,11 +32,12 @@ export async function GET(req: NextRequest) {
           OR: [
             { name: { contains: q, mode: "insensitive" } },
             { nameBs: { contains: q, mode: "insensitive" } },
+            { nameI18n: { string_contains: q } },
             { category: { contains: q, mode: "insensitive" } },
             { muscleGroup: { contains: q, mode: "insensitive" } },
           ],
         },
-        select: { id: true, name: true, nameBs: true, category: true, muscleGroup: true },
+        select: { id: true, name: true, nameBs: true, nameI18n: true, category: true, muscleGroup: true },
         take: 5,
         orderBy: { name: "asc" },
       }),

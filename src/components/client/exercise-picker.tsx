@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { LibraryExercise } from "@/types";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, useTV, getExerciseDisplayName } from "@/lib/i18n";
 
 interface ExercisePickerProps {
   onSelect: (exercise: { name: string; exerciseLibraryId?: string }) => void;
@@ -18,9 +18,10 @@ interface CategoryItem {
 export function ExercisePicker({ onSelect }: ExercisePickerProps) {
   const t = useT();
   const { locale } = useLocale();
+  const tv = useTV();
 
   function displayName(ex: LibraryExercise) {
-    return locale !== "en" && ex.nameBs ? ex.nameBs : ex.name;
+    return getExerciseDisplayName(ex, locale);
   }
 
   const [query, setQuery] = useState("");
@@ -99,7 +100,7 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            {cat.name}
+            {tv("categories", cat.name)}
           </button>
         ))}
       </div>
@@ -125,11 +126,11 @@ export function ExercisePicker({ onSelect }: ExercisePickerProps) {
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-gray-900">{displayName(ex)}</span>
                   {ex.equipment && (
-                    <span className="text-xs text-gray-400">{ex.equipment}</span>
+                    <span className="text-xs text-gray-400">{tv("equipment", ex.equipment)}</span>
                   )}
                 </div>
                 {ex.muscleGroup && (
-                  <span className="text-xs text-gray-400">{ex.muscleGroup}</span>
+                  <span className="text-xs text-gray-400">{tv("muscleGroups", ex.muscleGroup)}</span>
                 )}
               </button>
             ))}

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { Search, Users, Dumbbell, Library, UtensilsCrossed, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
-import { useT } from "@/lib/i18n";
+import { useT, useTV, useLocale, getExerciseDisplayName } from "@/lib/i18n";
 
 interface SearchResults {
   clients: { id: string; name: string; email: string | null; status: string }[];
-  exercises: { id: string; name: string; nameBs: string | null; category: string | null; muscleGroup: string | null }[];
+  exercises: { id: string; name: string; nameBs: string | null; nameI18n: Record<string, string> | null; category: string | null; muscleGroup: string | null }[];
   workoutPlans: { id: string; name: string; description: string | null }[];
   mealPlans: { id: string; name: string; description: string | null }[];
 }
@@ -33,6 +33,8 @@ export function GlobalSearch() {
 
   const router = useRouter();
   const t = useT();
+  const tv = useTV();
+  const { locale } = useLocale();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Press "/" to open search (only when not typing in an input)
@@ -85,8 +87,8 @@ export function GlobalSearch() {
       for (const ex of data.exercises) {
         items.push({
           id: ex.id,
-          label: ex.nameBs || ex.name,
-          sublabel: [ex.category, ex.muscleGroup].filter(Boolean).join(" / "),
+          label: getExerciseDisplayName(ex, locale),
+          sublabel: [ex.category ? tv("categories", ex.category) : null, ex.muscleGroup ? tv("muscleGroups", ex.muscleGroup) : null].filter(Boolean).join(" / "),
           href: `/dashboard/exercises?highlight=${ex.id}`,
           category: t.nav.exerciseLibrary,
           icon: Library,

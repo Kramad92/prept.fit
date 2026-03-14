@@ -19,6 +19,7 @@ interface RawExercise {
   laterality: string | null;
   classification: string | null;
   movementPattern: string | null;
+  nameI18n: Record<string, string> | null;
   demoUrl: string | null;
   explanationUrl: string | null;
 }
@@ -58,11 +59,11 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  function count(exercises: RawExercise[], key: keyof RawExercise) {
+  function count(exercises: RawExercise[], key: Exclude<keyof RawExercise, "nameI18n">) {
     const map: Record<string, number> = {};
     for (const e of exercises) {
       const val = e[key];
-      if (val) map[val] = (map[val] || 0) + 1;
+      if (val) map[val as string] = (map[val as string] || 0) + 1;
     }
     return Object.entries(map)
       .map(([name, count]) => ({ name, count }))
@@ -188,6 +189,7 @@ export async function POST(req: NextRequest) {
         laterality: e.laterality,
         classification: e.classification,
         movementPattern: e.movementPattern,
+        nameI18n: e.nameI18n || undefined,
         videoUrl: e.demoUrl || null,
         tenantId,
       })),

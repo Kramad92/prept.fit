@@ -306,7 +306,7 @@ export const exerciseCategorySchema = z.object({
 
 export const exerciseLibrarySchema = z.object({
   name: z.string().min(1).max(200),
-  nameBs: z.string().max(200).nullable().optional(),
+  nameI18n: z.record(z.string().max(200)).nullable().optional(),
   category: z.string().max(100).nullable().optional(),
   muscleGroup: z.string().max(100).nullable().optional(),
   equipment: z.string().max(100).nullable().optional(),

@@ -27,12 +27,13 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { ExerciseImportModal } from "@/components/exercise-import-modal";
-import { useT, useLocale } from "@/lib/i18n";
+import { useT, useLocale, useTV, getExerciseDisplayName } from "@/lib/i18n";
 
 interface ExerciseItem {
   id: string;
   name: string;
   nameBs: string | null;
+  nameI18n: Record<string, string> | null;
   category: string | null;
   muscleGroup: string | null;
   equipment: string | null;
@@ -64,10 +65,11 @@ export default function ExerciseLibraryPage() {
 function ExerciseLibraryContent() {
   const t = useT();
   const { locale } = useLocale();
+  const tv = useTV();
   const searchParams = useSearchParams();
 
   function displayName(ex: ExerciseItem) {
-    return locale !== "en" && ex.nameBs ? ex.nameBs : ex.name;
+    return getExerciseDisplayName(ex, locale);
   }
 
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);
@@ -247,7 +249,7 @@ function ExerciseLibraryContent() {
 
   function startEdit(ex: ExerciseItem) {
     setEditingId(ex.id);
-    setFormName(locale !== "en" && ex.nameBs ? ex.nameBs : ex.name);
+    setFormName(getExerciseDisplayName(ex, locale));
     setFormCategory(ex.category || "");
     setFormMuscleGroup(ex.muscleGroup || "");
     setFormEquipment(ex.equipment || "");
@@ -298,7 +300,8 @@ function ExerciseLibraryContent() {
 
   const filtered = exercises.filter((ex) => {
     const s = search.toLowerCase();
-    const matchSearch = ex.name.toLowerCase().includes(s) || (ex.nameBs?.toLowerCase().includes(s) ?? false);
+    const i18nMatch = ex.nameI18n ? Object.values(ex.nameI18n).some((v) => v.toLowerCase().includes(s)) : false;
+    const matchSearch = ex.name.toLowerCase().includes(s) || i18nMatch;
     const matchCategory = !filterCategory || ex.category === filterCategory;
     const matchDifficulty = filterDifficulty.length === 0 || (ex.difficulty && filterDifficulty.includes(ex.difficulty));
     const matchEquipment = filterEquipment.length === 0 || (ex.equipment && filterEquipment.includes(ex.equipment));
@@ -423,7 +426,7 @@ function ExerciseLibraryContent() {
             onChange={setFilterCategory}
             placeholder={t.exerciseLibrary.allCategories}
             className="w-full sm:w-auto"
-            options={categories.map((c) => ({ value: c.name, label: c.name }))}
+            options={categories.map((c) => ({ value: c.name, label: tv("categories", c.name) }))}
           />
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -431,11 +434,11 @@ function ExerciseLibraryContent() {
             multi
             value={filterDifficulty}
             onChange={setFilterDifficulty}
-            placeholder="All Difficulty"
+            placeholder={t.exerciseLibrary.select}
             options={(() => {
               const order = ["Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Master", "Grand Master", "Legendary"];
               const existing = new Set(exercises.map((e) => e.difficulty).filter(Boolean));
-              return order.filter((d) => existing.has(d)).map((d) => ({ value: d, label: d }));
+              return order.filter((d) => existing.has(d)).map((d) => ({ value: d, label: tv("difficulty", d) }));
             })()}
             className="w-full sm:w-48"
           />
@@ -443,8 +446,8 @@ function ExerciseLibraryContent() {
             multi
             value={filterEquipment}
             onChange={setFilterEquipment}
-            placeholder="All Equipment"
-            options={equipmentTypes.map((e) => ({ value: e.name, label: e.name }))}
+            placeholder={t.exerciseLibrary.selectEquipment}
+            options={equipmentTypes.map((e) => ({ value: e.name, label: tv("equipment", e.name) }))}
             className="w-full sm:w-48"
           />
           <div className="flex items-center gap-2">
@@ -501,7 +504,7 @@ function ExerciseLibraryContent() {
                   ) : (
                     <ChevronDown className="h-4 w-4 text-gray-400" />
                   )}
-                  <span className="rounded bg-brand-50 px-2 py-0.5 text-brand-700">{category}</span>
+                  <span className="rounded bg-brand-50 px-2 py-0.5 text-brand-700">{tv("categories", category)}</span>
                   <span className="text-gray-400">({exs.length})</span>
                 </button>
                 {!collapsedCategories.has(category) && (
@@ -525,8 +528,8 @@ function ExerciseLibraryContent() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium text-gray-900">{displayName(ex)}</p>
                           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
-                            {ex.muscleGroup && <span>{ex.muscleGroup}</span>}
-                            {ex.equipment && <span>· {ex.equipment}</span>}
+                            {ex.muscleGroup && <span>{tv("muscleGroups", ex.muscleGroup)}</span>}
+                            {ex.equipment && <span>· {tv("equipment", ex.equipment)}</span>}
                           </div>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {ex.difficulty && (
@@ -537,7 +540,7 @@ function ExerciseLibraryContent() {
                                 ex.difficulty === "Advanced" ? "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
                                 "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                               }`}>
-                                {ex.difficulty}
+                                {tv("difficulty", ex.difficulty)}
                               </span>
                             )}
                             {ex.videoUrl && (
@@ -607,7 +610,7 @@ function ExerciseLibraryContent() {
                   onChange={setFormCategory}
                   placeholder={t.exerciseLibrary.select}
                   className="mt-1"
-                  options={categories.map((c) => ({ value: c.name, label: c.name }))}
+                  options={categories.map((c) => ({ value: c.name, label: tv("categories", c.name) }))}
                 />
               </div>
               <div>
@@ -617,7 +620,7 @@ function ExerciseLibraryContent() {
                   onChange={setFormEquipment}
                   placeholder={t.exerciseLibrary.select}
                   className="mt-1"
-                  options={equipmentTypes.map((e) => ({ value: e.name, label: e.name }))}
+                  options={equipmentTypes.map((e) => ({ value: e.name, label: tv("equipment", e.name) }))}
                 />
               </div>
             </div>
@@ -695,7 +698,9 @@ function ExerciseDetailModal({
   onEdit: (ex: ExerciseItem) => void;
   onDelete: (id: string) => void;
 }) {
-  const displayName = locale !== "en" && ex.nameBs ? ex.nameBs : ex.name;
+  const t = useT();
+  const tv = useTV();
+  const displayName = getExerciseDisplayName(ex, locale);
   const embedUrl = ex.videoUrl ? getYouTubeEmbedUrl(ex.videoUrl) : null;
 
   const difficultyColor =
@@ -711,7 +716,7 @@ function ExerciseDetailModal({
         <div className="flex items-start justify-between gap-3 pr-8">
           <div className="min-w-0 flex-1">
             <DialogTitle>{displayName}</DialogTitle>
-            {locale !== "en" && ex.nameBs && (
+            {locale !== "en" && displayName !== ex.name && (
               <p className="text-sm text-gray-400">{ex.name}</p>
             )}
           </div>
@@ -753,32 +758,32 @@ function ExerciseDetailModal({
       <div className="mt-4 flex flex-wrap gap-1.5">
         {ex.difficulty && (
           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${difficultyColor}`}>
-            {ex.difficulty}
+            {tv("difficulty", ex.difficulty)}
           </span>
         )}
         {ex.bodyRegion && (
           <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-            {ex.bodyRegion}
+            {tv("bodyRegion", ex.bodyRegion)}
           </span>
         )}
         {ex.mechanics && (
           <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
-            {ex.mechanics}
+            {tv("mechanics", ex.mechanics)}
           </span>
         )}
         {ex.forceType && (
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-            {ex.forceType}
+            {tv("forceType", ex.forceType)}
           </span>
         )}
         {ex.laterality && (
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-            {ex.laterality}
+            {tv("laterality", ex.laterality)}
           </span>
         )}
         {ex.classification && (
           <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
-            {ex.classification}
+            {tv("classification", ex.classification)}
           </span>
         )}
       </div>
@@ -787,32 +792,32 @@ function ExerciseDetailModal({
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         {ex.category && (
           <div>
-            <p className="text-xs font-medium text-gray-400">Target Muscle Group</p>
-            <p className="text-gray-900">{ex.category}</p>
+            <p className="text-xs font-medium text-gray-400">{t.exerciseValues.targetMuscleGroup}</p>
+            <p className="text-gray-900">{tv("categories", ex.category)}</p>
           </div>
         )}
         {ex.muscleGroup && (
           <div>
-            <p className="text-xs font-medium text-gray-400">Prime Mover</p>
-            <p className="text-gray-900">{ex.muscleGroup}</p>
+            <p className="text-xs font-medium text-gray-400">{t.exerciseValues.primeMover}</p>
+            <p className="text-gray-900">{tv("muscleGroups", ex.muscleGroup)}</p>
           </div>
         )}
         {ex.secondaryMuscles && (
           <div className="col-span-2">
-            <p className="text-xs font-medium text-gray-400">Secondary Muscles</p>
+            <p className="text-xs font-medium text-gray-400">{t.exerciseValues.secondaryMuscles}</p>
             <p className="text-gray-900">{ex.secondaryMuscles}</p>
           </div>
         )}
         {ex.equipment && (
           <div>
-            <p className="text-xs font-medium text-gray-400">Equipment</p>
-            <p className="text-gray-900">{ex.equipment}</p>
+            <p className="text-xs font-medium text-gray-400">{t.exerciseLibrary.equipment}</p>
+            <p className="text-gray-900">{tv("equipment", ex.equipment)}</p>
           </div>
         )}
         {ex.movementPattern && (
           <div>
-            <p className="text-xs font-medium text-gray-400">Movement Pattern</p>
-            <p className="text-gray-900">{ex.movementPattern}</p>
+            <p className="text-xs font-medium text-gray-400">{t.exerciseValues.movementPatternLabel}</p>
+            <p className="text-gray-900">{tv("movementPattern", ex.movementPattern)}</p>
           </div>
         )}
       </div>

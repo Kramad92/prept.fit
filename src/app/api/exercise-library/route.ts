@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getSession } from "@/lib/session";
 import { validateBody, exerciseLibrarySchema } from "@/lib/validations";
 
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
             OR: [
               { name: { contains: search, mode: "insensitive" as const } },
               { nameBs: { contains: search, mode: "insensitive" as const } },
+              { nameI18n: { string_contains: search } },
             ],
           }
         : {}),
@@ -42,7 +44,7 @@ export async function POST(req: NextRequest) {
   const exercise = await prisma.exerciseLibrary.create({
     data: {
       name: body.name,
-      nameBs: body.nameBs || null,
+      nameI18n: body.nameI18n || Prisma.JsonNull,
       category: body.category || null,
       muscleGroup: body.muscleGroup || null,
       equipment: body.equipment || null,

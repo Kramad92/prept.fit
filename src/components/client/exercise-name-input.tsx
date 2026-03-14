@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { LibraryExercise } from "@/types";
-import { useT } from "@/lib/i18n";
+import { useT, useTV } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 interface ExerciseNameInputProps {
@@ -16,6 +16,7 @@ interface ExerciseNameInputProps {
 
 export function ExerciseNameInput({ value, onChange, placeholder, className, onKeyDown, ...rest }: ExerciseNameInputProps) {
   const t = useT();
+  const tv = useTV();
   const [results, setResults] = useState<LibraryExercise[]>([]);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -79,7 +80,7 @@ export function ExerciseNameInput({ value, onChange, placeholder, className, onK
               >
                 <span className="font-medium text-gray-900">{ex.name}</span>
                 <span className="text-xs text-gray-400">
-                  {[ex.muscleGroup, ex.equipment].filter(Boolean).join(" · ")}
+                  {[ex.muscleGroup ? tv("muscleGroups", ex.muscleGroup) : null, ex.equipment ? tv("equipment", ex.equipment) : null].filter(Boolean).join(" · ")}
                 </span>
               </button>
             ))}

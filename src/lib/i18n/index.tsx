@@ -77,6 +77,18 @@ export function useLocale() {
   return useContext(I18nContext);
 }
 
+/** Translate an exercise metadata value (category, equipment, etc.) */
+type ExerciseValueField = "categories" | "muscleGroups" | "equipment" | "difficulty" | "bodyRegion" | "movementPattern" | "forceType" | "mechanics" | "laterality" | "classification";
+
+export function useTV() {
+  const { t } = useContext(I18nContext);
+  return (field: ExerciseValueField, value: string | null | undefined): string => {
+    if (!value) return "";
+    const map = t.exerciseValues[field] as Record<string, string>;
+    return map?.[value] ?? value;
+  };
+}
+
 /** Map app locale to BCP 47 date locale for toLocaleDateString() */
 const DATE_LOCALES: Record<Locale, string> = {
   bs: "bs-BA",
@@ -87,6 +99,15 @@ const DATE_LOCALES: Record<Locale, string> = {
 
 export function getDateLocale(locale: Locale): string {
   return DATE_LOCALES[locale] || "en-US";
+}
+
+/** Get locale-appropriate exercise name from nameI18n JSON, falling back to English name */
+export function getExerciseDisplayName(
+  exercise: { name: string; nameI18n?: Record<string, string> | null },
+  locale: Locale | string
+): string {
+  if (locale === "en") return exercise.name;
+  return exercise.nameI18n?.[locale] || exercise.name;
 }
 
 export { type Translations };

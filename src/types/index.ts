@@ -82,6 +82,7 @@ export interface LibraryExercise {
   id: string;
   name: string;
   nameBs: string | null;
+  nameI18n: Record<string, string> | null;
   category: string | null;
   muscleGroup: string | null;
   equipment: string | null;

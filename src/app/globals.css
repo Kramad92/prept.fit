@@ -341,3 +341,31 @@ body {
 .stagger-in > *:nth-child(7) { animation-delay: 180ms; }
 .stagger-in > *:nth-child(8) { animation-delay: 210ms; }
 .stagger-in > *:nth-child(n+9) { animation-delay: 240ms; }
+
+/* Thin, subtle scrollbar for scrollable containers */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.3) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(148 163 184 / 0.3);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184 / 0.5);
+}
+html.dark .scrollbar-thin {
+  scrollbar-color: rgb(71 85 105 / 0.4) transparent;
+}
+html.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(71 85 105 / 0.4);
+}
+html.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(71 85 105 / 0.6);
+}

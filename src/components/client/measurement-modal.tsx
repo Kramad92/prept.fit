@@ -45,7 +45,7 @@ export function MeasurementModal({ clientId, lastMeasurement, onClose, onSaved }
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto top-auto bottom-0 translate-y-0 rounded-t-2xl rounded-b-none md:top-[50%] md:translate-y-[-50%] md:bottom-auto md:rounded-xl">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-thin top-auto bottom-0 translate-y-0 rounded-t-2xl rounded-b-none md:top-[50%] md:translate-y-[-50%] md:bottom-auto md:rounded-xl">
         <DialogHeader>
           <DialogTitle>{t.measurements.addMeasurement}</DialogTitle>
         </DialogHeader>

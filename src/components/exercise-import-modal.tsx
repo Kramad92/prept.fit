@@ -146,7 +146,7 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto scrollbar-thin">
         <DialogHeader>
           <DialogTitle>Import Exercise Database</DialogTitle>
         </DialogHeader>

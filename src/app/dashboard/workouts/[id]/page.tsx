@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -99,15 +100,22 @@ export default function WorkoutDetailPage() {
     setDuplicating(false);
   }
 
-  async function handleDelete() {
-    if (!confirm(t.workouts.deleteConfirm)) return;
-    setDeleting(true);
-    try {
-      await api.delete(`/api/workouts/${params.id}`);
-      router.push("/dashboard/workouts");
-    } catch {
-      setDeleting(false);
-    }
+  function handleDelete() {
+    toast(t.workouts.deleteConfirm, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          setDeleting(true);
+          try {
+            await api.delete(`/api/workouts/${params.id}`);
+            router.push("/dashboard/workouts");
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+            setDeleting(false);
+          }
+        },
+      },
+    });
   }
 
   async function handleAssign() {

@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Dumbbell, CheckCircle2, Users, Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FilterSelect } from "@/components/ui/filter-select";
+import { toast } from "sonner";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -71,10 +72,20 @@ export default function SessionDetailPage() {
     refresh();
   };
 
-  const handleDelete = async () => {
-    if (!confirm(t.common.delete + "?")) return;
-    await api.delete(`/api/group-sessions/${id}`);
-    router.push("/dashboard/group-training");
+  const handleDelete = () => {
+    toast(t.common.delete + "?", {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          try {
+            await api.delete(`/api/group-sessions/${id}`);
+            router.push("/dashboard/group-training");
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+          }
+        },
+      },
+    });
   };
 
   if (loading || !session) return <PageSkeleton />;

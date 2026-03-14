@@ -140,18 +140,24 @@ function NutritionContent() {
     setDuplicating(null);
   }
 
-  async function handleDelete(planId: string) {
-    if (!confirm(t.workouts.deleteConfirm)) return;
-    try {
-      await api.delete(`/api/meal-plans/${planId}`);
-      setPlans((prev) => prev.filter((p) => p.id !== planId));
-      if (expandedPlan === planId) {
-        setExpandedPlan(null);
-        setPlanDetail(null);
-      }
-    } catch {
-      toast.error(t.errors.somethingWentWrong);
-    }
+  function handleDelete(planId: string) {
+    toast(t.workouts.deleteConfirm, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          try {
+            await api.delete(`/api/meal-plans/${planId}`);
+            setPlans((prev) => prev.filter((p) => p.id !== planId));
+            if (expandedPlan === planId) {
+              setExpandedPlan(null);
+              setPlanDetail(null);
+            }
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+          }
+        },
+      },
+    });
   }
 
   async function handleEdit(planId: string) {

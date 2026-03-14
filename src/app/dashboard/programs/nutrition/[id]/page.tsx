@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -77,15 +78,22 @@ export default function NutritionProgramDetailPage() {
     setAssigning(false);
   }
 
-  async function handleDelete() {
-    if (!confirm(t.programs.deleteConfirm)) return;
-    setDeleting(true);
-    try {
-      await api.delete(`/api/nutrition-programs/${params.id}`);
-      router.push("/dashboard/programs");
-    } catch {
-      setDeleting(false);
-    }
+  function handleDelete() {
+    toast(t.programs.deleteConfirm, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          setDeleting(true);
+          try {
+            await api.delete(`/api/nutrition-programs/${params.id}`);
+            router.push("/dashboard/programs");
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+            setDeleting(false);
+          }
+        },
+      },
+    });
   }
 
   if (loading || !program) {

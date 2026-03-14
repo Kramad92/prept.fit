@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { ExerciseImportModal } from "@/components/exercise-import-modal";
+import { toast } from "sonner";
 import { useT, useLocale, useTV, getExerciseDisplayName } from "@/lib/i18n";
 
 interface ExerciseItem {
@@ -263,23 +264,28 @@ function ExerciseLibraryContent() {
     loadExercises();
   }
 
-  async function handleBatchDelete() {
+  function handleBatchDelete() {
     if (selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} exercises? This cannot be undone.`)) return;
-    setBatchDeleting(true);
-    const ids = Array.from(selected);
-    // Delete in chunks of 500
-    for (let i = 0; i < ids.length; i += 500) {
-      await fetch("/api/exercise-library/batch", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: ids.slice(i, i + 500) }),
-      });
-    }
-    setSelected(new Set());
-    setSelectMode(false);
-    setBatchDeleting(false);
-    loadExercises();
+    toast(`Delete ${selected.size} exercises? This cannot be undone.`, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          setBatchDeleting(true);
+          const ids = Array.from(selected);
+          for (let i = 0; i < ids.length; i += 500) {
+            await fetch("/api/exercise-library/batch", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ids: ids.slice(i, i + 500) }),
+            });
+          }
+          setSelected(new Set());
+          setSelectMode(false);
+          setBatchDeleting(false);
+          loadExercises();
+        },
+      },
+    });
   }
 
   function toggleSelect(id: string) {
@@ -729,7 +735,7 @@ function ExerciseDetailModal({
               <Pencil className="h-4 w-4" />
             </button>
             <button
-              onClick={() => { if (confirm("Delete this exercise?")) onDelete(ex.id); }}
+              onClick={() => toast("Delete this exercise?", { action: { label: t.common.delete, onClick: () => onDelete(ex.id) } })}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
               title="Delete"
             >
@@ -1001,10 +1007,16 @@ function OptionList({
     }
   }
 
-  async function handleDeleteItem(id: string) {
-    if (!confirm(t.exerciseLibrary.deleteConfirm)) return;
-    await fetch(`${apiPath}/${id}`, { method: "DELETE" });
-    onChange();
+  function handleDeleteItem(id: string) {
+    toast(t.exerciseLibrary.deleteConfirm, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          await fetch(`${apiPath}/${id}`, { method: "DELETE" });
+          onChange();
+        },
+      },
+    });
   }
 
   return (

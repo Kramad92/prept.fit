@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Users, Calendar, Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -44,10 +45,20 @@ export default function GroupDetailPage() {
     refresh();
   };
 
-  const handleDelete = async () => {
-    if (!confirm(t.common.delete + "?")) return;
-    await api.delete(`/api/training-groups/${id}`);
-    router.push("/dashboard/group-training");
+  const handleDelete = () => {
+    toast(t.common.delete + "?", {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          try {
+            await api.delete(`/api/training-groups/${id}`);
+            router.push("/dashboard/group-training");
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+          }
+        },
+      },
+    });
   };
 
   if (loading || !group) return <PageSkeleton />;

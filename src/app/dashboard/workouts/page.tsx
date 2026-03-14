@@ -7,6 +7,7 @@ import { Plus, Dumbbell, Search, Zap, Pencil, Copy, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -108,14 +109,20 @@ export default function WorkoutsPage() {
     setCreating(null);
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm(t.workouts.deleteConfirm)) return;
-    try {
-      await api.delete(`/api/workouts/${id}`);
-      refresh();
-    } catch {
-      // handled by api client
-    }
+  function handleDelete(id: string) {
+    toast(t.workouts.deleteConfirm, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          try {
+            await api.delete(`/api/workouts/${id}`);
+            refresh();
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+          }
+        },
+      },
+    });
   }
 
   async function handleDuplicate(id: string) {

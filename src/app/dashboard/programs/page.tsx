@@ -7,6 +7,7 @@ import { Plus, CalendarRange, UtensilsCrossed, Search, Users, Pencil, Trash2 } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
+import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
@@ -20,24 +21,36 @@ export default function ProgramsPage() {
   const { data: programs, loading, refresh } = useApi<WorkoutProgramSummary[]>("/api/programs");
   const { data: nutritionPrograms, loading: nLoading, refresh: nRefresh } = useApi<NutritionProgramSummary[]>("/api/nutrition-programs");
 
-  async function handleDeleteWorkout(id: string) {
-    if (!confirm(t.programs.deleteConfirm)) return;
-    try {
-      await api.delete(`/api/programs/${id}`);
-      refresh();
-    } catch {
-      // handled by api client
-    }
+  function handleDeleteWorkout(id: string) {
+    toast(t.programs.deleteConfirm, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          try {
+            await api.delete(`/api/programs/${id}`);
+            refresh();
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+          }
+        },
+      },
+    });
   }
 
-  async function handleDeleteNutrition(id: string) {
-    if (!confirm(t.programs.deleteConfirm)) return;
-    try {
-      await api.delete(`/api/nutrition-programs/${id}`);
-      nRefresh();
-    } catch {
-      // handled by api client
-    }
+  function handleDeleteNutrition(id: string) {
+    toast(t.programs.deleteConfirm, {
+      action: {
+        label: t.common.delete,
+        onClick: async () => {
+          try {
+            await api.delete(`/api/nutrition-programs/${id}`);
+            nRefresh();
+          } catch {
+            toast.error(t.errors.somethingWentWrong);
+          }
+        },
+      },
+    });
   }
 
   const filteredWorkouts = (programs || []).filter((p) =>

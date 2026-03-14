@@ -3,11 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import { AIGenerateProgram } from "@/components/ai/ai-generate-program";
@@ -111,7 +110,6 @@ export default function NewProgramPage() {
     if (!name) setName(data.name);
     setAiDescription(data.description || "");
 
-    // Merge AI-generated days into the current grid
     setDays((prev) =>
       prev.map((slot) => {
         const aiDay = data.days.find(
@@ -129,6 +127,28 @@ export default function NewProgramPage() {
       })
     );
   }
+
+  // Smart auto-fill: rotation when too few workouts for AI to add value
+  function handleAutoFill() {
+    if (workouts.length === 0) return;
+    const dayLabels = DAY_KEYS.map((key) => t.programs[key]);
+
+    setDays((prev) =>
+      prev.map((slot) => {
+        const globalIndex = (slot.weekNumber - 1) * daysPerWeek + (slot.dayNumber - 1);
+        const workout = workouts[globalIndex % workouts.length];
+        return {
+          ...slot,
+          label: slot.label || dayLabels[slot.dayNumber - 1],
+          workoutPlanId: workout.id,
+          workoutName: workout.name,
+        };
+      })
+    );
+  }
+
+  // Should we skip AI and just auto-fill?
+  const shouldAutoFill = workouts.length > 0 && workouts.length <= Math.floor(daysPerWeek / 2);
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -162,10 +182,7 @@ export default function NewProgramPage() {
     weekGroups[d.weekNumber].push(d);
   }
 
-  const dayOptions = DAY_KEYS.map((key) => ({
-    value: t.programs[key],
-    label: t.programs[key],
-  }));
+  const dayLabels = DAY_KEYS.map((key) => t.programs[key]);
 
   return (
     <div>
@@ -202,12 +219,22 @@ export default function NewProgramPage() {
               rows={2}
             />
             <div className="mt-2">
-              <AIGenerateProgram
-                prompt={description}
-                durationWeeks={durationWeeks}
-                daysPerWeek={daysPerWeek}
-                onGenerate={handleAIGenerate}
-              />
+              {shouldAutoFill ? (
+                <button
+                  type="button"
+                  onClick={handleAutoFill}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
+                >
+                  {t.programs.generateWithAI}
+                </button>
+              ) : workouts.length > 0 ? (
+                <AIGenerateProgram
+                  prompt={description}
+                  durationWeeks={durationWeeks}
+                  daysPerWeek={daysPerWeek}
+                  onGenerate={handleAIGenerate}
+                />
+              ) : null}
             </div>
           </div>
           {aiDescription && (
@@ -257,67 +284,91 @@ export default function NewProgramPage() {
             {t.programs.scheduleDesc}
           </p>
 
-          <div className="mt-4 space-y-6">
-            {Object.entries(weekGroups).map(([weekStr, weekDays]) => {
-              const week = Number(weekStr);
-              return (
-                <div key={week}>
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    {t.programs.week} {week}
-                  </h3>
-                  <div className="mt-2 space-y-2">
-                    {weekDays.map((slot) => (
-                      <div
-                        key={`${slot.weekNumber}-${slot.dayNumber}`}
-                        className="card !py-3"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-                            {slot.dayNumber}
-                          </span>
-                          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[9rem_1fr]">
-                            <FilterSelect
-                              value={slot.label}
-                              onChange={(v) =>
-                                updateLabel(slot.weekNumber, slot.dayNumber, v)
-                              }
-                              placeholder={t.programs.selectDay}
-                              options={dayOptions}
-                            />
-                            <FilterSelect
-                              value={slot.workoutPlanId || ""}
-                              onChange={(v) =>
-                                updateDay(
-                                  slot.weekNumber,
-                                  slot.dayNumber,
-                                  v || null
-                                )
-                              }
-                              placeholder={t.programs.selectWorkout}
-                              options={workouts.map((w) => ({
-                                value: w.id,
-                                label: `${w.name} (${w.exerciseCount} ${t.workouts.exercises_count})`,
-                              }))}
-                            />
+          {workouts.length === 0 ? (
+            <div className="mt-4 rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
+              <p className="text-sm text-gray-500">
+                {t.workouts.noPlans}
+              </p>
+              <Link
+                href="/dashboard/workouts/new"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              >
+                <Plus className="h-4 w-4" />
+                {t.workouts.createWorkoutPlan}
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-6">
+              {Object.entries(weekGroups).map(([weekStr, weekDays]) => {
+                const week = Number(weekStr);
+                return (
+                  <div key={week}>
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      {t.programs.week} {week}
+                    </h3>
+                    <div className="mt-2 space-y-2">
+                      {weekDays.map((slot) => (
+                        <div
+                          key={`${slot.weekNumber}-${slot.dayNumber}`}
+                          className="card !py-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+                              {slot.dayNumber}
+                            </span>
+                            <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[9rem_1fr]">
+                              <select
+                                value={slot.label}
+                                onChange={(e) =>
+                                  updateLabel(slot.weekNumber, slot.dayNumber, e.target.value)
+                                }
+                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                              >
+                                <option value="">{t.programs.selectDay}</option>
+                                {dayLabels.map((label) => (
+                                  <option key={label} value={label}>
+                                    {label}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                value={slot.workoutPlanId || ""}
+                                onChange={(e) =>
+                                  updateDay(
+                                    slot.weekNumber,
+                                    slot.dayNumber,
+                                    e.target.value || null
+                                  )
+                                }
+                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                              >
+                                <option value="">{t.programs.selectWorkout}</option>
+                                {workouts.map((w) => (
+                                  <option key={w.id} value={w.id}>
+                                    {w.name} ({w.exerciseCount} {t.workouts.exercises_count})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            {slot.workoutPlanId && (
+                              <button
+                                onClick={() =>
+                                  updateDay(slot.weekNumber, slot.dayNumber, null)
+                                }
+                                className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-red-500"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
-                          {slot.workoutPlanId && (
-                            <button
-                              onClick={() =>
-                                updateDay(slot.weekNumber, slot.dayNumber, null)
-                              }
-                              className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-red-500"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Save */}

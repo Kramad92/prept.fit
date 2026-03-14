@@ -3,11 +3,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FilterSelect } from "@/components/ui/filter-select";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 
@@ -178,10 +177,7 @@ export default function EditNutritionProgramPage() {
     weekGroups[d.weekNumber].push(d);
   }
 
-  const dayOptions = DAY_KEYS.map((key) => ({
-    value: t.programs[key],
-    label: t.programs[key],
-  }));
+  const dayLabels = DAY_KEYS.map((key) => t.programs[key]);
 
   return (
     <div>
@@ -251,60 +247,85 @@ export default function EditNutritionProgramPage() {
           <h2 className="text-lg font-semibold text-gray-900">
             {t.programs.nutritionSchedule}
           </h2>
-          <div className="mt-4 space-y-6">
-            {Object.entries(weekGroups).map(([weekStr, weekDays]) => (
-              <div key={weekStr}>
-                <h3 className="text-sm font-semibold text-gray-700">
-                  {t.programs.week} {weekStr}
-                </h3>
-                <div className="mt-2 space-y-2">
-                  {weekDays.map((slot) => (
-                    <div
-                      key={`${slot.weekNumber}-${slot.dayNumber}`}
-                      className="card !py-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-semibold text-orange-700">
-                          {slot.dayNumber}
-                        </span>
-                        <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[9rem_1fr]">
-                          <FilterSelect
-                            value={slot.label}
-                            onChange={(v) =>
-                              updateLabel(slot.weekNumber, slot.dayNumber, v)
-                            }
-                            placeholder={t.programs.selectDay}
-                            options={dayOptions}
-                          />
-                          <FilterSelect
-                            value={slot.mealPlanId || ""}
-                            onChange={(v) =>
-                              updateDay(slot.weekNumber, slot.dayNumber, v || null)
-                            }
-                            placeholder={t.programs.selectMealPlan}
-                            options={mealPlans.map((m) => ({
-                              value: m.id,
-                              label: `${m.name} (${m.mealCount} ${t.nutrition.meals_count})`,
-                            }))}
-                          />
+
+          {mealPlans.length === 0 ? (
+            <div className="mt-4 rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
+              <p className="text-sm text-gray-500">
+                {t.nutrition.noPlans}
+              </p>
+              <Link
+                href="/dashboard/nutrition"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              >
+                <Plus className="h-4 w-4" />
+                {t.nutrition.createMealPlan}
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-6">
+              {Object.entries(weekGroups).map(([weekStr, weekDays]) => (
+                <div key={weekStr}>
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    {t.programs.week} {weekStr}
+                  </h3>
+                  <div className="mt-2 space-y-2">
+                    {weekDays.map((slot) => (
+                      <div
+                        key={`${slot.weekNumber}-${slot.dayNumber}`}
+                        className="card !py-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-semibold text-orange-700">
+                            {slot.dayNumber}
+                          </span>
+                          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[9rem_1fr]">
+                            <select
+                              value={slot.label}
+                              onChange={(e) =>
+                                updateLabel(slot.weekNumber, slot.dayNumber, e.target.value)
+                              }
+                              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                            >
+                              <option value="">{t.programs.selectDay}</option>
+                              {dayLabels.map((label) => (
+                                <option key={label} value={label}>
+                                  {label}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              value={slot.mealPlanId || ""}
+                              onChange={(e) =>
+                                updateDay(slot.weekNumber, slot.dayNumber, e.target.value || null)
+                              }
+                              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                            >
+                              <option value="">{t.programs.selectMealPlan}</option>
+                              {mealPlans.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name} ({m.mealCount} {t.nutrition.meals_count})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {slot.mealPlanId && (
+                            <button
+                              onClick={() =>
+                                updateDay(slot.weekNumber, slot.dayNumber, null)
+                              }
+                              className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-red-500"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
-                        {slot.mealPlanId && (
-                          <button
-                            onClick={() =>
-                              updateDay(slot.weekNumber, slot.dayNumber, null)
-                            }
-                            className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-red-500"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3">

@@ -67,7 +67,7 @@ export default function EditNutritionProgramPage() {
   useEffect(() => {
     Promise.all([
       api.get<ProgramDetail>(`/api/nutrition-programs/${params.id}`),
-      api.get<MealPlanOption[]>("/api/nutrition"),
+      api.get<MealPlanOption[]>("/api/meal-plans"),
     ])
       .then(([prog, m]) => {
         setName(prog.name);

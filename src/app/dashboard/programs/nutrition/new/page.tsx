@@ -49,7 +49,7 @@ export default function NewNutritionProgramPage() {
   const [aiDescription, setAiDescription] = useState("");
 
   useEffect(() => {
-    api.get<MealPlanOption[]>("/api/nutrition").then(setMealPlans).catch(() => {});
+    api.get<MealPlanOption[]>("/api/meal-plans").then(setMealPlans).catch(() => {});
   }, []);
 
   // Generate day grid when weeks change (7 days per week for nutrition)

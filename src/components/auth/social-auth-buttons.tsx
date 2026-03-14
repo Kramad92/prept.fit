@@ -17,7 +17,7 @@ export function SocialAuthButtons({ mode, callbackUrl }: SocialAuthButtonsProps)
   const handleSocialAuth = async (provider: string) => {
     setLoading(provider);
     await signIn(provider, {
-      callbackUrl: callbackUrl || (mode === "register" ? "/register" : "/login"),
+      callbackUrl: callbackUrl || "/dashboard",
     });
   };
 

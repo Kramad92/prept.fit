@@ -150,7 +150,23 @@ export function NutritionPlanForm({
             {aiDescription && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">{t.common.clientDescription || "Client description"}</label>
-                <Input type="text" value={aiDescription} onChange={(e) => { setAiDescription(e.target.value); onFormChange((prev) => ({ ...prev, description: e.target.value })); }} className="mt-1" />
+                <Textarea
+                  value={aiDescription}
+                  onChange={(e) => {
+                    setAiDescription(e.target.value);
+                    onFormChange((prev) => ({ ...prev, description: e.target.value }));
+                    e.target.style.height = "auto";
+                    e.target.style.height = Math.min(e.target.scrollHeight, 4.5 * 16) + "px";
+                  }}
+                  ref={(el) => {
+                    if (el && aiDescription) {
+                      el.style.height = "auto";
+                      el.style.height = Math.min(el.scrollHeight, 4.5 * 16) + "px";
+                    }
+                  }}
+                  className="mt-1 resize-none overflow-hidden"
+                  rows={1}
+                />
               </div>
             )}
 

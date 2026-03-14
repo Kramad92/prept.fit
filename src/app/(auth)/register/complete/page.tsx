@@ -53,16 +53,28 @@ function CompleteRegistrationContent() {
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error || t.auth.registrationFailed);
         setLoading(false);
         return;
       }
 
-      // Account created — now sign in with the OAuth provider
-      // This time the signIn callback will find the user and succeed
-      await signIn(provider, { callbackUrl: "/dashboard" });
+      // Sign in directly using the one-time token (no second Google popup)
+      const result = await signIn("credentials", {
+        email,
+        password: data.loginToken,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(t.auth.registrationFailed);
+        setLoading(false);
+        return;
+      }
+
+      router.push("/dashboard");
     } catch {
       setError(t.auth.registrationFailed);
       setLoading(false);

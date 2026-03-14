@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
@@ -36,6 +37,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Generate a one-time login token (expires in 5 minutes)
+    const loginToken = randomBytes(32).toString("hex");
+    const loginTokenExpiry = new Date(Date.now() + 5 * 60 * 1000);
+
     // Create tenant + user (no password — social auth only)
     const tenant = await prisma.tenant.create({
       data: {
@@ -48,7 +53,8 @@ export async function POST(req: NextRequest) {
             email,
             role: "COACH",
             emailVerified: new Date(),
-            // No passwordHash — OAuth user
+            // Store one-time token as passwordHash (prefixed to distinguish)
+            passwordHash: `otp:${loginToken}:${loginTokenExpiry.toISOString()}`,
           },
         },
       },
@@ -56,7 +62,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { id: tenant.id, slug: tenant.slug },
+      { id: tenant.id, slug: tenant.slug, loginToken },
       { status: 201 }
     );
   } catch (error) {

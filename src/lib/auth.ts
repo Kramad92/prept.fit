@@ -41,12 +41,25 @@ export const authOptions: NextAuthOptions = {
 
         if (!user || !user.passwordHash) return null;
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        );
+        // Check for one-time login token (from social registration)
+        if (user.passwordHash.startsWith("otp:")) {
+          const [, token, expiry] = user.passwordHash.split(":");
+          if (credentials.password !== token || new Date(expiry) < new Date()) {
+            return null;
+          }
+          // Clear the one-time token after use
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash: null },
+          });
+        } else {
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.passwordHash
+          );
 
-        if (!isValid) return null;
+          if (!isValid) return null;
+        }
 
         // Admin users don't belong to a tenant — empty string sentinel
         if (user.role === "ADMIN") {

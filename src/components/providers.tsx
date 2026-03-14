@@ -11,9 +11,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {children}
         <Toaster
           position="bottom-right"
+          closeButton
+          mobilePosition="top-center"
           toastOptions={{
             className: "text-sm",
-            duration: 5000,
+            duration: 3000,
           }}
         />
       </I18nProvider>

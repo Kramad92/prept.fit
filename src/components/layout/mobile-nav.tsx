@@ -32,17 +32,17 @@ export function MobileNav() {
   const primaryNav = [
     { href: "/dashboard", icon: LayoutDashboard, label: t.nav.home },
     { href: "/dashboard/clients", icon: Users, label: t.nav.clients },
-    { href: "/dashboard/workouts", icon: Dumbbell, label: t.nav.workouts },
-    { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+    { href: "/dashboard/schedule", icon: Calendar, label: t.nav.schedule },
+    { href: "/dashboard/messages", icon: MessageSquare, label: t.nav.messages },
   ];
 
   const moreNav = [
-    { href: "/dashboard/schedule", icon: Calendar, label: t.nav.schedule },
-    { href: "/dashboard/group-training", icon: UsersRound, label: t.nav.groupTraining },
+    { href: "/dashboard/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
+    { href: "/dashboard/workouts", icon: Dumbbell, label: t.nav.workouts },
+    { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
     { href: "/dashboard/programs", icon: CalendarRange, label: t.nav.programs },
     { href: "/dashboard/exercises", icon: Library, label: t.nav.exerciseLibrary },
-    { href: "/dashboard/messages", icon: MessageSquare, label: t.nav.messages },
-    { href: "/dashboard/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
+    { href: "/dashboard/group-training", icon: UsersRound, label: t.nav.groupTraining },
     { href: "/dashboard/habits", icon: Sparkles, label: t.nav.habits },
     { href: "/dashboard/billing", icon: DollarSign, label: t.nav.billing },
     { href: "/dashboard/settings", icon: Settings, label: t.nav.settings },

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FilterSelect } from "@/components/ui/filter-select";
+import { AIGenerateNutritionProgram } from "@/components/ai/ai-generate-nutrition-program";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 
@@ -46,6 +47,7 @@ export default function NewNutritionProgramPage() {
   const [days, setDays] = useState<DaySlot[]>([]);
   const [mealPlans, setMealPlans] = useState<MealPlanOption[]>([]);
   const [saving, setSaving] = useState(false);
+  const [aiDescription, setAiDescription] = useState("");
 
   useEffect(() => {
     api.get<MealPlanOption[]>("/api/nutrition").then(setMealPlans).catch(() => {});
@@ -95,13 +97,45 @@ export default function NewNutritionProgramPage() {
     );
   }
 
+  function handleAIGenerate(data: {
+    name: string;
+    description: string;
+    days: {
+      weekNumber: number;
+      dayNumber: number;
+      label: string;
+      mealPlanId: string | null;
+      mealPlanName: string | null;
+    }[];
+  }) {
+    if (!name) setName(data.name);
+    setAiDescription(data.description || "");
+
+    setDays((prev) =>
+      prev.map((slot) => {
+        const aiDay = data.days.find(
+          (d) => d.weekNumber === slot.weekNumber && d.dayNumber === slot.dayNumber
+        );
+        if (aiDay) {
+          return {
+            ...slot,
+            label: aiDay.label || slot.label,
+            mealPlanId: aiDay.mealPlanId,
+            mealPlanName: aiDay.mealPlanName,
+          };
+        }
+        return slot;
+      })
+    );
+  }
+
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
     try {
       const payload = {
         name,
-        description: description || null,
+        description: aiDescription || description || null,
         durationWeeks,
         mealsPerDay,
         days: days
@@ -159,38 +193,56 @@ export default function NewNutritionProgramPage() {
             />
           </div>
           <div>
-            <label className="label">{t.common.description}</label>
+            <label className="label">{aiDescription ? (t.common.aiPromptLabel || "AI Prompt") : t.common.description}</label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.programs.nutritionProgramDescPlaceholder}
               rows={2}
             />
+            <div className="mt-2">
+              <AIGenerateNutritionProgram
+                prompt={description}
+                durationWeeks={durationWeeks}
+                mealsPerDay={mealsPerDay}
+                onGenerate={handleAIGenerate}
+              />
+            </div>
           </div>
+          {aiDescription && (
+            <div>
+              <label className="label">{t.common.clientDescription || "Client description"}</label>
+              <Textarea value={aiDescription} onChange={(e) => setAiDescription(e.target.value)} rows={2} />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">{t.programs.durationWeeks}</label>
-              <FilterSelect
-                value={String(durationWeeks)}
-                onChange={(v) => setDurationWeeks(Number(v))}
-                placeholder={t.programs.durationWeeks}
-                options={Array.from({ length: 12 }, (_, i) => ({
-                  value: String(i + 1),
-                  label: `${i + 1} ${t.programs.weeks}`,
-                }))}
-              />
+              <select
+                value={durationWeeks}
+                onChange={(e) => setDurationWeeks(Number(e.target.value))}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              >
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1} {t.programs.weeks}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="label">{t.programs.mealsPerDay}</label>
-              <FilterSelect
-                value={String(mealsPerDay)}
-                onChange={(v) => setMealsPerDay(Number(v))}
-                placeholder={t.programs.mealsPerDay}
-                options={Array.from({ length: 8 }, (_, i) => ({
-                  value: String(i + 1),
-                  label: `${i + 1} ${t.nutrition.meals_count}`,
-                }))}
-              />
+              <select
+                value={mealsPerDay}
+                onChange={(e) => setMealsPerDay(Number(e.target.value))}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              >
+                {Array.from({ length: 8 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1} {t.nutrition.meals_count}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -216,46 +268,48 @@ export default function NewNutritionProgramPage() {
                     {weekDays.map((slot) => (
                       <div
                         key={`${slot.weekNumber}-${slot.dayNumber}`}
-                        className="card flex items-center gap-3 !py-3"
+                        className="card !py-3"
                       >
-                        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-semibold text-orange-700">
-                          {slot.dayNumber}
-                        </span>
-                        <FilterSelect
-                          value={slot.label}
-                          onChange={(v) =>
-                            updateLabel(slot.weekNumber, slot.dayNumber, v)
-                          }
-                          placeholder={t.programs.selectDay}
-                          options={dayOptions}
-                          className="w-36 flex-shrink-0"
-                        />
-                        <FilterSelect
-                          value={slot.mealPlanId || ""}
-                          onChange={(v) =>
-                            updateDay(
-                              slot.weekNumber,
-                              slot.dayNumber,
-                              v || null
-                            )
-                          }
-                          placeholder={t.programs.selectMealPlan}
-                          options={mealPlans.map((m) => ({
-                            value: m.id,
-                            label: `${m.name} (${m.mealCount} ${t.nutrition.meals_count})`,
-                          }))}
-                          className="flex-1"
-                        />
-                        {slot.mealPlanId && (
-                          <button
-                            onClick={() =>
-                              updateDay(slot.weekNumber, slot.dayNumber, null)
-                            }
-                            className="rounded p-1 text-gray-400 hover:text-red-500"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-semibold text-orange-700">
+                            {slot.dayNumber}
+                          </span>
+                          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[9rem_1fr]">
+                            <FilterSelect
+                              value={slot.label}
+                              onChange={(v) =>
+                                updateLabel(slot.weekNumber, slot.dayNumber, v)
+                              }
+                              placeholder={t.programs.selectDay}
+                              options={dayOptions}
+                            />
+                            <FilterSelect
+                              value={slot.mealPlanId || ""}
+                              onChange={(v) =>
+                                updateDay(
+                                  slot.weekNumber,
+                                  slot.dayNumber,
+                                  v || null
+                                )
+                              }
+                              placeholder={t.programs.selectMealPlan}
+                              options={mealPlans.map((m) => ({
+                                value: m.id,
+                                label: `${m.name} (${m.mealCount} ${t.nutrition.meals_count})`,
+                              }))}
+                            />
+                          </div>
+                          {slot.mealPlanId && (
+                            <button
+                              onClick={() =>
+                                updateDay(slot.weekNumber, slot.dayNumber, null)
+                              }
+                              className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-red-500"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -271,7 +325,7 @@ export default function NewNutritionProgramPage() {
             onClick={handleSave}
             disabled={!name.trim() || saving}
           >
-            {saving ? t.common.saving : t.programs.newNutritionProgram}
+            {saving ? t.common.saving : t.programs.createProgram}
           </Button>
           <Button variant="outline" asChild>
             <Link href="/dashboard/programs">

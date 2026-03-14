@@ -219,27 +219,31 @@ export default function NewProgramPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">{t.programs.durationWeeks}</label>
-              <FilterSelect
-                value={String(durationWeeks)}
-                onChange={(v) => setDurationWeeks(Number(v))}
-                placeholder={t.programs.durationWeeks}
-                options={Array.from({ length: 12 }, (_, i) => ({
-                  value: String(i + 1),
-                  label: `${i + 1} ${t.programs.weeks}`,
-                }))}
-              />
+              <select
+                value={durationWeeks}
+                onChange={(e) => setDurationWeeks(Number(e.target.value))}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              >
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1} {t.programs.weeks}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="label">{t.programs.trainingDays}</label>
-              <FilterSelect
-                value={String(daysPerWeek)}
-                onChange={(v) => setDaysPerWeek(Number(v))}
-                placeholder={t.programs.trainingDays}
-                options={Array.from({ length: 7 }, (_, i) => ({
-                  value: String(i + 1),
-                  label: `${i + 1} ${t.programs.daysWeek}`,
-                }))}
-              />
+              <select
+                value={daysPerWeek}
+                onChange={(e) => setDaysPerWeek(Number(e.target.value))}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              >
+                {Array.from({ length: 7 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1} {t.programs.daysWeek}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -265,46 +269,48 @@ export default function NewProgramPage() {
                     {weekDays.map((slot) => (
                       <div
                         key={`${slot.weekNumber}-${slot.dayNumber}`}
-                        className="card flex items-center gap-3 !py-3"
+                        className="card !py-3"
                       >
-                        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-                          {slot.dayNumber}
-                        </span>
-                        <FilterSelect
-                          value={slot.label}
-                          onChange={(v) =>
-                            updateLabel(slot.weekNumber, slot.dayNumber, v)
-                          }
-                          placeholder={t.programs.selectDay}
-                          options={dayOptions}
-                          className="w-36 flex-shrink-0"
-                        />
-                        <FilterSelect
-                          value={slot.workoutPlanId || ""}
-                          onChange={(v) =>
-                            updateDay(
-                              slot.weekNumber,
-                              slot.dayNumber,
-                              v || null
-                            )
-                          }
-                          placeholder={t.programs.selectWorkout}
-                          options={workouts.map((w) => ({
-                            value: w.id,
-                            label: `${w.name} (${w.exerciseCount} ${t.workouts.exercises_count})`,
-                          }))}
-                          className="flex-1"
-                        />
-                        {slot.workoutPlanId && (
-                          <button
-                            onClick={() =>
-                              updateDay(slot.weekNumber, slot.dayNumber, null)
-                            }
-                            className="rounded p-1 text-gray-400 hover:text-red-500"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+                            {slot.dayNumber}
+                          </span>
+                          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[9rem_1fr]">
+                            <FilterSelect
+                              value={slot.label}
+                              onChange={(v) =>
+                                updateLabel(slot.weekNumber, slot.dayNumber, v)
+                              }
+                              placeholder={t.programs.selectDay}
+                              options={dayOptions}
+                            />
+                            <FilterSelect
+                              value={slot.workoutPlanId || ""}
+                              onChange={(v) =>
+                                updateDay(
+                                  slot.weekNumber,
+                                  slot.dayNumber,
+                                  v || null
+                                )
+                              }
+                              placeholder={t.programs.selectWorkout}
+                              options={workouts.map((w) => ({
+                                value: w.id,
+                                label: `${w.name} (${w.exerciseCount} ${t.workouts.exercises_count})`,
+                              }))}
+                            />
+                          </div>
+                          {slot.workoutPlanId && (
+                            <button
+                              onClick={() =>
+                                updateDay(slot.weekNumber, slot.dayNumber, null)
+                              }
+                              className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-red-500"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

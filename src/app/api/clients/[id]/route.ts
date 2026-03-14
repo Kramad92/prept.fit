@@ -52,9 +52,7 @@ export async function GET(
 
   const photos = await resolvePhotoUrls(client.progressPhotos);
 
-  return NextResponse.json({ ...client, progressPhotos: photos }, {
-    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
-  });
+  return NextResponse.json({ ...client, progressPhotos: photos });
 }
 
 export async function PUT(

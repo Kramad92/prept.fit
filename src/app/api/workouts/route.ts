@@ -28,9 +28,7 @@ export async function GET() {
     assignedCount: p._count.assignedTo,
   }));
 
-  return NextResponse.json(result, {
-    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
-  });
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {

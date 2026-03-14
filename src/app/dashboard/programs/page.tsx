@@ -28,10 +28,12 @@ export default function ProgramsPage() {
         onClick: async () => {
           try {
             await api.delete(`/api/programs/${id}`);
-            refresh();
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
+          } catch (err: any) {
+            if (err?.status !== 404) {
+              toast.error(err?.message || t.errors.somethingWentWrong);
+            }
           }
+          refresh();
         },
       },
     });
@@ -44,10 +46,12 @@ export default function ProgramsPage() {
         onClick: async () => {
           try {
             await api.delete(`/api/nutrition-programs/${id}`);
-            nRefresh();
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
+          } catch (err: any) {
+            if (err?.status !== 404) {
+              toast.error(err?.message || t.errors.somethingWentWrong);
+            }
           }
+          nRefresh();
         },
       },
     });

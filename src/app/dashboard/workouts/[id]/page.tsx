@@ -108,11 +108,14 @@ export default function WorkoutDetailPage() {
           setDeleting(true);
           try {
             await api.delete(`/api/workouts/${params.id}`);
-            router.push("/dashboard/workouts");
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
-            setDeleting(false);
+          } catch (err: any) {
+            if (err?.status !== 404) {
+              toast.error(err?.message || t.errors.somethingWentWrong);
+              setDeleting(false);
+              return;
+            }
           }
+          router.push("/dashboard/workouts");
         },
       },
     });

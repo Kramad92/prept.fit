@@ -28,9 +28,7 @@ export async function GET(req: NextRequest) {
     orderBy: { name: "asc" },
   });
 
-  return NextResponse.json(exercises, {
-    headers: { "Cache-Control": "private, max-age=10, stale-while-revalidate=60" },
-  });
+  return NextResponse.json(exercises);
 }
 
 export async function POST(req: NextRequest) {

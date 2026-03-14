@@ -20,7 +20,7 @@ async function request<T>(
   method: HttpMethod = "GET",
   body?: unknown
 ): Promise<T> {
-  const opts: RequestInit = { method };
+  const opts: RequestInit = { method, cache: "no-store" };
   if (body !== undefined) {
     opts.headers = { "Content-Type": "application/json" };
     opts.body = JSON.stringify(body);

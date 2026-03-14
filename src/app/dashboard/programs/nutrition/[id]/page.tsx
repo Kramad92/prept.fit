@@ -86,11 +86,14 @@ export default function NutritionProgramDetailPage() {
           setDeleting(true);
           try {
             await api.delete(`/api/nutrition-programs/${params.id}`);
-            router.push("/dashboard/programs");
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
-            setDeleting(false);
+          } catch (err: any) {
+            if (err?.status !== 404) {
+              toast.error(err?.message || t.errors.somethingWentWrong);
+              setDeleting(false);
+              return;
+            }
           }
+          router.push("/dashboard/programs");
         },
       },
     });

@@ -116,10 +116,13 @@ export default function WorkoutsPage() {
         onClick: async () => {
           try {
             await api.delete(`/api/workouts/${id}`);
-            refresh();
           } catch (err: any) {
-            toast.error(err?.message || t.errors.somethingWentWrong);
+            // 404 means already deleted — not an error
+            if (err?.status !== 404) {
+              toast.error(err?.message || t.errors.somethingWentWrong);
+            }
           }
+          refresh();
         },
       },
     });

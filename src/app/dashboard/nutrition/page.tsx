@@ -147,13 +147,15 @@ function NutritionContent() {
         onClick: async () => {
           try {
             await api.delete(`/api/meal-plans/${planId}`);
-            setPlans((prev) => prev.filter((p) => p.id !== planId));
-            if (expandedPlan === planId) {
-              setExpandedPlan(null);
-              setPlanDetail(null);
+          } catch (err: any) {
+            if (err?.status !== 404) {
+              toast.error(err?.message || t.errors.somethingWentWrong);
             }
-          } catch {
-            toast.error(t.errors.somethingWentWrong);
+          }
+          setPlans((prev) => prev.filter((p) => p.id !== planId));
+          if (expandedPlan === planId) {
+            setExpandedPlan(null);
+            setPlanDetail(null);
           }
         },
       },

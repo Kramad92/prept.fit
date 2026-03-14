@@ -318,6 +318,5 @@ export async function GET() {
       })),
       activityFeed,
     },
-    { headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" } }
   );
 }

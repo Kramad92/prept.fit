@@ -38,9 +38,7 @@ export async function GET(
     clones: undefined,
   };
 
-  return NextResponse.json(merged, {
-    headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
-  });
+  return NextResponse.json(merged);
 }
 
 export async function PUT(

@@ -8,7 +8,11 @@ export async function GET(
 ) {
   try {
     await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const tenant = await prisma.tenant.findUnique({
       where: { id: params.id },
       include: {
@@ -44,8 +48,10 @@ export async function GET(
     }
 
     return NextResponse.json(tenant);
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err: unknown) {
+    console.error("[admin/tenants/id] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -55,7 +61,11 @@ export async function PATCH(
 ) {
   try {
     await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const body = await req.json();
     const data: Record<string, unknown> = {};
 
@@ -78,7 +88,9 @@ export async function PATCH(
     });
 
     return NextResponse.json(tenant);
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err: unknown) {
+    console.error("[admin/tenants/id PATCH] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

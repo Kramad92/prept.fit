@@ -5,10 +5,12 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const [
       tenantCount,
@@ -86,7 +88,9 @@ export async function GET() {
         tokensOut: p._sum.tokensOut || 0,
       })),
     });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err: unknown) {
+    console.error("[admin/dashboard] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

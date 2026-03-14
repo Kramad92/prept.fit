@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const url = new URL(req.url);
     const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get("days") || "30") || 30));
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -18,50 +22,43 @@ export async function GET(req: NextRequest) {
       aiTimeline,
       totalTokens,
     ] = await Promise.all([
-      // AI usage grouped by tenant
       prisma.aiUsageLog.groupBy({
         by: ["tenantId"],
         where: { createdAt: { gte: since } },
         _count: true,
         _sum: { tokensIn: true, tokensOut: true },
       }),
-      // Storage grouped by tenant
       prisma.storageUsageLog.groupBy({
         by: ["tenantId"],
         _count: true,
         _sum: { sizeBytes: true },
       }),
-      // AI by endpoint (in period)
       prisma.aiUsageLog.groupBy({
         by: ["endpoint"],
         where: { createdAt: { gte: since } },
         _count: true,
         _sum: { tokensIn: true, tokensOut: true },
       }),
-      // AI by provider (in period)
       prisma.aiUsageLog.groupBy({
         by: ["provider"],
         where: { createdAt: { gte: since } },
         _count: true,
         _sum: { tokensIn: true, tokensOut: true },
       }),
-      // Daily AI call counts for timeline
       prisma.$queryRaw<{ date: string; calls: bigint; tokens_in: bigint; tokens_out: bigint }[]>`
         SELECT
           DATE("createdAt") as date,
           COUNT(*) as calls,
           COALESCE(SUM("tokensIn"), 0) as tokens_in,
           COALESCE(SUM("tokensOut"), 0) as tokens_out
-        FROM "AiUsageLog"
+        FROM "ai_usage_logs"
         WHERE "createdAt" >= ${since}
         GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
-      // Total tokens all time
       prisma.aiUsageLog.aggregate({ _sum: { tokensIn: true, tokensOut: true }, _count: true }),
     ]);
 
-    // Fetch tenant names for the grouped data
     const tenantIds = Array.from(new Set([
       ...aiByTenant.map((a) => a.tenantId),
       ...storageByTenant.map((s) => s.tenantId),
@@ -72,7 +69,6 @@ export async function GET(req: NextRequest) {
     });
     const tenantMap = new Map(tenants.map((t) => [t.id, t]));
 
-    // Build per-tenant usage
     const perTenant = tenantIds.map((id) => {
       const tenant = tenantMap.get(id);
       const ai = aiByTenant.find((a) => a.tenantId === id);
@@ -88,12 +84,11 @@ export async function GET(req: NextRequest) {
         },
         storage: {
           files: storage?._count || 0,
-          bytes: storage?._sum.sizeBytes || 0,
+          bytes: Number(storage?._sum.sizeBytes || 0),
         },
       };
     });
 
-    // Sort by AI calls desc
     perTenant.sort((a, b) => b.ai.calls - a.ai.calls);
 
     return NextResponse.json({
@@ -117,13 +112,15 @@ export async function GET(req: NextRequest) {
         tokensOut: p._sum.tokensOut || 0,
       })),
       timeline: aiTimeline.map((d) => ({
-        date: d.date,
+        date: String(d.date),
         calls: Number(d.calls),
         tokensIn: Number(d.tokens_in),
         tokensOut: Number(d.tokens_out),
       })),
     });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err: unknown) {
+    console.error("[admin/usage] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

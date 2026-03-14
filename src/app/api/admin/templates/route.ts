@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const url = new URL(req.url);
     const type = url.searchParams.get("type") || "all"; // workout, meal, workout_program, nutrition_program, all
     const search = url.searchParams.get("search") || "";
@@ -115,7 +119,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ ...results, tenants });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err: unknown) {
+    console.error("[admin/templates] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

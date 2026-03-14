@@ -8,7 +8,11 @@ export async function GET(
 ) {
   try {
     await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const url = new URL(req.url);
     const days = parseInt(url.searchParams.get("days") || "30");
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -62,7 +66,9 @@ export async function GET(
         totalFiles: storageTotal._count,
       },
     });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err: unknown) {
+    console.error("[admin/tenants/id/usage] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

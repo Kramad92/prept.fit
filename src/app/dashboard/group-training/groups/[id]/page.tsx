@@ -87,17 +87,6 @@ export default function GroupDetailPage() {
         </button>
       </div>
 
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={confirmDelete}
-        title={t.common.delete + "?"}
-        confirmLabel={t.common.delete}
-        cancelLabel={t.common.cancel}
-        loading={deleteLoading}
-        destructive
-      />
-
       {/* Members */}
       <div className="mb-8">
         <div className="mb-3 flex items-center justify-between">

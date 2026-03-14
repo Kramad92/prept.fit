@@ -5,10 +5,14 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
-    const status = searchParams.get("status"); // "active" | "inactive" | null (all)
+    const status = searchParams.get("status");
     const tier = searchParams.get("tier") || "";
 
     const where: Record<string, unknown> = {};
@@ -41,7 +45,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(tenants);
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (err: unknown) {
+    console.error("[admin/tenants] Error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

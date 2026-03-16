@@ -1,5 +1,5 @@
 // AI provider abstraction layer
-// Supports: Groq (free), Gemini (free), Claude (paid). Set AI_PROVIDER env var.
+// Supports: Groq (free), Gemini (free), OpenRouter (free+paid), Claude (paid). Set AI_PROVIDER env var.
 
 export interface AIMessage {
   role: "system" | "user";
@@ -143,6 +143,53 @@ function createGeminiProvider(apiKey: string): AIProvider {
   };
 }
 
+// --- OpenRouter Provider (OpenAI-compatible, many models) ---
+
+function createOpenRouterProvider(apiKey: string): AIProvider {
+  return {
+    async complete({ messages, json, maxTokens = 2048, temperature = 0.3 }) {
+      const model = process.env.AI_OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
+
+      const body: Record<string, unknown> = {
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      };
+
+      if (json) {
+        body.response_format = { type: "json_object" };
+      }
+
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`OpenRouter API error (${res.status}): ${err}`);
+      }
+
+      const data = await res.json();
+      const text = data?.choices?.[0]?.message?.content;
+      if (!text) throw new Error("Empty response from OpenRouter");
+      return {
+        text,
+        usage: {
+          tokensIn: data?.usage?.prompt_tokens || 0,
+          tokensOut: data?.usage?.completion_tokens || 0,
+          provider: "openrouter",
+        },
+      };
+    },
+  };
+}
+
 // --- Claude Provider ---
 
 function createClaudeProvider(apiKey: string): AIProvider {
@@ -204,6 +251,7 @@ function createProvider(name: string, apiKey: string): AIProvider | null {
     case "gemini": return createGeminiProvider(apiKey);
     case "claude": return createClaudeProvider(apiKey);
     case "groq": return createGroqProvider(apiKey);
+    case "openrouter": return createOpenRouterProvider(apiKey);
     default: return null;
   }
 }
@@ -235,6 +283,8 @@ export function getAI(): AIProvider {
   const primaryKey = process.env.AI_API_KEY || "";
   const fallbackName = process.env.AI_FALLBACK_PROVIDER || "";
   const fallbackKey = process.env.AI_FALLBACK_API_KEY || "";
+  const fallback2Name = process.env.AI_FALLBACK2_PROVIDER || "";
+  const fallback2Key = process.env.AI_FALLBACK2_API_KEY || "";
 
   const providers: AIProvider[] = [];
 
@@ -244,6 +294,11 @@ export function getAI(): AIProvider {
   if (fallbackName && fallbackKey) {
     const fallback = createProvider(fallbackName, fallbackKey);
     if (fallback) providers.push(fallback);
+  }
+
+  if (fallback2Name && fallback2Key) {
+    const fallback2 = createProvider(fallback2Name, fallback2Key);
+    if (fallback2) providers.push(fallback2);
   }
 
   if (providers.length === 0) {

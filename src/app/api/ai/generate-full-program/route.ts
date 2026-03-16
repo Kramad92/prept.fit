@@ -96,6 +96,9 @@ interface ExistingResult {
   days: ExistingDay[];
 }
 
+// Allow up to 120s for multi-step AI generation (blueprint + N plan generations)
+export const maxDuration = 120;
+
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -117,7 +120,8 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.error("AI generate-full-program error:", e);
-    return NextResponse.json({ error: "Failed to generate program" }, { status: 502 });
+    const msg = e instanceof Error ? e.message : "Failed to generate program";
+    return NextResponse.json({ error: msg }, { status: 502 });
   }
 }
 

@@ -76,6 +76,8 @@ SCOPE: You ONLY handle requests related to fitness, exercise, workout programmin
 ${libraryContext}
 Rules:
 - Each exercise must have: name, nameEn (English name for reference), sets (number), reps (string like "8-12" or "10"), weight (string like "bodyweight", "moderate", or leave empty ""), restSeconds (number), notes (string with detailed form cues)
+- CRITICAL: The "name" and "nameEn" fields must ONLY contain the standard exercise name (e.g. "Barbell Close Grip Bench Press"). NEVER include substitution context, reasoning, or phrases like "X is replaced with Y", "instead of X", "replaces X", or similar. If you are replacing an exercise from a previous version, just use the new exercise's clean name.
+- Avoid including duplicate or overly similar exercises (e.g. do not include both Barbell Bench Press and Barbell Close Grip Bench Press in the same plan unless specifically requested). Each exercise should target the muscle group from a distinct angle or movement pattern.
 - Include 5-10 exercises per workout
 - Order exercises logically (compound first, isolation after)
 - Use appropriate set/rep schemes for the goal (strength: 3-5x3-5, hypertrophy: 3-4x8-12, endurance: 2-3x15-20)

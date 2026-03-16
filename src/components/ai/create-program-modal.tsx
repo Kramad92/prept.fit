@@ -15,6 +15,26 @@ import {
 } from "@/components/ui/dialog";
 import { useLocale } from "@/lib/i18n";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+
+interface BlueprintPlan {
+  name: string;
+  prompt: string;
+}
+
+interface BlueprintDay {
+  weekNumber: number;
+  dayNumber: number;
+  label: string;
+  planIndex: number;
+}
+
+interface Blueprint {
+  name: string;
+  description: string;
+  plans: BlueprintPlan[];
+  schedule: BlueprintDay[];
+}
 
 interface CreateProgramModalProps {
   open: boolean;
@@ -30,7 +50,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
   const [prompt, setPrompt] = useState("");
   const [source, setSource] = useState<"existing" | "generate">("generate");
   const [durationWeeks, setDurationWeeks] = useState(4);
-  const [daysPerWeek, setDaysPerWeek] = useState(type === "workout" ? 3 : 3);
+  const [daysPerWeek, setDaysPerWeek] = useState(3);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
@@ -40,46 +60,163 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
     if (newType === "workout" && daysPerWeek > 7) setDaysPerWeek(3);
   }
 
-  async function handleGenerate() {
+  // ---- "Use existing" mode: single server call ----
+  async function handleExisting() {
+    setProgress(t.programs.generating || "Generating...");
+
+    const res = await fetch("/api/ai/generate-full-program", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, prompt: prompt.trim(), source: "existing", durationWeeks, daysPerWeek, locale }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to generate program");
+    }
+    const result = await res.json();
+
+    toast.success(t.programs.programCreated || "Program created");
+    return result.programId;
+  }
+
+  // ---- "Generate new" mode: client-side orchestration ----
+  async function handleGenerateNew() {
+    // Step 1: Get blueprint
+    setProgress(t.programs.designingProgram || "Designing program structure...");
+
+    const blueprintRes = await fetch("/api/ai/generate-full-program", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, prompt: prompt.trim(), source: "generate", durationWeeks, daysPerWeek, locale }),
+    });
+    if (!blueprintRes.ok) {
+      const data = await blueprintRes.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to generate program blueprint");
+    }
+    const { blueprint } = await blueprintRes.json() as { blueprint: Blueprint };
+
+    // Step 2: Generate and save each plan individually
+    const planIds: string[] = [];
+    const totalPlans = blueprint.plans.length;
+
+    for (let i = 0; i < totalPlans; i++) {
+      const plan = blueprint.plans[i];
+      setProgress(`${t.programs.generatingPlan || "Generating"} ${plan.name}... (${i + 1}/${totalPlans})`);
+
+      if (type === "workout") {
+        // Generate workout plan via existing endpoint
+        const genRes = await fetch("/api/ai/generate-workout-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: `Create a workout plan: ${plan.name}. ${plan.prompt}`,
+            locale,
+          }),
+        });
+        if (!genRes.ok) {
+          const data = await genRes.json().catch(() => ({}));
+          throw new Error(data.error || `Failed to generate ${plan.name}`);
+        }
+        const genData = await genRes.json();
+
+        // Save as template
+        setProgress(`${t.common.saving || "Saving"} ${plan.name}... (${i + 1}/${totalPlans})`);
+        const saved = await api.post<{ id: string }>("/api/workouts", {
+          name: genData.name || plan.name,
+          description: genData.description || null,
+          isTemplate: true,
+          exercises: (genData.exercises || []).map((ex: any, idx: number) => ({
+            name: ex.name,
+            sets: ex.sets || null,
+            reps: ex.reps || null,
+            weight: ex.weight || null,
+            restSeconds: ex.restSeconds || null,
+            notes: ex.notes || null,
+            videoUrl: ex.videoUrl || null,
+            orderIndex: idx,
+          })),
+        });
+        planIds.push(saved.id);
+      } else {
+        // Generate meal plan via existing endpoint
+        const genRes = await fetch("/api/ai/generate-meal-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: `Create a meal plan: ${plan.name}. ${plan.prompt}`,
+            locale,
+          }),
+        });
+        if (!genRes.ok) {
+          const data = await genRes.json().catch(() => ({}));
+          throw new Error(data.error || `Failed to generate ${plan.name}`);
+        }
+        const genData = await genRes.json();
+
+        // Save as template
+        setProgress(`${t.common.saving || "Saving"} ${plan.name}... (${i + 1}/${totalPlans})`);
+        const saved = await api.post<{ id: string }>("/api/meal-plans", {
+          name: genData.name || plan.name,
+          description: genData.description || null,
+          isTemplate: true,
+          targetCalories: genData.targetCalories || null,
+          targetProtein: genData.targetProtein || null,
+          targetCarbs: genData.targetCarbs || null,
+          targetFat: genData.targetFat || null,
+          meals: (genData.meals || []).map((meal: any, idx: number) => ({
+            name: meal.name,
+            description: meal.description || null,
+            time: meal.time || null,
+            foods: meal.foods || [],
+            orderIndex: idx,
+          })),
+        });
+        planIds.push(saved.id);
+      }
+    }
+
+    // Step 3: Create the program with day mappings
+    setProgress(t.programs.creatingProgram || "Creating program...");
+
+    const days = blueprint.schedule
+      .filter((d) => d.planIndex >= 0 && d.planIndex < planIds.length)
+      .map((d) => ({
+        weekNumber: d.weekNumber,
+        dayNumber: d.dayNumber,
+        label: d.label || null,
+        ...(type === "workout"
+          ? { workoutPlanId: planIds[d.planIndex] }
+          : { mealPlanId: planIds[d.planIndex] }),
+      }));
+
+    const programEndpoint = type === "workout" ? "/api/programs" : "/api/nutrition-programs";
+    const programPayload = type === "workout"
+      ? { name: blueprint.name, description: blueprint.description || null, durationWeeks, daysPerWeek, days }
+      : { name: blueprint.name, description: blueprint.description || null, durationWeeks, mealsPerDay: daysPerWeek, days };
+
+    const program = await api.post<{ id: string }>(programEndpoint, programPayload);
+
+    toast.success(
+      `${t.programs.programCreated || "Program created"} (${totalPlans} ${type === "workout" ? t.programs.workoutsCount : t.programs.mealPlansCount} ${t.programs.generated || "generated"})`
+    );
+
+    return program.id;
+  }
+
+  async function handleSubmit() {
     if (!prompt.trim() || loading) return;
     setLoading(true);
     setError("");
-    setProgress(source === "generate"
-      ? (t.programs.generatingPlans || "Generating plans...")
-      : (t.programs.generating || "Generating..."));
 
     try {
-      const res = await fetch("/api/ai/generate-full-program", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          prompt: prompt.trim(),
-          source,
-          durationWeeks,
-          daysPerWeek,
-          locale,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to generate program");
-      }
-
-      const result = await res.json();
-
-      toast.success(
-        result.plansCreated > 0
-          ? `${t.programs.programCreated || "Program created"} (${result.plansCreated} ${type === "workout" ? t.programs.workoutsCount : t.programs.mealPlansCount} ${t.programs.generated || "generated"})`
-          : (t.programs.programCreated || "Program created")
-      );
+      const programId = source === "existing"
+        ? await handleExisting()
+        : await handleGenerateNew();
 
       onClose();
-
       const path = type === "workout"
-        ? `/dashboard/programs/${result.programId}`
-        : `/dashboard/programs/nutrition/${result.programId}`;
+        ? `/dashboard/programs/${programId}`
+        : `/dashboard/programs/nutrition/${programId}`;
       router.push(path);
     } catch (e) {
       setError(e instanceof Error ? e.message : (t.programs.aiError || "Generation failed"));
@@ -90,7 +227,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => !v && !loading && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -110,6 +247,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
               <button
                 type="button"
                 onClick={() => handleTypeChange("workout")}
+                disabled={loading}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   type === "workout"
                     ? "border-brand-300 bg-brand-50 text-brand-700"
@@ -122,6 +260,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
               <button
                 type="button"
                 onClick={() => handleTypeChange("nutrition")}
+                disabled={loading}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   type === "nutrition"
                     ? "border-brand-300 bg-brand-50 text-brand-700"
@@ -141,6 +280,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
               <button
                 type="button"
                 onClick={() => setSource("existing")}
+                disabled={loading}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   source === "existing"
                     ? "border-brand-300 bg-brand-50 text-brand-700"
@@ -153,6 +293,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
               <button
                 type="button"
                 onClick={() => setSource("generate")}
+                disabled={loading}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   source === "generate"
                     ? "border-brand-300 bg-brand-50 text-brand-700"
@@ -176,6 +317,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
+              disabled={loading}
               placeholder={type === "workout"
                 ? (t.programs.aiPromptWorkoutPlaceholder || "e.g. 4-week push/pull/legs strength program, progressive overload...")
                 : (t.programs.aiPromptNutritionPlaceholder || "e.g. 4-week meal prep program, 2200 cal/day, high protein...")}
@@ -217,7 +359,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <Button
-              onClick={handleGenerate}
+              onClick={handleSubmit}
               disabled={!prompt.trim() || loading}
               className="flex-1"
             >

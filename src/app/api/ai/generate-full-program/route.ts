@@ -4,7 +4,7 @@ import { aiJSON } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { validateBody } from "@/lib/validations";
-import { getAILanguageInstruction, getAIExerciseNameInstruction } from "@/lib/ai-locale";
+import { getAILanguageInstruction } from "@/lib/ai-locale";
 import { logAiUsage } from "@/lib/usage";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -17,18 +17,18 @@ const schema = z.object({
   locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("en"),
 });
 
-// --- Types for AI responses ---
+// --- Types ---
 
 interface BlueprintPlan {
   name: string;
-  prompt: string; // description for generating the plan
+  prompt: string;
 }
 
 interface BlueprintDay {
   weekNumber: number;
   dayNumber: number;
   label: string;
-  planIndex: number; // index into the plans array
+  planIndex: number;
 }
 
 interface Blueprint {
@@ -37,50 +37,6 @@ interface Blueprint {
   plans: BlueprintPlan[];
   schedule: BlueprintDay[];
 }
-
-interface GeneratedExercise {
-  name: string;
-  nameEn: string;
-  sets: number;
-  reps: string;
-  weight: string;
-  restSeconds: number;
-  notes: string;
-}
-
-interface GeneratedWorkoutPlan {
-  name: string;
-  description: string;
-  exercises: GeneratedExercise[];
-}
-
-interface GeneratedFood {
-  name: string;
-  portion: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-}
-
-interface GeneratedMeal {
-  name: string;
-  description: string;
-  time: string;
-  foods: GeneratedFood[];
-}
-
-interface GeneratedMealPlan {
-  name: string;
-  description: string;
-  targetCalories: number;
-  targetProtein: number;
-  targetCarbs: number;
-  targetFat: number;
-  meals: GeneratedMeal[];
-}
-
-// --- Existing-plan selection (reuse from generate-program routes) ---
 
 interface ExistingDay {
   weekNumber: number;
@@ -95,9 +51,6 @@ interface ExistingResult {
   description: string;
   days: ExistingDay[];
 }
-
-// Allow up to 120s for multi-step AI generation (blueprint + N plan generations)
-export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -116,7 +69,7 @@ export async function POST(req: NextRequest) {
     if (source === "existing") {
       return await handleExisting(session, type, prompt, durationWeeks, daysPerWeek, locale);
     } else {
-      return await handleGenerate(session, type, prompt, durationWeeks, daysPerWeek, locale);
+      return await handleBlueprint(session, type, prompt, durationWeeks, daysPerWeek, locale);
     }
   } catch (e) {
     console.error("AI generate-full-program error:", e);
@@ -126,7 +79,7 @@ export async function POST(req: NextRequest) {
 }
 
 // ===========================================
-// SOURCE: "existing" — select from existing plans
+// SOURCE: "existing" — single AI call, select from existing plans, create program
 // ===========================================
 
 async function handleExisting(
@@ -275,7 +228,7 @@ Include ALL ${durationWeeks * 7} day slots.`,
         name: result.name,
         description: result.description || null,
         durationWeeks,
-        mealsPerDay: daysPerWeek, // reuse field for nutrition
+        mealsPerDay: daysPerWeek,
         isTemplate: true,
         tenantId,
         days: { create: days.filter((d) => d.mealPlanId) },
@@ -289,10 +242,10 @@ Include ALL ${durationWeeks * 7} day slots.`,
 }
 
 // ===========================================
-// SOURCE: "generate" — AI creates new plans + program
+// SOURCE: "generate" — returns blueprint only (client orchestrates the rest)
 // ===========================================
 
-async function handleGenerate(
+async function handleBlueprint(
   session: any,
   type: string,
   prompt: string,
@@ -303,23 +256,6 @@ async function handleGenerate(
   const tenantId = session.user.tenantId;
   const langInstruction = getAILanguageInstruction(locale);
 
-  // Step 1: Generate the blueprint — what plans to create and how to schedule them
-  const blueprint = await generateBlueprint(type, prompt, durationWeeks, daysPerWeek, langInstruction);
-
-  if (type === "workout") {
-    return await generateWorkoutProgram(session, tenantId, blueprint, durationWeeks, daysPerWeek, locale, langInstruction);
-  } else {
-    return await generateNutritionProgram(session, tenantId, blueprint, durationWeeks, daysPerWeek, locale, langInstruction);
-  }
-}
-
-async function generateBlueprint(
-  type: string,
-  prompt: string,
-  durationWeeks: number,
-  daysPerWeek: number,
-  langInstruction: string,
-): Promise<Blueprint> {
   const totalSlots = type === "workout"
     ? durationWeeks * daysPerWeek
     : durationWeeks * 7;
@@ -329,11 +265,13 @@ async function generateBlueprint(
     ? `${daysPerWeek} training days per week`
     : `7 days per week`;
 
-  const { data } = await aiJSON<Blueprint>({
+  const { data, usage } = await aiJSON<Blueprint & { error?: string }>({
     messages: [
       {
         role: "system",
         content: `You are an expert ${type === "workout" ? "fitness" : "nutrition"} coach. Design a ${planType} program blueprint.
+
+SCOPE: You ONLY handle ${type === "workout" ? "fitness" : "nutrition"}-related requests. If unrelated, return: {"error": "off_topic"}.
 
 You need to determine:
 1. What unique ${planType} plans to create (typically 3-6 distinct plans)
@@ -369,232 +307,19 @@ Return JSON:
     temperature: 0.3,
   });
 
-  return data;
-}
-
-async function generateWorkoutProgram(
-  session: any,
-  tenantId: string,
-  blueprint: Blueprint,
-  durationWeeks: number,
-  daysPerWeek: number,
-  locale: string,
-  langInstruction: string,
-) {
-  const exerciseNameInstruction = getAIExerciseNameInstruction(locale);
-
-  // Fetch exercise library for context
-  const libraryExercises = await prisma.exerciseLibrary.findMany({
-    where: { tenantId },
-    select: { name: true, nameI18n: true, videoUrl: true, category: true },
-    take: 200,
-  });
-
-  const libraryContext = libraryExercises.length > 0
-    ? `\nExercise library (use exact names when matching):\n${libraryExercises.map((e) => {
-        const i18n = e.nameI18n as Record<string, string> | null;
-        const altName = i18n ? Object.values(i18n)[0] : null;
-        return `- ${e.name}${altName ? ` / ${altName}` : ""}${e.category ? ` (${e.category})` : ""}`;
-      }).join("\n")}\n`
-    : "";
-
-  // Step 2: Generate each unique workout plan
-  const planIds: string[] = [];
-  let totalTokensIn = 0;
-  let totalTokensOut = 0;
-  let provider = "";
-
-  for (const plan of blueprint.plans) {
-    const { data: workoutData, usage } = await aiJSON<GeneratedWorkoutPlan>({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert fitness coach. Generate a complete workout plan.
-${libraryContext}
-Rules:
-- Each exercise: name, nameEn, sets (number), reps (string), weight (string or ""), restSeconds (number), notes (2-3 sentence form cues)
-- CRITICAL: Exercise "name" and "nameEn" must be clean standard names only. No "replaced with" or substitution phrases.
-- Avoid duplicate or overly similar exercises. Each should target from a distinct angle.
-- Include 4-8 exercises, ordered logically (compounds first)
-- Use appropriate set/rep schemes for the goal
-- ${exerciseNameInstruction}
-- ${langInstruction}
-
-Return JSON: { "name": "...", "description": "...", "exercises": [{ "name": "...", "nameEn": "...", "sets": 4, "reps": "8-12", "weight": "", "restSeconds": 90, "notes": "..." }] }`,
-        },
-        { role: "user", content: `Create a workout plan: ${plan.name}. ${plan.prompt}` },
-      ],
-      maxTokens: 2500,
-      temperature: 0.3,
-    });
-
-    totalTokensIn += usage.tokensIn;
-    totalTokensOut += usage.tokensOut;
-    provider = usage.provider;
-
-    // Save as template
-    const saved = await prisma.workoutPlan.create({
-      data: {
-        name: workoutData.name || plan.name,
-        description: workoutData.description || null,
-        isTemplate: true,
-        tenantId,
-        exercises: {
-          create: (workoutData.exercises || []).map((ex, i) => ({
-            name: ex.name,
-            sets: ex.sets || null,
-            reps: ex.reps || null,
-            weight: ex.weight || null,
-            restSeconds: ex.restSeconds || null,
-            notes: ex.notes || null,
-            orderIndex: i,
-          })),
-        },
-      },
-    });
-
-    planIds.push(saved.id);
+  if (data.error === "off_topic") {
+    return NextResponse.json({ error: `Please provide a ${type === "workout" ? "fitness" : "nutrition"}-related request.` }, { status: 400 });
   }
 
-  // Step 3: Create the program with day mappings
-  const days = blueprint.schedule
-    .filter((d) => d.planIndex >= 0 && d.planIndex < planIds.length)
-    .map((d) => ({
-      weekNumber: d.weekNumber,
-      dayNumber: d.dayNumber,
-      label: d.label || null,
-      workoutPlanId: planIds[d.planIndex],
-    }));
+  logAiUsage({ tenantId, endpoint: "generate-full-program-blueprint", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
 
-  const program = await prisma.workoutProgram.create({
-    data: {
-      name: blueprint.name,
-      description: blueprint.description || null,
-      durationWeeks,
-      daysPerWeek,
-      isTemplate: true,
-      tenantId,
-      days: { create: days },
-    },
-  });
-
-  logAiUsage({ tenantId, endpoint: "generate-full-program", tokensIn: totalTokensIn, tokensOut: totalTokensOut, provider });
-
+  // Return the blueprint — the client will orchestrate individual plan generation
   return NextResponse.json({
-    programId: program.id,
-    programName: blueprint.name,
-    plansCreated: planIds.length,
-  });
-}
-
-async function generateNutritionProgram(
-  session: any,
-  tenantId: string,
-  blueprint: Blueprint,
-  durationWeeks: number,
-  daysPerWeek: number, // mealsPerDay for nutrition
-  locale: string,
-  langInstruction: string,
-) {
-  // Step 2: Generate each unique meal plan
-  const planIds: string[] = [];
-  let totalTokensIn = 0;
-  let totalTokensOut = 0;
-  let provider = "";
-
-  for (const plan of blueprint.plans) {
-    const { data: mealData, usage } = await aiJSON<GeneratedMealPlan>({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert nutrition coach. Generate a complete daily meal plan.
-
-Rules:
-- Each meal: name, description (1-2 sentences), time (HH:MM), foods array
-- Each food: name, portion (grams or count), calories, protein, carbs, fat (integers)
-- Meal and food names must be clean standard names. No substitution phrases.
-- Avoid duplicate or overly similar meals. Each should be distinct.
-- Include 3-6 meals with 3-8 food items each
-- Use accurate macros for stated portions
-- Portions in grams (e.g. "150g") or counts (e.g. "2 eggs")
-- All macro values must be integers
-- ${langInstruction}
-
-Return JSON: { "name": "...", "description": "...", "targetCalories": N, "targetProtein": N, "targetCarbs": N, "targetFat": N, "meals": [{ "name": "...", "description": "...", "time": "07:00", "foods": [{ "name": "...", "portion": "150g", "calories": 200, "protein": 30, "carbs": 0, "fat": 8 }] }] }`,
-        },
-        { role: "user", content: `Create a meal plan: ${plan.name}. ${plan.prompt}` },
-      ],
-      maxTokens: 3000,
-      temperature: 0.3,
-    });
-
-    totalTokensIn += usage.tokensIn;
-    totalTokensOut += usage.tokensOut;
-    provider = usage.provider;
-
-    // Recalculate totals from actual foods
-    let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
-    for (const meal of mealData.meals || []) {
-      for (const food of meal.foods || []) {
-        totalCalories += food.calories || 0;
-        totalProtein += food.protein || 0;
-        totalCarbs += food.carbs || 0;
-        totalFat += food.fat || 0;
-      }
-    }
-
-    const saved = await prisma.mealPlan.create({
-      data: {
-        name: mealData.name || plan.name,
-        description: mealData.description || null,
-        isTemplate: true,
-        targetCalories: totalCalories || mealData.targetCalories || null,
-        targetProtein: totalProtein || mealData.targetProtein || null,
-        targetCarbs: totalCarbs || mealData.targetCarbs || null,
-        targetFat: totalFat || mealData.targetFat || null,
-        tenantId,
-        meals: {
-          create: (mealData.meals || []).map((meal, i) => ({
-            name: meal.name,
-            description: meal.description || null,
-            time: meal.time || null,
-            foods: (meal.foods || []) as unknown as import("@prisma/client").Prisma.InputJsonValue,
-            orderIndex: i,
-          })),
-        },
-      },
-    });
-
-    planIds.push(saved.id);
-  }
-
-  // Step 3: Create the program with day mappings
-  const days = blueprint.schedule
-    .filter((d) => d.planIndex >= 0 && d.planIndex < planIds.length)
-    .map((d) => ({
-      weekNumber: d.weekNumber,
-      dayNumber: d.dayNumber,
-      label: d.label || null,
-      mealPlanId: planIds[d.planIndex],
-    }));
-
-  const program = await prisma.nutritionProgram.create({
-    data: {
-      name: blueprint.name,
-      description: blueprint.description || null,
-      durationWeeks,
-      mealsPerDay: daysPerWeek,
-      isTemplate: true,
-      tenantId,
-      days: { create: days },
+    blueprint: {
+      name: data.name,
+      description: data.description,
+      plans: data.plans,
+      schedule: data.schedule,
     },
-  });
-
-  logAiUsage({ tenantId, endpoint: "generate-full-program", tokensIn: totalTokensIn, tokensOut: totalTokensOut, provider });
-
-  return NextResponse.json({
-    programId: program.id,
-    programName: blueprint.name,
-    plansCreated: planIds.length,
   });
 }

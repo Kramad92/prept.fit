@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Plus,
@@ -56,6 +56,8 @@ interface OptionItem {
   name: string;
 }
 
+const BATCH_SIZE = 60;
+
 export default function ExerciseLibraryPage() {
   return (
     <Suspense>
@@ -93,6 +95,17 @@ function ExerciseLibraryContent() {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set<string>());
   const [showImport, setShowImport] = useState(false);
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
+
+  // Debounced search for performance
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 200);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Progressive rendering
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   function toggleCollapsed(category: string) {
     setCollapsedCategories((prev) => {
@@ -304,8 +317,8 @@ function ExerciseLibraryContent() {
     setSelected(new Set());
   }
 
-  const filtered = exercises.filter((ex) => {
-    const s = search.toLowerCase();
+  const filtered = useMemo(() => exercises.filter((ex) => {
+    const s = debouncedSearch.toLowerCase();
     const i18nMatch = ex.nameI18n ? Object.values(ex.nameI18n).some((v) => v.toLowerCase().includes(s)) : false;
     const matchSearch = ex.name.toLowerCase().includes(s) || i18nMatch;
     const matchCategory = !filterCategory || ex.category === filterCategory;
@@ -314,21 +327,61 @@ function ExerciseLibraryContent() {
     const notHiddenCat = !ex.category || !hiddenCategories.has(ex.category);
     const notHiddenEq = !ex.equipment || !hiddenEquipment.has(ex.equipment);
     return matchSearch && matchCategory && matchDifficulty && matchEquipment && notHiddenCat && notHiddenEq;
-  });
+  }), [exercises, debouncedSearch, filterCategory, filterDifficulty, filterEquipment, hiddenCategories, hiddenEquipment]);
 
-  const hiddenCount = exercises.length - exercises.filter((ex) => {
+  const hiddenCount = useMemo(() => exercises.length - exercises.filter((ex) => {
     const notHiddenCat = !ex.category || !hiddenCategories.has(ex.category);
     const notHiddenEq = !ex.equipment || !hiddenEquipment.has(ex.equipment);
     return notHiddenCat && notHiddenEq;
-  }).length;
+  }).length, [exercises, hiddenCategories, hiddenEquipment]);
 
   // Group by category
-  const grouped: Record<string, ExerciseItem[]> = {};
-  for (const ex of filtered) {
-    const cat = ex.category || t.exerciseLibrary.uncategorized;
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(ex);
-  }
+  const grouped = useMemo(() => {
+    const g: Record<string, ExerciseItem[]> = {};
+    for (const ex of filtered) {
+      const cat = ex.category || t.exerciseLibrary.uncategorized;
+      if (!g[cat]) g[cat] = [];
+      g[cat].push(ex);
+    }
+    return g;
+  }, [filtered, t.exerciseLibrary.uncategorized]);
+
+  // Progressive rendering: slice grouped entries to visibleCount total items
+  const visibleGrouped = useMemo(() => {
+    const result: [string, ExerciseItem[]][] = [];
+    let count = 0;
+    for (const [cat, exs] of Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b))) {
+      if (count >= visibleCount) break;
+      const remaining = visibleCount - count;
+      result.push([cat, exs.slice(0, remaining)]);
+      count += Math.min(exs.length, remaining);
+    }
+    return result;
+  }, [grouped, visibleCount]);
+
+  const hasMore = filtered.length > visibleCount;
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [debouncedSearch, filterCategory, filterDifficulty, filterEquipment, hiddenCategories, hiddenEquipment]);
+
+  // IntersectionObserver to progressively load more items on scroll
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => prev + BATCH_SIZE);
+        }
+      },
+      { rootMargin: "400px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, visibleCount]);
 
   if (loading) {
     return (
@@ -497,9 +550,7 @@ function ExerciseLibraryContent() {
               <button onClick={collapseAll} className="text-gray-400 hover:text-gray-600">Collapse all</button>
             </div>
           )}
-          {Object.entries(grouped)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([category, exs]) => (
+          {visibleGrouped.map(([category, exs]) => (
               <div key={category}>
                 <button
                   onClick={() => toggleCollapsed(category)}
@@ -580,6 +631,11 @@ function ExerciseLibraryContent() {
                 )}
               </div>
             ))}
+          {hasMore && (
+            <div ref={sentinelRef} className="flex justify-center py-4">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+            </div>
+          )}
         </div>
       )}
 
@@ -718,8 +774,25 @@ function ExerciseDetailModal({
   const t = useT();
   const tv = useTV();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [videoActive, setVideoActive] = useState(false);
+  const [preloadVideo, setPreloadVideo] = useState(false);
   const displayName = getExerciseDisplayName(ex, locale);
   const embedUrl = ex.videoUrl ? getYouTubeEmbedUrl(ex.videoUrl) : null;
+  const videoId = embedUrl ? embedUrl.split("/embed/")[1]?.split(/[?&]/)[0] : null;
+
+  // Preconnect to YouTube domains on modal mount for faster iframe load
+  useEffect(() => {
+    if (!videoId) return;
+    const origins = ["https://www.youtube.com", "https://www.google.com", "https://i.ytimg.com"];
+    const links = origins.map((href) => {
+      const link = document.createElement("link");
+      link.rel = "preconnect";
+      link.href = href;
+      document.head.appendChild(link);
+      return link;
+    });
+    return () => links.forEach((l) => l.remove());
+  }, [videoId]);
 
   const difficultyColor =
     ex.difficulty === "Beginner" ? "bg-green-50 text-green-700" :
@@ -757,17 +830,46 @@ function ExerciseDetailModal({
         </div>
       </DialogHeader>
 
-      {/* Video Player */}
-      {embedUrl && (
+      {/* Video Player — thumbnail-first, preloads iframe on hover for faster playback */}
+      {embedUrl && videoId && (
         <div className="mt-4 overflow-hidden rounded-xl bg-black">
           <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-            <iframe
-              src={embedUrl}
-              className="absolute inset-0 h-full w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title={displayName}
-            />
+            {videoActive ? (
+              <iframe
+                src={`${embedUrl}?autoplay=1`}
+                className="absolute inset-0 h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={displayName}
+              />
+            ) : (
+              <>
+                <button
+                  onMouseEnter={() => setPreloadVideo(true)}
+                  onTouchStart={() => setPreloadVideo(true)}
+                  onClick={() => setVideoActive(true)}
+                  className="absolute inset-0 z-10 flex h-full w-full items-center justify-center"
+                >
+                  <img
+                    src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                    alt={displayName}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-red-600 shadow-lg transition-transform hover:scale-110">
+                    <Play className="h-7 w-7 fill-white text-white" />
+                  </div>
+                </button>
+                {/* Hidden iframe preloads YouTube player JS/CSS on hover so it's cached when user clicks */}
+                {preloadVideo && (
+                  <iframe
+                    src={embedUrl}
+                    className="absolute inset-0 h-full w-full"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

@@ -1223,6 +1223,21 @@ export const bs = {
     nutritionSchedule: "Sedmični raspored",
     nutritionScheduleDesc: "Dodijelite plan ishrane svakom danu. Dani bez plana su dani odmora.",
     noMealPlansAdded: "Još nema planova ishrane dodanih u ovaj program.",
+    // AI Program Builder
+    aiCreateProgram: "AI Kreator programa",
+    aiCreateProgramDesc: "Opišite program i pustite AI da ga kreira za vas.",
+    programType: "Tip programa",
+    planSource: "Izvor planova",
+    useExisting: "Koristi postojeće",
+    generateNew: "Generiši nove",
+    useExistingDesc: "Kreirajte program od vaših postojećih planova treninga/ishrane.",
+    generateNewDesc: "AI kreira nove planove i sprema ih u vašu biblioteku.",
+    aiPromptWorkoutPlaceholder: "npr. 4-sedmični push/pull/legs program snage, progresivno opterećenje...",
+    aiPromptNutritionPlaceholder: "npr. 4-sedmični program ishrane, 2200 kal/dan, visoki proteini...",
+    buildProgram: "Kreiraj program",
+    generatingPlans: "Generisanje planova...",
+    programCreated: "Program kreiran",
+    generated: "generirano",
   },
 
   exerciseValues: {

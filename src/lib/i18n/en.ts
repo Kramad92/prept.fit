@@ -1191,6 +1191,21 @@ export const en: Translations = {
     nutritionSchedule: "Weekly Schedule",
     nutritionScheduleDesc: "Assign a meal plan to each day. Days without a plan are rest days.",
     noMealPlansAdded: "No meal plans have been added to this program yet.",
+    // AI Program Builder
+    aiCreateProgram: "AI Program Builder",
+    aiCreateProgramDesc: "Describe your program and let AI build it for you.",
+    programType: "Program type",
+    planSource: "Plan source",
+    useExisting: "Use existing",
+    generateNew: "Generate new",
+    useExistingDesc: "Build a program from your existing workout/meal plans.",
+    generateNewDesc: "AI creates new plans and saves them to your library.",
+    aiPromptWorkoutPlaceholder: "e.g. 4-week push/pull/legs strength program, progressive overload...",
+    aiPromptNutritionPlaceholder: "e.g. 4-week meal prep program, 2200 cal/day, high protein...",
+    buildProgram: "Build Program",
+    generatingPlans: "Generating plans...",
+    programCreated: "Program created",
+    generated: "generated",
   },
 
   exerciseValues: {

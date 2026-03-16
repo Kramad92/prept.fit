@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, CalendarRange, UtensilsCrossed, Search, Users, Pencil, Trash2 } from "lucide-react";
+import { Plus, CalendarRange, UtensilsCrossed, Search, Users, Pencil, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CreateProgramModal } from "@/components/ai/create-program-modal";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
@@ -22,6 +23,7 @@ export default function ProgramsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingType, setDeletingType] = useState<"workout" | "nutrition">("workout");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
   const { data: programs, loading, refresh } = useApi<WorkoutProgramSummary[]>("/api/programs");
   const { data: nutritionPrograms, loading: nLoading, refresh: nRefresh } = useApi<NutritionProgramSummary[]>("/api/nutrition-programs");
 
@@ -73,14 +75,26 @@ export default function ProgramsPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t.programs.title}</h1>
           <p className="mt-1 text-sm text-gray-500">{t.programs.subtitle}</p>
         </div>
-        <Button asChild>
-          <Link href={tab === "workout" ? "/dashboard/programs/new" : "/dashboard/programs/nutrition/new"}>
-            <Plus className="h-4 w-4 md:mr-2" />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAIModal(true)}
+            className="border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100"
+          >
+            <Sparkles className="h-4 w-4 md:mr-2" />
             <span className="hidden md:inline">
-              {tab === "workout" ? t.programs.newProgram : t.programs.newNutritionProgram}
+              {t.programs.aiCreateProgram || "AI Program Builder"}
             </span>
-          </Link>
-        </Button>
+          </Button>
+          <Button asChild>
+            <Link href={tab === "workout" ? "/dashboard/programs/new" : "/dashboard/programs/nutrition/new"}>
+              <Plus className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">
+                {tab === "workout" ? t.programs.newProgram : t.programs.newNutritionProgram}
+              </span>
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -270,6 +284,11 @@ export default function ProgramsPage() {
         cancelLabel={t.common.cancel}
         loading={deleteLoading}
         destructive
+      />
+      <CreateProgramModal
+        open={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        defaultType={tab}
       />
     </div>
   );

@@ -30,7 +30,7 @@ export function MobileInputScroll() {
         scroller.appendChild(spacer);
         scrollContainer = scroller;
         // Force layout so the spacer is accounted for before scrolling
-        scroller.scrollHeight; // eslint-disable-line @typescript-eslint/no-unused-expressions
+        void scroller.scrollHeight; // force layout reflow
       }
 
       // Two-phase scroll: immediate jump to roughly right place, then smooth after keyboard settles

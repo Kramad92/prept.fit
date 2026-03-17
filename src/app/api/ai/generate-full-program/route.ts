@@ -382,7 +382,8 @@ Return JSON:
   // Cap plans
   const plans = blueprint.plans.slice(0, maxPlans);
 
-  // ---- Step 2: Generate and save each plan ----
+  // ---- Step 2: Generate ALL plans into memory (no DB writes yet) ----
+  // If any AI call fails, nothing gets saved — no orphaned plans.
 
   // Pre-fetch exercise library once for workout type
   let libraryContext = "";
@@ -405,81 +406,138 @@ Return JSON:
     }
   }
 
-  const planIds: string[] = [];
+  interface GeneratedPlanData {
+    workoutData?: { name: string; description: string | null; exercises: any[] };
+    mealData?: { name: string; description: string | null; targetCalories: number; targetProtein: number; targetCarbs: number; targetFat: number; meals: any[] };
+    usage: { tokensIn: number; tokensOut: number; provider: string };
+  }
+
+  const generated: GeneratedPlanData[] = [];
 
   for (let i = 0; i < plans.length; i++) {
-    // Space out AI calls to avoid rate limits (provider rotation handles distribution)
+    // Space out AI calls to avoid rate limits
     if (i > 0) await delay(5000);
 
     const planDef = plans[i];
 
     if (type === "workout") {
-      const planId = await generateAndSaveWorkout(
-        tenantId, planDef, locale, langInstruction, libraryContext, libraryLookup,
-      );
-      planIds.push(planId);
+      const data = await generateWorkout(planDef, locale, langInstruction, libraryContext, libraryLookup);
+      generated.push(data);
     } else {
-      const planId = await generateAndSaveMealPlan(
-        tenantId, planDef, locale, langInstruction, mealsPerDay,
-      );
-      planIds.push(planId);
+      const data = await generateMealPlan(planDef, locale, langInstruction, mealsPerDay);
+      generated.push(data);
     }
   }
 
-  // ---- Step 3: Create program with day mappings ----
+  // ---- Step 3: Save everything in one transaction ----
+  // All AI calls succeeded — now persist plans + program atomically.
 
-  const days = blueprint.schedule
-    .filter((d) => d.planIndex >= 0 && d.planIndex < planIds.length)
-    .map((d) => ({
-      weekNumber: d.weekNumber,
-      dayNumber: d.dayNumber,
-      label: d.label || null,
-      ...(type === "workout"
-        ? { workoutPlanId: planIds[d.planIndex] }
-        : { mealPlanId: planIds[d.planIndex] }),
-    }));
+  const result = await prisma.$transaction(async (tx) => {
+    const planIds: string[] = [];
 
-  if (type === "workout") {
-    const program = await prisma.workoutProgram.create({
-      data: {
-        name: blueprint.name,
-        description: blueprint.description || null,
-        durationWeeks,
-        daysPerWeek,
-        isTemplate: true,
-        tenantId,
-        days: { create: days },
-      },
+    for (const gen of generated) {
+      if (type === "workout" && gen.workoutData) {
+        const created = await tx.workoutPlan.create({
+          data: {
+            name: gen.workoutData.name,
+            description: gen.workoutData.description,
+            isTemplate: true,
+            tenantId,
+            exercises: { create: gen.workoutData.exercises },
+          },
+        });
+        planIds.push(created.id);
+      } else if (type === "nutrition" && gen.mealData) {
+        const created = await tx.mealPlan.create({
+          data: {
+            name: gen.mealData.name,
+            description: gen.mealData.description,
+            isTemplate: true,
+            targetCalories: gen.mealData.targetCalories,
+            targetProtein: gen.mealData.targetProtein,
+            targetCarbs: gen.mealData.targetCarbs,
+            targetFat: gen.mealData.targetFat,
+            tenantId,
+            meals: {
+              create: gen.mealData.meals.map((meal: any, idx: number) => ({
+                name: meal.name,
+                description: meal.description || null,
+                time: meal.time || null,
+                foods: (meal.foods || []) as any,
+                orderIndex: idx,
+              })),
+            },
+          },
+        });
+        planIds.push(created.id);
+      }
+    }
+
+    const days = blueprint.schedule
+      .filter((d) => d.planIndex >= 0 && d.planIndex < planIds.length)
+      .map((d) => ({
+        weekNumber: d.weekNumber,
+        dayNumber: d.dayNumber,
+        label: d.label || null,
+        ...(type === "workout"
+          ? { workoutPlanId: planIds[d.planIndex] }
+          : { mealPlanId: planIds[d.planIndex] }),
+      }));
+
+    if (type === "workout") {
+      const program = await tx.workoutProgram.create({
+        data: {
+          name: blueprint.name,
+          description: blueprint.description || null,
+          durationWeeks,
+          daysPerWeek,
+          isTemplate: true,
+          tenantId,
+          days: { create: days },
+        },
+      });
+      return { programId: program.id, plansCreated: planIds.length };
+    } else {
+      const program = await tx.nutritionProgram.create({
+        data: {
+          name: blueprint.name,
+          description: blueprint.description || null,
+          durationWeeks,
+          mealsPerDay: daysPerWeek,
+          isTemplate: true,
+          tenantId,
+          days: { create: days },
+        },
+      });
+      return { programId: program.id, plansCreated: planIds.length };
+    }
+  });
+
+  // Log usage after successful save
+  for (const gen of generated) {
+    logAiUsage({
+      tenantId,
+      endpoint: type === "workout" ? "generate-workout-plan" : "generate-meal-plan",
+      tokensIn: gen.usage.tokensIn,
+      tokensOut: gen.usage.tokensOut,
+      provider: gen.usage.provider,
     });
-    return NextResponse.json({ programId: program.id, programName: blueprint.name, plansCreated: planIds.length });
-  } else {
-    const program = await prisma.nutritionProgram.create({
-      data: {
-        name: blueprint.name,
-        description: blueprint.description || null,
-        durationWeeks,
-        mealsPerDay: daysPerWeek,
-        isTemplate: true,
-        tenantId,
-        days: { create: days },
-      },
-    });
-    return NextResponse.json({ programId: program.id, programName: blueprint.name, plansCreated: planIds.length });
   }
+
+  return NextResponse.json({ programId: result.programId, programName: blueprint.name, plansCreated: result.plansCreated });
 }
 
 // ===========================================
-// Inline plan generators (no HTTP round-trips)
+// AI generators (generate into memory, no DB writes)
 // ===========================================
 
-async function generateAndSaveWorkout(
-  tenantId: string,
+async function generateWorkout(
   planDef: BlueprintPlan,
   locale: string,
   langInstruction: string,
   libraryContext: string,
   libraryLookup: Map<string, string>,
-): Promise<string> {
+) {
   const exerciseNameInstruction = getAIExerciseNameInstruction(locale);
 
   const { data: result, usage } = await aiJSON<GeneratedWorkoutPlan>({
@@ -526,7 +584,6 @@ Return a JSON object with this exact structure:
     temperature: 0.3,
   });
 
-  // Enrich with video URLs from library
   const exercises = result.exercises.map((ex, idx) => {
     const libraryVideo = libraryLookup.get(ex.name.toLowerCase());
     return {
@@ -541,28 +598,22 @@ Return a JSON object with this exact structure:
     };
   });
 
-  const created = await prisma.workoutPlan.create({
-    data: {
+  return {
+    workoutData: {
       name: result.name || planDef.name,
       description: result.description || null,
-      isTemplate: true,
-      tenantId,
-      exercises: { create: exercises },
+      exercises,
     },
-  });
-
-  logAiUsage({ tenantId, endpoint: "generate-workout-plan", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
-
-  return created.id;
+    usage: { tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider },
+  };
 }
 
-async function generateAndSaveMealPlan(
-  tenantId: string,
+async function generateMealPlan(
   planDef: BlueprintPlan,
   locale: string,
   langInstruction: string,
   numMeals?: number,
-): Promise<string> {
+) {
   const mealCountInstruction = numMeals
     ? `Create exactly ${numMeals} meal(s). This is a strict requirement — do NOT add extra meals.`
     : "Default to 3 meals (breakfast, lunch, dinner).";
@@ -656,31 +707,18 @@ Return JSON:
     }
   }
 
-  const created = await prisma.mealPlan.create({
-    data: {
+  return {
+    mealData: {
       name: result.name || planDef.name,
       description: result.description || null,
-      isTemplate: true,
       targetCalories: totalCalories,
       targetProtein: totalProtein,
       targetCarbs: totalCarbs,
       targetFat: totalFat,
-      tenantId,
-      meals: {
-        create: result.meals.map((meal, idx) => ({
-          name: meal.name,
-          description: meal.description || null,
-          time: meal.time || null,
-          foods: (meal.foods || []) as any,
-          orderIndex: idx,
-        })),
-      },
+      meals: result.meals,
     },
-  });
-
-  logAiUsage({ tenantId, endpoint: "generate-meal-plan", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
-
-  return created.id;
+    usage: { tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider },
+  };
 }
 
 // ===========================================

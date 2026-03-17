@@ -14,7 +14,7 @@ export const maxDuration = 120;
 const schema = z.object({
   type: z.enum(["workout", "nutrition"]),
   prompt: z.string().min(3).max(1000),
-  source: z.enum(["existing", "generate"]),
+  generateNew: z.boolean().default(false),
   durationWeeks: z.number().min(1).max(12),
   daysPerWeek: z.number().min(1).max(8),
   locale: z.enum(["bs", "sr", "hr", "en"]).optional().default("en"),
@@ -22,37 +22,26 @@ const schema = z.object({
 
 // --- Types ---
 
-interface BlueprintPlan {
+interface UnifiedBlueprintPlan {
   name: string;
   prompt: string;
+  source: "existing" | "generate";
 }
 
-interface BlueprintDay {
+interface UnifiedBlueprintDay {
   weekNumber: number;
   dayNumber: number;
   label: string;
   planIndex: number;
 }
 
-interface Blueprint {
+interface UnifiedBlueprint {
   name: string;
   description: string;
-  plans: BlueprintPlan[];
-  schedule: BlueprintDay[];
-}
-
-interface ExistingDay {
-  weekNumber: number;
-  dayNumber: number;
-  label: string;
-  workoutName?: string;
-  mealPlanName?: string;
-}
-
-interface ExistingResult {
-  name: string;
-  description: string;
-  days: ExistingDay[];
+  fit: "good" | "partial" | "poor";
+  missingPlans: string[];
+  plans: UnifiedBlueprintPlan[];
+  schedule: UnifiedBlueprintDay[];
 }
 
 interface GeneratedExercise {
@@ -97,6 +86,12 @@ interface GeneratedMealPlan {
   meals: GeneratedMeal[];
 }
 
+interface GeneratedPlanData {
+  workoutData?: { name: string; description: string | null; exercises: any[] };
+  mealData?: { name: string; description: string | null; targetCalories: number; targetProtein: number; targetCarbs: number; targetFat: number; meals: any[] };
+  usage: { tokensIn: number; tokensOut: number; provider: string };
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -111,19 +106,15 @@ export async function POST(req: NextRequest) {
   const parsed = await validateBody(req, schema);
   if ("error" in parsed) return parsed.error;
 
-  const { type, prompt, source, durationWeeks, daysPerWeek, locale: rawLocale } = parsed.data;
+  const { type, prompt, generateNew, durationWeeks, daysPerWeek, locale: rawLocale } = parsed.data;
   const locale = rawLocale || "en";
+  const tenantId = session.user.tenantId;
 
   try {
-    if (source === "existing") {
-      return await handleExisting(session, type, prompt, durationWeeks, daysPerWeek, locale);
-    } else {
-      return await handleGenerate(session, type, prompt, durationWeeks, daysPerWeek, locale);
-    }
+    return await handleProgram(tenantId, type, prompt, generateNew ?? false, durationWeeks, daysPerWeek, locale);
   } catch (e) {
     console.error("AI generate-full-program error:", e);
     const raw = e instanceof Error ? e.message : String(e);
-    // Don't leak raw provider errors to the user
     const isRateLimit = raw.includes("429") || raw.toLowerCase().includes("rate limit");
     const msg = isRateLimit
       ? "AI providers are temporarily rate-limited. Please wait a minute and try again."
@@ -133,193 +124,26 @@ export async function POST(req: NextRequest) {
 }
 
 // ===========================================
-// SOURCE: "existing" — single AI call, select from existing plans, create program
+// Unified program builder
 // ===========================================
 
-async function handleExisting(
-  session: any,
+async function handleProgram(
+  tenantId: string,
   type: string,
   prompt: string,
+  generateNew: boolean,
   durationWeeks: number,
   daysPerWeek: number,
   locale: string,
 ) {
-  const tenantId = session.user.tenantId;
   const langInstruction = getAILanguageInstruction(locale);
-
-  if (type === "workout") {
-    const workouts = await prisma.workoutPlan.findMany({
-      where: { tenantId, sourceTemplateId: null },
-      select: { id: true, name: true, description: true, _count: { select: { exercises: true } } },
-      take: 100,
-    });
-
-    if (workouts.length === 0) {
-      return NextResponse.json({ error: "No workouts available. Create some workouts first, or use 'Generate new'." }, { status: 400 });
-    }
-
-    const workoutList = workouts
-      .map((w) => `- "${w.name}"${w.description ? ` — ${w.description}` : ""} (${w._count.exercises} exercises)`)
-      .join("\n");
-
-    const { data: result, usage } = await aiJSON<ExistingResult & { error?: string }>({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert fitness coach. Generate a workout program schedule by selecting from the coach's EXISTING workouts.
-
-SCOPE: You ONLY handle fitness-related requests. If unrelated, return: {"error": "off_topic"}.
-
-AVAILABLE WORKOUTS:
-${workoutList}
-
-PROGRAM: ${durationWeeks} weeks, ${daysPerWeek} days/week.
-
-Rules:
-- Use workout names EXACTLY as listed. Do NOT invent new names.
-- Assign one workout per day slot (weekNumber 1-${durationWeeks}, dayNumber 1-${daysPerWeek})
-- Label each day (Monday, Tuesday, etc.) in the user's language
-- Arrange logically — avoid same muscle group on consecutive days
-- Reuse workouts across weeks if needed
-- ${langInstruction}
-
-Return JSON: { "name": "...", "description": "...", "days": [{ "weekNumber": 1, "dayNumber": 1, "label": "Monday", "workoutName": "Exact Name" }] }
-Include ALL ${durationWeeks * daysPerWeek} day slots.`,
-        },
-        { role: "user", content: prompt },
-      ],
-      maxTokens: 3000,
-      temperature: 0.3,
-    });
-
-    if (result.error === "off_topic") {
-      return NextResponse.json({ error: "Please provide a fitness-related request." }, { status: 400 });
-    }
-
-    const workoutLookup = new Map(workouts.map((w) => [w.name.toLowerCase(), w.id]));
-    const days = result.days.map((d) => ({
-      weekNumber: d.weekNumber,
-      dayNumber: d.dayNumber,
-      label: d.label,
-      workoutPlanId: workoutLookup.get(d.workoutName?.toLowerCase() || "") || null,
-    }));
-
-    const program = await prisma.workoutProgram.create({
-      data: {
-        name: result.name,
-        description: result.description || null,
-        durationWeeks,
-        daysPerWeek,
-        isTemplate: true,
-        tenantId,
-        days: { create: days.filter((d) => d.workoutPlanId) },
-      },
-    });
-
-    logAiUsage({ tenantId, endpoint: "generate-full-program", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
-
-    return NextResponse.json({ programId: program.id, programName: result.name, plansCreated: 0 });
-  } else {
-    // nutrition — existing
-    const mealPlans = await prisma.mealPlan.findMany({
-      where: { tenantId, sourceTemplateId: null },
-      select: { id: true, name: true, description: true, _count: { select: { meals: true } } },
-      take: 100,
-    });
-
-    if (mealPlans.length === 0) {
-      return NextResponse.json({ error: "No meal plans available. Create some meal plans first, or use 'Generate new'." }, { status: 400 });
-    }
-
-    const planList = mealPlans
-      .map((m) => `- "${m.name}"${m.description ? ` — ${m.description}` : ""} (${m._count.meals} meals)`)
-      .join("\n");
-
-    const { data: result, usage } = await aiJSON<ExistingResult & { error?: string }>({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert nutrition coach. Generate a nutrition program schedule by selecting from the coach's EXISTING meal plans.
-
-SCOPE: You ONLY handle nutrition-related requests. If unrelated, return: {"error": "off_topic"}.
-
-AVAILABLE MEAL PLANS:
-${planList}
-
-PROGRAM: ${durationWeeks} weeks, 7 days/week.
-
-Rules:
-- Use meal plan names EXACTLY as listed. Do NOT invent new names.
-- Assign one meal plan per day (weekNumber 1-${durationWeeks}, dayNumber 1-7)
-- Label each day (Monday–Sunday) in the user's language
-- Vary plans across days for dietary balance
-- Reuse if fewer plans than days
-- ${langInstruction}
-
-Return JSON: { "name": "...", "description": "...", "days": [{ "weekNumber": 1, "dayNumber": 1, "label": "Monday", "mealPlanName": "Exact Name" }] }
-Include ALL ${durationWeeks * 7} day slots.`,
-        },
-        { role: "user", content: prompt },
-      ],
-      maxTokens: 3000,
-      temperature: 0.3,
-    });
-
-    if (result.error === "off_topic") {
-      return NextResponse.json({ error: "Please provide a nutrition-related request." }, { status: 400 });
-    }
-
-    const planLookup = new Map(mealPlans.map((m) => [m.name.toLowerCase(), m.id]));
-    const days = result.days.map((d) => ({
-      weekNumber: d.weekNumber,
-      dayNumber: d.dayNumber,
-      label: d.label,
-      mealPlanId: planLookup.get(d.mealPlanName?.toLowerCase() || "") || null,
-    }));
-
-    const program = await prisma.nutritionProgram.create({
-      data: {
-        name: result.name,
-        description: result.description || null,
-        durationWeeks,
-        mealsPerDay: daysPerWeek,
-        isTemplate: true,
-        tenantId,
-        days: { create: days.filter((d) => d.mealPlanId) },
-      },
-    });
-
-    logAiUsage({ tenantId, endpoint: "generate-full-program", tokensIn: usage.tokensIn, tokensOut: usage.tokensOut, provider: usage.provider });
-
-    return NextResponse.json({ programId: program.id, programName: result.name, plansCreated: 0 });
-  }
-}
-
-// ===========================================
-// SOURCE: "generate" — full server-side orchestration
-// Blueprint → generate each plan → save to DB → create program
-// ===========================================
-
-async function handleGenerate(
-  session: any,
-  type: string,
-  prompt: string,
-  durationWeeks: number,
-  daysPerWeek: number,
-  locale: string,
-) {
-  const tenantId = session.user.tenantId;
-  const langInstruction = getAILanguageInstruction(locale);
-
-  // For nutrition, daysPerWeek is mealsPerDay
   const mealsPerDay = type === "nutrition" ? daysPerWeek : undefined;
 
   const totalSlots = type === "workout"
     ? durationWeeks * daysPerWeek
     : durationWeeks * 7;
 
-  // Cap unique plans to something sensible
-  const maxPlans = type === "workout"
+  const maxUniquePlans = type === "workout"
     ? Math.min(daysPerWeek, 5)
     : Math.min(5, 4);
 
@@ -328,31 +152,31 @@ async function handleGenerate(
     ? `${daysPerWeek} training days per week`
     : `7 days per week, ${mealsPerDay} meal(s) per day`;
 
-  // Fetch existing plan names to avoid duplicates
-  const existingNames: string[] = [];
+  // ---- Fetch existing plans ----
+
+  let existingPlans: { id: string; name: string; description: string | null }[] = [];
+
   if (type === "workout") {
-    const existing = await prisma.workoutPlan.findMany({
+    existingPlans = await prisma.workoutPlan.findMany({
       where: { tenantId, sourceTemplateId: null },
-      select: { name: true },
-      take: 200,
+      select: { id: true, name: true, description: true },
+      take: 100,
     });
-    existingNames.push(...existing.map((p) => p.name));
   } else {
-    const existing = await prisma.mealPlan.findMany({
+    existingPlans = await prisma.mealPlan.findMany({
       where: { tenantId, sourceTemplateId: null },
-      select: { name: true },
-      take: 200,
+      select: { id: true, name: true, description: true },
+      take: 100,
     });
-    existingNames.push(...existing.map((p) => p.name));
   }
 
-  const existingNamesInstruction = existingNames.length > 0
-    ? `\nEXISTING PLAN NAMES (do NOT reuse these — pick different, distinct names):\n${existingNames.map((n) => `- "${n}"`).join("\n")}\n`
-    : "";
+  const existingList = existingPlans.length > 0
+    ? existingPlans.map((p) => `- "${p.name}"${p.description ? ` — ${p.description}` : ""}`).join("\n")
+    : "(none)";
 
-  // ---- Step 1: Generate blueprint ----
+  // ---- Step 1: Unified blueprint with fit assessment ----
 
-  const { data: blueprint, usage: bpUsage } = await aiJSON<Blueprint & { error?: string }>({
+  const { data: blueprint, usage: bpUsage } = await aiJSON<UnifiedBlueprint & { error?: string }>({
     messages: [
       {
         role: "system",
@@ -360,29 +184,41 @@ async function handleGenerate(
 
 SCOPE: You ONLY handle ${type === "workout" ? "fitness" : "nutrition"}-related requests. If unrelated, return: {"error": "off_topic"}.
 
-You need to determine:
-1. What unique ${planType} plans to create (maximum ${maxPlans} distinct plans)
-2. How to schedule them across the program
+EXISTING ${planType.toUpperCase()} PLANS available to the coach:
+${existingList}
 
 PROGRAM: ${durationWeeks} weeks, ${dayDesc}.
 ${mealsPerDay ? `Each meal plan MUST contain exactly ${mealsPerDay} meal(s). This is critical — the user specified ${mealsPerDay} meal(s) per day.` : ""}
-${existingNamesInstruction}
+
+YOUR TASK:
+1. Determine what unique ${planType} plans this program needs (max ${maxUniquePlans} distinct plans).
+2. Check if the EXISTING plans above cover what's needed. A plan "matches" if it is clearly suitable for a slot in the program based on its name and description.
+3. Evaluate the overall fit:
+   - "good" = all needed plans exist and match the request
+   - "partial" = some plans match but others are missing
+   - "poor" = none or almost none of the existing plans match the request
+4. For each plan the program needs, set source to "existing" if a matching plan exists (use its EXACT name), or "generate" if it needs to be created.
+5. "missingPlans" should list the NAMES of plans that need to be generated (human-readable, for display to the user).
+6. The "prompt" field: for "existing" plans, leave empty "". For "generate" plans, write a detailed description of what that plan should contain.${mealsPerDay ? ` Every generate prompt MUST specify: "This plan must have exactly ${mealsPerDay} meal(s)."` : ""}
+
 Rules:
-- Create ${maxPlans} or fewer unique plans. Each plan will be fully generated with ${type === "workout" ? "exercises" : "meals and foods"}.
-- The "prompt" field for each plan should be a detailed description of what that ${planType} plan should contain (target muscles, style, intensity, etc for workouts; calorie target, meal types, dietary focus for nutrition).${mealsPerDay ? ` Every plan prompt MUST specify: "This plan must have exactly ${mealsPerDay} meal(s)."` : ""}
+- ${maxUniquePlans} or fewer unique plans total.
 - Schedule ALL ${totalSlots} day slots by referencing planIndex (0-based index into the plans array).
 - Label days with weekday names in the user's language.
 - ${type === "workout" ? "Arrange logically — avoid same muscle group on consecutive days." : "Vary plans across days for dietary balance."}
-- CRITICAL: Each plan name must be UNIQUE and different from any existing plan names listed above. Use specific, descriptive names (e.g. "Upper Body Push — Chest & Shoulders" instead of just "Chest Day").
-- Avoid duplicate or overly similar plans. Each plan should be distinct.
+- For "generate" plans: use specific, descriptive names (e.g. "Upper Body Push — Chest & Shoulders" instead of just "Chest Day").
+- For "existing" plans: use the EXACT name from the list above.
+- Be strict about matching — don't force-fit a "Full Body Kettlebell" plan when the user asked for an isolated "Shoulder Day". Only mark as "existing" if the plan genuinely fits.
 - ${langInstruction}
 
 Return JSON:
 {
   "name": "Program name",
   "description": "Brief program description",
+  "fit": "good" | "partial" | "poor",
+  "missingPlans": ["Plan Name That Needs Generating", ...],
   "plans": [
-    { "name": "Plan Name", "prompt": "Detailed description for generating this plan..." }
+    { "name": "Plan Name", "prompt": "...", "source": "existing" | "generate" }
   ],
   "schedule": [
     { "weekNumber": 1, "dayNumber": 1, "label": "Monday", "planIndex": 0 }
@@ -401,13 +237,35 @@ Return JSON:
 
   logAiUsage({ tenantId, endpoint: "generate-full-program-blueprint", tokensIn: bpUsage.tokensIn, tokensOut: bpUsage.tokensOut, provider: bpUsage.provider });
 
+  // ---- Step 2: Check if generation is needed but not allowed ----
+
+  const plansToGenerate = blueprint.plans.filter((p) => p.source === "generate");
+  const plansFromExisting = blueprint.plans.filter((p) => p.source === "existing");
+
+  if (plansToGenerate.length > 0 && !generateNew) {
+    // Return fit feedback — don't build anything yet
+    return NextResponse.json({
+      needsGeneration: true,
+      fit: blueprint.fit,
+      missingPlans: blueprint.missingPlans.length > 0
+        ? blueprint.missingPlans
+        : plansToGenerate.map((p) => p.name),
+      existingCount: plansFromExisting.length,
+      totalNeeded: blueprint.plans.length,
+    });
+  }
+
+  // ---- Step 3: Resolve existing plan IDs ----
+
+  const existingLookup = new Map(
+    existingPlans.map((p) => [p.name.toLowerCase(), p.id])
+  );
+
   // Cap plans
-  const plans = blueprint.plans.slice(0, maxPlans);
+  const plans = blueprint.plans.slice(0, maxUniquePlans);
 
-  // ---- Step 2: Generate ALL plans into memory (no DB writes yet) ----
-  // If any AI call fails, nothing gets saved — no orphaned plans.
+  // ---- Step 4: Generate missing plans into memory ----
 
-  // Pre-fetch exercise library once for workout type
   let libraryContext = "";
   let libraryLookup = new Map<string, string>();
   if (type === "workout") {
@@ -428,33 +286,44 @@ Return JSON:
     }
   }
 
-  interface GeneratedPlanData {
-    workoutData?: { name: string; description: string | null; exercises: any[] };
-    mealData?: { name: string; description: string | null; targetCalories: number; targetProtein: number; targetCarbs: number; targetFat: number; meals: any[] };
-    usage: { tokensIn: number; tokensOut: number; provider: string };
+  // Build plan resolution: existing ID or generated data
+  interface ResolvedPlan {
+    existingId?: string;
+    generated?: GeneratedPlanData;
   }
 
-  const generated: GeneratedPlanData[] = [];
+  const resolved: ResolvedPlan[] = [];
+  let genCount = 0;
 
   for (let i = 0; i < plans.length; i++) {
-    // Space out AI calls to avoid rate limits
-    if (i > 0) await delay(5000);
-
     const planDef = plans[i];
+
+    if (planDef.source === "existing") {
+      const existingId = existingLookup.get(planDef.name.toLowerCase());
+      if (existingId) {
+        resolved.push({ existingId });
+        continue;
+      }
+      // AI said "existing" but plan doesn't actually exist — fall through to generate
+      console.warn(`Blueprint referenced existing plan "${planDef.name}" but it wasn't found — will generate instead`);
+    }
+
+    // Generate this plan
+    if (genCount > 0) await delay(5000);
+    genCount++;
 
     if (type === "workout") {
       const data = await generateWorkout(planDef, locale, langInstruction, libraryContext, libraryLookup);
-      generated.push(data);
+      resolved.push({ generated: data });
     } else {
       const data = await generateMealPlan(planDef, locale, langInstruction, mealsPerDay);
-      generated.push(data);
+      resolved.push({ generated: data });
     }
   }
 
-  // ---- Step 3: Save everything in one transaction ----
-  // All AI calls succeeded — now persist plans + program atomically.
-  // Deduplicate names: if AI picked a name that already exists, append a number.
+  // ---- Step 5: Save everything in one transaction ----
 
+  const existingNames = existingPlans.map((p) => p.name);
   const usedNames = new Set(existingNames.map((n) => n.toLowerCase()));
 
   function uniqueName(name: string): string {
@@ -470,47 +339,55 @@ Return JSON:
         return candidate;
       }
     }
-    return name; // fallback
+    return name;
   }
 
   const result = await prisma.$transaction(async (tx) => {
     const planIds: string[] = [];
+    let plansCreated = 0;
 
-    for (const gen of generated) {
-      if (type === "workout" && gen.workoutData) {
-        const created = await tx.workoutPlan.create({
-          data: {
-            name: uniqueName(gen.workoutData.name),
-            description: gen.workoutData.description,
-            isTemplate: true,
-            tenantId,
-            exercises: { create: gen.workoutData.exercises },
-          },
-        });
-        planIds.push(created.id);
-      } else if (type === "nutrition" && gen.mealData) {
-        const created = await tx.mealPlan.create({
-          data: {
-            name: uniqueName(gen.mealData.name),
-            description: gen.mealData.description,
-            isTemplate: true,
-            targetCalories: gen.mealData.targetCalories,
-            targetProtein: gen.mealData.targetProtein,
-            targetCarbs: gen.mealData.targetCarbs,
-            targetFat: gen.mealData.targetFat,
-            tenantId,
-            meals: {
-              create: gen.mealData.meals.map((meal: any, idx: number) => ({
-                name: meal.name,
-                description: meal.description || null,
-                time: meal.time || null,
-                foods: (meal.foods || []) as any,
-                orderIndex: idx,
-              })),
+    for (const plan of resolved) {
+      if (plan.existingId) {
+        planIds.push(plan.existingId);
+      } else if (plan.generated) {
+        const gen = plan.generated;
+        if (type === "workout" && gen.workoutData) {
+          const created = await tx.workoutPlan.create({
+            data: {
+              name: uniqueName(gen.workoutData.name),
+              description: gen.workoutData.description,
+              isTemplate: true,
+              tenantId,
+              exercises: { create: gen.workoutData.exercises },
             },
-          },
-        });
-        planIds.push(created.id);
+          });
+          planIds.push(created.id);
+          plansCreated++;
+        } else if (type === "nutrition" && gen.mealData) {
+          const created = await tx.mealPlan.create({
+            data: {
+              name: uniqueName(gen.mealData.name),
+              description: gen.mealData.description,
+              isTemplate: true,
+              targetCalories: gen.mealData.targetCalories,
+              targetProtein: gen.mealData.targetProtein,
+              targetCarbs: gen.mealData.targetCarbs,
+              targetFat: gen.mealData.targetFat,
+              tenantId,
+              meals: {
+                create: gen.mealData.meals.map((meal: any, idx: number) => ({
+                  name: meal.name,
+                  description: meal.description || null,
+                  time: meal.time || null,
+                  foods: (meal.foods || []) as any,
+                  orderIndex: idx,
+                })),
+              },
+            },
+          });
+          planIds.push(created.id);
+          plansCreated++;
+        }
       }
     }
 
@@ -537,7 +414,7 @@ Return JSON:
           days: { create: days },
         },
       });
-      return { programId: program.id, plansCreated: planIds.length };
+      return { programId: program.id, plansCreated };
     } else {
       const program = await tx.nutritionProgram.create({
         data: {
@@ -550,22 +427,29 @@ Return JSON:
           days: { create: days },
         },
       });
-      return { programId: program.id, plansCreated: planIds.length };
+      return { programId: program.id, plansCreated };
     }
   });
 
-  // Log usage after successful save
-  for (const gen of generated) {
-    logAiUsage({
-      tenantId,
-      endpoint: type === "workout" ? "generate-workout-plan" : "generate-meal-plan",
-      tokensIn: gen.usage.tokensIn,
-      tokensOut: gen.usage.tokensOut,
-      provider: gen.usage.provider,
-    });
+  // Log usage for generated plans
+  for (const plan of resolved) {
+    if (plan.generated) {
+      logAiUsage({
+        tenantId,
+        endpoint: type === "workout" ? "generate-workout-plan" : "generate-meal-plan",
+        tokensIn: plan.generated.usage.tokensIn,
+        tokensOut: plan.generated.usage.tokensOut,
+        provider: plan.generated.usage.provider,
+      });
+    }
   }
 
-  return NextResponse.json({ programId: result.programId, programName: blueprint.name, plansCreated: result.plansCreated });
+  return NextResponse.json({
+    programId: result.programId,
+    programName: blueprint.name,
+    plansCreated: result.plansCreated,
+    plansReused: resolved.filter((r) => r.existingId).length,
+  });
 }
 
 // ===========================================
@@ -573,7 +457,7 @@ Return JSON:
 // ===========================================
 
 async function generateWorkout(
-  planDef: BlueprintPlan,
+  planDef: UnifiedBlueprintPlan,
   locale: string,
   langInstruction: string,
   libraryContext: string,
@@ -650,7 +534,7 @@ Return a JSON object with this exact structure:
 }
 
 async function generateMealPlan(
-  planDef: BlueprintPlan,
+  planDef: UnifiedBlueprintPlan,
   locale: string,
   langInstruction: string,
   numMeals?: number,

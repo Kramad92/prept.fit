@@ -24,6 +24,37 @@ interface Props {
   onImported: () => void;
 }
 
+// Custom sort orders — items not listed fall to the end sorted by count
+const DIFFICULTY_ORDER = [
+  "Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Master", "Grand Master", "Legendary",
+];
+
+const EQUIPMENT_ORDER = [
+  "Bodyweight", "Dumbbell", "Barbell", "Kettlebell", "Cable", "Resistance Band",
+  "Pull Up Bar", "Stability Ball", "Medicine Ball", "Suspension Trainer",
+  "Gymnastic Rings", "EZ Bar", "Trap Bar", "Weight Plate", "Sandbag",
+  "Heavy Sandbag", "Clubbell", "Macebell", "Sliders", "Miniband", "Superband",
+  "Battle Ropes", "Slam Ball", "Wall Ball", "Sled", "Tire", "Ab Wheel",
+  "Climbing Rope", "Landmine", "Parallette Bars", "Bulgarian Bag",
+  "Indian Club",
+];
+
+const TRAINING_STYLE_ORDER = [
+  "Bodybuilding", "Calisthenics", "Powerlifting", "Olympic Weightlifting",
+  "Ballistics", "Plyometric", "Balance", "Mobility", "Postural",
+  "Grinds", "Animal Flow",
+];
+
+function sortByOrder(options: FilterOption[], order: string[]): FilterOption[] {
+  const orderMap = new Map(order.map((name, i) => [name.toLowerCase(), i]));
+  return [...options].sort((a, b) => {
+    const aIdx = orderMap.get(a.name.toLowerCase()) ?? 999;
+    const bIdx = orderMap.get(b.name.toLowerCase()) ?? 999;
+    if (aIdx !== bIdx) return aIdx - bIdx;
+    return b.count - a.count; // fallback: by count
+  });
+}
+
 function FilterSection({
   title,
   options,
@@ -164,7 +195,7 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
 
             <FilterSection
               title="Difficulty Level"
-              options={filters.difficulties}
+              options={sortByOrder(filters.difficulties, DIFFICULTY_ORDER)}
               selected={selectedDifficulties}
               onToggle={(n) => toggle(selectedDifficulties, setSelectedDifficulties, n)}
               onSelectAll={() => setSelectedDifficulties(new Set(filters.difficulties.map((o) => o.name)))}
@@ -173,7 +204,7 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
 
             <FilterSection
               title="Equipment"
-              options={filters.equipment}
+              options={sortByOrder(filters.equipment, EQUIPMENT_ORDER)}
               selected={selectedEquipment}
               onToggle={(n) => toggle(selectedEquipment, setSelectedEquipment, n)}
               onSelectAll={() => setSelectedEquipment(new Set(filters.equipment.map((o) => o.name)))}
@@ -191,7 +222,7 @@ export function ExerciseImportModal({ open, onClose, onImported }: Props) {
 
             <FilterSection
               title="Training Style"
-              options={filters.classifications}
+              options={sortByOrder(filters.classifications, TRAINING_STYLE_ORDER)}
               selected={selectedClassifications}
               onToggle={(n) => toggle(selectedClassifications, setSelectedClassifications, n)}
               onSelectAll={() => setSelectedClassifications(new Set(filters.classifications.map((o) => o.name)))}

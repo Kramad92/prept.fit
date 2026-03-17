@@ -271,34 +271,44 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+interface NamedProvider {
+  name: string;
+  provider: AIProvider;
+}
+
 /** Build a provider with automatic fallback and sticky rotation.
  *  Remembers which provider last succeeded and starts there on the next call.
  *  On 429 (rate-limit), immediately advances to the next provider instead of
  *  retrying the exhausted one. Only retries with backoff as a last resort
  *  when all providers are rate-limited. */
-function createFallbackProvider(providers: AIProvider[]): AIProvider {
+function createFallbackProvider(named: NamedProvider[]): AIProvider {
   let startIndex = 0;
 
   return {
     async complete(options) {
       let lastError: Error | null = null;
       let shortest429Wait: number | null = null;
+      const tried: string[] = [];
 
       // Try each provider once, starting from the last one that worked
-      for (let attempt = 0; attempt < providers.length; attempt++) {
-        const idx = (startIndex + attempt) % providers.length;
-        const provider = providers[idx];
+      for (let attempt = 0; attempt < named.length; attempt++) {
+        const idx = (startIndex + attempt) % named.length;
+        const { name, provider } = named[idx];
+        tried.push(name);
         try {
           const result = await provider.complete(options);
           startIndex = idx; // sticky — start here next time
+          if (tried.length > 1) {
+            console.log(`AI fallback chain: ${tried.join(" → ")} (${name} succeeded)`);
+          }
           return result;
         } catch (e) {
           lastError = e instanceof Error ? e : new Error(String(e));
-          console.warn(`AI provider [${idx}] failed: ${lastError.message}`);
+          console.warn(`AI provider [${name}] failed: ${lastError.message}`);
 
           if (lastError.message.includes("429")) {
             // Advance past this provider for future calls
-            startIndex = (idx + 1) % providers.length;
+            startIndex = (idx + 1) % named.length;
             const waitMs = extractRetryAfterMs(lastError.message);
             if (waitMs && (shortest429Wait === null || waitMs < shortest429Wait)) {
               shortest429Wait = waitMs;
@@ -310,10 +320,11 @@ function createFallbackProvider(providers: AIProvider[]): AIProvider {
       // All providers failed — if any were 429, wait for the shortest and retry once
       if (shortest429Wait !== null) {
         const waitMs = Math.min(shortest429Wait + 1000, 15000);
-        console.log(`All providers exhausted — waiting ${waitMs}ms for rate limit reset…`);
+        const retryName = named[startIndex].name;
+        console.log(`All providers exhausted (${tried.join(", ")}) — waiting ${waitMs}ms, retrying ${retryName}…`);
         await delay(waitMs);
         try {
-          return await providers[startIndex].complete(options);
+          return await named[startIndex].provider.complete(options);
         } catch (retryErr) {
           lastError = retryErr instanceof Error ? retryErr : new Error(String(retryErr));
         }
@@ -336,28 +347,28 @@ export function getAI(): AIProvider {
   const fallback2Name = (process.env.AI_FALLBACK2_PROVIDER || "").trim();
   const fallback2Key = (process.env.AI_FALLBACK2_API_KEY || "").trim();
 
-  const providers: AIProvider[] = [];
+  const named: NamedProvider[] = [];
 
   const primary = createProvider(primaryName, primaryKey);
-  if (primary) providers.push(primary);
+  if (primary) named.push({ name: primaryName, provider: primary });
 
   if (fallbackName && fallbackKey) {
     const fallback = createProvider(fallbackName, fallbackKey);
-    if (fallback) providers.push(fallback);
+    if (fallback) named.push({ name: fallbackName, provider: fallback });
   }
 
   if (fallback2Name && fallback2Key) {
     const fallback2 = createProvider(fallback2Name, fallback2Key);
-    if (fallback2) providers.push(fallback2);
+    if (fallback2) named.push({ name: fallback2Name, provider: fallback2 });
   }
 
-  console.log(`AI providers initialized: ${providers.length} (primary=${primaryName}, fb1=${fallbackName || "none"}, fb2=${fallback2Name || "none"})`);
+  console.log(`AI providers initialized: ${named.length} (primary=${primaryName}, fb1=${fallbackName || "none"}, fb2=${fallback2Name || "none"})`);
 
-  if (providers.length === 0) {
+  if (named.length === 0) {
     throw new Error("AI_API_KEY environment variable is not set");
   }
 
-  _provider = providers.length === 1 ? providers[0] : createFallbackProvider(providers);
+  _provider = named.length === 1 ? named[0].provider : createFallbackProvider(named);
   return _provider;
 }
 

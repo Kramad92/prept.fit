@@ -4,7 +4,7 @@
 
 html {
   overflow-x: clip;
-  background-color: #f9fafb; /* gray-50 — matches light body bg */
+  background-color: #f2f2f7; /* Apple iOS secondary bg — matches light body bg */
 }
 html.dark {
   background-color: rgb(2 6 23); /* slate-950 — matches dark surface-secondary */
@@ -83,13 +83,13 @@ html.dark * {
     --accent-900: 15 23 42;      /* #0F172A Deep Slate */
     --accent-950: 2 6 23;
 
-    /* Semantic surfaces — light mode */
+    /* Semantic surfaces — light mode (Apple iOS cool blue-violet tint) */
     --surface-primary:   255 255 255;       /* white — cards, modals */
-    --surface-secondary: 248 250 252;       /* slate-50 — page background */
+    --surface-secondary: 242 242 247;       /* #F2F2F7 — page background */
     --surface-elevated:  255 255 255;       /* white — elevated elements */
 
     /* shadcn/ui semantic tokens (HSL without hsl() wrapper) */
-    --background: 210 40% 98%;
+    --background: 240 20% 96%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -152,6 +152,14 @@ html.dark * {
   html.dark body {
     background-color: rgb(var(--surface-secondary));
     color: rgb(248 250 252); /* slate-50 */
+  }
+
+  /* ─── Light mode softening ─────────────────────────── */
+  .bg-white {
+    background-color: rgb(var(--surface-primary)) !important;
+  }
+  .bg-gray-50 {
+    background-color: rgb(var(--surface-secondary)) !important;
   }
 
   /* ─── Dark mode overrides ──────────────────────────── */

@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { Dumbbell, Mail, Phone, Globe, Award, Star, ArrowRight } from "lucide-react";
 import type { CoachPublicProfile } from "@/types";
 import { SocialLinks } from "./public/social-links";
 import { LandingPageInteractive } from "./public/landing-page-interactive";
+import { ThemeToggle } from "./theme-toggle";
 import Image from "next/image";
 
 export function CoachLandingPage({ profile }: { profile: CoachPublicProfile }) {
@@ -10,21 +12,24 @@ export function CoachLandingPage({ profile }: { profile: CoachPublicProfile }) {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
             {profile.logo ? (
               <Image src={profile.logo} alt="" width={32} height={32} className="h-8 w-8 rounded-lg object-cover" />
             ) : (
               <Dumbbell className="h-7 w-7 text-brand-600" />
             )}
             <span className="text-xl font-bold">{profile.name}</span>
-          </div>
-          <nav className="hidden items-center gap-6 text-sm md:flex">
-            {profile.bio && <a href="#about" className="text-gray-600 transition-colors hover:text-gray-900">About</a>}
-            {profile.certificates.length > 0 && <a href="#certificates" className="text-gray-600 transition-colors hover:text-gray-900">Credentials</a>}
-            {profile.packages.length > 0 && <a href="#pricing" className="text-gray-600 transition-colors hover:text-gray-900">Pricing</a>}
-            <a href="#contact" className="rounded-lg bg-brand-600 px-4 py-2 text-white transition-colors hover:bg-brand-700">
-              Get in Touch
-            </a>
+          </Link>
+          <nav className="flex items-center gap-4 text-sm md:gap-6">
+            <span className="hidden md:contents">
+              {profile.bio && <a href="#about" className="text-gray-600 transition-colors hover:text-gray-900">About</a>}
+              {profile.certificates.length > 0 && <a href="#certificates" className="text-gray-600 transition-colors hover:text-gray-900">Credentials</a>}
+              {profile.packages.length > 0 && <a href="#pricing" className="text-gray-600 transition-colors hover:text-gray-900">Pricing</a>}
+              <a href="#contact" className="rounded-lg bg-brand-600 px-4 py-2 text-white transition-colors hover:bg-brand-700">
+                Get in Touch
+              </a>
+            </span>
+            <ThemeToggle />
           </nav>
         </div>
       </header>
@@ -255,7 +260,10 @@ export function CoachLandingPage({ profile }: { profile: CoachPublicProfile }) {
             </div>
           )}
           <p className="text-sm text-gray-400">
-            {profile.name} &mdash; Powered by Prept
+            {profile.name} &mdash; Powered by{" "}
+            <Link href="/" className="font-medium text-brand-600 transition-colors hover:text-brand-700">
+              Prept
+            </Link>
           </p>
         </div>
       </footer>

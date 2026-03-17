@@ -9,13 +9,13 @@ export async function getTenantFromHost() {
   // In development: use query param or default tenant
   const parts = host.split(".");
 
-  let slug: string;
-  if (parts.length >= 3) {
-    slug = parts[0];
-  } else {
-    // Development fallback — use first tenant
-    slug = "demo";
+  // Only resolve tenant from subdomain (e.g. coach-name.prept.fit)
+  // On localhost / bare domains, return null so the main landing page shows
+  if (parts.length < 3) {
+    return null;
   }
+
+  const slug = parts[0];
 
   const tenant = await prisma.tenant.findUnique({
     where: { slug },

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Calendar, Dumbbell, Camera, CalendarPlus, Clock } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatTime } from "@/lib/utils";
 import { useT, useLocale, getDateLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -49,8 +50,31 @@ export default function PortalHomePage() {
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+      <div className="animate-pulse">
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-7 w-48" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card flex flex-col items-center gap-2 py-4">
+              <Skeleton className="h-6 w-6 rounded" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 space-y-3">
+          <Skeleton className="h-5 w-36" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="card flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

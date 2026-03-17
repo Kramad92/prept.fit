@@ -18,7 +18,9 @@ import {
   ClipboardCheck,
   Timer,
   Send,
+  TrendingUp,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -148,34 +150,46 @@ export default function DashboardPage() {
   }, []);
 
   const stats = [
-    { label: t.dashboard.activeClients, value: data?.clientCount ?? "—", icon: Users, href: "/dashboard/clients", color: "bg-blue-50 text-blue-600" },
-    { label: t.dashboard.thisWeek, value: data?.weekSessions ?? "—", icon: Calendar, href: "/dashboard/schedule", color: "bg-purple-50 text-purple-600" },
-    { label: t.dashboard.workoutPlans, value: data?.planCount ?? "—", icon: Dumbbell, href: "/dashboard/workouts", color: "bg-brand-50 text-brand-600" },
-    { label: t.dashboard.mealPlans, value: data?.mealPlanCount ?? "—", icon: UtensilsCrossed, href: "/dashboard/nutrition", color: "bg-orange-50 text-orange-600" },
+    { label: t.dashboard.activeClients, value: data?.clientCount ?? "—", total: data?.totalClients, icon: Users, href: "/dashboard/clients", gradient: "from-blue-500 to-blue-600", bg: "bg-blue-50", iconColor: "text-blue-600" },
+    { label: t.dashboard.thisWeek, value: data?.weekSessions ?? "—", icon: Calendar, href: "/dashboard/schedule", gradient: "from-purple-500 to-purple-600", bg: "bg-purple-50", iconColor: "text-purple-600" },
+    { label: t.dashboard.workoutPlans, value: data?.planCount ?? "—", icon: Dumbbell, href: "/dashboard/workouts", gradient: "from-brand-500 to-brand-600", bg: "bg-brand-50", iconColor: "text-brand-600" },
+    { label: t.dashboard.mealPlans, value: data?.mealPlanCount ?? "—", icon: UtensilsCrossed, href: "/dashboard/nutrition", gradient: "from-orange-500 to-orange-600", bg: "bg-orange-50", iconColor: "text-orange-600" },
   ];
 
   const fmt = (amount: number, currency: string = "BAM") => `${amount.toFixed(2)} ${currency}`;
 
+  if (!data) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t.dashboard.title}</h1>
-        <p className="mt-1 text-sm text-gray-500">{t.dashboard.welcome}</p>
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t.dashboard.title}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t.dashboard.welcome}</p>
+        </div>
+        <QuickActions t={t} />
       </div>
 
-      {/* Quick Actions */}
-      <QuickActions t={t} />
-
       {/* Stats Grid */}
-      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {stats.map((stat) => (
-          <Link key={stat.label} href={stat.href} className="card flex flex-col gap-3 transition-shadow hover:shadow-md">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.color}`}>
-              <stat.icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500">{stat.label}</p>
+          <Link key={stat.label} href={stat.href} className="group card relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">{stat.label}</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">{stat.value}</p>
+                {stat.total !== undefined && stat.total > 0 && (
+                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-400">
+                    <TrendingUp className="h-3 w-3 text-brand-500" />
+                    {stat.total} total
+                  </p>
+                )}
+              </div>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
+                <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+              </div>
             </div>
           </Link>
         ))}
@@ -224,21 +238,67 @@ function QuickActions({ t }: { t: ReturnType<typeof useT> }) {
     { label: t.dashboard.addClient, href: "/dashboard/clients/new", icon: Users },
     { label: t.dashboard.scheduleSession, href: "/dashboard/schedule", icon: Calendar },
     { label: t.dashboard.newWorkout, href: "/dashboard/workouts/new", icon: Dumbbell },
-    { label: t.dashboard.newMealPlan, href: "/dashboard/nutrition", icon: UtensilsCrossed },
   ];
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="hidden items-center gap-2 md:flex">
       {actions.map((a) => (
         <Link
           key={a.href}
           href={a.href}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-gray-300"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 transition-all hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
         >
-          <Plus className="h-3.5 w-3.5 text-gray-400" />
+          <Plus className="h-3 w-3" />
           {a.label}
         </Link>
       ))}
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="mb-6 flex items-end justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-4 w-56" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="card">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-7 w-12" />
+              </div>
+              <Skeleton className="h-10 w-10 rounded-xl" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-36" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="card flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-36" />
+          <div className="card space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

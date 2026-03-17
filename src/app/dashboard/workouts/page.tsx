@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
@@ -142,7 +143,7 @@ export default function WorkoutsPage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return null;
+  if (loading) return <PageSkeleton />;
 
   return (
     <div>

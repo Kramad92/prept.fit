@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/hooks/use-api";
 
@@ -29,7 +30,7 @@ export default function ClientsPage() {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return null;
+  if (loading) return <PageSkeleton />;
 
   return (
     <div>

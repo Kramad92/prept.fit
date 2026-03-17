@@ -31,20 +31,34 @@ export function Sidebar() {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "/" }));
   };
 
-  const navItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
-    { href: "/dashboard/clients", icon: Users, label: t.nav.clients },
-    { href: "/dashboard/schedule", icon: Calendar, label: t.nav.schedule },
-    { href: "/dashboard/messages", icon: MessageSquare, label: t.nav.messages },
-    { href: "/dashboard/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
-    { href: "/dashboard/workouts", icon: Dumbbell, label: t.nav.workouts },
-    { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
-    { href: "/dashboard/programs", icon: CalendarRange, label: t.nav.programs },
-    { href: "/dashboard/exercises", icon: Library, label: t.nav.exerciseLibrary },
-    { href: "/dashboard/group-training", icon: UsersRound, label: t.nav.groupTraining },
-    { href: "/dashboard/habits", icon: Sparkles, label: t.nav.habits },
-    { href: "/dashboard/billing", icon: DollarSign, label: t.nav.billing },
-    { href: "/dashboard/settings", icon: Settings, label: t.nav.settings },
+  const navSections = [
+    {
+      items: [
+        { href: "/dashboard", icon: LayoutDashboard, label: t.nav.dashboard },
+        { href: "/dashboard/clients", icon: Users, label: t.nav.clients },
+        { href: "/dashboard/schedule", icon: Calendar, label: t.nav.schedule },
+        { href: "/dashboard/messages", icon: MessageSquare, label: t.nav.messages },
+        { href: "/dashboard/check-ins", icon: ClipboardCheck, label: t.nav.checkIns },
+      ],
+    },
+    {
+      label: t.nav.programs ?? "Programs",
+      items: [
+        { href: "/dashboard/workouts", icon: Dumbbell, label: t.nav.workouts },
+        { href: "/dashboard/nutrition", icon: UtensilsCrossed, label: t.nav.nutrition },
+        { href: "/dashboard/programs", icon: CalendarRange, label: t.nav.programs },
+        { href: "/dashboard/exercises", icon: Library, label: t.nav.exerciseLibrary },
+      ],
+    },
+    {
+      label: t.common.more ?? "More",
+      items: [
+        { href: "/dashboard/group-training", icon: UsersRound, label: t.nav.groupTraining },
+        { href: "/dashboard/habits", icon: Sparkles, label: t.nav.habits },
+        { href: "/dashboard/billing", icon: DollarSign, label: t.nav.billing },
+        { href: "/dashboard/settings", icon: Settings, label: t.nav.settings },
+      ],
+    },
   ];
 
   return (
@@ -68,28 +82,39 @@ export function Sidebar() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map((item) => {
-            const isActive =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
+          {navSections.map((section, si) => (
+            <div key={si} className={si > 0 ? "mt-4" : ""}>
+              {section.label && (
+                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                  {section.label}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive =
+                    item.href === "/dashboard"
+                      ? pathname === "/dashboard"
+                      : pathname === item.href || pathname.startsWith(item.href + "/");
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-brand-50 text-brand-700"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      )}
+                    >
+                      <item.icon className="h-[18px] w-[18px]" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="border-t border-gray-200 p-3">

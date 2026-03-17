@@ -328,6 +328,28 @@ async function handleGenerate(
     ? `${daysPerWeek} training days per week`
     : `7 days per week, ${mealsPerDay} meal(s) per day`;
 
+  // Fetch existing plan names to avoid duplicates
+  const existingNames: string[] = [];
+  if (type === "workout") {
+    const existing = await prisma.workoutPlan.findMany({
+      where: { tenantId, sourceTemplateId: null },
+      select: { name: true },
+      take: 200,
+    });
+    existingNames.push(...existing.map((p) => p.name));
+  } else {
+    const existing = await prisma.mealPlan.findMany({
+      where: { tenantId, sourceTemplateId: null },
+      select: { name: true },
+      take: 200,
+    });
+    existingNames.push(...existing.map((p) => p.name));
+  }
+
+  const existingNamesInstruction = existingNames.length > 0
+    ? `\nEXISTING PLAN NAMES (do NOT reuse these — pick different, distinct names):\n${existingNames.map((n) => `- "${n}"`).join("\n")}\n`
+    : "";
+
   // ---- Step 1: Generate blueprint ----
 
   const { data: blueprint, usage: bpUsage } = await aiJSON<Blueprint & { error?: string }>({
@@ -344,14 +366,14 @@ You need to determine:
 
 PROGRAM: ${durationWeeks} weeks, ${dayDesc}.
 ${mealsPerDay ? `Each meal plan MUST contain exactly ${mealsPerDay} meal(s). This is critical — the user specified ${mealsPerDay} meal(s) per day.` : ""}
-
+${existingNamesInstruction}
 Rules:
 - Create ${maxPlans} or fewer unique plans. Each plan will be fully generated with ${type === "workout" ? "exercises" : "meals and foods"}.
 - The "prompt" field for each plan should be a detailed description of what that ${planType} plan should contain (target muscles, style, intensity, etc for workouts; calorie target, meal types, dietary focus for nutrition).${mealsPerDay ? ` Every plan prompt MUST specify: "This plan must have exactly ${mealsPerDay} meal(s)."` : ""}
 - Schedule ALL ${totalSlots} day slots by referencing planIndex (0-based index into the plans array).
 - Label days with weekday names in the user's language.
 - ${type === "workout" ? "Arrange logically — avoid same muscle group on consecutive days." : "Vary plans across days for dietary balance."}
-- CRITICAL: The "name" field for each plan must be a clean, standard name. No substitution phrases.
+- CRITICAL: Each plan name must be UNIQUE and different from any existing plan names listed above. Use specific, descriptive names (e.g. "Upper Body Push — Chest & Shoulders" instead of just "Chest Day").
 - Avoid duplicate or overly similar plans. Each plan should be distinct.
 - ${langInstruction}
 
@@ -431,6 +453,25 @@ Return JSON:
 
   // ---- Step 3: Save everything in one transaction ----
   // All AI calls succeeded — now persist plans + program atomically.
+  // Deduplicate names: if AI picked a name that already exists, append a number.
+
+  const usedNames = new Set(existingNames.map((n) => n.toLowerCase()));
+
+  function uniqueName(name: string): string {
+    const lower = name.toLowerCase();
+    if (!usedNames.has(lower)) {
+      usedNames.add(lower);
+      return name;
+    }
+    for (let n = 2; n <= 50; n++) {
+      const candidate = `${name} (${n})`;
+      if (!usedNames.has(candidate.toLowerCase())) {
+        usedNames.add(candidate.toLowerCase());
+        return candidate;
+      }
+    }
+    return name; // fallback
+  }
 
   const result = await prisma.$transaction(async (tx) => {
     const planIds: string[] = [];
@@ -439,7 +480,7 @@ Return JSON:
       if (type === "workout" && gen.workoutData) {
         const created = await tx.workoutPlan.create({
           data: {
-            name: gen.workoutData.name,
+            name: uniqueName(gen.workoutData.name),
             description: gen.workoutData.description,
             isTemplate: true,
             tenantId,
@@ -450,7 +491,7 @@ Return JSON:
       } else if (type === "nutrition" && gen.mealData) {
         const created = await tx.mealPlan.create({
           data: {
-            name: gen.mealData.name,
+            name: uniqueName(gen.mealData.name),
             description: gen.mealData.description,
             isTemplate: true,
             targetCalories: gen.mealData.targetCalories,

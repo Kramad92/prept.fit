@@ -100,6 +100,15 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
     const totalPlans = blueprint.plans.length;
 
     for (let i = 0; i < totalPlans; i++) {
+      // Space out AI calls to avoid hitting free-tier rate limits across providers
+      if (i > 0) {
+        const waitSec = 10;
+        for (let s = waitSec; s > 0; s--) {
+          setProgress(`${t.programs.rateLimitWait || "Waiting before next generation"} (${s}s)… (${i + 1}/${totalPlans})`);
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+
       const plan = blueprint.plans[i];
       setProgress(`${t.programs.generatingPlan || "Generating"} ${plan.name}... (${i + 1}/${totalPlans})`);
 

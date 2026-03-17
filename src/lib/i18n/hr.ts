@@ -1236,6 +1236,7 @@ export const hr = {
     generatingPlans: "Generiranje planova...",
     designingProgram: "Dizajniranje strukture programa...",
     generatingPlan: "Generiranje",
+    rateLimitWait: "Čekanje prije sljedeće generacije",
     creatingProgram: "Kreiranje programa...",
     programCreated: "Program kreiran",
     generated: "generirano",

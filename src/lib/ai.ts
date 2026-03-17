@@ -256,7 +256,23 @@ function createProvider(name: string, apiKey: string): AIProvider | null {
   }
 }
 
-/** Build a provider with automatic fallback. Primary tries first, falls back to others on error. */
+/** Extract retry-after delay (in ms) from a 429 error message */
+function extractRetryAfterMs(msg: string): number | null {
+  // "Please try again in 4.465s" (Groq)
+  const secMatch = msg.match(/(?:retry|try again) in ([\d.]+)s/i);
+  if (secMatch) return Math.ceil(parseFloat(secMatch[1]) * 1000);
+  // "Please retry in 30.377443282s" (Gemini)
+  const retryMatch = msg.match(/retry in ([\d.]+)s/i);
+  if (retryMatch) return Math.ceil(parseFloat(retryMatch[1]) * 1000);
+  return null;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Build a provider with automatic fallback. Primary tries first, falls back to others on error.
+ *  On 429 (rate-limit), waits and retries the same provider once before moving to the next. */
 function createFallbackProvider(providers: AIProvider[]): AIProvider {
   return {
     async complete(options) {
@@ -267,6 +283,20 @@ function createFallbackProvider(providers: AIProvider[]): AIProvider {
         } catch (e) {
           lastError = e instanceof Error ? e : new Error(String(e));
           console.warn(`AI provider failed, trying next: ${lastError.message}`);
+
+          // If rate-limited, wait and retry the same provider once
+          if (lastError.message.includes("429")) {
+            const retryMs = extractRetryAfterMs(lastError.message) || 5000;
+            const waitMs = Math.min(retryMs + 1000, 15000); // cap at 15s, add 1s buffer
+            console.log(`Rate limited — waiting ${waitMs}ms before retry…`);
+            await delay(waitMs);
+            try {
+              return await provider.complete(options);
+            } catch (retryErr) {
+              lastError = retryErr instanceof Error ? retryErr : new Error(String(retryErr));
+              console.warn(`Retry also failed, moving to next provider: ${lastError.message}`);
+            }
+          }
         }
       }
       throw lastError || new Error("All AI providers failed");
@@ -279,12 +309,12 @@ let _provider: AIProvider | null = null;
 export function getAI(): AIProvider {
   if (_provider) return _provider;
 
-  const primaryName = process.env.AI_PROVIDER || "groq";
-  const primaryKey = process.env.AI_API_KEY || "";
-  const fallbackName = process.env.AI_FALLBACK_PROVIDER || "";
-  const fallbackKey = process.env.AI_FALLBACK_API_KEY || "";
-  const fallback2Name = process.env.AI_FALLBACK2_PROVIDER || "";
-  const fallback2Key = process.env.AI_FALLBACK2_API_KEY || "";
+  const primaryName = (process.env.AI_PROVIDER || "groq").trim();
+  const primaryKey = (process.env.AI_API_KEY || "").trim();
+  const fallbackName = (process.env.AI_FALLBACK_PROVIDER || "").trim();
+  const fallbackKey = (process.env.AI_FALLBACK_API_KEY || "").trim();
+  const fallback2Name = (process.env.AI_FALLBACK2_PROVIDER || "").trim();
+  const fallback2Key = (process.env.AI_FALLBACK2_API_KEY || "").trim();
 
   const providers: AIProvider[] = [];
 
@@ -300,6 +330,8 @@ export function getAI(): AIProvider {
     const fallback2 = createProvider(fallback2Name, fallback2Key);
     if (fallback2) providers.push(fallback2);
   }
+
+  console.log(`AI providers initialized: ${providers.length} (primary=${primaryName}, fb1=${fallbackName || "none"}, fb2=${fallback2Name || "none"})`);
 
   if (providers.length === 0) {
     throw new Error("AI_API_KEY environment variable is not set");

@@ -1236,6 +1236,7 @@ export const sr = {
     generatingPlans: "Generisanje planova...",
     designingProgram: "Dizajniranje strukture programa...",
     generatingPlan: "Generisanje",
+    rateLimitWait: "Čekanje pre sledeće generacije",
     creatingProgram: "Kreiranje programa...",
     programCreated: "Program kreiran",
     generated: "generisano",

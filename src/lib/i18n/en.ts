@@ -1206,6 +1206,7 @@ export const en: Translations = {
     generatingPlans: "Generating plans...",
     designingProgram: "Designing program structure...",
     generatingPlan: "Generating",
+    rateLimitWait: "Waiting before next generation",
     creatingProgram: "Creating program...",
     programCreated: "Program created",
     generated: "generated",

@@ -1238,6 +1238,7 @@ export const bs = {
     generatingPlans: "Generisanje planova...",
     designingProgram: "Dizajniranje strukture programa...",
     generatingPlan: "Generisanje",
+    rateLimitWait: "Čekanje prije sljedeće generacije",
     creatingProgram: "Kreiranje programa...",
     programCreated: "Program kreiran",
     generated: "generirano",

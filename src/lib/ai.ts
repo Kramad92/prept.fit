@@ -271,34 +271,54 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Build a provider with automatic fallback. Primary tries first, falls back to others on error.
- *  On 429 (rate-limit), waits and retries the same provider once before moving to the next. */
+/** Build a provider with automatic fallback and sticky rotation.
+ *  Remembers which provider last succeeded and starts there on the next call.
+ *  On 429 (rate-limit), immediately advances to the next provider instead of
+ *  retrying the exhausted one. Only retries with backoff as a last resort
+ *  when all providers are rate-limited. */
 function createFallbackProvider(providers: AIProvider[]): AIProvider {
+  let startIndex = 0;
+
   return {
     async complete(options) {
       let lastError: Error | null = null;
-      for (const provider of providers) {
+      let shortest429Wait: number | null = null;
+
+      // Try each provider once, starting from the last one that worked
+      for (let attempt = 0; attempt < providers.length; attempt++) {
+        const idx = (startIndex + attempt) % providers.length;
+        const provider = providers[idx];
         try {
-          return await provider.complete(options);
+          const result = await provider.complete(options);
+          startIndex = idx; // sticky — start here next time
+          return result;
         } catch (e) {
           lastError = e instanceof Error ? e : new Error(String(e));
-          console.warn(`AI provider failed, trying next: ${lastError.message}`);
+          console.warn(`AI provider [${idx}] failed: ${lastError.message}`);
 
-          // If rate-limited, wait and retry the same provider once
           if (lastError.message.includes("429")) {
-            const retryMs = extractRetryAfterMs(lastError.message) || 5000;
-            const waitMs = Math.min(retryMs + 1000, 15000); // cap at 15s, add 1s buffer
-            console.log(`Rate limited — waiting ${waitMs}ms before retry…`);
-            await delay(waitMs);
-            try {
-              return await provider.complete(options);
-            } catch (retryErr) {
-              lastError = retryErr instanceof Error ? retryErr : new Error(String(retryErr));
-              console.warn(`Retry also failed, moving to next provider: ${lastError.message}`);
+            // Advance past this provider for future calls
+            startIndex = (idx + 1) % providers.length;
+            const waitMs = extractRetryAfterMs(lastError.message);
+            if (waitMs && (shortest429Wait === null || waitMs < shortest429Wait)) {
+              shortest429Wait = waitMs;
             }
           }
         }
       }
+
+      // All providers failed — if any were 429, wait for the shortest and retry once
+      if (shortest429Wait !== null) {
+        const waitMs = Math.min(shortest429Wait + 1000, 15000);
+        console.log(`All providers exhausted — waiting ${waitMs}ms for rate limit reset…`);
+        await delay(waitMs);
+        try {
+          return await providers[startIndex].complete(options);
+        } catch (retryErr) {
+          lastError = retryErr instanceof Error ? retryErr : new Error(String(retryErr));
+        }
+      }
+
       throw lastError || new Error("All AI providers failed");
     },
   };

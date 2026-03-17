@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { Input } from "@/components/ui/input";
 import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Dumbbell, Users, BarChart3, Calendar, MessageSquare, Sparkles } from "lucide-react";
 
 function LoginForm() {
@@ -18,7 +19,6 @@ function LoginForm() {
   const t = useT();
 
   const registered = searchParams.get("registered") === "true";
-  // Show error from OAuth redirect (e.g. PORTAL_DISABLED)
   const oauthError = searchParams.get("error");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -50,7 +50,6 @@ function LoginForm() {
         setError(t.auth.invalidCredentials);
       }
     } else {
-      // Redirect based on role
       const session = await getSession();
       if (session?.user?.role === "ADMIN") {
         router.push("/admin");
@@ -76,30 +75,30 @@ function LoginForm() {
     <>
       <div className="mb-8 text-center">
         <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
-        <h2 className="mt-2 text-xl font-bold text-white">Prept</h2>
-        <p className="mt-1 text-sm text-slate-400">
+        <h2 className="mt-2 text-xl font-bold text-gray-900">Prept</h2>
+        <p className="mt-1 text-sm text-gray-500">
           {t.auth.signInTitle}
         </p>
       </div>
 
       {registered && (
-        <div className="mb-4 rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-sm text-green-400">
+        <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
           {t.auth.verificationEmailSent}
         </div>
       )}
 
       <div className="relative">
-      <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-brand-500/[0.07] blur-2xl" />
-      <div className="relative rounded-xl border border-white/10 bg-slate-900/70 p-4 backdrop-blur-md space-y-4 md:p-6">
+      <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-brand-500/[0.04] blur-2xl" />
+      <div className="relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm backdrop-blur-md space-y-4 md:p-6">
         {(error || oauthError === "PORTAL_DISABLED") && (
-          <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
+          <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">
             <p>{error || t.auth.portalDisabled}</p>
             {error === t.auth.emailNotVerified && (
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={resendStatus !== "idle"}
-                className="mt-2 font-medium text-brand-400 hover:text-brand-300 disabled:opacity-50"
+                className="mt-2 font-medium text-brand-600 hover:text-brand-500 disabled:opacity-50"
               >
                 {resendStatus === "sending"
                   ? t.auth.resendingVerification
@@ -115,16 +114,16 @@ function LoginForm() {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10" />
+            <div className="w-full border-t border-gray-200" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-slate-900 px-3 text-slate-500">{t.auth.orContinueWith}</span>
+            <span className="bg-white px-3 text-gray-400">{t.auth.orContinueWith}</span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300">
+          <label className="block text-sm font-medium text-gray-700">
             {t.auth.email}
           </label>
           <Input
@@ -132,13 +131,13 @@ function LoginForm() {
             name="email"
             required
             autoComplete="email"
-            className="mt-1 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/20"
+            className="mt-1"
             placeholder="vas@email.com"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300">
+          <label className="block text-sm font-medium text-gray-700">
             {t.auth.password}
           </label>
           <Input
@@ -146,9 +145,15 @@ function LoginForm() {
             name="password"
             required
             autoComplete="current-password"
-            className="mt-1 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/20"
+            className="mt-1"
             placeholder={t.auth.enterPassword}
           />
+        </div>
+
+        <div className="flex justify-end">
+          <a href="/forgot-password" className="text-sm text-brand-600 hover:text-brand-500">
+            {t.auth.forgotPassword}
+          </a>
         </div>
 
         <button
@@ -162,11 +167,11 @@ function LoginForm() {
       </div>
       </div>
 
-      <p className="mt-4 text-center text-sm text-slate-500">
+      <p className="mt-4 text-center text-sm text-gray-500">
         {t.auth.dontHaveAccount}{" "}
         <a
           href="/register"
-          className="font-medium text-brand-400 hover:text-brand-300"
+          className="font-medium text-brand-600 hover:text-brand-500"
         >
           {t.auth.getStarted}
         </a>
@@ -187,15 +192,15 @@ const floatingPills = [
 function FloatingPills() {
   return (
     <div className="pointer-events-none absolute inset-0 hidden overflow-hidden xl:block">
-      {floatingPills.map((pill, i) => (
+      {floatingPills.map((pill) => (
         <div
           key={pill.text}
           className={`absolute ${pill.position} login-float-${pill.anim}`}
           style={{ animationDelay: pill.delay }}
         >
-          <div className="flex items-center gap-3 rounded-xl border border-brand-400/10 bg-brand-400/[0.03] px-4 py-3 shadow-[0_0_20px_rgba(132,204,22,0.1)] backdrop-blur-sm">
-            <pill.icon className="h-4 w-4 text-brand-400/60" />
-            <span className="text-sm text-slate-400">{pill.text}</span>
+          <div className="flex items-center gap-3 rounded-xl border border-brand-200/30 bg-brand-50/50 px-4 py-3 shadow-sm backdrop-blur-sm">
+            <pill.icon className="h-4 w-4 text-brand-500/60" />
+            <span className="text-sm text-gray-500">{pill.text}</span>
           </div>
         </div>
       ))}
@@ -205,13 +210,17 @@ function FloatingPills() {
 
 export default function LoginPage() {
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 px-4" style={{ colorScheme: "dark" }}>
-      <style>{`html, body { background-color: rgb(2 6 23) !important; }`}</style>
+    <div className="relative flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      {/* Theme toggle — top right */}
+      <div className="absolute right-4 top-4 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/3 h-[500px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/8 blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full bg-purple-500/5 blur-[100px]" />
-        <div className="bg-dot-pattern absolute inset-0 opacity-20" />
+        <div className="absolute left-1/2 top-1/3 h-[500px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/5 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full bg-purple-500/3 blur-[100px]" />
+        <div className="bg-dot-pattern absolute inset-0 opacity-10" />
       </div>
 
       {/* Floating feature pills — desktop only */}

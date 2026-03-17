@@ -90,6 +90,7 @@ model User {
   refreshTokens      RefreshToken[]
   pushTokens         PushToken[]
   verificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
   accounts           Account[]
 
   @@index([tenantId])
@@ -344,6 +345,23 @@ model EmailVerificationToken {
   @@index([token])
   @@index([userId])
   @@map("email_verification_tokens")
+}
+
+// ========== PASSWORD RESET ==========
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 // ========== IN-APP MESSAGING ==========

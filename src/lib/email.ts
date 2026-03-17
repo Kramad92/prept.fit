@@ -83,6 +83,39 @@ export async function sendVerificationEmail({
   });
 }
 
+export async function sendPasswordResetEmail({
+  to,
+  name,
+  resetUrl,
+}: {
+  to: string;
+  name: string;
+  resetUrl: string;
+}) {
+  await getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: "Reset your Prept password",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <h2 style="color: #111827; margin-bottom: 8px;">Reset your password</h2>
+        <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
+          Hi ${name},
+        </p>
+        <p style="color: #6b7280; font-size: 15px; line-height: 1.6;">
+          We received a request to reset your Prept password. Click the button below to set a new password.
+        </p>
+        <a href="${resetUrl}" style="display: inline-block; background-color: #84CC16; color: #0F172A; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0;">
+          Reset Password
+        </a>
+        <p style="color: #9ca3af; font-size: 13px; margin-top: 24px;">
+          This link expires in 1 hour. If you didn't request a password reset, you can ignore this email.
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendInviteEmail({
   to,
   clientName,

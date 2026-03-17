@@ -38,6 +38,14 @@ export const resendVerificationSchema = z.object({
   email: z.string().email(),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  password: passwordSchema,
+});
+
 export const adminTenantUpdateSchema = z.object({
   isActive: z.boolean().optional(),
   planTier: z.enum(["free", "starter", "pro", "enterprise"]).optional(),

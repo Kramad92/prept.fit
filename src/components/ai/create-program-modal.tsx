@@ -211,7 +211,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
 
           {/* Error */}
           {error && (
-            <p className="text-sm text-red-500">{error}</p>
+            <p className="break-words text-sm text-red-500">{error}</p>
           )}
 
           {/* Actions */}

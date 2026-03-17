@@ -122,8 +122,13 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.error("AI generate-full-program error:", e);
-    const msg = e instanceof Error ? e.message : "Failed to generate program";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    const raw = e instanceof Error ? e.message : String(e);
+    // Don't leak raw provider errors to the user
+    const isRateLimit = raw.includes("429") || raw.toLowerCase().includes("rate limit");
+    const msg = isRateLimit
+      ? "AI providers are temporarily rate-limited. Please wait a minute and try again."
+      : "Failed to generate program. Please try again.";
+    return NextResponse.json({ error: msg }, { status: isRateLimit ? 429 : 502 });
   }
 }
 

@@ -61,7 +61,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12" style={{ colorScheme: "dark" }}>
+      <style>{`html, body { background-color: rgb(2 6 23) !important; }`}</style>
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-1/3 h-[500px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/8 blur-[120px]" />

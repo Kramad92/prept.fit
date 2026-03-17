@@ -69,7 +69,8 @@ const highlights = [
 
 export function HomePage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-slate-950 text-white" style={{ colorScheme: "dark" }}>
+      <style>{`html, body { background-color: rgb(2 6 23) !important; }`}</style>
       {/* Navigation */}
       <header className="relative z-10 border-b border-white/5">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">

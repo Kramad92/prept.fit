@@ -22,9 +22,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
-.env
+# env files
+.env*
 
 # vercel
 .vercel
@@ -40,8 +39,5 @@ claude.md
 # local docs
 CHANGELOG.md
 DEPLOYMENT.md
-.env.example
-
 # source CSV (exercises.json is the clean parsed version)
 prisma/exercises.csv
-

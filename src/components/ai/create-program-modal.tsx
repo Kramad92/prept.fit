@@ -15,26 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { useLocale } from "@/lib/i18n";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
-
-interface BlueprintPlan {
-  name: string;
-  prompt: string;
-}
-
-interface BlueprintDay {
-  weekNumber: number;
-  dayNumber: number;
-  label: string;
-  planIndex: number;
-}
-
-interface Blueprint {
-  name: string;
-  description: string;
-  plans: BlueprintPlan[];
-  schedule: BlueprintDay[];
-}
 
 interface CreateProgramModalProps {
   open: boolean;
@@ -60,172 +40,41 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
     if (newType === "workout" && daysPerWeek > 7) setDaysPerWeek(3);
   }
 
-  // ---- "Use existing" mode: single server call ----
-  async function handleExisting() {
-    setProgress(t.programs.generating || "Generating...");
-
-    const res = await fetch("/api/ai/generate-full-program", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, prompt: prompt.trim(), source: "existing", durationWeeks, daysPerWeek, locale }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || "Failed to generate program");
-    }
-    const result = await res.json();
-
-    toast.success(t.programs.programCreated || "Program created");
-    return result.programId;
-  }
-
-  // ---- "Generate new" mode: client-side orchestration ----
-  async function handleGenerateNew() {
-    // Step 1: Get blueprint
-    setProgress(t.programs.designingProgram || "Designing program structure...");
-
-    const blueprintRes = await fetch("/api/ai/generate-full-program", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, prompt: prompt.trim(), source: "generate", durationWeeks, daysPerWeek, locale }),
-    });
-    if (!blueprintRes.ok) {
-      const data = await blueprintRes.json().catch(() => ({}));
-      throw new Error(data.error || "Failed to generate program blueprint");
-    }
-    const { blueprint } = await blueprintRes.json() as { blueprint: Blueprint };
-
-    // Step 2: Generate and save each plan individually
-    const planIds: string[] = [];
-    const totalPlans = blueprint.plans.length;
-
-    for (let i = 0; i < totalPlans; i++) {
-      // Space out AI calls to avoid hitting free-tier rate limits across providers
-      if (i > 0) {
-        const waitSec = 10;
-        for (let s = waitSec; s > 0; s--) {
-          setProgress(`${t.programs.rateLimitWait || "Waiting before next generation"} (${s}s)… (${i + 1}/${totalPlans})`);
-          await new Promise((r) => setTimeout(r, 1000));
-        }
-      }
-
-      const plan = blueprint.plans[i];
-      setProgress(`${t.programs.generatingPlan || "Generating"} ${plan.name}... (${i + 1}/${totalPlans})`);
-
-      if (type === "workout") {
-        // Generate workout plan via existing endpoint
-        const genRes = await fetch("/api/ai/generate-workout-plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: `Create a workout plan: ${plan.name}. ${plan.prompt}`,
-            locale,
-          }),
-        });
-        if (!genRes.ok) {
-          const data = await genRes.json().catch(() => ({}));
-          throw new Error(data.error || `Failed to generate ${plan.name}`);
-        }
-        const genData = await genRes.json();
-
-        // Save as template
-        setProgress(`${t.common.saving || "Saving"} ${plan.name}... (${i + 1}/${totalPlans})`);
-        const saved = await api.post<{ id: string }>("/api/workouts", {
-          name: genData.name || plan.name,
-          description: genData.description || null,
-          isTemplate: true,
-          exercises: (genData.exercises || []).map((ex: any, idx: number) => ({
-            name: ex.name,
-            sets: ex.sets || null,
-            reps: ex.reps || null,
-            weight: ex.weight || null,
-            restSeconds: ex.restSeconds || null,
-            notes: ex.notes || null,
-            videoUrl: ex.videoUrl || null,
-            orderIndex: idx,
-          })),
-        });
-        planIds.push(saved.id);
-      } else {
-        // Generate meal plan via existing endpoint
-        const genRes = await fetch("/api/ai/generate-meal-plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: `Create a meal plan: ${plan.name}. ${plan.prompt}`,
-            locale,
-          }),
-        });
-        if (!genRes.ok) {
-          const data = await genRes.json().catch(() => ({}));
-          throw new Error(data.error || `Failed to generate ${plan.name}`);
-        }
-        const genData = await genRes.json();
-
-        // Save as template
-        setProgress(`${t.common.saving || "Saving"} ${plan.name}... (${i + 1}/${totalPlans})`);
-        const saved = await api.post<{ id: string }>("/api/meal-plans", {
-          name: genData.name || plan.name,
-          description: genData.description || null,
-          isTemplate: true,
-          targetCalories: genData.targetCalories || null,
-          targetProtein: genData.targetProtein || null,
-          targetCarbs: genData.targetCarbs || null,
-          targetFat: genData.targetFat || null,
-          meals: (genData.meals || []).map((meal: any, idx: number) => ({
-            name: meal.name,
-            description: meal.description || null,
-            time: meal.time || null,
-            foods: meal.foods || [],
-            orderIndex: idx,
-          })),
-        });
-        planIds.push(saved.id);
-      }
-    }
-
-    // Step 3: Create the program with day mappings
-    setProgress(t.programs.creatingProgram || "Creating program...");
-
-    const days = blueprint.schedule
-      .filter((d) => d.planIndex >= 0 && d.planIndex < planIds.length)
-      .map((d) => ({
-        weekNumber: d.weekNumber,
-        dayNumber: d.dayNumber,
-        label: d.label || null,
-        ...(type === "workout"
-          ? { workoutPlanId: planIds[d.planIndex] }
-          : { mealPlanId: planIds[d.planIndex] }),
-      }));
-
-    const programEndpoint = type === "workout" ? "/api/programs" : "/api/nutrition-programs";
-    const programPayload = type === "workout"
-      ? { name: blueprint.name, description: blueprint.description || null, durationWeeks, daysPerWeek, days }
-      : { name: blueprint.name, description: blueprint.description || null, durationWeeks, mealsPerDay: daysPerWeek, days };
-
-    const program = await api.post<{ id: string }>(programEndpoint, programPayload);
-
-    toast.success(
-      `${t.programs.programCreated || "Program created"} (${totalPlans} ${type === "workout" ? t.programs.workoutsCount : t.programs.mealPlansCount} ${t.programs.generated || "generated"})`
-    );
-
-    return program.id;
-  }
-
   async function handleSubmit() {
     if (!prompt.trim() || loading) return;
     setLoading(true);
     setError("");
 
     try {
-      const programId = source === "existing"
-        ? await handleExisting()
-        : await handleGenerateNew();
+      setProgress(
+        source === "generate"
+          ? (t.programs.generatingPlans || "Generating plans...")
+          : (t.programs.generating || "Generating...")
+      );
+
+      const res = await fetch("/api/ai/generate-full-program", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, prompt: prompt.trim(), source, durationWeeks, daysPerWeek, locale }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to generate program");
+      }
+      const result = await res.json();
+
+      if (result.plansCreated > 0) {
+        toast.success(
+          `${t.programs.programCreated || "Program created"} (${result.plansCreated} ${type === "workout" ? t.programs.workoutsCount : t.programs.mealPlansCount} ${t.programs.generated || "generated"})`
+        );
+      } else {
+        toast.success(t.programs.programCreated || "Program created");
+      }
 
       onClose();
       const path = type === "workout"
-        ? `/dashboard/programs/${programId}`
-        : `/dashboard/programs/nutrition/${programId}`;
+        ? `/dashboard/programs/${result.programId}`
+        : `/dashboard/programs/nutrition/${result.programId}`;
       router.push(path);
     } catch (e) {
       setError(e instanceof Error ? e.message : (t.programs.aiError || "Generation failed"));

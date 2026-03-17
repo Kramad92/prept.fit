@@ -203,13 +203,10 @@ export default function NutritionProgramDetailPage() {
                         </span>
                       )}
                       {day.mealPlan ? (
-                        <Link
-                          href={`/dashboard/nutrition/${day.mealPlan.id}`}
-                          className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700"
-                        >
-                          <UtensilsCrossed className="h-4 w-4" />
+                        <span className="flex items-center gap-2 text-sm text-gray-900">
+                          <UtensilsCrossed className="h-4 w-4 text-orange-500" />
                           {day.mealPlan.name}
-                        </Link>
+                        </span>
                       ) : (
                         <span className="text-sm text-gray-400">
                           {t.programs.restDay}

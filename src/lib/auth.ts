@@ -174,7 +174,52 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      // No existing user — redirect to complete registration
+      // No existing user — check if there's a pending client invite for this email
+      const pendingClient = await prisma.client.findFirst({
+        where: { email, userId: null },
+        include: { tenant: true },
+      });
+
+      if (pendingClient) {
+        // Auto-create CLIENT account for invited user signing in via OAuth
+        const newUser = await prisma.user.create({
+          data: {
+            email,
+            name: user.name || pendingClient.name,
+            role: "CLIENT",
+            tenantId: pendingClient.tenantId,
+            emailVerified: new Date(),
+          },
+        });
+
+        // Link OAuth account
+        await prisma.account.create({
+          data: {
+            userId: newUser.id,
+            provider: account!.provider,
+            providerAccountId: account!.providerAccountId,
+          },
+        });
+
+        // Link all pending client profiles with this email to the new user
+        await prisma.client.updateMany({
+          where: { email, userId: null },
+          data: { userId: newUser.id },
+        });
+
+        // Mark all pending invite tokens for this client as used
+        await prisma.inviteToken.updateMany({
+          where: {
+            clientId: pendingClient.id,
+            usedAt: null,
+          },
+          data: { usedAt: new Date() },
+        });
+
+        return true;
+      }
+
+      // No pending invite — redirect to complete registration (coach signup)
       return `/register/complete?provider=${account!.provider}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(user.name || "")}`;
     },
 

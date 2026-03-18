@@ -94,6 +94,16 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
+  // CLIENT users cannot access coach dashboard — redirect to portal
+  if (role === "CLIENT" && pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/portal", req.url));
+  }
+
+  // COACH users cannot access client portal — redirect to dashboard
+  if (role === "COACH" && pathname.startsWith("/portal")) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   return NextResponse.next();
 }
 

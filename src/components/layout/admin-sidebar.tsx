@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -62,6 +63,10 @@ export function AdminSidebar() {
         </nav>
 
         <div className="border-t border-gray-200 p-3">
+          <div className="flex items-center justify-between px-3 py-1">
+            <span className="text-xs text-gray-400">Theme</span>
+            <ThemeToggle />
+          </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"

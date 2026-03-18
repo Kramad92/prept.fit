@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Home" },
@@ -49,6 +50,7 @@ export function AdminMobileNav() {
             </Link>
           );
         })}
+        <ThemeToggle className="p-1" />
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex flex-col items-center gap-1 px-3 py-2 text-xs text-gray-500 transition-colors hover:text-gray-700"

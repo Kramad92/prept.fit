@@ -3,6 +3,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { MobileInputScroll } from "@/components/mobile-input-scroll";
 import { GlobalSearch } from "@/components/layout/global-search";
+import { PrankPopup } from "@/components/prank-popup";
 
 export default function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default function DashboardLayout({
       <MobileNav />
       <MobileInputScroll />
       <GlobalSearch />
+      <PrankPopup />
     </div>
   );
 }

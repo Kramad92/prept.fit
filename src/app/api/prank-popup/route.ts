@@ -34,7 +34,7 @@ export async function GET() {
       prank: { imageUrls, message: raw.message || null },
     });
   } catch (err: unknown) {
-    console.error("[portal/prank-popup] Error:", err);
+    console.error("[prank-popup] Error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -22,7 +22,7 @@ export function PrankPopup() {
 
   // Fetch prank config once on mount
   useEffect(() => {
-    fetch("/api/portal/prank-popup")
+    fetch("/api/prank-popup")
       .then((r) => r.json())
       .then((data) => {
         if (data.prank?.imageUrls?.length) {

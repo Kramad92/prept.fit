@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Trash2, Plus, PartyPopper, X, ImagePlus } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Trash2, Plus, PartyPopper, X, ImagePlus, ChevronDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface PrankUser {
@@ -10,6 +10,150 @@ interface PrankUser {
   name: string;
   role: string;
   prankPopup: { imageUrls: string[]; message?: string | null };
+}
+
+interface UserOption {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+function UserPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (email: string, name: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [displayLabel, setDisplayLabel] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Fetch users when search changes
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+
+    fetch(`/api/admin/users?${params}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setUsers(data);
+      })
+      .finally(() => setLoading(false));
+  }, [search, open]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Focus search when opened
+  useEffect(() => {
+    if (open) searchRef.current?.focus();
+  }, [open]);
+
+  const select = (user: UserOption) => {
+    onChange(user.email, user.name);
+    setDisplayLabel(`${user.name} (${user.email})`);
+    setOpen(false);
+    setSearch("");
+  };
+
+  const clear = () => {
+    onChange("", "");
+    setDisplayLabel("");
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex h-10 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-sm transition-colors hover:bg-gray-50"
+      >
+        {value ? (
+          <span className="truncate text-gray-900">{displayLabel}</span>
+        ) : (
+          <span className="text-gray-400">Select a user...</span>
+        )}
+        <div className="flex items-center gap-1">
+          {value && (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                clear();
+              }}
+              className="rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
+              <X className="h-3.5 w-3.5" />
+            </span>
+          )}
+          <ChevronDown className="h-4 w-4 text-gray-400" />
+        </div>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
+            />
+          </div>
+          <div className="max-h-60 overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+              </div>
+            ) : users.length === 0 ? (
+              <p className="py-4 text-center text-sm text-gray-400">No users found</p>
+            ) : (
+              users.map((user) => (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => select(user)}
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-gray-50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-gray-900">{user.name}</p>
+                    <p className="truncate text-xs text-gray-500">{user.email}</p>
+                  </div>
+                  <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    user.role === "COACH"
+                      ? "bg-blue-100 text-blue-700"
+                      : user.role === "ADMIN"
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-green-100 text-green-700"
+                  }`}>
+                    {user.role}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AdminPranksPage() {
@@ -38,7 +182,7 @@ export default function AdminPranksPage() {
   const addPrank = async () => {
     const validUrls = imageUrls.filter((u) => u.trim());
     if (!email || validUrls.length === 0) {
-      setError("Email and at least one image URL are required");
+      setError("Select a user and add at least one image URL");
       return;
     }
     setError("");
@@ -112,11 +256,15 @@ export default function AdminPranksPage() {
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-gray-700">Add Prank</h2>
         <div className="mt-3 space-y-3">
-          <Input
-            placeholder="User email (e.g. mirza.nikolic@gmail.com)"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              Target user
+            </label>
+            <UserPicker
+              value={email}
+              onChange={(selectedEmail) => setEmail(selectedEmail)}
+            />
+          </div>
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-gray-500">

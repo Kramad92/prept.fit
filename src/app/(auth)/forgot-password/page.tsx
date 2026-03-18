@@ -39,46 +39,46 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-gray-50 dark:bg-slate-950 px-4">
       <div className="absolute right-4 top-4 z-20">
         <ThemeToggle />
       </div>
 
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/3 h-[500px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/5 blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full bg-purple-500/3 blur-[100px]" />
-        <div className="bg-dot-pattern absolute inset-0 opacity-10" />
+        <div className="absolute left-1/2 top-1/3 h-[500px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/5 dark:bg-brand-500/8 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full bg-purple-500/3 dark:bg-purple-500/5 blur-[100px]" />
+        <div className="bg-dot-pattern absolute inset-0 opacity-10 dark:opacity-20" />
       </div>
 
       <div className="relative w-full max-w-sm">
         <div className="mb-8 text-center">
           <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
-          <h2 className="mt-2 text-xl font-bold text-gray-900">{t.auth.forgotPasswordTitle}</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{t.auth.forgotPasswordTitle}</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             {t.auth.forgotPasswordSubtitle}
           </p>
         </div>
 
         <div className="relative">
-          <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-brand-500/[0.04] blur-2xl" />
-          <div className="relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm backdrop-blur-md space-y-4 md:p-6">
+          <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-brand-500/[0.04] dark:bg-brand-500/[0.07] blur-2xl" />
+          <div className="relative rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900/70 p-4 shadow-sm backdrop-blur-md space-y-4 md:p-6">
 
             {status === "sent" ? (
-              <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
+              <div className="rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 p-3 text-sm text-green-700 dark:text-green-400">
                 {t.auth.resetLinkSent}
               </div>
             ) : (
               <>
                 {status === "error" && errorMsg && (
-                  <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+                  <div className="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 p-3 text-sm text-red-600 dark:text-red-400">
                     {errorMsg}
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                       {t.auth.email}
                     </label>
                     <Input
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
                       name="email"
                       required
                       autoComplete="email"
-                      className="mt-1"
+                      className="mt-1 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
                       placeholder="vas@email.com"
                     />
                   </div>
@@ -104,10 +104,10 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        <p className="mt-4 text-center text-sm text-gray-500">
+        <p className="mt-4 text-center text-sm text-gray-500 dark:text-slate-500">
           <a
             href="/login"
-            className="font-medium text-brand-600 hover:text-brand-500"
+            className="font-medium text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300"
           >
             {t.auth.backToLogin}
           </a>

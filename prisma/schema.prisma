@@ -76,6 +76,7 @@ model User {
   avatar        String?
   theme         String    @default("system") // "light", "dark", or "system"
   emailVerified DateTime?
+  prankPopup    Json?     // { imageUrls: string[], message?: string } — fun popup prank, managed from admin
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -118,6 +119,7 @@ model Client {
   phone            String?
   dateOfBirth      DateTime?
   gender           String?
+  height           Float?   // in cm (display converts to ft/in for imperial)
   notes            String?
   goals            String?
   allergies        String?  // e.g. "gluten, dairy, nuts"

@@ -178,6 +178,8 @@ export const sr = {
     male: "Muško",
     female: "Žensko",
     other: "Ostalo",
+    height: "Visina",
+    heightPlaceholder: "npr. 175",
     goals: "Ciljevi",
     goalsPlaceholder: "Ciljevi klijenta...",
     active: "Aktivan",

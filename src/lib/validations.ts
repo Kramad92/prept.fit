@@ -111,6 +111,7 @@ export const paymentUpdateSchema = z.object({
 });
 
 const clientProfileFields = {
+  height: z.union([z.string(), z.number()]).nullable().optional(),
   allergies: z.string().max(1000).nullable().optional(),
   dietaryPrefs: z.string().max(1000).nullable().optional(),
   injuries: z.string().max(1000).nullable().optional(),

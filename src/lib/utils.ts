@@ -43,6 +43,25 @@ export function getLengthUnit(units: string): string {
   return units === "imperial" ? "in" : "cm";
 }
 
+/**
+ * Convert height in cm to feet and inches string.
+ * e.g. 175 → "5'9\""
+ */
+export function cmToFtIn(cm: number): string {
+  const totalInches = cm / 2.54;
+  const feet = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches % 12);
+  if (inches === 12) return `${feet + 1}'0"`;
+  return `${feet}'${inches}"`;
+}
+
+/**
+ * Format height for display based on unit preference.
+ */
+export function formatHeight(cm: number, units: string): string {
+  return units === "imperial" ? cmToFtIn(cm) : `${cm} cm`;
+}
+
 export function getInitials(name: string): string {
   return name
     .split(" ")

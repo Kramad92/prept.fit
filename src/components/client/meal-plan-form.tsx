@@ -270,14 +270,15 @@ function MealEditor({ meals, setMeals, t }: MealEditorProps) {
           </div>
         </div>
       ))}
-      <button
+      <Button
         type="button"
+        variant="dashed"
         onClick={() => setMeals([...meals, { tempId: Math.random().toString(36).slice(2), name: "", description: "", time: "", foods: [] }])}
-        className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-brand-300 hover:text-brand-600"
+        className="w-full"
       >
         <Plus className="h-4 w-4" />
         {t.nutrition.addMeal}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -363,9 +364,9 @@ function CreateForm({ form, setForm, updateFormField, setMeals, saving, onSubmit
       <form onSubmit={(e) => { if (aiDescription) updateFormField("description" as keyof FormState, aiDescription); onSubmit(e); }}>
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-gray-900">{t.nutrition.newCustomMealPlan}</h4>
-          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-gray-100">
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
         <div className="mt-3">
           <Input type="text" required value={form.name} onChange={(e) => updateFormField("name", e.target.value)} placeholder={t.nutrition.planName} />

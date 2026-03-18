@@ -127,6 +127,7 @@ export interface ClientProfile {
   email: string | null;
   phone: string | null;
   gender: string | null;
+  height: number | null;
   goals: string | null;
   notes: string | null;
   status: string;
@@ -461,6 +462,7 @@ export interface ClientDetail {
   email: string | null;
   phone: string | null;
   gender: string | null;
+  height: number | null;
   status: string;
   goals: string | null;
   notes: string | null;

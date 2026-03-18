@@ -157,9 +157,9 @@ export default function ClientDetailPage() {
           {/* Three-dot menu (always visible) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50">
+              <Button variant="outline" size="icon" className="h-9 w-9">
                 <MoreVertical className="h-4 w-4" />
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               {client.status !== "active" && (
@@ -201,21 +201,23 @@ export default function ClientDetailPage() {
             </Button>
           )}
           {client.status === "active" ? (
-            <button
+            <Button
+              variant="outline"
               onClick={() => handleStatusChange("inactive")}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+              className="text-sm"
             >
-              <Power className="mr-1 inline h-4 w-4" />
+              <Power className="mr-1 h-4 w-4" />
               {t.clients.deactivate}
-            </button>
+            </Button>
           ) : client.status !== "archived" ? (
-            <button
+            <Button
+              variant="outline"
               onClick={() => handleStatusChange("active")}
-              className="rounded-lg border border-green-200 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50"
+              className="text-sm"
             >
-              <Power className="mr-1 inline h-4 w-4" />
+              <Power className="mr-1 h-4 w-4" />
               {t.clients.activate}
-            </button>
+            </Button>
           ) : null}
           <Button variant="outline" asChild className="text-sm">
             <Link href={`/dashboard/clients/${client.id}/edit`}>
@@ -234,12 +236,12 @@ export default function ClientDetailPage() {
           </DialogHeader>
           <p className="mt-2 text-sm text-gray-600">{t.clients.deleteClientConfirm}</p>
           <div className="mt-4 flex gap-3">
-            <button onClick={handleDelete} className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+            <Button variant="destructive" onClick={handleDelete} className="flex-1">
               {t.common.delete}
-            </button>
-            <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            </Button>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="flex-1">
               {t.common.cancel}
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -285,10 +287,15 @@ export default function ClientDetailPage() {
       <div className="mt-6">
         {activeTab === "overview" && (
           <div className="space-y-4">
-            {(client.allergies || client.dietaryPrefs || client.injuries || client.fitnessLevel || client.activityLevel || client.notes) && (
+            {(client.height || client.allergies || client.dietaryPrefs || client.injuries || client.fitnessLevel || client.activityLevel || client.notes) && (
               <div className="card space-y-3">
-                {(client.fitnessLevel || client.activityLevel) && (
+                {(client.height || client.fitnessLevel || client.activityLevel) && (
                   <div className="flex flex-wrap gap-2">
+                    {client.height != null && (
+                      <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700">
+                        {t.clients.height}: {client.height} cm
+                      </span>
+                    )}
                     {client.fitnessLevel && (
                       <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
                         {t.clients.fitnessLevel}: {t.clients[client.fitnessLevel as "beginner" | "intermediate" | "advanced"] || client.fitnessLevel}

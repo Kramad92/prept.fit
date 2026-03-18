@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dumbbell, UtensilsCrossed, Search, User, Users, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n";
@@ -57,12 +58,12 @@ export function TemplatePickerModal({ type, onSelect, onClose }: TemplatePickerM
 
         {type === "workout" && (
           <div className="flex gap-2">
-            <button onClick={() => setMode("solo")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${mode === "solo" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+            <Button size="sm" variant={mode === "solo" ? "default" : "outline"} onClick={() => setMode("solo")}>
               <User className="h-4 w-4" /> {t.workouts.solo}
-            </button>
-            <button onClick={() => setMode("live")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${mode === "live" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+            </Button>
+            <Button size="sm" variant={mode === "live" ? "default" : "outline"} onClick={() => setMode("live")}>
               <Users className="h-4 w-4" /> {t.workouts.liveWithCoach}
-            </button>
+            </Button>
           </div>
         )}
 

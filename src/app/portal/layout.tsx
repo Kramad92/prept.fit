@@ -1,6 +1,7 @@
 import { PortalMobileNav, PortalDesktopNav } from "@/components/layout/portal-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { MobileInputScroll } from "@/components/mobile-input-scroll";
+import { PrankPopup } from "@/components/prank-popup";
 
 export default function PortalLayout({
   children,
@@ -18,6 +19,7 @@ export default function PortalLayout({
       </main>
       <PortalMobileNav />
       <MobileInputScroll />
+      <PrankPopup />
     </div>
   );
 }

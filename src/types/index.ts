@@ -281,6 +281,7 @@ export interface ClientDetail {
   email: string | null;
   phone: string | null;
   gender: string | null;
+  height: number | null;
   goals: string | null;
   notes: string | null;
   allergies: string | null;

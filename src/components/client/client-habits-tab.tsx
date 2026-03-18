@@ -94,9 +94,9 @@ export function ClientHabitsTab({ clientId }: ClientHabitsTabProps) {
         <div className="card mb-4 border-2 border-brand-200">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-gray-900">{t.habits.assignHabits}</h4>
-            <button onClick={() => setShowAssign(false)} className="rounded p-1 hover:bg-gray-100">
+            <Button variant="ghost" size="icon" onClick={() => setShowAssign(false)} className="h-8 w-8">
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
           {unassigned.length === 0 ? (
             <p className="mt-3 text-sm text-gray-500">

@@ -175,6 +175,8 @@ export const en: Translations = {
     male: "Male",
     female: "Female",
     other: "Other",
+    height: "Height",
+    heightPlaceholder: "e.g. 175",
     goals: "Goals",
     goalsPlaceholder: "Client goals...",
     active: "Active",

@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExercisePicker } from "./exercise-picker";
 import { ExerciseNameInput } from "./exercise-name-input";
@@ -75,14 +76,15 @@ export function ExerciseEditor({ exercises, onChange, t }: ExerciseEditorProps) 
           </div>
         </div>
       ))}
-      <button
+      <Button
         type="button"
+        variant="dashed"
         onClick={() => onChange([...exercises, createEmptyExercise()])}
-        className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-brand-300 hover:text-brand-600"
+        className="w-full"
       >
         <Plus className="h-4 w-4" />
         {t.workouts.addExerciseManually}
-      </button>
+      </Button>
     </div>
   );
 }

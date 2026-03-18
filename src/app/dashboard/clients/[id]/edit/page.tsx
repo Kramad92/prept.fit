@@ -16,6 +16,7 @@ interface ClientData {
   email: string | null;
   phone: string | null;
   gender: string | null;
+  height: number | null;
   goals: string | null;
   notes: string | null;
   allergies: string | null;
@@ -68,6 +69,7 @@ export default function EditClientPage() {
       email: fd.get("email") || null,
       phone: fd.get("phone") || null,
       gender: gender || null,
+      height: fd.get("height") || null,
       goals: fd.get("goals") || null,
       notes: fd.get("notes") || null,
       allergies: fd.get("allergies") || null,
@@ -163,6 +165,19 @@ export default function EditClientPage() {
               { value: "female", label: t.clients.female },
               { value: "other", label: t.clients.other },
             ]}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.clients.height} (cm)
+          </label>
+          <Input
+            type="number"
+            name="height"
+            defaultValue={client.height ?? ""}
+            className="mt-1"
+            placeholder={t.clients.heightPlaceholder}
           />
         </div>
 

@@ -46,9 +46,9 @@ export function CustomWorkoutForm({
       <form onSubmit={handleSubmit}>
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-gray-900">{t.workouts.newCustomPlan}</h4>
-          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-gray-100">
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
         <div className="mt-3">
           <Input
@@ -87,12 +87,12 @@ export function CustomWorkoutForm({
         <div className="mt-3">
           <label className="text-xs text-gray-500">{t.workouts.workoutMode}</label>
           <div className="mt-1 flex gap-2">
-            <button type="button" onClick={() => setAssignMode("solo")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${assignMode === "solo" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+            <Button type="button" variant={assignMode === "solo" ? "default" : "outline"} size="sm" onClick={() => setAssignMode("solo")}>
               <User className="h-4 w-4" /> {t.workouts.solo}
-            </button>
-            <button type="button" onClick={() => setAssignMode("live")} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${assignMode === "live" ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+            </Button>
+            <Button type="button" variant={assignMode === "live" ? "default" : "outline"} size="sm" onClick={() => setAssignMode("live")}>
               <Users className="h-4 w-4" /> {t.workouts.liveWithCoach}
-            </button>
+            </Button>
           </div>
         </div>
         <div className="mt-3">

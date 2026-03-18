@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       email: body.email || null,
       phone: body.phone || null,
       gender: body.gender || null,
+      height: body.height ? Number(body.height) : null,
       goals: body.goals || null,
       notes: body.notes || null,
       allergies: body.allergies || null,

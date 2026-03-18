@@ -5,6 +5,7 @@ import { getAILanguageInstruction } from "@/lib/ai-locale";
 interface ClientContext {
   name: string;
   gender: string | null;
+  height: number | null;
   goals: string | null;
   notes: string | null;
   allergies: string | null;
@@ -21,7 +22,7 @@ async function getClientContext(clientId: string): Promise<ClientContext> {
   const client = await prisma.client.findUnique({
     where: { id: clientId },
     select: {
-      name: true, gender: true, goals: true, notes: true, dateOfBirth: true,
+      name: true, gender: true, height: true, goals: true, notes: true, dateOfBirth: true,
       allergies: true, dietaryPrefs: true, injuries: true, fitnessLevel: true, activityLevel: true,
     },
   });
@@ -49,6 +50,7 @@ function buildClientPrompt(ctx: ClientContext): string {
     const age = Math.floor((Date.now() - ctx.dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
     parts.push(`Age: ${age}`);
   }
+  if (ctx.height) parts.push(`Height: ${ctx.height}cm`);
   if (ctx.latestWeight) parts.push(`Current weight: ${ctx.latestWeight}kg`);
   if (ctx.latestBodyFat) parts.push(`Body fat: ${ctx.latestBodyFat}%`);
   if (ctx.fitnessLevel) parts.push(`Fitness level: ${ctx.fitnessLevel}`);

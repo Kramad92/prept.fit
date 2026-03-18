@@ -18,6 +18,7 @@ const clientFormSchema = z.object({
   email: z.string().email("Invalid email").or(z.literal("")).optional(),
   phone: z.string().max(50).optional(),
   gender: z.string().optional(),
+  height: z.string().optional(),
   goals: z.string().max(2000).optional(),
   notes: z.string().max(5000).optional(),
   allergies: z.string().max(1000).optional(),
@@ -40,6 +41,7 @@ export default function NewClientPage() {
       email: "",
       phone: "",
       gender: "",
+      height: "",
       goals: "",
       notes: "",
       allergies: "",
@@ -141,6 +143,19 @@ export default function NewClientPage() {
                     { value: "other", label: t.clients.other },
                   ]}
                 />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="height"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.clients.height} (cm)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder={t.clients.heightPlaceholder} {...field} />
+                </FormControl>
               </FormItem>
             )}
           />

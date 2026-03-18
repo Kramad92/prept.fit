@@ -248,6 +248,9 @@ function OverviewTab({
       </View>
 
       {/* Details */}
+      {client.height != null && (
+        <InfoRow icon={Ruler} label="Height" value={`${client.height} cm`} />
+      )}
       {client.goals && (
         <InfoRow icon={Target} label="Goals" value={client.goals} />
       )}

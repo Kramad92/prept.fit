@@ -18,8 +18,14 @@ export async function GET() {
       return NextResponse.json({ prank: null });
     }
 
-    // Normalize: support both old {imageUrl} and new {imageUrls} shapes
     const raw = user.prankPopup as Record<string, unknown>;
+
+    // Check enabled flag (default true for backwards compat)
+    if (raw.enabled === false) {
+      return NextResponse.json({ prank: null });
+    }
+
+    // Normalize image URLs
     const imageUrls = Array.isArray(raw.imageUrls)
       ? raw.imageUrls
       : raw.imageUrl
@@ -31,7 +37,11 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      prank: { imageUrls, message: raw.message || null },
+      prank: {
+        imageUrls,
+        message: raw.message || null,
+        mode: raw.mode || "navigation",
+      },
     });
   } catch (err: unknown) {
     console.error("[prank-popup] Error:", err);

@@ -1,15 +1,31 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Trash2, Plus, PartyPopper, X, ImagePlus, ChevronDown, Search } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  PartyPopper,
+  X,
+  ImagePlus,
+  ChevronDown,
+  Search,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+interface PrankData {
+  imageUrls: string[];
+  message?: string | null;
+  enabled: boolean;
+  mode: "login" | "navigation";
+}
 
 interface PrankUser {
   id: string;
   email: string;
   name: string;
   role: string;
-  prankPopup: { imageUrls: string[]; message?: string | null };
+  prankPopup: PrankData;
 }
 
 interface UserOption {
@@ -19,12 +35,14 @@ interface UserOption {
   role: string;
 }
 
+// ─── Searchable user dropdown ───────────────────────────────────────────────
+
 function UserPicker({
   value,
   onChange,
 }: {
   value: string;
-  onChange: (email: string, name: string) => void;
+  onChange: (email: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -34,13 +52,11 @@ function UserPicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Fetch users when search changes
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     const params = new URLSearchParams();
     if (search) params.set("search", search);
-
     fetch(`/api/admin/users?${params}`)
       .then((r) => r.json())
       .then((data) => {
@@ -49,31 +65,28 @@ function UserPicker({
       .finally(() => setLoading(false));
   }, [search, open]);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node))
         setOpen(false);
-      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Focus search when opened
   useEffect(() => {
     if (open) searchRef.current?.focus();
   }, [open]);
 
   const select = (user: UserOption) => {
-    onChange(user.email, user.name);
+    onChange(user.email);
     setDisplayLabel(`${user.name} (${user.email})`);
     setOpen(false);
     setSearch("");
   };
 
   const clear = () => {
-    onChange("", "");
+    onChange("");
     setDisplayLabel("");
   };
 
@@ -124,7 +137,9 @@ function UserPicker({
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
               </div>
             ) : users.length === 0 ? (
-              <p className="py-4 text-center text-sm text-gray-400">No users found</p>
+              <p className="py-4 text-center text-sm text-gray-400">
+                No users found
+              </p>
             ) : (
               users.map((user) => (
                 <button
@@ -134,16 +149,20 @@ function UserPicker({
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-gray-50"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-gray-900">{user.name}</p>
+                    <p className="truncate font-medium text-gray-900">
+                      {user.name}
+                    </p>
                     <p className="truncate text-xs text-gray-500">{user.email}</p>
                   </div>
-                  <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    user.role === "COACH"
-                      ? "bg-blue-100 text-blue-700"
-                      : user.role === "ADMIN"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-green-100 text-green-700"
-                  }`}>
+                  <span
+                    className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      user.role === "COACH"
+                        ? "bg-blue-100 text-blue-700"
+                        : user.role === "ADMIN"
+                          ? "bg-purple-100 text-purple-700"
+                          : "bg-green-100 text-green-700"
+                    }`}
+                  >
                     {user.role}
                   </span>
                 </button>
@@ -156,12 +175,48 @@ function UserPicker({
   );
 }
 
+// ─── Toggle switch ──────────────────────────────────────────────────────────
+
+function Toggle({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        checked ? "bg-indigo-600" : "bg-gray-200"
+      )}
+    >
+      <span
+        className={cn(
+          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200",
+          checked ? "translate-x-5" : "translate-x-0"
+        )}
+      />
+    </button>
+  );
+}
+
+// ─── Main page ──────────────────────────────────────────────────────────────
+
 export default function AdminPranksPage() {
   const [users, setUsers] = useState<PrankUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([""]);
   const [message, setMessage] = useState("");
+  const [mode, setMode] = useState<"login" | "navigation">("navigation");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -195,6 +250,7 @@ export default function AdminPranksPage() {
           email,
           imageUrls: validUrls,
           message: message || undefined,
+          mode,
         }),
       });
       const data = await res.json();
@@ -205,11 +261,41 @@ export default function AdminPranksPage() {
       setEmail("");
       setImageUrls([""]);
       setMessage("");
+      setMode("navigation");
       fetchPranks();
     } catch {
       setError("Failed to set prank");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleEnabled = async (userEmail: string, enabled: boolean) => {
+    try {
+      await fetch("/api/admin/prank-popup", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail, enabled }),
+      });
+      fetchPranks();
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleMode = async (
+    userEmail: string,
+    newMode: "login" | "navigation"
+  ) => {
+    try {
+      await fetch("/api/admin/prank-popup", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail, mode: newMode }),
+      });
+      fetchPranks();
+    } catch {
+      // ignore
     }
   };
 
@@ -246,13 +332,12 @@ export default function AdminPranksPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pranks</h1>
           <p className="mt-0.5 text-sm text-gray-500">
-            Set pop-up images that appear on every page navigation for a user.
-            Multiple images rotate randomly.
+            Set pop-up images for users. Choose login-only or every navigation.
           </p>
         </div>
       </div>
 
-      {/* Add new prank */}
+      {/* ── Add new prank ──────────────────────────────────────────────── */}
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-gray-700">Add Prank</h2>
         <div className="mt-3 space-y-3">
@@ -260,10 +345,40 @@ export default function AdminPranksPage() {
             <label className="mb-1 block text-xs font-medium text-gray-500">
               Target user
             </label>
-            <UserPicker
-              value={email}
-              onChange={(selectedEmail) => setEmail(selectedEmail)}
-            />
+            <UserPicker value={email} onChange={setEmail} />
+          </div>
+
+          {/* Mode selector */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              When to show
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setMode("login")}
+                className={cn(
+                  "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                  mode === "login"
+                    ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                    : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                )}
+              >
+                Login only
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("navigation")}
+                className={cn(
+                  "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                  mode === "navigation"
+                    ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                    : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                )}
+              >
+                Every navigation
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -308,7 +423,6 @@ export default function AdminPranksPage() {
 
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
-        {/* Previews */}
         {imageUrls.some((u) => u.trim()) && (
           <div className="mt-3">
             <p className="mb-1 text-xs text-gray-400">Preview:</p>
@@ -340,61 +454,124 @@ export default function AdminPranksPage() {
         </button>
       </div>
 
-      {/* Active pranks */}
+      {/* ── Active pranks list ─────────────────────────────────────────── */}
       <div className="mt-6">
-        <h2 className="text-sm font-semibold text-gray-700">Active Pranks</h2>
+        <h2 className="text-sm font-semibold text-gray-700">All Pranks</h2>
         {loading ? (
           <div className="flex h-32 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
           </div>
         ) : users.length === 0 ? (
           <p className="mt-3 text-sm text-gray-400">
-            No active pranks. Add one above!
+            No pranks yet. Add one above!
           </p>
         ) : (
           <div className="mt-3 space-y-3">
-            {users.map((u) => (
-              <div
-                key={u.id}
-                className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4"
-              >
-                <div className="flex flex-shrink-0 gap-1">
-                  {u.prankPopup.imageUrls.slice(0, 3).map((url, i) => (
-                    <img
-                      key={i}
-                      src={url}
-                      alt="Prank"
-                      className="h-14 w-14 rounded-lg object-cover"
-                    />
-                  ))}
-                  {u.prankPopup.imageUrls.length > 3 && (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xs font-medium text-gray-500">
-                      +{u.prankPopup.imageUrls.length - 3}
-                    </div>
+            {users.map((u) => {
+              const p = u.prankPopup;
+              const enabled = p.enabled !== false;
+              return (
+                <div
+                  key={u.id}
+                  className={cn(
+                    "rounded-xl border bg-white p-4 transition-opacity",
+                    enabled
+                      ? "border-gray-200"
+                      : "border-gray-100 opacity-60"
                   )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900">{u.name}</p>
-                  <p className="truncate text-sm text-gray-500">{u.email}</p>
-                  <p className="mt-0.5 text-xs text-gray-400">
-                    {u.prankPopup.imageUrls.length} image{u.prankPopup.imageUrls.length !== 1 ? "s" : ""}
-                    {u.prankPopup.message && (
-                      <> &middot; &quot;{u.prankPopup.message}&quot;</>
-                    )}
-                  </p>
-                </div>
-                <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-                  {u.role}
-                </span>
-                <button
-                  onClick={() => removePrank(u.email)}
-                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                  title="Remove prank"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-4">
+                    {/* Thumbnails */}
+                    <div className="flex flex-shrink-0 gap-1">
+                      {p.imageUrls.slice(0, 3).map((url, i) => (
+                        <img
+                          key={i}
+                          src={url}
+                          alt="Prank"
+                          className="h-14 w-14 rounded-lg object-cover"
+                        />
+                      ))}
+                      {p.imageUrls.length > 3 && (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xs font-medium text-gray-500">
+                          +{p.imageUrls.length - 3}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900">{u.name}</p>
+                      <p className="truncate text-sm text-gray-500">
+                        {u.email}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        {p.imageUrls.length} image
+                        {p.imageUrls.length !== 1 ? "s" : ""}
+                        {p.message && (
+                          <> &middot; &quot;{p.message}&quot;</>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Role badge */}
+                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                      {u.role}
+                    </span>
+                  </div>
+
+                  {/* Controls row */}
+                  <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-gray-100 pt-3">
+                    {/* Enable/disable toggle */}
+                    <div className="flex items-center gap-2">
+                      <Toggle
+                        checked={enabled}
+                        onChange={(v) => toggleEnabled(u.email, v)}
+                      />
+                      <span className="text-xs text-gray-500">
+                        {enabled ? "Active" : "Paused"}
+                      </span>
+                    </div>
+
+                    {/* Mode pills */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => toggleMode(u.email, "login")}
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                          (p.mode || "navigation") === "login"
+                            ? "bg-indigo-100 text-indigo-700"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        )}
+                      >
+                        Login only
+                      </button>
+                      <button
+                        onClick={() => toggleMode(u.email, "navigation")}
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                          (p.mode || "navigation") === "navigation"
+                            ? "bg-indigo-100 text-indigo-700"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        )}
+                      >
+                        Every nav
+                      </button>
+                    </div>
+
+                    {/* Spacer + delete */}
+                    <div className="ml-auto">
+                      <button
+                        onClick={() => removePrank(u.email)}
+                        className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        title="Delete prank"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

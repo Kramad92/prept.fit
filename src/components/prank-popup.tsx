@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 interface PrankConfig {
   imageUrls: string[];
   message?: string | null;
+  mode: "login" | "navigation";
 }
 
 function pickRandom(urls: string[]): string {
@@ -28,7 +29,7 @@ export function PrankPopup() {
         if (data.prank?.imageUrls?.length) {
           setPrank(data.prank);
           setLoaded(true);
-          // Show on first load (login)
+          // Show on first load (login) — both modes do this
           setCurrentImage(pickRandom(data.prank.imageUrls));
           setVisible(true);
           initialShown.current = true;
@@ -37,9 +38,9 @@ export function PrankPopup() {
       .catch(() => {});
   }, []);
 
-  // Show a random image on every route change
+  // Show a random image on every route change (only in "navigation" mode)
   useEffect(() => {
-    if (loaded && prank && initialShown.current) {
+    if (loaded && prank && initialShown.current && prank.mode === "navigation") {
       setCurrentImage(pickRandom(prank.imageUrls));
       setVisible(true);
     }

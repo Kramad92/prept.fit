@@ -100,8 +100,10 @@ export default function NotificationsScreen() {
           router.push("/(client)/(tabs)/habits");
           break;
         case "session_reminder":
+          router.push("/(client)/book");
+          break;
         case "group_session":
-          // Phase 4 — no route yet
+          router.push("/(client)/group-training");
           break;
       }
     },

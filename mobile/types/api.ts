@@ -191,42 +191,10 @@ export interface WorkoutLog {
   entries: WorkoutLogEntry[];
 }
 
-export interface NutritionLog {
-  id: string;
-  clientId: string;
-  date: string;
-  mealName: string;
-  foods: string;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-  notes: string | null;
-}
-
 export interface BookingSlot {
   date: string;
   startTime: string;
   endTime: string;
-}
-
-export interface PaymentSummary {
-  payments: Array<{
-    id: string;
-    amount: number;
-    currency: string;
-    date: string;
-    dueDate: string | null;
-    method: string | null;
-    status: string;
-    period: string | null;
-    description: string | null;
-  }>;
-  summary: {
-    totalPaid: number;
-    totalPending: number;
-    totalOverdue: number;
-  };
 }
 
 // Phase 3: Communication & Tracking

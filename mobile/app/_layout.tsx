@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Slot, router } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { addNotificationResponseListener } from "@/lib/notifications";
 
@@ -16,18 +16,23 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function RootLayout() {
-  // Handle notification tap — route to the correct screen
+function NotificationHandler() {
+  const { user } = useAuth();
+
   useEffect(() => {
     const subscription = addNotificationResponseListener((response) => {
       const data = response.notification.request.content.data as
         | Record<string, string>
         | undefined;
-      if (!data?.type) return;
+      if (!data?.type || !user) return;
+
+      const isCoach = user.role === "COACH";
 
       switch (data.type) {
         case "new_message":
-          if (data.clientId) {
+          if (isCoach && data.clientId) {
+            router.push(`/(coach)/messages/${data.clientId}` as never);
+          } else {
             router.push("/(client)/messages");
           }
           break;
@@ -35,32 +40,56 @@ export default function RootLayout() {
           router.push("/(client)/(tabs)/workouts");
           break;
         case "session_reminder":
-          router.push("/(client)/book");
+          if (isCoach) {
+            router.push("/(coach)/(tabs)/schedule");
+          } else {
+            router.push("/(client)/book");
+          }
           break;
         case "check_in_due":
-        case "check_in_submitted":
           router.push("/(client)/check-ins");
+          break;
+        case "check_in_submitted":
+          if (isCoach && data.clientId) {
+            router.push(`/(coach)/clients/${data.clientId}` as never);
+          } else {
+            router.push("/(client)/check-ins");
+          }
           break;
         case "habit_reminder":
           router.push("/(client)/(tabs)/habits");
           break;
         case "payment_overdue":
-          router.push("/(client)/payments");
+          if (isCoach) {
+            router.push("/(coach)/payments" as never);
+          } else {
+            router.push("/(client)/payments");
+          }
           break;
         case "group_session":
-          router.push("/(client)/group-training");
+          if (isCoach) {
+            router.push("/(coach)/group-training" as never);
+          } else {
+            router.push("/(client)/group-training");
+          }
           break;
       }
     });
 
     return () => subscription.remove();
-  }, []);
+  }, [user]);
+
+  return null;
+}
+
+export default function RootLayout() {
 
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
+            <NotificationHandler />
             <Slot />
           </AuthProvider>
         </QueryClientProvider>

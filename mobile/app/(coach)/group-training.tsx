@@ -34,6 +34,7 @@ type ViewMode = "groups" | "sessions" | "attendance";
 
 export default function CoachGroupTrainingScreen() {
   const [view, setView] = useState<ViewMode>("groups");
+  const [selectedGroupId, setSelectedGroupId] = useState<string>();
   const [selectedSessionId, setSelectedSessionId] = useState<string>();
 
   return (
@@ -42,7 +43,10 @@ export default function CoachGroupTrainingScreen() {
         <TouchableOpacity
           onPress={() => {
             if (view === "attendance") setView("sessions");
-            else if (view === "sessions") setView("groups");
+            else if (view === "sessions") {
+              setSelectedGroupId(undefined);
+              setView("groups");
+            }
             else router.back();
           }}
           className="mr-3 p-1"
@@ -60,11 +64,15 @@ export default function CoachGroupTrainingScreen() {
 
       {view === "groups" && (
         <GroupsList
-          onSelectGroup={() => setView("sessions")}
+          onSelectGroup={(groupId) => {
+            setSelectedGroupId(groupId);
+            setView("sessions");
+          }}
         />
       )}
       {view === "sessions" && (
         <SessionsList
+          groupId={selectedGroupId}
           onSelectSession={(id) => {
             setSelectedSessionId(id);
             setView("attendance");
@@ -78,7 +86,7 @@ export default function CoachGroupTrainingScreen() {
   );
 }
 
-function GroupsList({ onSelectGroup }: { onSelectGroup: () => void }) {
+function GroupsList({ onSelectGroup }: { onSelectGroup: (groupId: string) => void }) {
   const { data: groups, isLoading, error, refetch, isRefetching } =
     useCoachTrainingGroups();
 
@@ -109,7 +117,7 @@ function GroupsList({ onSelectGroup }: { onSelectGroup: () => void }) {
       renderItem={({ item }: { item: CoachTrainingGroup }) => (
         <TouchableOpacity
           className="bg-white rounded-xl border border-gray-100 p-4 mb-3"
-          onPress={onSelectGroup}
+          onPress={() => onSelectGroup(item.id)}
           activeOpacity={0.6}
         >
           <View className="flex-row items-center justify-between">
@@ -148,12 +156,14 @@ function GroupsList({ onSelectGroup }: { onSelectGroup: () => void }) {
 }
 
 function SessionsList({
+  groupId,
   onSelectSession,
 }: {
+  groupId?: string;
   onSelectSession: (id: string) => void;
 }) {
   const { data: sessions, isLoading, error, refetch, isRefetching } =
-    useCoachGroupSessions();
+    useCoachGroupSessions(groupId);
 
   if (isLoading) {
     return (

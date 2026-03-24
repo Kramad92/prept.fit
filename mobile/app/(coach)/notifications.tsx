@@ -51,7 +51,7 @@ export default function CoachNotificationsScreen() {
     useCoachNotifications();
 
   const markReadMutation = useMutation({
-    mutationFn: () => api.put("/api/notifications", { markAll: true }),
+    mutationFn: () => api.put("/api/notifications", { ids: "all" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["coach-notifications"] });
     },

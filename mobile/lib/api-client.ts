@@ -1,4 +1,5 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./token-store";
+import { router } from "expo-router";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 const REQUEST_TIMEOUT = 15000; // 15 seconds
@@ -41,6 +42,7 @@ async function refreshAccessToken(): Promise<string> {
 
   if (!res.ok) {
     await clearTokens();
+    router.replace("/login");
     throw new Error("Session expired");
   }
 
@@ -142,16 +144,32 @@ export const api = {
   },
 
   upload: async <T>(path: string, formData: FormData): Promise<T> => {
+    // Don't set Content-Type — fetch sets it with boundary for FormData
     const accessToken = await getAccessToken();
     const headers: Record<string, string> = {};
     if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-    // Don't set Content-Type — fetch sets it with boundary for FormData
-    // Use longer timeout for file uploads
-    const res = await fetchWithTimeout(
+
+    let res = await fetchWithTimeout(
       `${API_URL}${path}`,
       { method: "POST", headers, body: formData },
       60000
     );
+
+    // Retry on 401 with refreshed token
+    if (res.status === 401 && accessToken) {
+      try {
+        const newToken = await refreshAccessToken();
+        headers["Authorization"] = `Bearer ${newToken}`;
+        res = await fetchWithTimeout(
+          `${API_URL}${path}`,
+          { method: "POST", headers, body: formData },
+          60000
+        );
+      } catch {
+        throw new Error("Session expired");
+      }
+    }
+
     return handleResponse<T>(res);
   },
 };

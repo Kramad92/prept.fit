@@ -186,9 +186,7 @@ export default function HomeScreen() {
         <TouchableOpacity
           className="bg-white rounded-xl p-4 mb-3 border border-gray-100 flex-row items-center"
           activeOpacity={0.7}
-          onPress={() => {
-            // Navigate to booking in the future
-          }}
+          onPress={() => router.push("/(client)/book")}
         >
           <View className="w-10 h-10 rounded-full bg-brand-50 items-center justify-center mr-3">
             <Calendar size={20} color="#059669" />

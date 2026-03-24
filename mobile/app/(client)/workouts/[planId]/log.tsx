@@ -214,7 +214,7 @@ export default function WorkoutLogScreen() {
       haptics.success();
       queryClient.invalidateQueries({ queryKey: ["workout-logs"] });
       queryClient.invalidateQueries({ queryKey: ["client-profile"] });
-      router.dismiss(2);
+      router.replace("/(client)/(tabs)/workouts");
     },
   });
 

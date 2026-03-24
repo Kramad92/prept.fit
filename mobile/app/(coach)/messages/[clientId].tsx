@@ -89,9 +89,11 @@ export default function CoachChatScreen() {
     return () => clearInterval(interval);
   }, [clientId, queryClient]);
 
-  // Mark messages as read
+  // Mark messages as read (debounced to avoid repeated calls on each new message)
+  const lastMarkedCount = useRef(0);
   useEffect(() => {
-    if (clientId) {
+    if (clientId && messages.length > lastMarkedCount.current) {
+      lastMarkedCount.current = messages.length;
       api.put("/api/messages/read", { clientId }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["coach-unread-counts"] });
       queryClient.invalidateQueries({ queryKey: ["coach-latest-messages"] });

@@ -8,5 +8,9 @@ export default function ClientLayout() {
     return <Redirect href="/login" />;
   }
 
+  if (user.role === "COACH") {
+    return <Redirect href="/(coach)/(tabs)" />;
+  }
+
   return <Stack screenOptions={{ headerShown: false }} />;
 }

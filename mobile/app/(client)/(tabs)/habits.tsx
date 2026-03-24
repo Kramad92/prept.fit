@@ -45,7 +45,15 @@ function computeStreak(habits: AssignedHabit[]): number {
   let streak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  for (let i = 0; i < 365; i++) {
+
+  // Check if today is complete — if not, start counting from yesterday
+  const todayStr = getDateStr(today);
+  const todayDone = habits.every((h) =>
+    h.logs.some((l) => logMatchesDate(l.date, todayStr) && l.completed)
+  );
+  const startOffset = todayDone ? 0 : 1;
+
+  for (let i = startOffset; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = getDateStr(d);
@@ -53,7 +61,6 @@ function computeStreak(habits: AssignedHabit[]): number {
       h.logs.some((l) => logMatchesDate(l.date, dateStr) && l.completed)
     );
     if (allDone) streak++;
-    else if (i > 0) break;
     else break;
   }
   return streak;

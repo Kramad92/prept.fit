@@ -70,7 +70,7 @@ export default function BookSessionScreen() {
       groups.push({ date, label, slots: dateSlots });
     }
 
-    return groups;
+    return groups.sort((a, b) => a.date.localeCompare(b.date));
   }, [slots]);
 
   const onRefresh = useCallback(async () => {

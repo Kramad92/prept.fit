@@ -204,12 +204,19 @@ function SummaryCard({
   color: string;
   bgClass: string;
 }) {
+  const formatted = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+
   return (
     <View
       className={`flex-1 rounded-xl p-3 items-center ${bgClass} border border-gray-100`}
     >
       <Text className="text-lg font-bold" style={{ color }}>
-        {amount > 0 ? `$${amount.toFixed(0)}` : "$0"}
+        {formatted}
       </Text>
       <Text className="text-xs text-gray-500">{label}</Text>
     </View>

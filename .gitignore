@@ -39,5 +39,9 @@ claude.md
 # local docs
 CHANGELOG.md
 DEPLOYMENT.md
-# source CSV (exercises.json is the clean parsed version)
+# exercise database (hosted on R2, not in repo)
+prisma/exercises.json
 prisma/exercises.csv
+
+# one-time scripts
+scripts/

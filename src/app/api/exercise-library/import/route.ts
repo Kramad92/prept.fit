@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "@/lib/prisma";
 import { requireCoach } from "@/lib/session";
 
@@ -26,16 +25,37 @@ interface RawExercise {
 
 let cachedExercises: RawExercise[] | null = null;
 
-function loadExercises(): RawExercise[] {
+async function loadExercises(): Promise<RawExercise[]> {
   if (cachedExercises) return cachedExercises;
-  const filePath = join(process.cwd(), "prisma", "exercises.json");
-  cachedExercises = JSON.parse(readFileSync(filePath, "utf-8"));
+
+  const s3 = new S3Client({
+    region: process.env.S3_REGION || "us-east-1",
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
+    },
+    ...(process.env.S3_ENDPOINT
+      ? { endpoint: process.env.S3_ENDPOINT, forcePathStyle: true }
+      : {}),
+  });
+
+  const res = await s3.send(
+    new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME || "",
+      Key: "_system/exercise-db.json",
+    })
+  );
+
+  const body = await res.Body?.transformToString("utf-8");
+  if (!body) throw new Error("Failed to load exercise database from storage");
+
+  cachedExercises = JSON.parse(body);
   return cachedExercises!;
 }
 
 // GET — return available filters + counts, scoped by other active filters
 export async function GET(req: NextRequest) {
-  const allExercises = loadExercises();
+  const allExercises = await loadExercises();
   const url = req.nextUrl;
 
   const paramToArray = (key: string): string[] => {
@@ -105,7 +125,7 @@ export async function POST(req: NextRequest) {
     classifications?: string[];
   } = await req.json();
 
-  const allExercises = loadExercises();
+  const allExercises = await loadExercises();
 
   // Filter exercises based on selections
   const filtered = allExercises.filter((e) => {

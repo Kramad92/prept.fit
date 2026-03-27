@@ -1,22 +1,33 @@
 import { Platform } from "react-native";
-import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { api } from "./api-client";
 
+// Lazy-load expo-notifications to avoid crash on Android in Expo Go (SDK 53+)
+let Notifications: typeof import("expo-notifications") | null = null;
+try {
+  Notifications = require("expo-notifications");
+} catch {
+  console.warn("[push] expo-notifications not available in this environment");
+}
+
 // Configure how notifications are displayed when app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+if (Notifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
 /**
  * Request permission and register the device's push token with the backend.
  * Call after login.
  */
 export async function registerForPushNotifications(): Promise<string | null> {
+  if (!Notifications) return null;
+
   // Push doesn't work on simulator
   if (!Device.isDevice) {
     console.log("[push] Skipping — not a physical device");
@@ -86,7 +97,8 @@ export async function unregisterPushToken(): Promise<void> {
  * Returns a subscription that should be cleaned up on unmount.
  */
 export function addNotificationResponseListener(
-  handler: (response: Notifications.NotificationResponse) => void
+  handler: (response: any) => void
 ) {
+  if (!Notifications) return { remove: () => {} };
   return Notifications.addNotificationResponseReceivedListener(handler);
 }

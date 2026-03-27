@@ -1,13 +1,20 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import * as Device from "expo-device";
 import { api } from "./api-client";
 
-// Lazy-load expo-notifications to avoid crash on Android in Expo Go (SDK 53+)
+// expo-notifications crashes at import time on Android in Expo Go (SDK 53+).
+// Skip the require entirely in that environment.
+const isExpoGo = Constants.appOwnership === "expo";
+const isAndroidExpoGo = Platform.OS === "android" && isExpoGo;
+
 let Notifications: typeof import("expo-notifications") | null = null;
-try {
-  Notifications = require("expo-notifications");
-} catch {
-  console.warn("[push] expo-notifications not available in this environment");
+if (!isAndroidExpoGo) {
+  try {
+    Notifications = require("expo-notifications");
+  } catch {
+    console.warn("[push] expo-notifications not available in this environment");
+  }
 }
 
 // Configure how notifications are displayed when app is in foreground

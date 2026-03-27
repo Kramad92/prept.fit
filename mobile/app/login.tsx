@@ -41,7 +41,7 @@ export default function LoginScreen() {
     try {
       // Use implicit flow (response_type=id_token) — no PKCE/crypto needed
       const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      const redirectUri = "https://auth.expo.io/@anonymous/prept";
+      const redirectUri = "https://auth.expo.io/@kramad92/prept";
       const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${encodeURIComponent(GOOGLE_WEB_CLIENT_ID)}` +

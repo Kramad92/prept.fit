@@ -48,7 +48,8 @@ export default function LoginScreen() {
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&response_type=id_token` +
         `&scope=${encodeURIComponent("openid email profile")}` +
-        `&nonce=${nonce}`;
+        `&nonce=${nonce}` +
+        `&prompt=select_account`;
 
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
 

@@ -36,6 +36,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithSocial: (provider: "google" | "apple", idToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -43,6 +44,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   login: async () => {},
+  loginWithSocial: async () => {},
   logout: async () => {},
 });
 
@@ -137,6 +139,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const loginWithSocial = useCallback(async (provider: "google" | "apple", idToken: string) => {
+    const res = await api.post<{
+      accessToken: string;
+      refreshToken: string;
+      user: User;
+    }>("/api/auth/mobile/social", { provider, idToken });
+
+    await setTokens(res.accessToken, res.refreshToken);
+    await setStoredUser(res.user);
+
+    setUser(res.user);
+    registerForPushNotifications().catch(() => {});
+
+    if (res.user.role === "COACH") {
+      router.replace("/(coach)/(tabs)");
+    } else {
+      router.replace("/(client)/(tabs)");
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       // Unregister push token before clearing auth
@@ -150,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithSocial, logout }}>
       {children}
     </AuthContext.Provider>
   );

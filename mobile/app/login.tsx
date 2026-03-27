@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { router, Redirect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
 import { useAuth } from "@/lib/auth-context";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -34,29 +33,39 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: GOOGLE_WEB_CLIENT_ID,
-  });
-
-  useEffect(() => {
-    if (response?.type === "success") {
-      const idToken = response.params.id_token;
-      if (idToken) {
-        handleGoogleSignIn(idToken);
-      }
-    } else if (response?.type === "error") {
-      setError("Google sign-in failed. Please try again.");
-      setGoogleLoading(false);
-    } else if (response?.type === "dismiss") {
-      setGoogleLoading(false);
-    }
-  }, [response]);
-
-  const handleGoogleSignIn = async (idToken: string) => {
+  const handleGoogleSignIn = async () => {
+    if (!GOOGLE_WEB_CLIENT_ID) return;
     setError("");
     setGoogleLoading(true);
+
     try {
-      await loginWithSocial("google", idToken);
+      // Use implicit flow (response_type=id_token) — no PKCE/crypto needed
+      const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      const redirectUri = "https://auth.expo.io/@anonymous/prept";
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(GOOGLE_WEB_CLIENT_ID)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=id_token` +
+        `&scope=${encodeURIComponent("openid email profile")}` +
+        `&nonce=${nonce}`;
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+      if (result.type === "success" && result.url) {
+        // id_token is in the URL fragment (#id_token=...)
+        const hash = result.url.split("#")[1] || "";
+        const params = new URLSearchParams(hash);
+        const idToken = params.get("id_token");
+
+        if (idToken) {
+          await loginWithSocial("google", idToken);
+        } else {
+          setError("No token received from Google");
+        }
+      } else if (result.type === "cancel") {
+        // User cancelled — no error
+      }
     } catch (e: any) {
       const msg = e.message || "Google sign-in failed";
       if (msg.includes("NO_ACCOUNT")) {
@@ -111,12 +120,8 @@ export default function LoginScreen() {
               className={`rounded-lg py-3.5 items-center flex-row justify-center border border-gray-300 ${
                 isAnyLoading ? "opacity-50" : ""
               }`}
-              onPress={() => {
-                setError("");
-                setGoogleLoading(true);
-                promptAsync();
-              }}
-              disabled={!request || isAnyLoading}
+              onPress={handleGoogleSignIn}
+              disabled={isAnyLoading}
               activeOpacity={0.8}
             >
               {googleLoading ? (

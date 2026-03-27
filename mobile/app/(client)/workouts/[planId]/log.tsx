@@ -66,8 +66,8 @@ export default function WorkoutLogScreen() {
 
   useEffect(() => {
     if (exercises.length > 0 && exerciseLogs.length === 0) {
-      const logs = exercises.map((ex, idx) => ({
-        exerciseId: originalExercises[idx]?.id || ex.id,
+      const logs = exercises.map((ex) => ({
+        exerciseId: originalExercises.find((oe) => oe.id === ex.id)?.id || ex.id,
         name: ex.name,
         sets: Array.from({ length: ex.sets || 3 }, () => ({
           reps: ex.reps || "",
@@ -101,10 +101,11 @@ export default function WorkoutLogScreen() {
   }, [isResting]);
 
   const startRest = useCallback(() => {
+    if (isResting) return; // prevent double-fire
     const restSecs = currentExercise?.restSeconds || 60;
     setRestTimer(restSecs);
     setIsResting(true);
-  }, [currentExercise]);
+  }, [currentExercise, isResting]);
 
   const skipRest = useCallback(() => {
     setIsResting(false);
@@ -179,10 +180,12 @@ export default function WorkoutLogScreen() {
     ]);
   }, []);
 
-  const durationMinutes = useMemo(
-    () => Math.round((Date.now() - startTime.current) / 60000),
-    [showSummary]
-  );
+  const [durationMinutes, setDurationMinutes] = useState(0);
+  useEffect(() => {
+    if (showSummary) {
+      setDurationMinutes(Math.round((Date.now() - startTime.current) / 60000));
+    }
+  }, [showSummary]);
 
   const totalSetsCompleted = useMemo(
     () => exerciseLogs.reduce((sum, ex) => sum + ex.sets.filter((s) => s.completed).length, 0),

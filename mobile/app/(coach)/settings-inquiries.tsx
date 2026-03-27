@@ -98,7 +98,7 @@ export default function InquiriesScreen() {
         </View>
       </View>
     );
-  }, []);
+  }, [statusMutation, deleteMutation]);
 
   if (isLoading) {
     return (

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryFunctionContext } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type {
   CoachDashboard,
@@ -49,7 +49,10 @@ export function useCoachClients(search?: string) {
 export function useClientDetail(clientId: string | undefined) {
   return useQuery<ClientDetail>({
     queryKey: ["coach-client-detail", clientId],
-    queryFn: () => api.get<ClientDetail>(`/api/clients/${clientId}`),
+    queryFn: ({ queryKey }: QueryFunctionContext) => {
+      const [, id] = queryKey as [string, string];
+      return api.get<ClientDetail>(`/api/clients/${encodeURIComponent(id)}`);
+    },
     enabled: !!clientId,
   });
 }
@@ -76,6 +79,7 @@ export function useLatestMessages() {
     queryKey: ["coach-latest-messages"],
     queryFn: () => api.get<LatestMessagesMap>("/api/messages/latest"),
     refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -84,6 +88,7 @@ export function useCoachUnreadCounts() {
     queryKey: ["coach-unread-counts"],
     queryFn: () => api.get<UnreadCountsMap>("/api/messages/unread"),
     refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -106,8 +111,12 @@ export function useCoachGroupSessions(groupId?: string) {
 export function useCoachGroupSessionDetail(sessionId: string | undefined) {
   return useQuery<CoachGroupSessionDetail>({
     queryKey: ["coach-group-session-detail", sessionId],
-    queryFn: () =>
-      api.get<CoachGroupSessionDetail>(`/api/group-sessions/${sessionId}`),
+    queryFn: ({ queryKey }: QueryFunctionContext) => {
+      const [, id] = queryKey as [string, string];
+      return api.get<CoachGroupSessionDetail>(
+        `/api/group-sessions/${encodeURIComponent(id)}`
+      );
+    },
     enabled: !!sessionId,
   });
 }
@@ -117,6 +126,7 @@ export function useCoachNotifications() {
     queryKey: ["coach-notifications"],
     queryFn: () => api.get<AppNotification[]>("/api/notifications"),
     refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -193,7 +203,12 @@ export function useWorkoutPlans() {
 export function useWorkoutPlanDetail(id: string | undefined) {
   return useQuery<WorkoutPlanDetail>({
     queryKey: ["workout-plan-detail", id],
-    queryFn: () => api.get<WorkoutPlanDetail>(`/api/workouts/${id}`),
+    queryFn: ({ queryKey }: QueryFunctionContext) => {
+      const [, planId] = queryKey as [string, string];
+      return api.get<WorkoutPlanDetail>(
+        `/api/workouts/${encodeURIComponent(planId)}`
+      );
+    },
     enabled: !!id,
   });
 }
@@ -209,7 +224,12 @@ export function useMealPlans() {
 export function useMealPlanDetail(id: string | undefined) {
   return useQuery<MealPlanDetail>({
     queryKey: ["meal-plan-detail", id],
-    queryFn: () => api.get<MealPlanDetail>(`/api/meal-plans/${id}`),
+    queryFn: ({ queryKey }: QueryFunctionContext) => {
+      const [, planId] = queryKey as [string, string];
+      return api.get<MealPlanDetail>(
+        `/api/meal-plans/${encodeURIComponent(planId)}`
+      );
+    },
     enabled: !!id,
   });
 }
@@ -246,6 +266,7 @@ export function useNutritionPrograms() {
 }
 
 // Search
+// Callers must debounce the `query` parameter before passing it to this hook.
 export function useGlobalSearch(query: string) {
   return useQuery<SearchResults>({
     queryKey: ["global-search", query],

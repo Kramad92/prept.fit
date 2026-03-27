@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -46,7 +46,6 @@ export default function ClientDetailScreen() {
   const [showEditClient, setShowEditClient] = useState(false);
   const [showAssignWorkout, setShowAssignWorkout] = useState(false);
   const [showAssignMeal, setShowAssignMeal] = useState(false);
-  const [showAssignHabits, setShowAssignHabits] = useState(false);
 
   if (isLoading) {
     return (
@@ -557,6 +556,15 @@ function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boo
   const [goals, setGoals] = useState(client.goals || "");
   const [notes, setNotes] = useState(client.notes || "");
   const [status, setStatus] = useState(client.status?.toLowerCase() || "active");
+
+  useEffect(() => {
+    setName(client.name || "");
+    setEmail(client.email || "");
+    setPhone(client.phone || "");
+    setGoals(client.goals || "");
+    setNotes(client.notes || "");
+    setStatus(client.status?.toLowerCase() || "active");
+  }, [client]);
 
   const mutation = useMutation({
     mutationFn: (data: any) => api.put(`/api/clients/${client.id}`, data),

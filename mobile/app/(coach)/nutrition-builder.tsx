@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -61,18 +61,6 @@ export default function NutritionBuilderScreen() {
   const [mode, setMode] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | undefined>();
 
-  const openCreate = () => { setEditingId(undefined); setMode("form"); };
-  const openEdit = (id: string) => { setEditingId(id); setMode("form"); };
-  const handleDone = () => {
-    queryClient.invalidateQueries({ queryKey: ["meal-plans"] });
-    setMode("list");
-    setEditingId(undefined);
-  };
-
-  if (mode === "form") {
-    return <MealPlanForm editId={editingId} onDone={handleDone} />;
-  }
-
   const duplicateMutation = useMutation({
     mutationFn: (id: string) => api.post(`/api/meal-plans/${id}/duplicate`),
     onSuccess: () => { haptics.success(); queryClient.invalidateQueries({ queryKey: ["meal-plans"] }); },
@@ -84,6 +72,18 @@ export default function NutritionBuilderScreen() {
     onSuccess: () => { haptics.light(); queryClient.invalidateQueries({ queryKey: ["meal-plans"] }); },
     onError: (err: any) => Alert.alert("Error", err.message),
   });
+
+  const openCreate = () => { setEditingId(undefined); setMode("form"); };
+  const openEdit = (id: string) => { setEditingId(id); setMode("form"); };
+  const handleDone = () => {
+    queryClient.invalidateQueries({ queryKey: ["meal-plans"] });
+    setMode("list");
+    setEditingId(undefined);
+  };
+
+  if (mode === "form") {
+    return <MealPlanForm editId={editingId} onDone={handleDone} />;
+  }
 
   const renderPlan = ({ item }: { item: MealPlanListItem }) => (
     <TouchableOpacity className="bg-white mx-4 mb-2 rounded-xl border border-gray-100 px-4 py-3" onPress={() => openEdit(item.id)} activeOpacity={0.6}>
@@ -161,32 +161,34 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
   const [initialized, setInitialized] = useState(false);
   const [foodPickerMealKey, setFoodPickerMealKey] = useState<string | null>(null);
 
-  if (existing && !initialized) {
-    setName(existing.name);
-    setDescription(existing.description || "");
-    setTargetCalories(existing.targetCalories?.toString() || "");
-    setTargetProtein(existing.targetProtein?.toString() || "");
-    setTargetCarbs(existing.targetCarbs?.toString() || "");
-    setTargetFat(existing.targetFat?.toString() || "");
-    setMeals(
-      existing.meals.map((m) => ({
-        key: makeKey(),
-        name: m.name,
-        time: m.time || "",
-        foods: m.foods.map((f) => ({
+  useEffect(() => {
+    if (existing && !initialized) {
+      setName(existing.name);
+      setDescription(existing.description || "");
+      setTargetCalories(existing.targetCalories?.toString() || "");
+      setTargetProtein(existing.targetProtein?.toString() || "");
+      setTargetCarbs(existing.targetCarbs?.toString() || "");
+      setTargetFat(existing.targetFat?.toString() || "");
+      setMeals(
+        existing.meals.map((m) => ({
           key: makeKey(),
-          name: f.name,
-          portion: f.portion || "",
-          calories: f.calories?.toString() || "",
-          protein: f.protein?.toString() || "",
-          carbs: f.carbs?.toString() || "",
-          fat: f.fat?.toString() || "",
-        })),
-      }))
-    );
-    setInitialized(true);
-  }
-  if (!editId && !initialized) setInitialized(true);
+          name: m.name,
+          time: m.time || "",
+          foods: m.foods.map((f) => ({
+            key: makeKey(),
+            name: f.name,
+            portion: f.portion || "",
+            calories: f.calories?.toString() || "",
+            protein: f.protein?.toString() || "",
+            carbs: f.carbs?.toString() || "",
+            fat: f.fat?.toString() || "",
+          })),
+        }))
+      );
+      setInitialized(true);
+    }
+    if (!editId && !initialized) setInitialized(true);
+  }, [existing, editId, initialized]);
 
   const saveMutation = useMutation({
     mutationFn: (data: any) => editId ? api.put(`/api/meal-plans/${editId}`, data) : api.post("/api/meal-plans", data),
@@ -263,6 +265,18 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
     });
   };
 
+  const handleBack = () => {
+    const hasData = name.trim() || meals.length > 0;
+    if (hasData) {
+      Alert.alert("Discard Changes?", "Your unsaved changes will be lost.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Discard", style: "destructive", onPress: onDone },
+      ]);
+    } else {
+      onDone();
+    }
+  };
+
   if (editId && isLoading) {
     return <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}><View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color="#059669" /></View></SafeAreaView>;
   }
@@ -270,7 +284,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={onDone} className="mr-3 p-1"><ArrowLeft size={22} color="#111827" /></TouchableOpacity>
+        <TouchableOpacity onPress={handleBack} className="mr-3 p-1"><ArrowLeft size={22} color="#111827" /></TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 flex-1">{editId ? "Edit Plan" : "New Plan"}</Text>
         <TouchableOpacity onPress={handleSave} disabled={saveMutation.isPending} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
           {saveMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">Save</Text></>}

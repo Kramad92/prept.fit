@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -24,7 +24,6 @@ import {
   X,
   Copy,
   ClipboardList,
-  GripVertical,
 } from "lucide-react-native";
 import { useCheckInTemplates } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
@@ -95,7 +94,7 @@ export default function CheckInBuilderScreen() {
         )}
       </View>
     </View>
-  ), []);
+  ), [duplicateMutation, deleteMutation]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -178,7 +177,7 @@ function TemplateFormModal({ visible, onClose }: { visible: boolean; onClose: ()
 
             <Text className="text-sm font-medium text-gray-700 mb-2">Questions</Text>
             {questions.map((q, i) => (
-              <View key={i} className="flex-row items-center mb-2">
+              <View key={`q-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
                 <Text className="text-xs text-gray-400 mr-2 w-4">{i + 1}.</Text>
                 <TextInput
                   className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900"
@@ -229,12 +228,19 @@ function TemplateEditModal({ item, onClose }: { item: CheckInTemplate | null; on
   const [questions, setQuestions] = useState<string[]>([""]);
   const [init, setInit] = useState(false);
 
-  if (item && !init) {
-    setName(item.name);
-    setFrequency(item.frequency);
-    setQuestions(item.questions.map((q) => q.question));
-    setInit(true);
-  }
+  useEffect(() => {
+    if (item) {
+      setName(item.name);
+      setFrequency(item.frequency);
+      setQuestions(item.questions.map((q) => q.question));
+      setInit(true);
+    } else {
+      setName("");
+      setFrequency("weekly");
+      setQuestions([""]);
+      setInit(false);
+    }
+  }, [item]);
 
   const mutation = useMutation({
     mutationFn: (data: any) => api.put(`/api/check-ins/templates/${item?.id}`, data),
@@ -272,7 +278,7 @@ function TemplateEditModal({ item, onClose }: { item: CheckInTemplate | null; on
 
             <Text className="text-sm font-medium text-gray-700 mb-2">Questions</Text>
             {questions.map((q, i) => (
-              <View key={i} className="flex-row items-center mb-2">
+              <View key={`eq-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
                 <Text className="text-xs text-gray-400 mr-2 w-4">{i + 1}.</Text>
                 <TextInput
                   className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900"

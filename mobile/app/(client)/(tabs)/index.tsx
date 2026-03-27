@@ -38,7 +38,10 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await queryClient.invalidateQueries();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["client-profile"] }),
+      queryClient.invalidateQueries({ queryKey: ["habits"] }),
+    ]);
     setRefreshing(false);
   }, [queryClient]);
 
@@ -47,7 +50,7 @@ export default function HomeScreen() {
     [profile]
   );
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const habitsToday = useMemo(() => {
     if (!habits) return { done: 0, total: 0 };

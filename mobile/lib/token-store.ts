@@ -1,25 +1,40 @@
 import * as SecureStore from "expo-secure-store";
 
-const ACCESS_TOKEN_KEY = "prept_access_token";
-const REFRESH_TOKEN_KEY = "prept_refresh_token";
+const TOKEN_KEY = "prept_tokens";
 const USER_KEY = "prept_user";
 
+interface StoredTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export async function getAccessToken(): Promise<string | null> {
-  return SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  const raw = await SecureStore.getItemAsync(TOKEN_KEY);
+  if (!raw) return null;
+  try {
+    return (JSON.parse(raw) as StoredTokens).accessToken ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getRefreshToken(): Promise<string | null> {
-  return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  const raw = await SecureStore.getItemAsync(TOKEN_KEY);
+  if (!raw) return null;
+  try {
+    return (JSON.parse(raw) as StoredTokens).refreshToken ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function setTokens(access: string, refresh: string): Promise<void> {
-  await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access);
-  await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh);
+  const blob: StoredTokens = { accessToken: access, refreshToken: refresh };
+  await SecureStore.setItemAsync(TOKEN_KEY, JSON.stringify(blob));
 }
 
 export async function clearTokens(): Promise<void> {
-  await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+  await SecureStore.deleteItemAsync(TOKEN_KEY);
   await SecureStore.deleteItemAsync(USER_KEY);
 }
 

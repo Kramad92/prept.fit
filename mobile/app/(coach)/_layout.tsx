@@ -2,7 +2,9 @@ import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 
 export default function CoachLayout() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return null;
 
   if (!user) {
     return <Redirect href="/login" />;

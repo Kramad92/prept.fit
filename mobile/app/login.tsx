@@ -8,11 +8,15 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { router } from "expo-router";
+import { router, Redirect } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
+
+  if (!isLoading && user) {
+    return <Redirect href={user.role === "COACH" ? "/(coach)/(tabs)" : "/(client)/(tabs)"} />;
+  }
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

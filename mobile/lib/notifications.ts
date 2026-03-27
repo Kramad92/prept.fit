@@ -60,7 +60,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
       platform: Platform.OS,
     });
 
-    console.log("[push] Registered token:", token);
+    console.log("[push] Token registered successfully");
     return token;
   } catch (error) {
     console.error("[push] Failed to register:", error);

@@ -112,7 +112,7 @@ export default function SettingsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <Header onSave={handleSave} saving={false} />
+        <Header onSave={handleSave} saving={false} disabled={true} />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#059669" />
         </View>
@@ -123,7 +123,7 @@ export default function SettingsScreen() {
   if (error) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <Header onSave={handleSave} saving={false} />
+        <Header onSave={handleSave} saving={false} disabled={true} />
         <QueryError message="Failed to load settings" onRetry={refetch} />
       </SafeAreaView>
     );
@@ -290,7 +290,7 @@ export default function SettingsScreen() {
   );
 }
 
-function Header({ onSave, saving }: { onSave: () => void; saving: boolean }) {
+function Header({ onSave, saving, disabled }: { onSave: () => void; saving: boolean; disabled?: boolean }) {
   return (
     <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
       <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
@@ -299,8 +299,8 @@ function Header({ onSave, saving }: { onSave: () => void; saving: boolean }) {
       <Text className="text-lg font-semibold text-gray-900 flex-1">Settings</Text>
       <TouchableOpacity
         onPress={onSave}
-        disabled={saving}
-        className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center"
+        disabled={saving || disabled}
+        className={`rounded-lg px-3 py-1.5 flex-row items-center ${disabled ? "bg-gray-300" : "bg-brand-600"}`}
         activeOpacity={0.7}
       >
         {saving ? (

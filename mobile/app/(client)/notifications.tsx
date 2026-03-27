@@ -23,6 +23,7 @@ import {
 } from "lucide-react-native";
 import { api } from "@/lib/api-client";
 import { useNotifications } from "@/hooks/use-client-data";
+import { QueryError } from "@/components/query-error";
 import type { AppNotification } from "@/types/api";
 
 const ICON_MAP: Record<string, typeof Bell> = {
@@ -49,7 +50,7 @@ const COLOR_MAP: Record<string, string> = {
 
 export default function NotificationsScreen() {
   const queryClient = useQueryClient();
-  const { data: notifications, isLoading } = useNotifications();
+  const { data: notifications, isLoading, isError, refetch } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
 
   const sorted = useMemo(
@@ -156,7 +157,9 @@ export default function NotificationsScreen() {
           />
         }
       >
-        {isLoading ? (
+        {isError ? (
+          <QueryError onRetry={() => refetch()} />
+        ) : isLoading ? (
           <View className="items-center py-16">
             <ActivityIndicator size="large" color="#059669" />
           </View>

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
@@ -98,7 +98,12 @@ export default function MoreScreen() {
 
         <TouchableOpacity
           className="flex-row items-center bg-white rounded-xl border border-gray-100 px-4 py-3.5"
-          onPress={logout}
+          onPress={() =>
+            Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Sign Out", style: "destructive", onPress: logout },
+            ])
+          }
           activeOpacity={0.6}
         >
           <LogOut size={20} color="#ef4444" />

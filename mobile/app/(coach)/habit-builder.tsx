@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -77,7 +77,7 @@ export default function HabitBuilderScreen() {
         <Trash2 size={16} color="#ef4444" />
       </TouchableOpacity>
     </View>
-  ), []);
+  ), [deleteMutation]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -185,10 +185,15 @@ function HabitEditModal({ item, onClose }: { item: HabitTemplate | null; onClose
   const [icon, setIcon] = useState(item?.icon || "");
 
   // Sync state when item changes
-  if (item && name === "" && item.name !== "") {
-    setName(item.name);
-    setIcon(item.icon || "");
-  }
+  useEffect(() => {
+    if (item) {
+      setName(item.name);
+      setIcon(item.icon || "");
+    } else {
+      setName("");
+      setIcon("");
+    }
+  }, [item]);
 
   const mutation = useMutation({
     mutationFn: (data: any) => api.put("/api/habits", data),

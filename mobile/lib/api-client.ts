@@ -4,6 +4,12 @@ import { router } from "expo-router";
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 const REQUEST_TIMEOUT = 15000; // 15 seconds
 
+let onTokensCleared: (() => void) | null = null;
+
+export function setOnTokensCleared(cb: () => void) {
+  onTokensCleared = cb;
+}
+
 let isRefreshing = false;
 let refreshQueue: Array<{
   resolve: (token: string) => void;
@@ -11,11 +17,12 @@ let refreshQueue: Array<{
 }> = [];
 
 function processRefreshQueue(error: Error | null, token: string | null) {
-  refreshQueue.forEach(({ resolve, reject }) => {
+  const queue = refreshQueue;
+  refreshQueue = [];
+  queue.forEach(({ resolve, reject }) => {
     if (error) reject(error);
     else resolve(token!);
   });
-  refreshQueue = [];
 }
 
 function fetchWithTimeout(
@@ -42,6 +49,7 @@ async function refreshAccessToken(): Promise<string> {
 
   if (!res.ok) {
     await clearTokens();
+    onTokensCleared?.();
     router.replace("/login");
     throw new Error("Session expired");
   }
@@ -49,6 +57,26 @@ async function refreshAccessToken(): Promise<string> {
   const data = await res.json();
   await setTokens(data.accessToken, data.refreshToken);
   return data.accessToken;
+}
+
+async function ensureFreshToken(): Promise<string> {
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => {
+      refreshQueue.push({ resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+  try {
+    const newToken = await refreshAccessToken();
+    processRefreshQueue(null, newToken);
+    return newToken;
+  } catch (error) {
+    processRefreshQueue(error as Error, null);
+    throw error;
+  } finally {
+    isRefreshing = false;
+  }
 }
 
 async function fetchWithAuth(
@@ -73,28 +101,9 @@ async function fetchWithAuth(
 
   // If 401, try refreshing the token
   if (res.status === 401 && accessToken) {
-    if (isRefreshing) {
-      // Queue this request until refresh completes
-      const newToken = await new Promise<string>((resolve, reject) => {
-        refreshQueue.push({ resolve, reject });
-      });
-      headers["Authorization"] = `Bearer ${newToken}`;
-      return fetchWithTimeout(`${API_URL}${path}`, { ...options, headers });
-    }
-
-    isRefreshing = true;
-    try {
-      const newToken = await refreshAccessToken();
-      isRefreshing = false;
-      processRefreshQueue(null, newToken);
-
-      headers["Authorization"] = `Bearer ${newToken}`;
-      return fetchWithTimeout(`${API_URL}${path}`, { ...options, headers });
-    } catch (error) {
-      isRefreshing = false;
-      processRefreshQueue(error as Error, null);
-      throw error;
-    }
+    const newToken = await ensureFreshToken();
+    headers["Authorization"] = `Bearer ${newToken}`;
+    return fetchWithTimeout(`${API_URL}${path}`, { ...options, headers });
   }
 
   return res;
@@ -105,7 +114,9 @@ async function handleResponse<T>(res: Response): Promise<T> {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Request failed (${res.status})`);
   }
-  return res.json();
+  return res.json().catch(() => {
+    throw new Error(`Invalid JSON response (${res.status})`);
+  });
 }
 
 export const api = {
@@ -155,19 +166,15 @@ export const api = {
       60000
     );
 
-    // Retry on 401 with refreshed token
+    // Retry on 401 with refreshed token (uses shared queue to avoid race condition)
     if (res.status === 401 && accessToken) {
-      try {
-        const newToken = await refreshAccessToken();
-        headers["Authorization"] = `Bearer ${newToken}`;
-        res = await fetchWithTimeout(
-          `${API_URL}${path}`,
-          { method: "POST", headers, body: formData },
-          60000
-        );
-      } catch {
-        throw new Error("Session expired");
-      }
+      const newToken = await ensureFreshToken();
+      headers["Authorization"] = `Bearer ${newToken}`;
+      res = await fetchWithTimeout(
+        `${API_URL}${path}`,
+        { method: "POST", headers, body: formData },
+        60000
+      );
     }
 
     return handleResponse<T>(res);

@@ -19,6 +19,7 @@ import {
   XCircle,
 } from "lucide-react-native";
 import { usePayments } from "@/hooks/use-client-data";
+import { QueryError } from "@/components/query-error";
 import type { Payment } from "@/types/api";
 
 type FilterStatus = "all" | "paid" | "pending" | "overdue";
@@ -55,15 +56,15 @@ const STATUS_CONFIG: Record<
 
 export default function PaymentsScreen() {
   const queryClient = useQueryClient();
-  const { data, isLoading } = usePayments();
+  const { data, isLoading, isError, refetch } = usePayments();
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ["payments"] });
+    await refetch();
     setRefreshing(false);
-  }, [queryClient]);
+  }, [refetch]);
 
   const filteredPayments = useMemo(() => {
     if (!data?.payments) return [];
@@ -75,6 +76,7 @@ export default function PaymentsScreen() {
   }, [data?.payments, filter]);
 
   const summary = data?.summary;
+  const derivedCurrency = data?.payments?.[0]?.currency || "USD";
 
   const formatCurrency = useCallback(
     (amount: number, currency: string) => {
@@ -107,7 +109,9 @@ export default function PaymentsScreen() {
           />
         }
       >
-        {isLoading ? (
+        {isError ? (
+          <QueryError onRetry={() => refetch()} />
+        ) : isLoading ? (
           <View className="items-center py-16">
             <ActivityIndicator size="large" color="#059669" />
           </View>
@@ -121,18 +125,21 @@ export default function PaymentsScreen() {
                   amount={summary.totalPaid}
                   color="#059669"
                   bgClass="bg-green-50"
+                  currency={derivedCurrency}
                 />
                 <SummaryCard
                   label="Pending"
                   amount={summary.totalPending}
                   color="#f59e0b"
                   bgClass="bg-yellow-50"
+                  currency={derivedCurrency}
                 />
                 <SummaryCard
                   label="Overdue"
                   amount={summary.totalOverdue}
                   color="#ef4444"
                   bgClass="bg-red-50"
+                  currency={derivedCurrency}
                 />
               </View>
             )}
@@ -198,15 +205,17 @@ function SummaryCard({
   amount,
   color,
   bgClass,
+  currency,
 }: {
   label: string;
   amount: number;
   color: string;
   bgClass: string;
+  currency: string;
 }) {
   const formatted = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);

@@ -10,8 +10,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { ArrowLeft, Mail, CheckCircle } from "lucide-react-native";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+import { api } from "@/lib/api-client";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
@@ -27,15 +26,7 @@ export default function ForgotPasswordScreen() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Request failed");
-      }
+      await api.post("/api/auth/forgot-password", { email: email.trim() });
       setSent(true);
     } catch (e: any) {
       setError(e.message || "Something went wrong");

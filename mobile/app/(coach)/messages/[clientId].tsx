@@ -39,7 +39,7 @@ export default function CoachChatScreen() {
   );
 
   // Fetch messages
-  const { data: serverMessages, isLoading } = useQuery<Message[]>({
+  const { data: serverMessages, isLoading, error: messagesError, refetch: refetchMessages } = useQuery<Message[]>({
     queryKey: ["messages", clientId],
     queryFn: () => api.get<Message[]>(`/api/messages/${clientId}`),
     enabled: !!clientId,
@@ -91,13 +91,20 @@ export default function CoachChatScreen() {
 
   // Mark messages as read (debounced to avoid repeated calls on each new message)
   const lastMarkedCount = useRef(0);
+  const markReadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (clientId && messages.length > lastMarkedCount.current) {
-      lastMarkedCount.current = messages.length;
-      api.put("/api/messages/read", { clientId }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["coach-unread-counts"] });
-      queryClient.invalidateQueries({ queryKey: ["coach-latest-messages"] });
+      if (markReadTimer.current) clearTimeout(markReadTimer.current);
+      markReadTimer.current = setTimeout(() => {
+        lastMarkedCount.current = messages.length;
+        api.put("/api/messages/read", { clientId }).catch(() => {});
+        queryClient.invalidateQueries({ queryKey: ["coach-unread-counts"] });
+        queryClient.invalidateQueries({ queryKey: ["coach-latest-messages"] });
+      }, 2000);
     }
+    return () => {
+      if (markReadTimer.current) clearTimeout(markReadTimer.current);
+    };
   }, [clientId, messages.length, queryClient]);
 
   const sendMutation = useMutation({
@@ -211,6 +218,35 @@ export default function CoachChatScreen() {
         </View>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#059669" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (messagesError) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="mr-3 p-1"
+          >
+            <ArrowLeft size={22} color="#111827" />
+          </TouchableOpacity>
+          <Text className="text-lg font-semibold text-gray-900">
+            {clientName}
+          </Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-gray-500 text-base text-center mb-3">
+            Failed to load messages
+          </Text>
+          <TouchableOpacity
+            className="bg-brand-600 rounded-lg px-4 py-2"
+            onPress={() => refetchMessages()}
+          >
+            <Text className="text-white font-semibold text-sm">Retry</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );

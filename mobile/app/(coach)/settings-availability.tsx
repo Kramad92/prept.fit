@@ -48,6 +48,15 @@ export default function AvailabilityScreen() {
 
   const handleAdd = () => {
     if (addingDay === null) return;
+    const timePattern = /^\d{2}:\d{2}$/;
+    if (!timePattern.test(startTime) || !timePattern.test(endTime)) {
+      Alert.alert("Invalid Time", "Times must be in HH:MM format (e.g. 09:00).");
+      return;
+    }
+    if (startTime >= endTime) {
+      Alert.alert("Invalid Time Range", "Start time must be before end time.");
+      return;
+    }
     addMutation.mutate({ dayOfWeek: addingDay, startTime, endTime });
   };
 

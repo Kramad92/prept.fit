@@ -6,10 +6,12 @@ import {
   MessageCircle,
   Menu,
 } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCoachUnreadCounts } from "@/hooks/use-coach-data";
 import { useMemo } from "react";
 
 export default function CoachTabLayout() {
+  const insets = useSafeAreaInsets();
   const { data: unreadMap } = useCoachUnreadCounts();
 
   const totalUnread = useMemo(() => {
@@ -26,9 +28,9 @@ export default function CoachTabLayout() {
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: "#e5e7eb",
-          paddingBottom: 4,
+          paddingBottom: insets.bottom + 4,
           paddingTop: 4,
-          height: 56,
+          height: 56 + insets.bottom,
         },
         tabBarLabelStyle: {
           fontSize: 11,

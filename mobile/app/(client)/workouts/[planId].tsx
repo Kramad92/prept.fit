@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ import type { ClientProfile, ClientExercise, Exercise } from "@/types/api";
 export default function PlanDetailScreen() {
   const { planId } = useLocalSearchParams<{ planId: string }>();
 
-  const { data: profile } = useQuery<ClientProfile>({
+  const { data: profile, isLoading } = useQuery<ClientProfile>({
     queryKey: ["client-profile"],
     queryFn: () => api.get<ClientProfile>("/api/portal/me"),
   });
@@ -27,6 +27,17 @@ export default function PlanDetailScreen() {
       : plan.workoutPlan.exercises;
     return [...list].sort((a, b) => a.orderIndex - b.orderIndex);
   }, [plan]);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#059669" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!plan) {
     return (

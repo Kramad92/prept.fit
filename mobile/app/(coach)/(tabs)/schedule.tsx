@@ -337,6 +337,17 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
               onPress={() => {
                 if (!clientId) return Alert.alert("Required", "Select a client");
                 if (!date.trim()) return Alert.alert("Required", "Date is required");
+                const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+                const timePattern = /^\d{2}:\d{2}$/;
+                if (!datePattern.test(date.trim())) {
+                  return Alert.alert("Invalid Date", "Date must be in YYYY-MM-DD format.");
+                }
+                if (!timePattern.test(startTime.trim()) || !timePattern.test(endTime.trim())) {
+                  return Alert.alert("Invalid Time", "Times must be in HH:MM format (e.g. 09:00).");
+                }
+                if (startTime.trim() >= endTime.trim()) {
+                  return Alert.alert("Invalid Time Range", "Start time must be before end time.");
+                }
                 mutation.mutate({
                   clientId,
                   title: title.trim() || "Training Session",

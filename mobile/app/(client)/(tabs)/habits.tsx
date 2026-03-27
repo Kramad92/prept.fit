@@ -13,6 +13,7 @@ import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { haptics } from "@/lib/haptics";
 import { CheckCircle, Circle, Flame } from "lucide-react-native";
+import { QueryError } from "@/components/query-error";
 import type { AssignedHabit } from "@/types/api";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -75,7 +76,7 @@ export default function HabitsScreen() {
   const todayStr = getDateStr(new Date());
   const last7 = useMemo(() => getLast7Days(), []);
 
-  const { data: habits, isLoading } = useQuery<AssignedHabit[]>({
+  const { data: habits, isLoading, isError, refetch } = useQuery<AssignedHabit[]>({
     queryKey: ["habits", user?.clientProfileId],
     queryFn: () => api.get<AssignedHabit[]>(`/api/habits/log?clientId=${user?.clientProfileId}&days=30`),
     enabled: !!user?.clientProfileId,
@@ -123,6 +124,14 @@ export default function HabitsScreen() {
           <View className="h-4 w-48 bg-gray-100 rounded mb-6" />
           {[1, 2, 3].map((i) => <View key={i} className="bg-white rounded-xl p-4 mb-3 border border-gray-100 h-16" />)}
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+        <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
@@ -181,6 +190,8 @@ export default function HabitsScreen() {
                 onPress={() => toggleHabit(habit)}
                 activeOpacity={0.7}
                 disabled={isToggling}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isDone }}
               >
                 {isToggling ? (
                   <ActivityIndicator size="small" color="#059669" />

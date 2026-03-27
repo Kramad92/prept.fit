@@ -108,8 +108,17 @@ export default function CheckInsScreen() {
         <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
           <TouchableOpacity
             onPress={() => {
-              setMode("list");
-              setSelectedTemplate(null);
+              Alert.alert("Discard Check-in?", "Your answers will be lost.", [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Discard",
+                  style: "destructive",
+                  onPress: () => {
+                    setMode("list");
+                    setSelectedTemplate(null);
+                  },
+                },
+              ]);
             }}
             className="mr-3 p-1"
           >

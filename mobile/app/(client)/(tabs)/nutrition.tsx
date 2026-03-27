@@ -56,7 +56,7 @@ function MealCard({ meal }: { meal: ClientMeal | Meal }) {
       </TouchableOpacity>
       {expanded && meal.foods.length > 0 && (
         <View className="mt-2 pt-2 border-t border-gray-100">
-          {meal.foods.map((food, idx) => <FoodRow key={idx} food={food} />)}
+          {meal.foods.map((food, idx) => <FoodRow key={food.id || `${meal.id}-${idx}`} food={food} />)}
         </View>
       )}
     </View>

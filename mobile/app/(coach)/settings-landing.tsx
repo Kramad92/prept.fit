@@ -99,7 +99,7 @@ export default function LandingPageScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <Header onSave={handleSave} saving={false} />
+        <Header saving={false} disabled={true} />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#059669" />
         </View>
@@ -110,7 +110,7 @@ export default function LandingPageScreen() {
   if (error) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <Header onSave={handleSave} saving={false} />
+        <Header saving={false} disabled={true} />
         <QueryError message="Failed to load" onRetry={refetch} />
       </SafeAreaView>
     );
@@ -352,14 +352,14 @@ function PackageFormModal({ visible, onClose }: { visible: boolean; onClose: () 
   );
 }
 
-function Header({ onSave, saving }: { onSave?: () => void; saving?: boolean }) {
+function Header({ onSave, saving, disabled }: { onSave?: () => void; saving?: boolean; disabled?: boolean }) {
   return (
     <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
       <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
         <ArrowLeft size={22} color="#111827" />
       </TouchableOpacity>
       <Text className="text-lg font-semibold text-gray-900 flex-1">Landing Page</Text>
-      {onSave && (
+      {onSave && !disabled && (
         <TouchableOpacity onPress={onSave} disabled={saving} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
           {saving ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">Save</Text></>}
         </TouchableOpacity>

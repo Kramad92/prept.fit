@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -18,6 +20,7 @@ import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { haptics } from "@/lib/haptics";
 import { useMessages } from "@/hooks/use-client-data";
+import { QueryError } from "@/components/query-error";
 import type { Message } from "@/types/api";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
@@ -28,11 +31,12 @@ export default function MessagesScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
+  const isAtBottom = useRef(true);
   const [text, setText] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
 
   const clientId = user?.clientProfileId;
-  const { data: serverMessages, isLoading } = useMessages(clientId ?? undefined);
+  const { data: serverMessages, isLoading, isError, refetch } = useMessages(clientId ?? undefined);
 
   // Merge server + local optimistic messages
   const messages = useMemo(() => {
@@ -134,6 +138,12 @@ export default function MessagesScreen() {
     return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ${time}`;
   }, []);
 
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
+    isAtBottom.current = distanceFromBottom < 50;
+  }, []);
+
   const renderMessage = useCallback(
     ({ item }: { item: Message }) => {
       const isMine = item.senderId === user?.id;
@@ -188,6 +198,20 @@ export default function MessagesScreen() {
     );
   }
 
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+            <ArrowLeft size={22} color="#111827" />
+          </TouchableOpacity>
+          <Text className="text-lg font-semibold text-gray-900">Messages</Text>
+        </View>
+        <QueryError onRetry={() => refetch()} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
@@ -215,9 +239,13 @@ export default function MessagesScreen() {
             keyExtractor={(item) => item.id}
             renderItem={renderMessage}
             contentContainerStyle={{ padding: 16, flexGrow: 1, justifyContent: "flex-end" }}
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: false })
-            }
+            onScroll={handleScroll}
+            scrollEventThrottle={100}
+            onContentSizeChange={() => {
+              if (isAtBottom.current) {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              }
+            }}
           />
         )}
 

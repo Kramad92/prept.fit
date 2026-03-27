@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,6 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  GripVertical,
   ChevronDown,
   ChevronUp,
   Save,
@@ -61,6 +60,24 @@ export default function WorkoutBuilderScreen() {
   const [mode, setMode] = useState<"list" | "form">(editId ? "form" : "list");
   const [editingId, setEditingId] = useState<string | undefined>(editId);
 
+  const duplicateMutation = useMutation({
+    mutationFn: (id: string) => api.post(`/api/workouts/${id}/duplicate`),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/workouts/${id}`),
+    onSuccess: () => {
+      haptics.light();
+      queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
   const openCreate = () => {
     setEditingId(undefined);
     setMode("form");
@@ -80,25 +97,6 @@ export default function WorkoutBuilderScreen() {
   if (mode === "form") {
     return <WorkoutForm editId={editingId} onDone={handleDone} />;
   }
-
-  // List mode
-  const duplicateMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/api/workouts/${id}/duplicate`),
-    onSuccess: () => {
-      haptics.success();
-      queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
-    },
-    onError: (err: any) => Alert.alert("Error", err.message),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/api/workouts/${id}`),
-    onSuccess: () => {
-      haptics.light();
-      queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
-    },
-    onError: (err: any) => Alert.alert("Error", err.message),
-  });
 
   const renderPlan = ({ item }: { item: WorkoutPlanListItem }) => (
     <TouchableOpacity
@@ -185,28 +183,29 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
   const [showExercisePicker, setShowExercisePicker] = useState(false);
 
   // Initialize form from existing plan
-  if (existing && !initialized) {
-    setName(existing.name);
-    setDescription(existing.description || "");
-    setIsTemplate(existing.isTemplate);
-    setExercises(
-      existing.exercises.map((ex) => ({
-        key: makeKey(),
-        name: ex.name,
-        sets: ex.sets?.toString() || "",
-        reps: ex.reps || "",
-        weight: ex.weight || "",
-        restSeconds: ex.restSeconds?.toString() || "",
-        notes: ex.notes || "",
-        videoUrl: ex.videoUrl || "",
-      }))
-    );
-    setInitialized(true);
-  }
-
-  if (!editId && !initialized) {
-    setInitialized(true);
-  }
+  useEffect(() => {
+    if (existing && !initialized) {
+      setName(existing.name);
+      setDescription(existing.description || "");
+      setIsTemplate(existing.isTemplate);
+      setExercises(
+        existing.exercises.map((ex) => ({
+          key: makeKey(),
+          name: ex.name,
+          sets: ex.sets?.toString() || "",
+          reps: ex.reps || "",
+          weight: ex.weight || "",
+          restSeconds: ex.restSeconds?.toString() || "",
+          notes: ex.notes || "",
+          videoUrl: ex.videoUrl || "",
+        }))
+      );
+      setInitialized(true);
+    }
+    if (!editId && !initialized) {
+      setInitialized(true);
+    }
+  }, [existing, editId, initialized]);
 
   const saveMutation = useMutation({
     mutationFn: (data: any) =>
@@ -262,6 +261,18 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
     });
   };
 
+  const handleBack = () => {
+    const hasData = name.trim() || exercises.length > 0;
+    if (hasData) {
+      Alert.alert("Discard Changes?", "Your unsaved changes will be lost.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Discard", style: "destructive", onPress: onDone },
+      ]);
+    } else {
+      onDone();
+    }
+  };
+
   if (editId && isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
@@ -275,7 +286,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={onDone} className="mr-3 p-1">
+        <TouchableOpacity onPress={handleBack} className="mr-3 p-1">
           <ArrowLeft size={22} color="#111827" />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 flex-1">
@@ -384,8 +395,7 @@ function ExerciseCard({
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.6}
       >
-        <GripVertical size={16} color="#d1d5db" />
-        <Text className="text-xs font-medium text-gray-500 mx-2">#{index + 1}</Text>
+        <Text className="text-xs font-medium text-gray-500 mr-2">#{index + 1}</Text>
         <TextInput
           className="flex-1 text-sm font-medium text-gray-900 py-0"
           value={exercise.name}

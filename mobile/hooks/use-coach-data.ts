@@ -12,6 +12,23 @@ import type {
   LatestMessagesMap,
   UnreadCountsMap,
   AppNotification,
+  TenantSettings,
+  Certificate,
+  CoachPackage,
+  Inquiry,
+  ExerciseLibraryItem,
+  ExerciseCategory,
+  EquipmentType,
+  WorkoutPlanListItem,
+  WorkoutPlanDetail,
+  MealPlanListItem,
+  MealPlanDetail,
+  HabitTemplate,
+  CheckInTemplate,
+  ProgramListItem,
+  NutritionProgramListItem,
+  SearchResults,
+  AvailabilitySlot,
 } from "@/types/api";
 
 export function useCoachDashboard() {
@@ -100,5 +117,139 @@ export function useCoachNotifications() {
     queryKey: ["coach-notifications"],
     queryFn: () => api.get<AppNotification[]>("/api/notifications"),
     refetchInterval: 30000,
+  });
+}
+
+// Settings
+export function useSettings() {
+  return useQuery<TenantSettings>({
+    queryKey: ["settings"],
+    queryFn: () => api.get<TenantSettings>("/api/settings"),
+  });
+}
+
+export function useCertificates() {
+  return useQuery<Certificate[]>({
+    queryKey: ["certificates"],
+    queryFn: () => api.get<Certificate[]>("/api/settings/certificates"),
+  });
+}
+
+export function usePackages() {
+  return useQuery<CoachPackage[]>({
+    queryKey: ["packages"],
+    queryFn: () => api.get<CoachPackage[]>("/api/settings/packages"),
+  });
+}
+
+export function useInquiries() {
+  return useQuery<Inquiry[]>({
+    queryKey: ["inquiries"],
+    queryFn: () => api.get<Inquiry[]>("/api/settings/inquiries"),
+  });
+}
+
+export function useAvailability() {
+  return useQuery<AvailabilitySlot[]>({
+    queryKey: ["availability"],
+    queryFn: () => api.get<AvailabilitySlot[]>("/api/availability"),
+  });
+}
+
+// Exercise library
+export function useExerciseLibrary(search?: string, category?: string) {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (category) params.set("category", category);
+  const qs = params.toString();
+  return useQuery<ExerciseLibraryItem[]>({
+    queryKey: ["exercise-library", search, category],
+    queryFn: () => api.get<ExerciseLibraryItem[]>(`/api/exercise-library${qs ? `?${qs}` : ""}`),
+  });
+}
+
+export function useExerciseCategories() {
+  return useQuery<ExerciseCategory[]>({
+    queryKey: ["exercise-categories"],
+    queryFn: () => api.get<ExerciseCategory[]>("/api/exercise-categories"),
+  });
+}
+
+export function useEquipmentTypes() {
+  return useQuery<EquipmentType[]>({
+    queryKey: ["equipment-types"],
+    queryFn: () => api.get<EquipmentType[]>("/api/equipment-types"),
+  });
+}
+
+// Workout plans
+export function useWorkoutPlans() {
+  return useQuery<WorkoutPlanListItem[]>({
+    queryKey: ["workout-plans"],
+    queryFn: () => api.get<WorkoutPlanListItem[]>("/api/workouts"),
+  });
+}
+
+export function useWorkoutPlanDetail(id: string | undefined) {
+  return useQuery<WorkoutPlanDetail>({
+    queryKey: ["workout-plan-detail", id],
+    queryFn: () => api.get<WorkoutPlanDetail>(`/api/workouts/${id}`),
+    enabled: !!id,
+  });
+}
+
+// Meal plans
+export function useMealPlans() {
+  return useQuery<MealPlanListItem[]>({
+    queryKey: ["meal-plans"],
+    queryFn: () => api.get<MealPlanListItem[]>("/api/meal-plans"),
+  });
+}
+
+export function useMealPlanDetail(id: string | undefined) {
+  return useQuery<MealPlanDetail>({
+    queryKey: ["meal-plan-detail", id],
+    queryFn: () => api.get<MealPlanDetail>(`/api/meal-plans/${id}`),
+    enabled: !!id,
+  });
+}
+
+// Habits
+export function useHabitTemplates() {
+  return useQuery<HabitTemplate[]>({
+    queryKey: ["habit-templates"],
+    queryFn: () => api.get<HabitTemplate[]>("/api/habits"),
+  });
+}
+
+// Check-in templates
+export function useCheckInTemplates() {
+  return useQuery<CheckInTemplate[]>({
+    queryKey: ["checkin-templates"],
+    queryFn: () => api.get<CheckInTemplate[]>("/api/check-ins/templates"),
+  });
+}
+
+// Programs
+export function usePrograms() {
+  return useQuery<ProgramListItem[]>({
+    queryKey: ["programs"],
+    queryFn: () => api.get<ProgramListItem[]>("/api/programs"),
+  });
+}
+
+export function useNutritionPrograms() {
+  return useQuery<NutritionProgramListItem[]>({
+    queryKey: ["nutrition-programs"],
+    queryFn: () => api.get<NutritionProgramListItem[]>("/api/nutrition-programs"),
+  });
+}
+
+// Search
+export function useGlobalSearch(query: string) {
+  return useQuery<SearchResults>({
+    queryKey: ["global-search", query],
+    queryFn: () => api.get<SearchResults>(`/api/search?q=${encodeURIComponent(query)}`),
+    enabled: query.length >= 2,
   });
 }

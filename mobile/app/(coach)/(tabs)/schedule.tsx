@@ -7,6 +7,10 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -15,8 +19,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
+  Plus,
+  X,
 } from "lucide-react-native";
-import { useCoachSchedule } from "@/hooks/use-coach-data";
+import { useCoachSchedule, useCoachClients } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
@@ -31,6 +37,7 @@ const STATUS_OPTIONS = [
 
 export default function CoachScheduleScreen() {
   const [monthOffset, setMonthOffset] = useState(0);
+  const [showCreateSession, setShowCreateSession] = useState(false);
   const queryClient = useQueryClient();
 
   const currentMonth = useMemo(() => {
@@ -124,6 +131,14 @@ export default function CoachScheduleScreen() {
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <View className="flex-row items-center justify-between px-4 pt-4 pb-3">
         <Text className="text-2xl font-bold text-gray-900">Schedule</Text>
+        <TouchableOpacity
+          onPress={() => setShowCreateSession(true)}
+          className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center"
+          activeOpacity={0.7}
+        >
+          <Plus size={14} color="#fff" />
+          <Text className="text-white text-xs font-semibold ml-1">New</Text>
+        </TouchableOpacity>
       </View>
       <View className="flex-row items-center justify-center px-4 pb-3">
         <TouchableOpacity
@@ -224,7 +239,121 @@ export default function CoachScheduleScreen() {
           )}
         </ScrollView>
       )}
+
+      <CreateSessionModal
+        visible={showCreateSession}
+        onClose={() => setShowCreateSession(false)}
+        onSuccess={() => {
+          setShowCreateSession(false);
+          refetch();
+        }}
+      />
     </SafeAreaView>
+  );
+}
+
+function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean; onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient();
+  const { data: clients } = useCoachClients();
+  const [clientId, setClientId] = useState("");
+  const [title, setTitle] = useState("Training Session");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
+  const [notes, setNotes] = useState("");
+  const [showClientPicker, setShowClientPicker] = useState(false);
+
+  const selectedClient = clients?.find((c) => c.id === clientId);
+
+  const mutation = useMutation({
+    mutationFn: (data: any) => api.post("/api/schedules", data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-dashboard"] });
+      setClientId(""); setTitle("Training Session"); setNotes("");
+      onSuccess();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message || "Failed to create session"),
+  });
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+            <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
+            <Text className="text-lg font-semibold text-gray-900 flex-1">New Session</Text>
+          </View>
+          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
+            <Text className="text-sm font-medium text-gray-700 mb-1">Client *</Text>
+            <TouchableOpacity
+              className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-2"
+              onPress={() => setShowClientPicker(!showClientPicker)}
+            >
+              <Text className={selectedClient ? "text-gray-900" : "text-gray-400"}>
+                {selectedClient?.name || "Select client..."}
+              </Text>
+            </TouchableOpacity>
+            {showClientPicker && (
+              <View className="bg-white border border-gray-200 rounded-lg mb-4 max-h-48">
+                <ScrollView nestedScrollEnabled>
+                  {(clients || []).map((c) => (
+                    <TouchableOpacity
+                      key={c.id}
+                      className={`px-4 py-2.5 border-b border-gray-50 ${c.id === clientId ? "bg-brand-50" : ""}`}
+                      onPress={() => { setClientId(c.id); setShowClientPicker(false); }}
+                    >
+                      <Text className="text-sm text-gray-900">{c.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+            {!showClientPicker && <View className="mb-2" />}
+
+            <Text className="text-sm font-medium text-gray-700 mb-1">Title</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={title} onChangeText={setTitle} placeholder="Session title" placeholderTextColor="#9ca3af" />
+
+            <Text className="text-sm font-medium text-gray-700 mb-1">Date (YYYY-MM-DD)</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={date} onChangeText={setDate} placeholder="2024-01-15" placeholderTextColor="#9ca3af" />
+
+            <View className="flex-row mb-4">
+              <View className="flex-1 mr-2">
+                <Text className="text-sm font-medium text-gray-700 mb-1">Start Time</Text>
+                <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900" value={startTime} onChangeText={setStartTime} placeholder="09:00" placeholderTextColor="#9ca3af" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-gray-700 mb-1">End Time</Text>
+                <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900" value={endTime} onChangeText={setEndTime} placeholder="10:00" placeholderTextColor="#9ca3af" />
+              </View>
+            </View>
+
+            <Text className="text-sm font-medium text-gray-700 mb-1">Notes (optional)</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900" value={notes} onChangeText={setNotes} placeholder="Session notes..." placeholderTextColor="#9ca3af" multiline />
+
+            <TouchableOpacity
+              className={`rounded-lg py-3.5 items-center mb-8 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+              onPress={() => {
+                if (!clientId) return Alert.alert("Required", "Select a client");
+                if (!date.trim()) return Alert.alert("Required", "Date is required");
+                mutation.mutate({
+                  clientId,
+                  title: title.trim() || "Training Session",
+                  date: date.trim(),
+                  startTime: startTime.trim(),
+                  endTime: endTime.trim(),
+                  notes: notes.trim() || null,
+                });
+              }}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Session</Text>}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
   );
 }
 

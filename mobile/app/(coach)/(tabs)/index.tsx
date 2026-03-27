@@ -20,6 +20,10 @@ import {
   TrendingUp,
   Clock,
   ChevronRight,
+  Cake,
+  AlertCircle,
+  UserX,
+  ClipboardCheck,
 } from "lucide-react-native";
 import { useCoachDashboard } from "@/hooks/use-coach-data";
 import { useAuth } from "@/lib/auth-context";
@@ -243,6 +247,121 @@ export default function CoachDashboardScreen() {
                   <ChevronRight size={16} color="#d1d5db" />
                 </TouchableOpacity>
               )}
+            </View>
+          </>
+        )}
+
+        {/* Birthdays */}
+        {data.birthdays && data.birthdays.length > 0 && (
+          <>
+            <SectionHeader title="Upcoming Birthdays" />
+            <View className="bg-white rounded-xl border border-gray-100 mb-5 overflow-hidden">
+              {data.birthdays.slice(0, 5).map((b, i) => (
+                <TouchableOpacity
+                  key={b.id}
+                  className={`flex-row items-center px-4 py-3 ${i < Math.min(data.birthdays.length, 5) - 1 ? "border-b border-gray-50" : ""}`}
+                  onPress={() => router.push(`/(coach)/clients/${b.id}` as never)}
+                  activeOpacity={0.6}
+                >
+                  <View className="w-9 h-9 rounded-full bg-pink-50 items-center justify-center mr-3">
+                    <Cake size={16} color="#ec4899" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm font-medium text-gray-900">{b.name}</Text>
+                    <Text className="text-xs text-gray-500">
+                      Turning {b.turningAge} · {new Date(b.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </Text>
+                  </View>
+                  <View className="bg-pink-50 rounded-full px-2 py-0.5">
+                    <Text className="text-xs font-medium text-pink-700">
+                      {b.daysUntil === 0 ? "Today!" : `${b.daysUntil}d`}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* Expiring Plans */}
+        {data.expiringPlans && data.expiringPlans.length > 0 && (
+          <>
+            <SectionHeader title="Expiring Plans" />
+            <View className="bg-white rounded-xl border border-gray-100 mb-5 overflow-hidden">
+              {data.expiringPlans.slice(0, 5).map((p, i) => (
+                <TouchableOpacity
+                  key={p.id}
+                  className={`flex-row items-center px-4 py-3 ${i < Math.min(data.expiringPlans.length, 5) - 1 ? "border-b border-gray-50" : ""}`}
+                  onPress={() => router.push(`/(coach)/clients/${p.clientId}` as never)}
+                  activeOpacity={0.6}
+                >
+                  <View className="w-9 h-9 rounded-full bg-amber-50 items-center justify-center mr-3">
+                    <AlertCircle size={16} color="#f59e0b" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm font-medium text-gray-900">{p.clientName}</Text>
+                    <Text className="text-xs text-gray-500">{p.planName}</Text>
+                  </View>
+                  {p.endDate && (
+                    <Text className="text-xs text-amber-600">
+                      {new Date(p.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* Recent Check-ins */}
+        {data.checkIns && data.checkIns.length > 0 && (
+          <>
+            <SectionHeader title="Recent Check-ins" />
+            <View className="bg-white rounded-xl border border-gray-100 mb-5 overflow-hidden">
+              {data.checkIns.slice(0, 5).map((c, i) => (
+                <TouchableOpacity
+                  key={c.id}
+                  className={`flex-row items-center px-4 py-3 ${i < Math.min(data.checkIns.length, 5) - 1 ? "border-b border-gray-50" : ""}`}
+                  onPress={() => router.push(`/(coach)/clients/${c.clientId}` as never)}
+                  activeOpacity={0.6}
+                >
+                  <View className="w-9 h-9 rounded-full bg-indigo-50 items-center justify-center mr-3">
+                    <ClipboardCheck size={16} color="#6366f1" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm font-medium text-gray-900">{c.clientName}</Text>
+                  </View>
+                  <Text className="text-xs text-gray-400">{formatRelative(c.submittedAt)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* Profile Stats */}
+        {data.profileStats && data.profileStats.incompleteCount > 0 && (
+          <>
+            <SectionHeader title="Incomplete Profiles" />
+            <View className="bg-white rounded-xl border border-gray-100 mb-5 overflow-hidden">
+              {data.profileStats.incomplete.slice(0, 5).map((p, i) => (
+                <TouchableOpacity
+                  key={p.id}
+                  className={`flex-row items-center px-4 py-3 ${i < Math.min(data.profileStats.incomplete.length, 5) - 1 ? "border-b border-gray-50" : ""}`}
+                  onPress={() => router.push(`/(coach)/clients/${p.id}` as never)}
+                  activeOpacity={0.6}
+                >
+                  <View className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center mr-3">
+                    <UserX size={16} color="#6b7280" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-900">{p.name}</Text>
+                    <Text className="text-xs text-gray-500">{p.filled}/{p.total} fields{!p.hasPortalAccess ? " · No portal" : ""}</Text>
+                  </View>
+                  <View className="bg-gray-100 rounded-full w-8 h-8 items-center justify-center">
+                    <Text className="text-xs font-bold text-gray-600">{Math.round((p.filled / p.total) * 100)}%</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
             </View>
           </>
         )}

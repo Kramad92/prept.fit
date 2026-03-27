@@ -7,9 +7,15 @@ import {
   ActivityIndicator,
   Image,
   RefreshControl,
+  Modal,
+  TextInput,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   MessageCircle,
@@ -21,8 +27,13 @@ import {
   Phone,
   Target,
   AlertCircle,
+  Edit3,
+  Plus,
+  X,
 } from "lucide-react-native";
-import { useClientDetail } from "@/hooks/use-coach-data";
+import { useClientDetail, useWorkoutPlans, useMealPlans, useHabitTemplates } from "@/hooks/use-coach-data";
+import { api } from "@/lib/api-client";
+import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
 
 type Tab = "overview" | "workouts" | "nutrition" | "progress";
@@ -32,6 +43,10 @@ export default function ClientDetailScreen() {
   const { data: client, isLoading, error, refetch, isRefetching } =
     useClientDetail(id);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [showEditClient, setShowEditClient] = useState(false);
+  const [showAssignWorkout, setShowAssignWorkout] = useState(false);
+  const [showAssignMeal, setShowAssignMeal] = useState(false);
+  const [showAssignHabits, setShowAssignHabits] = useState(false);
 
   if (isLoading) {
     return (
@@ -121,19 +136,24 @@ export default function ClientDetailScreen() {
             </View>
           </View>
 
-          {/* Quick Action */}
-          <TouchableOpacity
-            className="flex-row items-center justify-center mt-4 bg-brand-600 rounded-lg py-2.5"
-            onPress={() =>
-              router.push(`/(coach)/messages/${id}` as never)
-            }
-            activeOpacity={0.7}
-          >
-            <MessageCircle size={16} color="#fff" />
-            <Text className="text-white font-semibold text-sm ml-2">
-              Message
-            </Text>
-          </TouchableOpacity>
+          {/* Quick Actions */}
+          <View className="flex-row mt-4">
+            <TouchableOpacity
+              className="flex-1 flex-row items-center justify-center bg-brand-600 rounded-lg py-2.5 mr-2"
+              onPress={() => router.push(`/(coach)/messages/${id}` as never)}
+              activeOpacity={0.7}
+            >
+              <MessageCircle size={16} color="#fff" />
+              <Text className="text-white font-semibold text-sm ml-2">Message</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-row items-center justify-center bg-white border border-gray-200 rounded-lg py-2.5 px-4"
+              onPress={() => setShowEditClient(true)}
+              activeOpacity={0.7}
+            >
+              <Edit3 size={16} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Tab Bar */}
@@ -173,10 +193,10 @@ export default function ClientDetailScreen() {
             />
           )}
           {activeTab === "workouts" && (
-            <WorkoutsTab plans={client.assignedPlans || []} />
+            <WorkoutsTab plans={client.assignedPlans || []} onAssign={() => setShowAssignWorkout(true)} />
           )}
           {activeTab === "nutrition" && (
-            <NutritionTab plans={client.assignedMealPlans || []} />
+            <NutritionTab plans={client.assignedMealPlans || []} onAssign={() => setShowAssignMeal(true)} />
           )}
           {activeTab === "progress" && (
             <ProgressTab
@@ -186,6 +206,14 @@ export default function ClientDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {client && (
+        <>
+          <EditClientModal visible={showEditClient} client={client} onClose={() => setShowEditClient(false)} onSuccess={() => { setShowEditClient(false); refetch(); }} />
+          <AssignWorkoutModal visible={showAssignWorkout} clientId={id!} onClose={() => setShowAssignWorkout(false)} onSuccess={() => { setShowAssignWorkout(false); refetch(); }} />
+          <AssignMealModal visible={showAssignMeal} clientId={id!} onClose={() => setShowAssignMeal(false)} onSuccess={() => { setShowAssignMeal(false); refetch(); }} />
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -293,20 +321,23 @@ function InfoRow({
   );
 }
 
-function WorkoutsTab({ plans }: { plans: any[] }) {
-  if (plans.length === 0) {
-    return (
-      <View className="items-center py-12">
-        <Dumbbell size={36} color="#d1d5db" />
-        <Text className="text-gray-400 text-sm mt-2">
-          No workout plans assigned
-        </Text>
-      </View>
-    );
-  }
-
+function WorkoutsTab({ plans, onAssign }: { plans: any[]; onAssign: () => void }) {
   return (
     <View>
+      <TouchableOpacity
+        className="flex-row items-center justify-center border-2 border-dashed border-brand-300 rounded-xl py-2.5 mb-3"
+        onPress={onAssign}
+        activeOpacity={0.6}
+      >
+        <Plus size={16} color="#059669" />
+        <Text className="text-sm font-medium text-brand-600 ml-1">Assign Workout Plan</Text>
+      </TouchableOpacity>
+      {plans.length === 0 ? (
+        <View className="items-center py-8">
+          <Dumbbell size={36} color="#d1d5db" />
+          <Text className="text-gray-400 text-sm mt-2">No plans assigned yet</Text>
+        </View>
+      ) : null}
       {plans.map((p) => (
         <View
           key={p.id}
@@ -346,20 +377,23 @@ function WorkoutsTab({ plans }: { plans: any[] }) {
   );
 }
 
-function NutritionTab({ plans }: { plans: any[] }) {
-  if (plans.length === 0) {
-    return (
-      <View className="items-center py-12">
-        <UtensilsCrossed size={36} color="#d1d5db" />
-        <Text className="text-gray-400 text-sm mt-2">
-          No meal plans assigned
-        </Text>
-      </View>
-    );
-  }
-
+function NutritionTab({ plans, onAssign }: { plans: any[]; onAssign: () => void }) {
   return (
     <View>
+      <TouchableOpacity
+        className="flex-row items-center justify-center border-2 border-dashed border-brand-300 rounded-xl py-2.5 mb-3"
+        onPress={onAssign}
+        activeOpacity={0.6}
+      >
+        <Plus size={16} color="#059669" />
+        <Text className="text-sm font-medium text-brand-600 ml-1">Assign Meal Plan</Text>
+      </TouchableOpacity>
+      {plans.length === 0 ? (
+        <View className="items-center py-8">
+          <UtensilsCrossed size={36} color="#d1d5db" />
+          <Text className="text-gray-400 text-sm mt-2">No plans assigned yet</Text>
+        </View>
+      ) : null}
       {plans.map((p) => {
         const mp = p.mealPlan;
         return (
@@ -512,5 +546,163 @@ function ProgressTab({
         </View>
       )}
     </View>
+  );
+}
+
+function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boolean; client: any; onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState(client.name || "");
+  const [email, setEmail] = useState(client.email || "");
+  const [phone, setPhone] = useState(client.phone || "");
+  const [goals, setGoals] = useState(client.goals || "");
+  const [notes, setNotes] = useState(client.notes || "");
+  const [status, setStatus] = useState(client.status?.toLowerCase() || "active");
+
+  const mutation = useMutation({
+    mutationFn: (data: any) => api.put(`/api/clients/${client.id}`, data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-clients"] });
+      onSuccess();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+            <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
+            <Text className="text-lg font-semibold text-gray-900 flex-1">Edit Client</Text>
+          </View>
+          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
+            <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} />
+            <Text className="text-sm font-medium text-gray-700 mb-1">Email</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+            <Text className="text-sm font-medium text-gray-700 mb-1">Phone</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+            <Text className="text-sm font-medium text-gray-700 mb-1">Goals</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={goals} onChangeText={setGoals} multiline />
+            <Text className="text-sm font-medium text-gray-700 mb-1">Notes</Text>
+            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={notes} onChangeText={setNotes} multiline />
+            <Text className="text-sm font-medium text-gray-700 mb-1">Status</Text>
+            <View className="flex-row mb-6">
+              {["active", "paused", "archived"].map((s) => (
+                <TouchableOpacity key={s} className={`mr-2 px-3 py-1.5 rounded-full ${status === s ? "bg-brand-600" : "bg-white border border-gray-200"}`} onPress={() => setStatus(s)}>
+                  <Text className={`text-xs font-medium capitalize ${status === s ? "text-white" : "text-gray-600"}`}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity
+              className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+              onPress={() => {
+                if (!name.trim()) return Alert.alert("Required", "Name is required");
+                mutation.mutate({ name: name.trim(), email: email.trim() || null, phone: phone.trim() || null, goals: goals.trim() || null, notes: notes.trim() || null, status });
+              }}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Save Changes</Text>}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+function AssignWorkoutModal({ visible, clientId, onClose, onSuccess }: { visible: boolean; clientId: string; onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient();
+  const { data: plans } = useWorkoutPlans();
+  const [selectedId, setSelectedId] = useState("");
+
+  const mutation = useMutation({
+    mutationFn: (data: any) => api.post("/api/workouts/assign", data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      setSelectedId("");
+      onSuccess();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
+          <Text className="text-lg font-semibold text-gray-900 flex-1">Assign Workout Plan</Text>
+        </View>
+        <ScrollView className="flex-1 px-4 pt-4">
+          {(plans || []).length === 0 ? (
+            <View className="items-center py-12"><Text className="text-sm text-gray-400">No plans to assign. Create one first.</Text></View>
+          ) : (plans || []).map((p) => (
+            <TouchableOpacity key={p.id} className={`bg-white rounded-xl border px-4 py-3 mb-2 ${selectedId === p.id ? "border-brand-600 bg-brand-50" : "border-gray-100"}`} onPress={() => setSelectedId(p.id)}>
+              <Text className="text-sm font-medium text-gray-900">{p.name}</Text>
+              <Text className="text-xs text-gray-500">{p.exerciseCount} exercises</Text>
+            </TouchableOpacity>
+          ))}
+          {selectedId && (
+            <TouchableOpacity
+              className={`rounded-lg py-3.5 items-center mt-4 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+              onPress={() => mutation.mutate({ clientId, workoutPlanId: selectedId })}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Assign Plan</Text>}
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+function AssignMealModal({ visible, clientId, onClose, onSuccess }: { visible: boolean; clientId: string; onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient();
+  const { data: plans } = useMealPlans();
+  const [selectedId, setSelectedId] = useState("");
+
+  const mutation = useMutation({
+    mutationFn: (data: any) => api.post("/api/meal-plans/assign", data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      setSelectedId("");
+      onSuccess();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
+          <Text className="text-lg font-semibold text-gray-900 flex-1">Assign Meal Plan</Text>
+        </View>
+        <ScrollView className="flex-1 px-4 pt-4">
+          {(plans || []).length === 0 ? (
+            <View className="items-center py-12"><Text className="text-sm text-gray-400">No plans to assign. Create one first.</Text></View>
+          ) : (plans || []).map((p) => (
+            <TouchableOpacity key={p.id} className={`bg-white rounded-xl border px-4 py-3 mb-2 ${selectedId === p.id ? "border-brand-600 bg-brand-50" : "border-gray-100"}`} onPress={() => setSelectedId(p.id)}>
+              <Text className="text-sm font-medium text-gray-900">{p.name}</Text>
+              <Text className="text-xs text-gray-500">{p.mealCount} meals{p.targetCalories ? ` · ${p.targetCalories} kcal` : ""}</Text>
+            </TouchableOpacity>
+          ))}
+          {selectedId && (
+            <TouchableOpacity
+              className={`rounded-lg py-3.5 items-center mt-4 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+              onPress={() => mutation.mutate({ clientId, mealPlanId: selectedId })}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Assign Plan</Text>}
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
   );
 }

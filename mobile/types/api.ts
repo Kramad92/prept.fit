@@ -543,3 +543,183 @@ export interface LatestMessagesMap {
 export interface UnreadCountsMap {
   [clientId: string]: number;
 }
+
+// Coach management types
+
+export interface TenantSettings {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | null;
+  brandColor: string;
+  timezone: string;
+  locale: string;
+  units: string;
+  currency: string;
+  bio: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  coachPhoto: string | null;
+  socialLinks: Record<string, string> | null;
+  specialties: string[] | null;
+  landingPageEnabled: boolean;
+}
+
+export interface Certificate {
+  id: string;
+  name: string;
+  issuer: string | null;
+  year: number | null;
+  description: string | null;
+  imageUrl: string | null;
+  orderIndex: number;
+}
+
+export interface CoachPackage {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  duration: string | null;
+  features: string[] | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  orderIndex: number;
+}
+
+export interface Inquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  preferredSlot: string | null;
+  status: "new" | "contacted" | "archived";
+  createdAt: string;
+}
+
+export interface ExerciseLibraryItem {
+  id: string;
+  name: string;
+  nameI18n: Record<string, string> | null;
+  category: string | null;
+  muscleGroup: string | null;
+  equipment: string | null;
+  videoUrl: string | null;
+  instructions: string | null;
+  difficulty: string | null;
+  bodyRegion: string | null;
+  secondaryMuscles: string | null;
+  secondaryEquipment: string | null;
+}
+
+export interface ExerciseCategory {
+  id: string;
+  name: string;
+}
+
+export interface EquipmentType {
+  id: string;
+  name: string;
+}
+
+export interface WorkoutPlanListItem {
+  id: string;
+  name: string;
+  description: string | null;
+  isTemplate: boolean;
+  exerciseCount: number;
+  assignedCount: number;
+}
+
+export interface WorkoutPlanDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  isTemplate: boolean;
+  exercises: Exercise[];
+}
+
+export interface MealPlanListItem {
+  id: string;
+  name: string;
+  description: string | null;
+  isTemplate: boolean;
+  targetCalories: number | null;
+  targetProtein: number | null;
+  targetCarbs: number | null;
+  targetFat: number | null;
+  mealCount: number;
+  assignedCount: number;
+}
+
+export interface MealPlanDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  isTemplate: boolean;
+  targetCalories: number | null;
+  targetProtein: number | null;
+  targetCarbs: number | null;
+  targetFat: number | null;
+  meals: Meal[];
+}
+
+export interface HabitTemplate {
+  id: string;
+  name: string;
+  icon: string | null;
+  description: string | null;
+}
+
+export interface ProgramListItem {
+  id: string;
+  name: string;
+  description: string | null;
+  durationWeeks: number;
+  daysPerWeek: number;
+  isTemplate: boolean;
+  dayCount: number;
+  assignedCount: number;
+}
+
+export interface NutritionProgramListItem {
+  id: string;
+  name: string;
+  description: string | null;
+  durationWeeks: number;
+  mealsPerDay: number;
+  isTemplate: boolean;
+  dayCount: number;
+  assignedCount: number;
+}
+
+export interface SearchResults {
+  clients: Array<{ id: string; name: string; email: string; status: string }>;
+  exercises: Array<{ id: string; name: string; category: string; muscleGroup: string }>;
+  workoutPlans: Array<{ id: string; name: string; description: string }>;
+  mealPlans: Array<{ id: string; name: string; description: string }>;
+}
+
+export interface FoodSearchResult {
+  fdcId?: number;
+  id?: string;
+  name: string;
+  portion: string;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  source?: string;
+  unitLabel?: string;
+  gramsPerUnit?: number;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}

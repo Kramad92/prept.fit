@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { router } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginScreen() {
@@ -90,6 +91,14 @@ export default function LoginScreen() {
           ) : (
             <Text className="text-white font-semibold text-base">Sign In</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="mt-4 items-center"
+          onPress={() => router.push("/forgot-password")}
+          activeOpacity={0.6}
+        >
+          <Text className="text-sm text-brand-600">Forgot password?</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

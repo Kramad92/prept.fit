@@ -9,7 +9,7 @@ export default function OnboardingLayout({
 }) {
   return (
     <SessionProvider>
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8">
+      <div className="flex min-h-screen items-center justify-center bg-surface-secondary px-4 py-8">
         <div className="w-full max-w-2xl">
           {children}
         </div>

@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StepIndicator } from "./step-indicator";
 
@@ -30,6 +30,12 @@ interface OnboardingWizardProps {
   subtitle?: string;
 }
 
+async function completeOnboarding(redirectTo: string) {
+  await fetch("/api/onboarding/complete", { method: "POST" });
+  // Hard redirect to force a fresh session with onboardingComplete=true
+  window.location.href = redirectTo;
+}
+
 export function OnboardingWizard({
   steps,
   onSave,
@@ -37,7 +43,6 @@ export function OnboardingWizard({
   title,
   subtitle,
 }: OnboardingWizardProps) {
-  const { update: updateSession } = useSession();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<Record<string, any>>({});
@@ -63,23 +68,15 @@ export function OnboardingWizard({
     setSaving(true);
     try {
       await onSave(data);
-      await fetch("/api/onboarding/complete", { method: "POST" });
-      await updateSession({ onboardingComplete: true });
-      router.push(redirectTo);
     } catch {
-      setSaving(false);
+      // save failed but still complete onboarding
     }
+    await completeOnboarding(redirectTo);
   }
 
   async function handleSkip() {
     setSaving(true);
-    try {
-      await fetch("/api/onboarding/complete", { method: "POST" });
-      await updateSession({ onboardingComplete: true });
-      router.push(redirectTo);
-    } catch {
-      setSaving(false);
-    }
+    await completeOnboarding(redirectTo);
   }
 
   const StepComponent = steps[currentStep].component;
@@ -90,10 +87,10 @@ export function OnboardingWizard({
       {(title || subtitle) && currentStep === 0 && (
         <div className="text-center">
           {title && (
-            <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
           )}
           {subtitle && (
-            <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           )}
         </div>
       )}
@@ -105,7 +102,7 @@ export function OnboardingWizard({
       />
 
       {/* Step Content */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm md:p-8">
         <StepComponent
           data={data}
           onUpdate={handleUpdate}
@@ -116,7 +113,7 @@ export function OnboardingWizard({
         />
 
         {/* Navigation */}
-        <div className="mt-8 flex items-center justify-between border-t border-gray-100 pt-6">
+        <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
           <div>
             {currentStep > 0 && (
               <Button variant="ghost" onClick={handleBack} className="gap-1.5">
@@ -146,7 +143,7 @@ export function OnboardingWizard({
         <button
           onClick={handleSkip}
           disabled={saving}
-          className="text-sm text-gray-400 hover:text-gray-600"
+          className="text-sm text-muted-foreground hover:text-foreground"
         >
           Skip setup for now
         </button>

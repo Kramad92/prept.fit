@@ -17,13 +17,13 @@ export function ClientWelcome({ onNext }: StepProps) {
 
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50">
-        <Heart className="h-8 w-8 text-rose-500" />
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10">
+        <Heart className="h-8 w-8 text-rose-400" />
       </div>
-      <h2 className="mt-5 text-2xl font-bold text-gray-900">
+      <h2 className="mt-5 text-2xl font-bold text-card-foreground">
         {tenantName ? `Welcome to ${tenantName}!` : "Welcome!"}
       </h2>
-      <p className="mt-3 max-w-md text-sm text-gray-500">
+      <p className="mt-3 max-w-md text-sm text-muted-foreground">
         Let&apos;s set up your profile so your coach can create the best plan for you.
         This takes about 2 minutes.
       </p>

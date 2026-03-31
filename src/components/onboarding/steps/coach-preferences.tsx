@@ -43,14 +43,14 @@ const CURRENCY_OPTIONS = [
 export function CoachPreferences({ data, onUpdate }: StepProps) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900">Preferences</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-card-foreground">Preferences</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
         Set your timezone, language, and measurement preferences.
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             Timezone
           </label>
           <FilterSelect
@@ -62,7 +62,7 @@ export function CoachPreferences({ data, onUpdate }: StepProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             Language
           </label>
           <FilterSelect
@@ -74,7 +74,7 @@ export function CoachPreferences({ data, onUpdate }: StepProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             Units
           </label>
           <FilterSelect
@@ -86,7 +86,7 @@ export function CoachPreferences({ data, onUpdate }: StepProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             Currency
           </label>
           <FilterSelect

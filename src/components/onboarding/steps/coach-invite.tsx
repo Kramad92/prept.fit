@@ -19,7 +19,6 @@ export function CoachInvite({ data, onUpdate }: StepProps) {
     setError("");
 
     try {
-      // Create client
       const createRes = await fetch("/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,7 +32,6 @@ export function CoachInvite({ data, onUpdate }: StepProps) {
 
       const client = await createRes.json();
 
-      // Send invite
       const inviteRes = await fetch(`/api/clients/${client.id}/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,11 +52,11 @@ export function CoachInvite({ data, onUpdate }: StepProps) {
   if (sent) {
     return (
       <div className="flex flex-col items-center py-4 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-          <Check className="h-6 w-6 text-green-600" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20">
+          <Check className="h-6 w-6 text-green-400" />
         </div>
-        <h2 className="mt-4 text-lg font-semibold text-gray-900">Invite Sent!</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="mt-4 text-lg font-semibold text-card-foreground">Invite Sent!</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           {name} will receive an email at {email} with instructions to join.
         </p>
       </div>
@@ -68,12 +66,12 @@ export function CoachInvite({ data, onUpdate }: StepProps) {
   return (
     <div>
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50">
-          <UserPlus className="h-5 w-5 text-green-600" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+          <UserPlus className="h-5 w-5 text-green-400" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Invite Your First Client</h2>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-card-foreground">Invite Your First Client</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Send an invite so your client can access their portal. You can always add more clients later.
           </p>
         </div>
@@ -81,7 +79,7 @@ export function CoachInvite({ data, onUpdate }: StepProps) {
 
       <div className="mt-6 space-y-4">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">Client Name</label>
+          <label className="mb-1.5 block text-sm font-medium text-card-foreground">Client Name</label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -89,7 +87,7 @@ export function CoachInvite({ data, onUpdate }: StepProps) {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">Email Address</label>
+          <label className="mb-1.5 block text-sm font-medium text-card-foreground">Email Address</label>
           <Input
             type="email"
             value={email}
@@ -99,7 +97,7 @@ export function CoachInvite({ data, onUpdate }: StepProps) {
         </div>
 
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-destructive">{error}</p>
         )}
 
         <Button

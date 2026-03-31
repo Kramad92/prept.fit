@@ -15,10 +15,10 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
           key={index}
           className={`h-1.5 rounded-full transition-all duration-300 ${
             index < currentStep
-              ? "w-6 bg-brand-600"
+              ? "w-6 bg-brand-500"
               : index === currentStep
-                ? "w-8 bg-brand-600"
-                : "w-6 bg-gray-200"
+                ? "w-8 bg-brand-500"
+                : "w-6 bg-border"
           }`}
         />
       ))}

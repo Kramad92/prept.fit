@@ -8,14 +8,14 @@ import type { StepProps } from "../onboarding-wizard";
 export function ClientHealth({ data, onUpdate }: StepProps) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900">Health Information</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-card-foreground">Health Information</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
         This helps your coach create safe, personalized plans. All fields are optional.
       </p>
 
       <div className="mt-6 space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             Injuries or Limitations
           </label>
           <Textarea
@@ -27,7 +27,7 @@ export function ClientHealth({ data, onUpdate }: StepProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             Food Allergies
           </label>
           <Input
@@ -38,7 +38,7 @@ export function ClientHealth({ data, onUpdate }: StepProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             Dietary Preferences
           </label>
           <Input
@@ -49,9 +49,9 @@ export function ClientHealth({ data, onUpdate }: StepProps) {
         </div>
       </div>
 
-      <div className="mt-6 flex items-start gap-2 rounded-lg bg-blue-50 p-3">
-        <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-        <p className="text-xs text-blue-700">
+      <div className="mt-6 flex items-start gap-2 rounded-lg bg-blue-500/10 p-3">
+        <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-400" />
+        <p className="text-xs text-blue-400">
           This information is only visible to your coach and is used to customize your training and nutrition plans.
         </p>
       </div>

@@ -156,18 +156,18 @@ export function CoachWorkout({ data, onUpdate }: StepProps) {
   if (mode === "done" && createdPlan) {
     return (
       <div className="flex flex-col items-center py-4 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-          <Check className="h-6 w-6 text-green-600" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20">
+          <Check className="h-6 w-6 text-green-400" />
         </div>
-        <h2 className="mt-4 text-lg font-semibold text-gray-900">Workout Created!</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="mt-4 text-lg font-semibold text-card-foreground">Workout Created!</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           &ldquo;{createdPlan.name}&rdquo; with {createdPlan.exerciseCount} exercises
         </p>
         <a
           href={`/dashboard/workouts/${createdPlan.id}/edit`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-700"
+          className="mt-4 text-sm font-medium text-brand-400 hover:text-brand-300"
         >
           Customize in editor &rarr;
         </a>
@@ -178,8 +178,8 @@ export function CoachWorkout({ data, onUpdate }: StepProps) {
   if (mode === "ai") {
     return (
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Generate with AI</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-lg font-semibold text-card-foreground">Generate with AI</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Describe the workout you want and we&apos;ll generate it for you.
         </p>
         <Textarea
@@ -213,8 +213,8 @@ export function CoachWorkout({ data, onUpdate }: StepProps) {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900">Create Your First Workout</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-card-foreground">Create Your First Workout</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
         Pick a template to get started or generate one with AI.
       </p>
 
@@ -224,29 +224,29 @@ export function CoachWorkout({ data, onUpdate }: StepProps) {
             key={preset.name}
             onClick={() => createFromPreset(preset)}
             disabled={creating}
-            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left transition-colors hover:bg-gray-50 disabled:opacity-50"
+            className="flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-left transition-colors hover:bg-accent disabled:opacity-50"
           >
             <div className="flex items-center gap-3">
-              <Dumbbell className="h-5 w-5 text-gray-400" />
+              <Dumbbell className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium text-gray-900">{preset.name}</p>
-                <p className="text-xs text-gray-500">{preset.description} &middot; {preset.exerciseCount} exercises</p>
+                <p className="text-sm font-medium text-card-foreground">{preset.name}</p>
+                <p className="text-xs text-muted-foreground">{preset.description} &middot; {preset.exerciseCount} exercises</p>
               </div>
             </div>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         ))}
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <div className="h-px flex-1 bg-gray-200" />
-        <span className="text-xs text-gray-400">or</span>
-        <div className="h-px flex-1 bg-gray-200" />
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or</span>
+        <div className="h-px flex-1 bg-border" />
       </div>
 
       <button
         onClick={() => setMode("ai")}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-3 text-sm font-medium text-gray-600 transition-colors hover:border-blue-300 hover:text-blue-600"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-brand-500/50 hover:text-brand-400"
       >
         <Sparkles className="h-4 w-4" />
         Generate with AI

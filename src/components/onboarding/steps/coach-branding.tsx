@@ -10,13 +10,13 @@ export function CoachBranding({ data, onUpdate }: StepProps) {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900">Your Brand</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-card-foreground">Your Brand</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
         Add your business logo to personalize your platform.
       </p>
 
       <div className="mt-6">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label className="mb-2 block text-sm font-medium text-card-foreground">
           Business Logo
         </label>
         {logoUrl ? (
@@ -24,11 +24,11 @@ export function CoachBranding({ data, onUpdate }: StepProps) {
             <img
               src={logoUrl}
               alt="Logo"
-              className="h-20 w-20 rounded-lg object-contain border border-gray-200 p-1"
+              className="h-20 w-20 rounded-lg object-contain border border-border p-1"
             />
             <button
               onClick={() => onUpdate({ logo: null })}
-              className="absolute -right-1 -top-1 rounded-full bg-gray-800 p-1 text-white hover:bg-gray-700"
+              className="absolute -right-1 -top-1 rounded-full bg-destructive p-1 text-white hover:bg-destructive/80"
             >
               <span className="text-xs">✕</span>
             </button>
@@ -40,7 +40,7 @@ export function CoachBranding({ data, onUpdate }: StepProps) {
             className="max-w-xs"
           />
         )}
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-muted-foreground">
           This will appear in your client portal and landing page.
         </p>
       </div>

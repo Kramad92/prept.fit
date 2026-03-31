@@ -13,15 +13,15 @@ const GENDER_OPTIONS = [
 export function ClientBodyStats({ data, onUpdate }: StepProps) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900">Body Stats</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-card-foreground">Body Stats</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
         All fields are optional. You can update these anytime from your profile.
       </p>
 
       <div className="mt-6 space-y-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-card-foreground">
               Gender
             </label>
             <FilterSelect
@@ -33,7 +33,7 @@ export function ClientBodyStats({ data, onUpdate }: StepProps) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-card-foreground">
               Date of Birth
             </label>
             <Input
@@ -46,7 +46,7 @@ export function ClientBodyStats({ data, onUpdate }: StepProps) {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-card-foreground">
               Height (cm)
             </label>
             <Input
@@ -60,7 +60,7 @@ export function ClientBodyStats({ data, onUpdate }: StepProps) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-card-foreground">
               Current Weight (kg)
             </label>
             <Input
@@ -72,7 +72,7 @@ export function ClientBodyStats({ data, onUpdate }: StepProps) {
               max={300}
               step={0.1}
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               This will be saved as your first measurement
             </p>
           </div>

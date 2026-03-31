@@ -21,14 +21,14 @@ const ACTIVITY_LEVELS = [
 export function ClientProfile({ data, onUpdate }: StepProps) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900">About You</h2>
-      <p className="mt-1 text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-card-foreground">About You</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
         Tell your coach about your goals and current fitness level.
       </p>
 
       <div className="mt-6 space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-card-foreground">
             What are your fitness goals?
           </label>
           <Textarea
@@ -41,7 +41,7 @@ export function ClientProfile({ data, onUpdate }: StepProps) {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-card-foreground">
               Fitness Level
             </label>
             <FilterSelect
@@ -53,7 +53,7 @@ export function ClientProfile({ data, onUpdate }: StepProps) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-card-foreground">
               Activity Level
             </label>
             <FilterSelect

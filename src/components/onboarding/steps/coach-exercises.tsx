@@ -92,7 +92,7 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
 
   if (loading) {
     return (
-      <div className="py-8 text-center text-sm text-gray-500">
+      <div className="py-8 text-center text-sm text-muted-foreground">
         Loading exercise database...
       </div>
     );
@@ -101,27 +101,27 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
   return (
     <div>
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-purple-50">
-          <Library className="h-5 w-5 text-purple-600" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
+          <Library className="h-5 w-5 text-purple-400" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Exercise Library</h2>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-card-foreground">Exercise Library</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Import exercises from our database to get started quickly. You can always add custom exercises later.
           </p>
         </div>
       </div>
 
       {result ? (
-        <div className="mt-6 flex flex-col items-center rounded-lg bg-green-50 py-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-6 w-6 text-green-600" />
+        <div className="mt-6 flex flex-col items-center rounded-lg bg-green-500/10 py-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20">
+            <Check className="h-6 w-6 text-green-400" />
           </div>
-          <p className="mt-3 font-medium text-green-800">
+          <p className="mt-3 font-medium text-green-400">
             {result.imported} exercises imported!
           </p>
           {result.skipped > 0 && (
-            <p className="mt-1 text-sm text-green-600">
+            <p className="mt-1 text-sm text-green-400/70">
               {result.skipped} already in your library
             </p>
           )}
@@ -131,7 +131,7 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
           {/* Difficulty */}
           {filters && filters.difficulties.length > 0 && (
             <div>
-              <h4 className="mb-2 text-sm font-medium text-gray-700">Difficulty</h4>
+              <h4 className="mb-2 text-sm font-medium text-card-foreground">Difficulty</h4>
               <div className="flex flex-wrap gap-1.5">
                 {sortByOrder(filters.difficulties, DIFFICULTY_ORDER).map((opt) => (
                   <button
@@ -139,8 +139,8 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
                     onClick={() => toggle(selectedDifficulties, setSelectedDifficulties, opt.name)}
                     className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                       selectedDifficulties.has(opt.name)
-                        ? "border-blue-400 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        ? "border-brand-500 bg-brand-500/10 text-brand-400"
+                        : "border-border text-muted-foreground hover:border-brand-500/50"
                     }`}
                   >
                     {opt.name} ({opt.count})
@@ -153,7 +153,7 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
           {/* Equipment */}
           {filters && filters.equipment.length > 0 && (
             <div>
-              <h4 className="mb-2 text-sm font-medium text-gray-700">Equipment</h4>
+              <h4 className="mb-2 text-sm font-medium text-card-foreground">Equipment</h4>
               <div className="flex flex-wrap gap-1.5">
                 {sortByOrder(filters.equipment, EQUIPMENT_ORDER).slice(0, 12).map((opt) => (
                   <button
@@ -161,8 +161,8 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
                     onClick={() => toggle(selectedEquipment, setSelectedEquipment, opt.name)}
                     className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                       selectedEquipment.has(opt.name)
-                        ? "border-blue-400 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        ? "border-brand-500 bg-brand-500/10 text-brand-400"
+                        : "border-border text-muted-foreground hover:border-brand-500/50"
                     }`}
                   >
                     {opt.name} ({opt.count})
@@ -175,7 +175,7 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
           {/* Body Region */}
           {filters && filters.bodyRegions.length > 0 && (
             <div>
-              <h4 className="mb-2 text-sm font-medium text-gray-700">Body Region</h4>
+              <h4 className="mb-2 text-sm font-medium text-card-foreground">Body Region</h4>
               <div className="flex flex-wrap gap-1.5">
                 {filters.bodyRegions.map((opt) => (
                   <button
@@ -183,8 +183,8 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
                     onClick={() => toggle(selectedBodyRegions, setSelectedBodyRegions, opt.name)}
                     className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                       selectedBodyRegions.has(opt.name)
-                        ? "border-blue-400 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        ? "border-brand-500 bg-brand-500/10 text-brand-400"
+                        : "border-border text-muted-foreground hover:border-brand-500/50"
                     }`}
                   >
                     {opt.name} ({opt.count})
@@ -194,8 +194,8 @@ export function CoachExercises({ data, onUpdate }: StepProps) {
             </div>
           )}
 
-          <div className="flex items-center justify-between border-t pt-4">
-            <span className="text-sm text-gray-500">
+          <div className="flex items-center justify-between border-t border-border pt-4">
+            <span className="text-sm text-muted-foreground">
               {(filters?.total ?? 0).toLocaleString()} exercises match
             </span>
             <Button onClick={handleImport} disabled={importing}>

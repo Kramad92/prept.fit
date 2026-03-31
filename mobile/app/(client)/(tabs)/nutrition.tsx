@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { UtensilsCrossed, ChevronDown, ChevronUp, Flame } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
+import { AppHeader } from "@/components/app-header";
 import type { ClientProfile, AssignedMealPlan, ClientMeal, Food, Meal } from "@/types/api";
 
 function MacroPill({ label, value }: { label: string; value: number | null }) {
@@ -152,11 +153,11 @@ export default function NutritionScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <AppHeader title="Nutrition" />
       <ScrollView
-        className="flex-1 px-4 pt-4"
+        className="flex-1 px-4"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />}
       >
-        <Text className="text-2xl font-bold text-gray-900 mb-4">Nutrition</Text>
 
         {totalMacros.calories > 0 && (
           <View className="bg-brand-50 rounded-xl p-4 mb-4 border border-brand-100">

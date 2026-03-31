@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 import { haptics } from "@/lib/haptics";
 import { CheckCircle, Circle, Flame } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
+import { AppHeader } from "@/components/app-header";
 import type { AssignedHabit } from "@/types/api";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -138,12 +139,11 @@ export default function HabitsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <AppHeader title="Habits" subtitle={dateDisplay} />
       <ScrollView
-        className="flex-1 px-4 pt-4"
+        className="flex-1 px-4"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />}
       >
-        <Text className="text-2xl font-bold text-gray-900 mb-1">Habits</Text>
-        <Text className="text-sm text-gray-500 mb-4">{dateDisplay}</Text>
 
         <View className="flex-row gap-3 mb-4">
           <View className="flex-1 bg-white rounded-xl p-3 border border-gray-100 items-center">

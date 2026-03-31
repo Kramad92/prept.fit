@@ -19,6 +19,7 @@ import {
   Library,
   Search,
 } from "lucide-react-native";
+import { AppHeader } from "@/components/app-header";
 
 interface MenuItem {
   icon: typeof CreditCard;
@@ -70,8 +71,8 @@ export default function CoachMoreScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <ScrollView className="flex-1 px-4 pt-4" contentContainerStyle={{ paddingBottom: 32 }}>
-        <Text className="text-2xl font-bold text-gray-900 mb-4">More</Text>
+      <AppHeader title="More" />
+      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 32 }}>
 
         {sections.map((section) => (
           <View key={section.title} className="mb-5">

@@ -7,6 +7,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
@@ -236,7 +238,11 @@ export default function WorkoutLogScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ScrollView className="flex-1 px-4 pt-8">
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+        <ScrollView className="flex-1 px-4 pt-8" keyboardShouldPersistTaps="handled">
           <View className="items-center mb-8">
             <View className="w-16 h-16 rounded-full bg-brand-100 items-center justify-center mb-4">
               <Trophy size={32} color="#059669" />
@@ -299,6 +305,7 @@ export default function WorkoutLogScreen() {
             <Text className="text-red-500 text-center text-sm mt-2">Failed to save. Tap to retry.</Text>
           )}
         </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -334,7 +341,11 @@ export default function WorkoutLogScreen() {
         </View>
       )}
 
-      <ScrollView className="flex-1 px-4 pt-4">
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+      <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
         <Text className="text-xl font-bold text-gray-900 mb-1">{currentExercise.name}</Text>
         {currentExercise.notes && (
           <Text className="text-sm text-gray-500 mb-3">{currentExercise.notes}</Text>
@@ -402,6 +413,7 @@ export default function WorkoutLogScreen() {
         </View>
         <View className="h-24" />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <View className="flex-row gap-3 p-4 bg-gray-50">
         {currentIndex > 0 && (

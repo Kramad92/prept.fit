@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -156,58 +158,63 @@ export default function BookSessionScreen() {
           </Text>
         </View>
 
-        <ScrollView className="flex-1 px-4 pt-6">
-          <View className="bg-white rounded-xl p-5 border border-gray-100 mb-4">
-            <View className="items-center mb-4">
-              <View className="w-16 h-16 rounded-full bg-brand-50 items-center justify-center mb-3">
-                <Calendar size={28} color="#059669" />
-              </View>
-              <Text className="text-xl font-bold text-gray-900">
-                {dateLabel}
-              </Text>
-              <Text className="text-lg text-brand-600 font-semibold mt-1">
-                {selectedSlot.startTime} - {selectedSlot.endTime}
-              </Text>
-            </View>
-          </View>
-
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Notes (optional)
-            </Text>
-            <TextInput
-              className="bg-white rounded-xl px-4 py-3 text-base text-gray-900 border border-gray-200 min-h-[80px]"
-              placeholder="Anything your coach should know..."
-              placeholderTextColor="#9ca3af"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              textAlignVertical="top"
-            />
-          </View>
-        </ScrollView>
-
-        <View className="px-4 py-3 bg-white border-t border-gray-100">
-          <TouchableOpacity
-            className={`rounded-xl py-3.5 items-center ${
-              bookMutation.isPending ? "bg-brand-400" : "bg-brand-600"
-            }`}
-            onPress={handleConfirmBooking}
-            disabled={bookMutation.isPending}
-            activeOpacity={0.7}
-          >
-            {bookMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <View className="flex-row items-center">
-                <Check size={18} color="#fff" />
-                <Text className="text-white font-semibold text-base ml-2">
-                  Confirm Booking
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <ScrollView className="flex-1 px-4 pt-6" keyboardShouldPersistTaps="handled">
+            <View className="bg-white rounded-xl p-5 border border-gray-100 mb-4">
+              <View className="items-center mb-4">
+                <View className="w-16 h-16 rounded-full bg-brand-50 items-center justify-center mb-3">
+                  <Calendar size={28} color="#059669" />
+                </View>
+                <Text className="text-xl font-bold text-gray-900">
+                  {dateLabel}
+                </Text>
+                <Text className="text-lg text-brand-600 font-semibold mt-1">
+                  {selectedSlot.startTime} - {selectedSlot.endTime}
                 </Text>
               </View>
-            )}
-          </TouchableOpacity>
-        </View>
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Notes (optional)
+              </Text>
+              <TextInput
+                className="bg-white rounded-xl px-4 py-3 text-base text-gray-900 border border-gray-200 min-h-[80px]"
+                placeholder="Anything your coach should know..."
+                placeholderTextColor="#9ca3af"
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                textAlignVertical="top"
+              />
+            </View>
+          </ScrollView>
+
+          <View className="px-4 py-3 bg-white border-t border-gray-100">
+            <TouchableOpacity
+              className={`rounded-xl py-3.5 items-center ${
+                bookMutation.isPending ? "bg-brand-400" : "bg-brand-600"
+              }`}
+              onPress={handleConfirmBooking}
+              disabled={bookMutation.isPending}
+              activeOpacity={0.7}
+            >
+              {bookMutation.isPending ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <View className="flex-row items-center">
+                  <Check size={18} color="#fff" />
+                  <Text className="text-white font-semibold text-base ml-2">
+                    Confirm Booking
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }

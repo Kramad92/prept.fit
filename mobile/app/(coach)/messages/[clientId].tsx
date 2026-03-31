@@ -5,14 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Send } from "lucide-react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Pusher from "pusher-js/react-native";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
@@ -45,13 +44,13 @@ export default function CoachChatScreen() {
     enabled: !!clientId,
   });
 
+  // Sorted newest-first for inverted FlatList
   const messages = useMemo(() => {
     const base = serverMessages || [];
     const serverIds = new Set(base.map((m) => m.id));
     const extras = localMessages.filter((m) => !serverIds.has(m.id));
     return [...base, ...extras].sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [serverMessages, localMessages]);
 
@@ -89,7 +88,7 @@ export default function CoachChatScreen() {
     return () => clearInterval(interval);
   }, [clientId, queryClient]);
 
-  // Mark messages as read (debounced to avoid repeated calls on each new message)
+  // Mark messages as read
   const lastMarkedCount = useRef(0);
   const markReadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -206,15 +205,10 @@ export default function CoachChatScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="mr-3 p-1"
-          >
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
             <ArrowLeft size={22} color="#111827" />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">
-            {clientName}
-          </Text>
+          <Text className="text-lg font-semibold text-gray-900">{clientName}</Text>
         </View>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#059669" />
@@ -227,24 +221,14 @@ export default function CoachChatScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="mr-3 p-1"
-          >
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
             <ArrowLeft size={22} color="#111827" />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">
-            {clientName}
-          </Text>
+          <Text className="text-lg font-semibold text-gray-900">{clientName}</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-gray-500 text-base text-center mb-3">
-            Failed to load messages
-          </Text>
-          <TouchableOpacity
-            className="bg-brand-600 rounded-lg px-4 py-2"
-            onPress={() => refetchMessages()}
-          >
+          <Text className="text-gray-500 text-base text-center mb-3">Failed to load messages</Text>
+          <TouchableOpacity className="bg-brand-600 rounded-lg px-4 py-2" onPress={() => refetchMessages()}>
             <Text className="text-white font-semibold text-sm">Retry</Text>
           </TouchableOpacity>
         </View>
@@ -258,14 +242,12 @@ export default function CoachChatScreen() {
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
           <ArrowLeft size={22} color="#111827" />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900">
-          {clientName}
-        </Text>
+        <Text className="text-lg font-semibold text-gray-900">{clientName}</Text>
       </View>
 
       <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+        behavior="padding"
         keyboardVerticalOffset={0}
       >
         {messages.length === 0 ? (
@@ -278,16 +260,12 @@ export default function CoachChatScreen() {
           <FlatList
             ref={flatListRef}
             data={messages}
+            inverted
             keyExtractor={(item) => item.id}
             renderItem={renderMessage}
-            contentContainerStyle={{
-              padding: 16,
-              flexGrow: 1,
-              justifyContent: "flex-end",
-            }}
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: false })
-            }
+            contentContainerStyle={{ padding: 16 }}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
           />
         )}
 

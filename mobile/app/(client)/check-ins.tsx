@@ -8,6 +8,8 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -131,51 +133,56 @@ export default function CheckInsScreen() {
           </View>
         </View>
 
-        <ScrollView className="flex-1 px-4 pt-4">
-          {selectedTemplate.questions.map((q, i) => (
-            <View key={q.id} className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                {i + 1}. {q.question}
-              </Text>
-              <TextInput
-                className="bg-white rounded-xl px-4 py-3 text-base text-gray-900 border border-gray-200 min-h-[80px]"
-                placeholder="Type your answer..."
-                placeholderTextColor="#9ca3af"
-                value={answers[i]}
-                onChangeText={(val) => {
-                  const updated = [...answers];
-                  updated[i] = val;
-                  setAnswers(updated);
-                }}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
-          ))}
-          <View className="h-4" />
-        </ScrollView>
-
-        <View className="px-4 py-3 bg-white border-t border-gray-100">
-          <TouchableOpacity
-            className={`rounded-xl py-3.5 items-center ${
-              submitMutation.isPending ? "bg-brand-400" : "bg-brand-600"
-            }`}
-            onPress={handleSubmit}
-            disabled={submitMutation.isPending}
-            activeOpacity={0.7}
-          >
-            {submitMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <View className="flex-row items-center">
-                <Send size={18} color="#fff" />
-                <Text className="text-white font-semibold text-base ml-2">
-                  Submit Check-in
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
+            {selectedTemplate.questions.map((q, i) => (
+              <View key={q.id} className="mb-4">
+                <Text className="text-sm font-medium text-gray-700 mb-2">
+                  {i + 1}. {q.question}
                 </Text>
+                <TextInput
+                  className="bg-white rounded-xl px-4 py-3 text-base text-gray-900 border border-gray-200 min-h-[80px]"
+                  placeholder="Type your answer..."
+                  placeholderTextColor="#9ca3af"
+                  value={answers[i]}
+                  onChangeText={(val) => {
+                    const updated = [...answers];
+                    updated[i] = val;
+                    setAnswers(updated);
+                  }}
+                  multiline
+                  textAlignVertical="top"
+                />
               </View>
-            )}
-          </TouchableOpacity>
-        </View>
+            ))}
+            <View className="h-4" />
+          </ScrollView>
+
+          <View className="px-4 py-3 bg-white border-t border-gray-100">
+            <TouchableOpacity
+              className={`rounded-xl py-3.5 items-center ${
+                submitMutation.isPending ? "bg-brand-400" : "bg-brand-600"
+              }`}
+              onPress={handleSubmit}
+              disabled={submitMutation.isPending}
+              activeOpacity={0.7}
+            >
+              {submitMutation.isPending ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <View className="flex-row items-center">
+                  <Send size={18} color="#fff" />
+                  <Text className="text-white font-semibold text-base ml-2">
+                    Submit Check-in
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }

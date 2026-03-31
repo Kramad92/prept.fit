@@ -5,16 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { ArrowLeft, Send } from "lucide-react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Pusher from "pusher-js/react-native";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
@@ -23,7 +20,6 @@ import { useMessages } from "@/hooks/use-client-data";
 import { QueryError } from "@/components/query-error";
 import type { Message } from "@/types/api";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 const PUSHER_KEY = process.env.EXPO_PUBLIC_PUSHER_KEY;
 const PUSHER_CLUSTER = process.env.EXPO_PUBLIC_PUSHER_CLUSTER || "mt1";
 
@@ -31,20 +27,19 @@ export default function MessagesScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
-  const isAtBottom = useRef(true);
   const [text, setText] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
 
   const clientId = user?.clientProfileId;
   const { data: serverMessages, isLoading, isError, refetch } = useMessages(clientId ?? undefined);
 
-  // Merge server + local optimistic messages
+  // Sorted newest-first for inverted FlatList
   const messages = useMemo(() => {
     const base = serverMessages || [];
     const serverIds = new Set(base.map((m) => m.id));
     const extras = localMessages.filter((m) => !serverIds.has(m.id));
     return [...base, ...extras].sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [serverMessages, localMessages]);
 
@@ -56,7 +51,6 @@ export default function MessagesScreen() {
     const channel = pusher.subscribe(`chat-${user.tenantId}-${clientId}`);
 
     channel.bind("new-message", (msg: Message) => {
-      // Skip own messages (handled optimistically)
       if (msg.senderId === user.id) return;
       queryClient.setQueryData<Message[]>(
         ["messages", clientId],
@@ -88,7 +82,6 @@ export default function MessagesScreen() {
     mutationFn: (content: string) =>
       api.post<Message>(`/api/messages/${clientId}`, { content }),
     onSuccess: (msg) => {
-      // Replace optimistic with real
       setLocalMessages((prev) => prev.filter((m) => !m.id.startsWith("temp-")));
       queryClient.setQueryData<Message[]>(
         ["messages", clientId],
@@ -106,7 +99,6 @@ export default function MessagesScreen() {
     if (!content || !user) return;
     haptics.light();
 
-    // Optimistic add
     const tempMsg: Message = {
       id: `temp-${Date.now()}`,
       content,
@@ -136,12 +128,6 @@ export default function MessagesScreen() {
     });
     if (isToday) return time;
     return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ${time}`;
-  }, []);
-
-  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
-    isAtBottom.current = distanceFromBottom < 50;
   }, []);
 
   const renderMessage = useCallback(
@@ -222,8 +208,8 @@ export default function MessagesScreen() {
       </View>
 
       <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+        behavior="padding"
         keyboardVerticalOffset={0}
       >
         {messages.length === 0 ? (
@@ -236,16 +222,12 @@ export default function MessagesScreen() {
           <FlatList
             ref={flatListRef}
             data={messages}
+            inverted
             keyExtractor={(item) => item.id}
             renderItem={renderMessage}
-            contentContainerStyle={{ padding: 16, flexGrow: 1, justifyContent: "flex-end" }}
-            onScroll={handleScroll}
-            scrollEventThrottle={100}
-            onContentSizeChange={() => {
-              if (isAtBottom.current) {
-                flatListRef.current?.scrollToEnd({ animated: false });
-              }
-            }}
+            contentContainerStyle={{ padding: 16 }}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
           />
         )}
 

@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Modal,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
@@ -27,11 +26,13 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from "lucide-react-native";
 import { useMealPlans, useMealPlanDetail } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 import type { MealPlanListItem, FoodSearchResult } from "@/types/api";
 
 interface FoodForm {
@@ -161,6 +162,13 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
   const [initialized, setInitialized] = useState(false);
   const [foodPickerMealKey, setFoodPickerMealKey] = useState<string | null>(null);
 
+  // AI generation state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiHasGenerated, setAiHasGenerated] = useState(false);
+  const [aiRefinement, setAiRefinement] = useState("");
+  const [aiRefinements, setAiRefinements] = useState<string[]>([]);
+
   useEffect(() => {
     if (existing && !initialized) {
       setName(existing.name);
@@ -240,6 +248,84 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
     setMeals(meals.map((m) => (m.key === mealKey ? { ...m, foods: m.foods.filter((f) => f.key !== foodKey) } : m)));
   };
 
+  const handleAiGenerate = async () => {
+    if (!description.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiError("");
+    try {
+      const allRefinements = [...aiRefinements];
+      if (aiRefinement.trim()) allRefinements.push(aiRefinement.trim());
+      const fullPrompt = allRefinements.length > 0
+        ? `${description.trim()}\n\nAdditional instructions:\n${allRefinements.map((r, i) => `${i + 1}. ${r}`).join("\n")}`
+        : description.trim();
+
+      const body: Record<string, unknown> = { prompt: fullPrompt, locale: "en" };
+      const calMatch = description.match(/(\d{3,5})\s*(?:cal(?:ories?)?|kcal)/i);
+      if (calMatch) body.targetCalories = parseInt(calMatch[1], 10);
+      const mealMatch = description.match(/(\d{1,2})\s*meals?/i);
+      if (mealMatch) body.numMeals = parseInt(mealMatch[1], 10);
+
+      const res = await api.post<{
+        name: string;
+        description: string;
+        targetCalories: number;
+        targetProtein: number;
+        targetCarbs: number;
+        targetFat: number;
+        meals: Array<{
+          name: string;
+          description?: string;
+          time?: string;
+          foods: Array<{
+            name: string;
+            portion: string;
+            calories: number;
+            protein: number;
+            carbs: number;
+            fat: number;
+          }>;
+        }>;
+      }>("/api/ai/generate-meal-plan", body);
+
+      if (!name.trim()) setName(res.name);
+      setTargetCalories(res.targetCalories?.toString() || "");
+      setTargetProtein(res.targetProtein?.toString() || "");
+      setTargetCarbs(res.targetCarbs?.toString() || "");
+      setTargetFat(res.targetFat?.toString() || "");
+      setMeals(
+        res.meals.map((m) => ({
+          key: makeKey(),
+          name: m.name,
+          time: m.time || "",
+          foods: m.foods.map((f) => ({
+            key: makeKey(),
+            name: f.name,
+            portion: f.portion || "",
+            calories: f.calories?.toString() || "",
+            protein: f.protein?.toString() || "",
+            carbs: f.carbs?.toString() || "",
+            fat: f.fat?.toString() || "",
+          })),
+        }))
+      );
+
+      if (aiRefinement.trim()) {
+        setAiRefinements((prev) => [...prev, aiRefinement.trim()]);
+      }
+      setAiHasGenerated(true);
+      setAiRefinement("");
+      haptics.success();
+    } catch (e: any) {
+      setAiError(e.message || "AI generation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const removeAiRefinement = (index: number) => {
+    setAiRefinements((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSave = () => {
     if (!name.trim()) return Alert.alert("Required", "Plan name is required");
     saveMutation.mutate({
@@ -293,7 +379,56 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <TextInput className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-base font-semibold text-gray-900 mb-3" value={name} onChangeText={setName} placeholder="Plan name" placeholderTextColor="#9ca3af" />
-          <TextInput className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 mb-3" value={description} onChangeText={setDescription} placeholder="Description (optional)" placeholderTextColor="#9ca3af" multiline />
+          <TextInput className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 mb-3" value={description} onChangeText={setDescription} placeholder="Describe the meal plan (e.g. 'High protein cut 2200 cal 5 meals')..." placeholderTextColor="#9ca3af" multiline />
+
+          {/* AI Generate Section */}
+          <View className="mb-3">
+            <TouchableOpacity
+              className={`flex-row items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 self-start ${
+                !description.trim() || aiLoading ? "opacity-50" : ""
+              }`}
+              onPress={handleAiGenerate}
+              disabled={!description.trim() || aiLoading}
+              activeOpacity={0.7}
+            >
+              {aiLoading ? (
+                <ActivityIndicator size="small" color="#059669" />
+              ) : (
+                <Sparkles size={14} color="#059669" />
+              )}
+              <Text className="text-xs font-medium text-emerald-700 ml-1.5">
+                {aiLoading ? "Generating..." : aiHasGenerated ? "Regenerate" : "Generate with AI"}
+              </Text>
+            </TouchableOpacity>
+            {aiError ? (
+              <Text className="text-xs text-red-500 mt-1">{aiError}</Text>
+            ) : null}
+            {aiHasGenerated && (
+              <View className="mt-2">
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700"
+                  value={aiRefinement}
+                  onChangeText={setAiRefinement}
+                  placeholder="Refine: e.g. 'swap chicken for fish', 'add more protein'..."
+                  placeholderTextColor="#9ca3af"
+                  returnKeyType="go"
+                  onSubmitEditing={handleAiGenerate}
+                />
+                {aiRefinements.length > 0 && (
+                  <View className="flex-row flex-wrap mt-1.5">
+                    {aiRefinements.map((r, i) => (
+                      <View key={i} className="flex-row items-center bg-gray-100 rounded-md px-2 py-1 mr-1 mb-1">
+                        <Text className="text-[10px] text-gray-600 mr-1">{r}</Text>
+                        <TouchableOpacity onPress={() => removeAiRefinement(i)}>
+                          <X size={10} color="#9ca3af" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
 
           {/* Macro Targets */}
           <Text className="text-xs font-medium text-gray-500 mb-1.5">Daily Targets</Text>
@@ -412,13 +547,9 @@ function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onC
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">Search Foods</Text>
-        </View>
-        <View className="px-4 py-2 bg-white border-b border-gray-100">
+    <AppBottomSheet visible={visible} onClose={onClose} snapPoints={["75%"]} title="Search Foods">
+      <View className="-mx-5">
+        <View className="px-5 py-2 border-b border-gray-100">
           <View className="flex-row items-center bg-gray-50 rounded-lg px-3">
             <Search size={16} color="#9ca3af" />
             <TextInput className="flex-1 py-2 px-2 text-sm text-gray-900" value={search} onChangeText={setSearch} placeholder="Search foods..." placeholderTextColor="#9ca3af" autoFocus />
@@ -427,8 +558,9 @@ function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onC
         <FlatList
           data={foods || []}
           keyExtractor={(item, i) => `${item.name}-${i}`}
+          style={{ maxHeight: 400 }}
           renderItem={({ item }) => (
-            <TouchableOpacity className="px-4 py-3 border-b border-gray-50 bg-white" onPress={() => onSelect(item)} activeOpacity={0.6}>
+            <TouchableOpacity className="px-5 py-3 border-b border-gray-50 bg-white" onPress={() => onSelect(item)} activeOpacity={0.6}>
               <Text className="text-sm text-gray-900">{item.name}</Text>
               <Text className="text-xs text-gray-500">
                 {item.portion}{item.calories != null ? ` · ${item.calories} kcal` : ""}
@@ -438,7 +570,7 @@ function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onC
           )}
           ListEmptyComponent={<View className="items-center py-12"><Text className="text-sm text-gray-400">{search.length < 2 ? "Type to search..." : "No foods found"}</Text></View>}
         />
-      </SafeAreaView>
-    </Modal>
+      </View>
+    </AppBottomSheet>
   );
 }

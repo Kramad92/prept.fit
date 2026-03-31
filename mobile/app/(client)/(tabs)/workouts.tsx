@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import { api } from "@/lib/api-client";
 import { Dumbbell, ChevronRight, Filter } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
+import { AppHeader } from "@/components/app-header";
 import type { ClientProfile } from "@/types/api";
 
 export default function WorkoutsScreen() {
@@ -61,24 +62,26 @@ export default function WorkoutsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <ScrollView
-        className="flex-1 px-4 pt-4"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />
-        }
-      >
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-2xl font-bold text-gray-900">Workouts</Text>
+      <AppHeader
+        title="Workouts"
+        rightContent={
           <TouchableOpacity
             onPress={() => setShowAll(!showAll)}
-            className="flex-row items-center px-3 py-1.5 rounded-full bg-gray-100"
+            className="flex-row items-center px-3 py-1.5 rounded-full bg-gray-100 ml-1"
           >
             <Filter size={14} color="#6b7280" />
             <Text className="text-xs text-gray-600 ml-1.5 font-medium">
               {showAll ? "All" : "Active"}
             </Text>
           </TouchableOpacity>
-        </View>
+        }
+      />
+      <ScrollView
+        className="flex-1 px-4"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />
+        }
+      >
 
         {plans.length === 0 ? (
           <View className="items-center justify-center py-16">

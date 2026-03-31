@@ -28,6 +28,7 @@ import {
 import { useCoachDashboard } from "@/hooks/use-coach-data";
 import { useAuth } from "@/lib/auth-context";
 import { QueryError } from "@/components/query-error";
+import { AppHeader } from "@/components/app-header";
 
 export default function CoachDashboardScreen() {
   const { user } = useAuth();
@@ -58,9 +59,10 @@ export default function CoachDashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <AppHeader title={`Hi, ${firstName}`} subtitle="Here's your overview" />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 32 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -69,10 +71,6 @@ export default function CoachDashboardScreen() {
           />
         }
       >
-        <Text className="text-2xl font-bold text-gray-900 mb-1">
-          Hi, {firstName}
-        </Text>
-        <Text className="text-sm text-gray-500 mb-5">Here's your overview</Text>
 
         {/* Stats Grid */}
         <View className="flex-row flex-wrap -mx-1.5 mb-5">

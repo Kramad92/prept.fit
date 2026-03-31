@@ -29,11 +29,13 @@
         "backgroundColor": "#10b981"
       },
       "package": "com.prept.app",
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "VIBRATE",
-        "POST_NOTIFICATIONS"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
       ],
       "intentFilters": [
         {
@@ -44,7 +46,10 @@
               "scheme": "prept"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -63,15 +68,17 @@
         {
           "color": "#059669"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "c38d25b4-d890-4257-a2fa-f0009aea4ad2"
       },
       "router": {
         "origin": false
       }
-    }
+    },
+    "owner": "kramad92"
   }
 }

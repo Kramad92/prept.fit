@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -92,9 +94,14 @@ export default function AvailabilityScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <Header />
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
       <ScrollView
         className="flex-1 px-4 pt-4"
         contentContainerStyle={{ paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#059669" />}
       >
         <Text className="text-sm text-gray-500 mb-4">
@@ -183,6 +190,7 @@ export default function AvailabilityScreen() {
           );
         })}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

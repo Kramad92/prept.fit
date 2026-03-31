@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,11 +7,8 @@ import {
   ActivityIndicator,
   Image,
   RefreshControl,
-  Modal,
   TextInput,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
@@ -29,12 +26,12 @@ import {
   AlertCircle,
   Edit3,
   Plus,
-  X,
 } from "lucide-react-native";
 import { useClientDetail, useWorkoutPlans, useMealPlans, useHabitTemplates } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 
 type Tab = "overview" | "workouts" | "nutrition" | "progress";
 
@@ -578,46 +575,43 @@ function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boo
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-            <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-900 flex-1">Edit Client</Text>
-          </View>
-          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-            <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
-            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} />
-            <Text className="text-sm font-medium text-gray-700 mb-1">Email</Text>
-            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-            <Text className="text-sm font-medium text-gray-700 mb-1">Phone</Text>
-            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-            <Text className="text-sm font-medium text-gray-700 mb-1">Goals</Text>
-            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={goals} onChangeText={setGoals} multiline />
-            <Text className="text-sm font-medium text-gray-700 mb-1">Notes</Text>
-            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={notes} onChangeText={setNotes} multiline />
-            <Text className="text-sm font-medium text-gray-700 mb-1">Status</Text>
-            <View className="flex-row mb-6">
-              {["active", "paused", "archived"].map((s) => (
-                <TouchableOpacity key={s} className={`mr-2 px-3 py-1.5 rounded-full ${status === s ? "bg-brand-600" : "bg-white border border-gray-200"}`} onPress={() => setStatus(s)}>
-                  <Text className={`text-xs font-medium capitalize ${status === s ? "text-white" : "text-gray-600"}`}>{s}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-              onPress={() => {
-                if (!name.trim()) return Alert.alert("Required", "Name is required");
-                mutation.mutate({ name: name.trim(), email: email.trim() || null, phone: phone.trim() || null, goals: goals.trim() || null, notes: notes.trim() || null, status });
-              }}
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Save Changes</Text>}
-            </TouchableOpacity>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["85%"]}
+      title="Edit Client"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            mutation.mutate({ name: name.trim(), email: email.trim() || null, phone: phone.trim() || null, goals: goals.trim() || null, notes: notes.trim() || null, status });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Save Changes</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Email</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Phone</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Goals</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={goals} onChangeText={setGoals} multiline />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Notes</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={notes} onChangeText={setNotes} multiline />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Status</Text>
+      <View className="flex-row">
+        {["active", "paused", "archived"].map((s) => (
+          <TouchableOpacity key={s} className={`mr-2 px-3 py-1.5 rounded-full ${status === s ? "bg-brand-600" : "bg-white border border-gray-200"}`} onPress={() => setStatus(s)}>
+            <Text className={`text-xs font-medium capitalize ${status === s ? "text-white" : "text-gray-600"}`}>{s}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </AppBottomSheet>
   );
 }
 
@@ -638,33 +632,29 @@ function AssignWorkoutModal({ visible, clientId, onClose, onSuccess }: { visible
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">Assign Workout Plan</Text>
-        </View>
-        <ScrollView className="flex-1 px-4 pt-4">
-          {(plans || []).length === 0 ? (
-            <View className="items-center py-12"><Text className="text-sm text-gray-400">No plans to assign. Create one first.</Text></View>
-          ) : (plans || []).map((p) => (
-            <TouchableOpacity key={p.id} className={`bg-white rounded-xl border px-4 py-3 mb-2 ${selectedId === p.id ? "border-brand-600 bg-brand-50" : "border-gray-100"}`} onPress={() => setSelectedId(p.id)}>
-              <Text className="text-sm font-medium text-gray-900">{p.name}</Text>
-              <Text className="text-xs text-gray-500">{p.exerciseCount} exercises</Text>
-            </TouchableOpacity>
-          ))}
-          {selectedId && (
-            <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center mt-4 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-              onPress={() => mutation.mutate({ clientId, workoutPlanId: selectedId })}
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Assign Plan</Text>}
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Assign Workout Plan"
+      footer={selectedId ? (
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => mutation.mutate({ clientId, workoutPlanId: selectedId })}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Assign Plan</Text>}
+        </TouchableOpacity>
+      ) : undefined}
+    >
+      {(plans || []).length === 0 ? (
+        <View className="items-center py-12"><Text className="text-sm text-gray-400">No plans to assign. Create one first.</Text></View>
+      ) : (plans || []).map((p) => (
+        <TouchableOpacity key={p.id} className={`bg-white rounded-xl border px-4 py-3 mb-2 ${selectedId === p.id ? "border-brand-600 bg-brand-50" : "border-gray-100"}`} onPress={() => setSelectedId(p.id)}>
+          <Text className="text-sm font-medium text-gray-900">{p.name}</Text>
+          <Text className="text-xs text-gray-500">{p.exerciseCount} exercises</Text>
+        </TouchableOpacity>
+      ))}
+    </AppBottomSheet>
   );
 }
 
@@ -685,32 +675,28 @@ function AssignMealModal({ visible, clientId, onClose, onSuccess }: { visible: b
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">Assign Meal Plan</Text>
-        </View>
-        <ScrollView className="flex-1 px-4 pt-4">
-          {(plans || []).length === 0 ? (
-            <View className="items-center py-12"><Text className="text-sm text-gray-400">No plans to assign. Create one first.</Text></View>
-          ) : (plans || []).map((p) => (
-            <TouchableOpacity key={p.id} className={`bg-white rounded-xl border px-4 py-3 mb-2 ${selectedId === p.id ? "border-brand-600 bg-brand-50" : "border-gray-100"}`} onPress={() => setSelectedId(p.id)}>
-              <Text className="text-sm font-medium text-gray-900">{p.name}</Text>
-              <Text className="text-xs text-gray-500">{p.mealCount} meals{p.targetCalories ? ` · ${p.targetCalories} kcal` : ""}</Text>
-            </TouchableOpacity>
-          ))}
-          {selectedId && (
-            <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center mt-4 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-              onPress={() => mutation.mutate({ clientId, mealPlanId: selectedId })}
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Assign Plan</Text>}
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Assign Meal Plan"
+      footer={selectedId ? (
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => mutation.mutate({ clientId, mealPlanId: selectedId })}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Assign Plan</Text>}
+        </TouchableOpacity>
+      ) : undefined}
+    >
+      {(plans || []).length === 0 ? (
+        <View className="items-center py-12"><Text className="text-sm text-gray-400">No plans to assign. Create one first.</Text></View>
+      ) : (plans || []).map((p) => (
+        <TouchableOpacity key={p.id} className={`bg-white rounded-xl border px-4 py-3 mb-2 ${selectedId === p.id ? "border-brand-600 bg-brand-50" : "border-gray-100"}`} onPress={() => setSelectedId(p.id)}>
+          <Text className="text-sm font-medium text-gray-900">{p.name}</Text>
+          <Text className="text-xs text-gray-500">{p.mealCount} meals{p.targetCalories ? ` · ${p.targetCalories} kcal` : ""}</Text>
+        </TouchableOpacity>
+      ))}
+    </AppBottomSheet>
   );
 }

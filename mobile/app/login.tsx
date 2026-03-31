@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { router, Redirect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri } from "expo-auth-session";
 import { useAuth } from "@/lib/auth-context";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -39,9 +40,9 @@ export default function LoginScreen() {
     setGoogleLoading(true);
 
     try {
-      // Use implicit flow (response_type=id_token) — no PKCE/crypto needed
       const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      const redirectUri = "https://auth.expo.io/@kramad92/prept";
+      // Use the app scheme redirect — works in dev builds and production
+      const redirectUri = makeRedirectUri({ scheme: "prept", path: "auth" });
       const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${encodeURIComponent(GOOGLE_WEB_CLIENT_ID)}` +
@@ -51,6 +52,7 @@ export default function LoginScreen() {
         `&nonce=${nonce}` +
         `&prompt=select_account`;
 
+      console.log("[GoogleAuth] redirectUri:", redirectUri);
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
 
       if (result.type === "success" && result.url) {

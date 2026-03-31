@@ -4,6 +4,9 @@ import { Slot, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { addNotificationResponseListener } from "@/lib/notifications";
@@ -86,15 +89,21 @@ function NotificationHandler() {
 export default function RootLayout() {
 
   return (
-    <ErrorBoundary>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <NotificationHandler />
-            <Slot />
-          </AuthProvider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <KeyboardProvider>
+        <ErrorBoundary>
+          <SafeAreaProvider>
+            <QueryClientProvider client={queryClient}>
+              <BottomSheetModalProvider>
+                <AuthProvider>
+                  <NotificationHandler />
+                  <Slot />
+                </AuthProvider>
+              </BottomSheetModalProvider>
+            </QueryClientProvider>
+          </SafeAreaProvider>
+        </ErrorBoundary>
+      </KeyboardProvider>
+    </GestureHandlerRootView>
   );
 }

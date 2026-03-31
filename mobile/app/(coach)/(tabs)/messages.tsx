@@ -16,6 +16,7 @@ import {
   useCoachUnreadCounts,
 } from "@/hooks/use-coach-data";
 import { QueryError } from "@/components/query-error";
+import { AppHeader } from "@/components/app-header";
 
 interface ConversationItem {
   clientId: string;
@@ -137,9 +138,7 @@ export default function CoachMessagesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="px-4 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-gray-900">Messages</Text>
-      </View>
+      <AppHeader title="Messages" />
 
       <FlatList
         data={conversations}

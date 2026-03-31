@@ -27,6 +27,7 @@ import {
   Search,
   X,
   Copy,
+  Sparkles,
 } from "lucide-react-native";
 import {
   useWorkoutPlans,
@@ -182,6 +183,14 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
   const [initialized, setInitialized] = useState(false);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
 
+  // AI generation state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiHasGenerated, setAiHasGenerated] = useState(false);
+  const [aiRefinement, setAiRefinement] = useState("");
+  const [aiRefinements, setAiRefinements] = useState<string[]>([]);
+  const [includeVideos, setIncludeVideos] = useState(false);
+
   // Initialize form from existing plan
   useEffect(() => {
     if (existing && !initialized) {
@@ -240,6 +249,66 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
 
   const removeExercise = (key: string) => {
     setExercises(exercises.filter((ex) => ex.key !== key));
+  };
+
+  const handleAiGenerate = async () => {
+    if (!description.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiError("");
+    try {
+      const allRefinements = [...aiRefinements];
+      if (aiRefinement.trim()) allRefinements.push(aiRefinement.trim());
+      const fullPrompt = allRefinements.length > 0
+        ? `${description.trim()}\n\nAdditional instructions:\n${allRefinements.map((r, i) => `${i + 1}. ${r}`).join("\n")}`
+        : description.trim();
+
+      const res = await api.post<{
+        name: string;
+        description: string;
+        exercises: Array<{
+          name: string;
+          sets: number;
+          reps: string;
+          weight: string;
+          restSeconds: number;
+          notes: string;
+          videoUrl?: string;
+        }>;
+      }>("/api/ai/generate-workout-plan", {
+        prompt: fullPrompt,
+        locale: "en",
+        includeVideos,
+      });
+
+      if (!name.trim()) setName(res.name);
+      setExercises(
+        res.exercises.map((ex) => ({
+          key: makeKey(),
+          name: ex.name,
+          sets: ex.sets?.toString() || "3",
+          reps: ex.reps || "8-12",
+          weight: ex.weight || "",
+          restSeconds: ex.restSeconds?.toString() || "60",
+          notes: ex.notes || "",
+          videoUrl: ex.videoUrl || "",
+        }))
+      );
+
+      if (aiRefinement.trim()) {
+        setAiRefinements((prev) => [...prev, aiRefinement.trim()]);
+      }
+      setAiHasGenerated(true);
+      setAiRefinement("");
+      haptics.success();
+    } catch (e: any) {
+      setAiError(e.message || "AI generation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const removeAiRefinement = (index: number) => {
+    setAiRefinements((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = () => {
@@ -322,10 +391,71 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
             className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 mb-3"
             value={description}
             onChangeText={setDescription}
-            placeholder="Description (optional)"
+            placeholder="Describe the workout (e.g. 'Upper body push day for intermediate')..."
             placeholderTextColor="#9ca3af"
             multiline
           />
+
+          {/* AI Generate Section */}
+          <View className="mb-3">
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                className={`flex-row items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 mr-2 ${
+                  !description.trim() || aiLoading ? "opacity-50" : ""
+                }`}
+                onPress={handleAiGenerate}
+                disabled={!description.trim() || aiLoading}
+                activeOpacity={0.7}
+              >
+                {aiLoading ? (
+                  <ActivityIndicator size="small" color="#059669" />
+                ) : (
+                  <Sparkles size={14} color="#059669" />
+                )}
+                <Text className="text-xs font-medium text-emerald-700 ml-1.5">
+                  {aiLoading ? "Generating..." : aiHasGenerated ? "Regenerate" : "Generate with AI"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-row items-center"
+                onPress={() => setIncludeVideos(!includeVideos)}
+              >
+                <View className={`w-4 h-4 rounded border mr-1.5 items-center justify-center ${includeVideos ? "bg-brand-600 border-brand-600" : "border-gray-300"}`}>
+                  {includeVideos && <Text className="text-white text-[8px] font-bold">✓</Text>}
+                </View>
+                <Text className="text-xs text-gray-500">Videos</Text>
+              </TouchableOpacity>
+            </View>
+            {aiError ? (
+              <Text className="text-xs text-red-500 mt-1">{aiError}</Text>
+            ) : null}
+            {aiHasGenerated && (
+              <View className="mt-2">
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700"
+                  value={aiRefinement}
+                  onChangeText={setAiRefinement}
+                  placeholder="Refine: e.g. 'add more leg exercises', 'reduce rest times'..."
+                  placeholderTextColor="#9ca3af"
+                  returnKeyType="go"
+                  onSubmitEditing={handleAiGenerate}
+                />
+                {aiRefinements.length > 0 && (
+                  <View className="flex-row flex-wrap mt-1.5">
+                    {aiRefinements.map((r, i) => (
+                      <View key={i} className="flex-row items-center bg-gray-100 rounded-md px-2 py-1 mr-1 mb-1">
+                        <Text className="text-[10px] text-gray-600 mr-1">{r}</Text>
+                        <TouchableOpacity onPress={() => removeAiRefinement(i)}>
+                          <X size={10} color="#9ca3af" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+
           <TouchableOpacity
             className="flex-row items-center mb-4"
             onPress={() => setIsTemplate(!isTemplate)}

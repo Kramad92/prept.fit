@@ -15,6 +15,7 @@ import {
   LogOut,
   ChevronRight,
 } from "lucide-react-native";
+import { AppHeader } from "@/components/app-header";
 
 interface MenuItem {
   icon: typeof MessageCircle;
@@ -67,8 +68,8 @@ export default function MoreScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <ScrollView className="flex-1 px-4 pt-4">
-        <Text className="text-2xl font-bold text-gray-900 mb-4">More</Text>
+      <AppHeader title="More" />
+      <ScrollView className="flex-1 px-4">
 
         <View className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-6">
           {menuItems.map((item, index) => (

@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
+import { AppHeader } from "@/components/app-header";
 import { router } from "expo-router";
 
 function SkeletonCard() {
@@ -101,8 +102,9 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <AppHeader title={`Hey, ${firstName}`} subtitle="Here's your overview for today" />
       <ScrollView
-        className="flex-1 px-4 pt-4"
+        className="flex-1 px-4"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -111,12 +113,6 @@ export default function HomeScreen() {
           />
         }
       >
-        <Text className="text-2xl font-bold text-gray-900 mb-1">
-          Hey, {firstName}
-        </Text>
-        <Text className="text-sm text-gray-500 mb-6">
-          Here's your overview for today
-        </Text>
 
         {/* Today's Workout */}
         <TouchableOpacity

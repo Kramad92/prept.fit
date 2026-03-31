@@ -13,6 +13,7 @@ import { router } from "expo-router";
 import { Search, Dumbbell, Camera, ChevronRight } from "lucide-react-native";
 import { useCoachClients } from "@/hooks/use-coach-data";
 import { QueryError } from "@/components/query-error";
+import { AppHeader } from "@/components/app-header";
 import type { ClientListItem } from "@/types/api";
 
 export default function CoachClientsScreen() {
@@ -102,8 +103,8 @@ export default function CoachClientsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="px-4 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-gray-900 mb-3">Clients</Text>
+      <AppHeader title="Clients" />
+      <View className="px-4 pb-2">
         <View className="flex-row items-center bg-white rounded-lg border border-gray-200 px-3 py-2.5">
           <Search size={18} color="#9ca3af" />
           <TextInput

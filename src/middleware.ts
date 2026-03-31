@@ -14,6 +14,7 @@ const protectedPatterns = [
   "/dashboard",
   "/portal",
   "/admin",
+  "/onboarding",
   "/api/clients",
   "/api/schedules",
   "/api/workouts",
@@ -38,6 +39,7 @@ const protectedPatterns = [
   "/api/group-sessions",
   "/api/search",
   "/api/admin",
+  "/api/onboarding",
 ];
 
 function isProtectedRoute(pathname: string): boolean {
@@ -104,6 +106,23 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
+  // Onboarding redirect — only for page routes, not API routes
+  if (!pathname.startsWith("/api/")) {
+    const onboardingComplete = nextAuthToken.onboardingComplete === true;
+
+    // Users who haven't completed onboarding → redirect to onboarding
+    if (!onboardingComplete && !pathname.startsWith("/onboarding")) {
+      const onboardingPath = role === "CLIENT" ? "/onboarding/client" : "/onboarding/coach";
+      return NextResponse.redirect(new URL(onboardingPath, req.url));
+    }
+
+    // Users who completed onboarding → redirect away from onboarding pages
+    if (onboardingComplete && pathname.startsWith("/onboarding")) {
+      const homePath = role === "CLIENT" ? "/portal" : "/dashboard";
+      return NextResponse.redirect(new URL(homePath, req.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -112,6 +131,7 @@ export const config = {
     "/dashboard/:path*",
     "/portal/:path*",
     "/admin/:path*",
+    "/onboarding/:path*",
     "/api/clients/:path*",
     "/api/schedules/:path*",
     "/api/workouts/:path*",
@@ -136,5 +156,6 @@ export const config = {
     "/api/group-sessions/:path*",
     "/api/search/:path*",
     "/api/admin/:path*",
+    "/api/onboarding/:path*",
   ],
 };

@@ -29,6 +29,7 @@ export async function getSession() {
           tenantId: (payload.tenantId as string) || "",
           tenantSlug: (payload.tenantSlug as string) || "",
           clientProfileId: (payload.clientProfileId as string) || null,
+          onboardingComplete: (payload.onboardingComplete as boolean) ?? true,
         },
       };
     } catch {

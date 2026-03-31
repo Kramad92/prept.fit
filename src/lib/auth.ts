@@ -71,6 +71,7 @@ export const authOptions: NextAuthOptions = {
             tenantId: "",
             tenantSlug: "",
             clientProfileId: null,
+            onboardingComplete: true,
           };
         }
 
@@ -119,6 +120,7 @@ export const authOptions: NextAuthOptions = {
           tenantId: effectiveTenantId,
           tenantSlug: effectiveTenant?.slug || "",
           clientProfileId: activeProfile?.id || null,
+          onboardingComplete: user.onboardingComplete,
         };
       },
     }),
@@ -235,6 +237,7 @@ export const authOptions: NextAuthOptions = {
           token.role = dbUser.role;
           token.tenantId = dbUser.tenantId || "";
           token.tenantSlug = dbUser.tenant?.slug || "";
+          token.onboardingComplete = dbUser.onboardingComplete;
           // Find active client profile for current tenant
           const activeProfile = dbUser.clientProfiles.find(
             (cp) => cp.tenantId === dbUser.tenantId && cp.status === "active"
@@ -247,6 +250,16 @@ export const authOptions: NextAuthOptions = {
         token.tenantId = (user as any).tenantId;
         token.tenantSlug = (user as any).tenantSlug;
         token.clientProfileId = (user as any).clientProfileId;
+        token.onboardingComplete = (user as any).onboardingComplete;
+      }
+
+      // Handle onboarding completion via useSession().update()
+      if (trigger === "update" && updateData?.onboardingComplete === true) {
+        token.onboardingComplete = true;
+        await prisma.user.update({
+          where: { id: token.sub },
+          data: { onboardingComplete: true },
+        });
       }
 
       // Handle tenant switch via useSession().update()
@@ -281,6 +294,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).tenantId = token.tenantId;
         (session.user as any).tenantSlug = token.tenantSlug;
         (session.user as any).clientProfileId = token.clientProfileId;
+        (session.user as any).onboardingComplete = token.onboardingComplete;
       }
       return session;
     },

@@ -76,6 +76,7 @@ model User {
   avatar        String?
   theme         String    @default("system") // "light", "dark", or "system"
   emailVerified DateTime?
+  onboardingComplete Boolean @default(false)
   prankPopup    Json?     // { imageUrls: string[], message?: string } — fun popup prank, managed from admin
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

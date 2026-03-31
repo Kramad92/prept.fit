@@ -517,3 +517,27 @@ export const groupAttendanceSchema = z.object({
 export const groupWorkoutAssignSchema = z.object({
   workoutPlanId: z.string().min(1),
 });
+
+// Onboarding schemas
+export const coachOnboardingSchema = z.object({
+  coachPhoto: z.string().max(500).nullable().optional(),
+  bio: z.string().max(5000).nullable().optional(),
+  logo: z.string().max(500).nullable().optional(),
+  timezone: z.string().max(100).optional(),
+  locale: z.enum(["bs", "sr", "hr", "en"]).optional(),
+  units: z.enum(["metric", "imperial"]).optional(),
+  currency: z.string().max(10).optional(),
+});
+
+export const clientOnboardingSchema = z.object({
+  goals: z.string().max(2000).nullable().optional(),
+  fitnessLevel: z.string().nullable().optional(),
+  activityLevel: z.string().nullable().optional(),
+  injuries: z.string().max(1000).nullable().optional(),
+  allergies: z.string().max(1000).nullable().optional(),
+  dietaryPrefs: z.string().max(1000).nullable().optional(),
+  gender: z.string().nullable().optional(),
+  dateOfBirth: z.string().nullable().optional(),
+  height: z.union([z.string(), z.number()]).nullable().optional(),
+  weight: z.union([z.string(), z.number()]).nullable().optional(),
+});

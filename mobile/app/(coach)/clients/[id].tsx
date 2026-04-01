@@ -578,7 +578,7 @@ function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boo
     <AppBottomSheet
       visible={visible}
       onClose={onClose}
-      snapPoints={["85%"]}
+      snapPoints={["50%", "85%"]}
       title="Edit Client"
       footer={
         <TouchableOpacity
@@ -634,7 +634,8 @@ function AssignWorkoutModal({ visible, clientId, onClose, onSuccess }: { visible
   return (
     <AppBottomSheet
       visible={visible}
-      onClose={onClose}
+      onClose={() => { setSelectedId(""); onClose(); }}
+      snapPoints={["50%", "85%"]}
       title="Assign Workout Plan"
       footer={selectedId ? (
         <TouchableOpacity
@@ -677,7 +678,8 @@ function AssignMealModal({ visible, clientId, onClose, onSuccess }: { visible: b
   return (
     <AppBottomSheet
       visible={visible}
-      onClose={onClose}
+      onClose={() => { setSelectedId(""); onClose(); }}
+      snapPoints={["50%", "85%"]}
       title="Assign Meal Plan"
       footer={selectedId ? (
         <TouchableOpacity

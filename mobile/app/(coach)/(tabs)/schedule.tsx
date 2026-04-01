@@ -282,7 +282,7 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
       visible={visible}
       onClose={onClose}
       title="New Session"
-      snapPoints={["90%"]}
+      snapPoints={["50%", "85%"]}
       footer={
         <TouchableOpacity
           className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}

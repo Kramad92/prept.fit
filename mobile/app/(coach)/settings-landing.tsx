@@ -10,7 +10,6 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
-  Modal,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -32,6 +31,7 @@ import { useSettings, useCertificates, usePackages } from "@/hooks/use-coach-dat
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 
 export default function LandingPageScreen() {
   const queryClient = useQueryClient();
@@ -271,32 +271,31 @@ function CertificateFormModal({ visible, onClose }: { visible: boolean; onClose:
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">Add Certificate</Text>
-        </View>
-        <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. NASM CPT" placeholderTextColor="#9ca3af" />
-          <Text className="text-sm font-medium text-gray-700 mb-1">Issuer</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={issuer} onChangeText={setIssuer} placeholder="e.g. NASM" placeholderTextColor="#9ca3af" />
-          <Text className="text-sm font-medium text-gray-700 mb-1">Year</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900" value={year} onChangeText={setYear} placeholder="2024" placeholderTextColor="#9ca3af" keyboardType="number-pad" />
-          <TouchableOpacity
-            className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-            onPress={() => {
-              if (!name.trim()) return Alert.alert("Required", "Name is required");
-              mutation.mutate({ name: name.trim(), issuer: issuer.trim() || null, year: year ? parseInt(year) : null });
-            }}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Add Certificate</Text>}
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={visible}
+      onClose={() => { setName(""); setIssuer(""); setYear(""); onClose(); }}
+      snapPoints={["50%", "85%"]}
+      title="Add Certificate"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            mutation.mutate({ name: name.trim(), issuer: issuer.trim() || null, year: year ? parseInt(year) : null });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Add Certificate</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. NASM CPT" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Issuer</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={issuer} onChangeText={setIssuer} placeholder="e.g. NASM" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Year</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={year} onChangeText={setYear} placeholder="2024" placeholderTextColor="#9ca3af" keyboardType="number-pad" />
+    </AppBottomSheet>
   );
 }
 
@@ -319,36 +318,35 @@ function PackageFormModal({ visible, onClose }: { visible: boolean; onClose: () 
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">Add Package</Text>
-        </View>
-        <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Monthly Coaching" placeholderTextColor="#9ca3af" />
-          <Text className="text-sm font-medium text-gray-700 mb-1">Price *</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={price} onChangeText={setPrice} placeholder="99.00" placeholderTextColor="#9ca3af" keyboardType="decimal-pad" />
-          <Text className="text-sm font-medium text-gray-700 mb-1">Duration</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={duration} onChangeText={setDuration} placeholder="e.g. monthly, 12 sessions" placeholderTextColor="#9ca3af" />
-          <Text className="text-sm font-medium text-gray-700 mb-1">Description</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900" value={description} onChangeText={setDescription} placeholder="What's included..." placeholderTextColor="#9ca3af" multiline numberOfLines={3} textAlignVertical="top" style={{ minHeight: 80 }} />
-          <TouchableOpacity
-            className={`rounded-lg py-3.5 items-center mb-8 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-            onPress={() => {
-              if (!name.trim()) return Alert.alert("Required", "Name is required");
-              const p = parseFloat(price);
-              if (isNaN(p) || p < 0) return Alert.alert("Required", "Valid price is required");
-              mutation.mutate({ name: name.trim(), price: p, duration: duration.trim() || null, description: description.trim() || null });
-            }}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Add Package</Text>}
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={visible}
+      onClose={() => { setName(""); setPrice(""); setDuration(""); setDescription(""); onClose(); }}
+      snapPoints={["50%", "85%"]}
+      title="Add Package"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            const p = parseFloat(price);
+            if (isNaN(p) || p < 0) return Alert.alert("Required", "Valid price is required");
+            mutation.mutate({ name: name.trim(), price: p, duration: duration.trim() || null, description: description.trim() || null });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Add Package</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Monthly Coaching" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Price *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={price} onChangeText={setPrice} placeholder="99.00" placeholderTextColor="#9ca3af" keyboardType="decimal-pad" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Duration</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={duration} onChangeText={setDuration} placeholder="e.g. monthly, 12 sessions" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Description</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={description} onChangeText={setDescription} placeholder="What's included..." placeholderTextColor="#9ca3af" multiline numberOfLines={3} textAlignVertical="top" style={{ minHeight: 80 }} />
+    </AppBottomSheet>
   );
 }
 

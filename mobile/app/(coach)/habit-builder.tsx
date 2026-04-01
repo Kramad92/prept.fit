@@ -7,18 +7,18 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Modal,
   ScrollView,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, Edit3, X, Heart } from "lucide-react-native";
+import { ArrowLeft, Plus, Trash2, Edit3, Heart } from "lucide-react-native";
 import { useHabitTemplates } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 import type { HabitTemplate } from "@/types/api";
 
 const PRESETS = [
@@ -152,30 +152,29 @@ function HabitFormModal({ visible, onClose }: { visible: boolean; onClose: () =>
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">New Habit</Text>
-        </View>
-        <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Drink 3L water" placeholderTextColor="#9ca3af" />
-          <Text className="text-sm font-medium text-gray-700 mb-1">Icon (emoji)</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900" value={icon} onChangeText={setIcon} placeholder="💧" placeholderTextColor="#9ca3af" />
-          <TouchableOpacity
-            className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-            onPress={() => {
-              if (!name.trim()) return Alert.alert("Required", "Name is required");
-              mutation.mutate({ name: name.trim(), icon: icon.trim() || null });
-            }}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Habit</Text>}
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["50%", "85%"]}
+      title="New Habit"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            mutation.mutate({ name: name.trim(), icon: icon.trim() || null });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Habit</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Drink 3L water" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Icon (emoji)</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={icon} onChangeText={setIcon} placeholder="💧" placeholderTextColor="#9ca3af" />
+    </AppBottomSheet>
   );
 }
 
@@ -184,7 +183,6 @@ function HabitEditModal({ item, onClose }: { item: HabitTemplate | null; onClose
   const [name, setName] = useState(item?.name || "");
   const [icon, setIcon] = useState(item?.icon || "");
 
-  // Sync state when item changes
   useEffect(() => {
     if (item) {
       setName(item.name);
@@ -209,29 +207,28 @@ function HabitEditModal({ item, onClose }: { item: HabitTemplate | null; onClose
   if (!item) return null;
 
   return (
-    <Modal visible={!!item} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={() => { setName(""); setIcon(""); onClose(); }} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">Edit Habit</Text>
-        </View>
-        <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="Habit name" placeholderTextColor="#9ca3af" />
-          <Text className="text-sm font-medium text-gray-700 mb-1">Icon (emoji)</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900" value={icon} onChangeText={setIcon} placeholder="💧" placeholderTextColor="#9ca3af" />
-          <TouchableOpacity
-            className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-            onPress={() => {
-              if (!name.trim()) return Alert.alert("Required", "Name is required");
-              mutation.mutate({ id: item.id, name: name.trim(), icon: icon.trim() || null });
-            }}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Save Changes</Text>}
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={!!item}
+      onClose={() => { setName(""); setIcon(""); onClose(); }}
+      snapPoints={["50%", "85%"]}
+      title="Edit Habit"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            mutation.mutate({ id: item.id, name: name.trim(), icon: icon.trim() || null });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Save Changes</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="Habit name" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Icon (emoji)</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={icon} onChangeText={setIcon} placeholder="💧" placeholderTextColor="#9ca3af" />
+    </AppBottomSheet>
   );
 }

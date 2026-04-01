@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Modal,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
@@ -37,6 +36,7 @@ import {
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 import type { WorkoutPlanListItem } from "@/types/api";
 
 interface ExerciseForm {
@@ -611,45 +611,39 @@ function ExercisePickerModal({
   const { data: exercises } = useExerciseLibrary(search || undefined);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1">Pick Exercise</Text>
-        </View>
-        <View className="px-4 py-2 bg-white border-b border-gray-100">
-          <View className="flex-row items-center bg-gray-50 rounded-lg px-3">
-            <Search size={16} color="#9ca3af" />
-            <TextInput
-              className="flex-1 py-2 px-2 text-sm text-gray-900"
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Search exercises..."
-              placeholderTextColor="#9ca3af"
-              autoFocus
-            />
-          </View>
-        </View>
-        <FlatList
-          data={(exercises || []).slice(0, 50)}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              className="px-4 py-3 border-b border-gray-50 bg-white"
-              onPress={() => onSelect(item.name)}
-              activeOpacity={0.6}
-            >
-              <Text className="text-sm text-gray-900">{item.name}</Text>
-              <Text className="text-xs text-gray-500">{[item.category, item.muscleGroup].filter(Boolean).join(" · ")}</Text>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            <View className="items-center py-12">
-              <Text className="text-sm text-gray-400">No exercises found</Text>
-            </View>
-          }
+    <AppBottomSheet
+      visible={visible}
+      onClose={() => { setSearch(""); onClose(); }}
+      snapPoints={["50%", "85%"]}
+      title="Pick Exercise"
+    >
+      <View className="flex-row items-center bg-gray-50 rounded-lg px-3 mb-3 -mx-1">
+        <Search size={16} color="#9ca3af" />
+        <TextInput
+          className="flex-1 py-2 px-2 text-sm text-gray-900"
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search exercises..."
+          placeholderTextColor="#9ca3af"
         />
-      </SafeAreaView>
-    </Modal>
+      </View>
+      {(exercises || []).slice(0, 50).length === 0 ? (
+        <View className="items-center py-12">
+          <Text className="text-sm text-gray-400">No exercises found</Text>
+        </View>
+      ) : (
+        (exercises || []).slice(0, 50).map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            className="py-3 border-b border-gray-50"
+            onPress={() => { onSelect(item.name); setSearch(""); }}
+            activeOpacity={0.6}
+          >
+            <Text className="text-sm text-gray-900">{item.name}</Text>
+            <Text className="text-xs text-gray-500">{[item.category, item.muscleGroup].filter(Boolean).join(" · ")}</Text>
+          </TouchableOpacity>
+        ))
+      )}
+    </AppBottomSheet>
   );
 }

@@ -7,11 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Modal,
   ScrollView,
   RefreshControl,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -20,15 +17,14 @@ import {
   ArrowLeft,
   Search,
   Plus,
-  X,
   Dumbbell,
   Filter,
-  ChevronDown,
 } from "lucide-react-native";
 import { useExerciseLibrary, useExerciseCategories, useEquipmentTypes } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 import type { ExerciseLibraryItem } from "@/types/api";
 
 const DIFFICULTIES = ["Beginner", "Novice", "Intermediate", "Advanced", "Expert"];
@@ -159,41 +155,33 @@ export default function ExercisesScreen() {
 function ExerciseDetailModal({ item, onClose }: { item: ExerciseLibraryItem | null; onClose: () => void }) {
   if (!item) return null;
   return (
-    <Modal visible={!!item} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-          <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 flex-1" numberOfLines={1}>{item.name}</Text>
+    <AppBottomSheet visible={!!item} onClose={onClose} snapPoints={["50%", "85%"]} title={item.name}>
+      <View className="flex-row flex-wrap mb-4">
+        {item.category && <Tag label={item.category} bg="bg-blue-50" text="text-blue-700" />}
+        {item.muscleGroup && <Tag label={item.muscleGroup} bg="bg-purple-50" text="text-purple-700" />}
+        {item.equipment && <Tag label={item.equipment} bg="bg-amber-50" text="text-amber-700" />}
+        {item.difficulty && <Tag label={item.difficulty} bg="bg-green-50" text="text-green-700" />}
+        {item.bodyRegion && <Tag label={item.bodyRegion} bg="bg-pink-50" text="text-pink-700" />}
+      </View>
+      {item.secondaryMuscles && (
+        <Detail label="Secondary Muscles" value={item.secondaryMuscles} />
+      )}
+      {item.secondaryEquipment && (
+        <Detail label="Secondary Equipment" value={item.secondaryEquipment} />
+      )}
+      {item.instructions && (
+        <View className="mt-2">
+          <Text className="text-xs font-medium text-gray-500 mb-1">Instructions</Text>
+          <Text className="text-sm text-gray-700 leading-5">{item.instructions}</Text>
         </View>
-        <ScrollView className="flex-1 px-4 pt-4" contentContainerStyle={{ paddingBottom: 40 }}>
-          <View className="flex-row flex-wrap mb-4">
-            {item.category && <Tag label={item.category} bg="bg-blue-50" text="text-blue-700" />}
-            {item.muscleGroup && <Tag label={item.muscleGroup} bg="bg-purple-50" text="text-purple-700" />}
-            {item.equipment && <Tag label={item.equipment} bg="bg-amber-50" text="text-amber-700" />}
-            {item.difficulty && <Tag label={item.difficulty} bg="bg-green-50" text="text-green-700" />}
-            {item.bodyRegion && <Tag label={item.bodyRegion} bg="bg-pink-50" text="text-pink-700" />}
-          </View>
-          {item.secondaryMuscles && (
-            <Detail label="Secondary Muscles" value={item.secondaryMuscles} />
-          )}
-          {item.secondaryEquipment && (
-            <Detail label="Secondary Equipment" value={item.secondaryEquipment} />
-          )}
-          {item.instructions && (
-            <View className="mt-2">
-              <Text className="text-xs font-medium text-gray-500 mb-1">Instructions</Text>
-              <Text className="text-sm text-gray-700 leading-5">{item.instructions}</Text>
-            </View>
-          )}
-          {item.videoUrl && (
-            <View className="mt-4">
-              <Text className="text-xs font-medium text-gray-500 mb-1">Video</Text>
-              <Text className="text-sm text-brand-600">{item.videoUrl}</Text>
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+      )}
+      {item.videoUrl && (
+        <View className="mt-4">
+          <Text className="text-xs font-medium text-gray-500 mb-1">Video</Text>
+          <Text className="text-sm text-brand-600">{item.videoUrl}</Text>
+        </View>
+      )}
+    </AppBottomSheet>
   );
 }
 
@@ -220,52 +208,49 @@ function CreateExerciseModal({ visible, onClose }: { visible: boolean; onClose: 
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-            <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-900 flex-1">New Exercise</Text>
-          </View>
-          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-            <FormField label="Name *" value={name} onChange={setName} placeholder="Exercise name" />
-            <FormField label="Category" value={category} onChange={setCategory} placeholder="e.g. Chest, Back, Legs" />
-            <FormField label="Muscle Group" value={muscleGroup} onChange={setMuscleGroup} placeholder="e.g. Pectorals, Lats" />
-            <FormField label="Equipment" value={equip} onChange={setEquip} placeholder="e.g. Barbell, Dumbbell" />
-            <FormField label="Video URL" value={videoUrl} onChange={setVideoUrl} placeholder="https://..." keyboard="url" />
-            <Text className="text-sm font-medium text-gray-700 mb-1">Instructions</Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
-              value={instructions}
-              onChangeText={setInstructions}
-              placeholder="Step-by-step instructions..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              style={{ minHeight: 100 }}
-            />
-            <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-              onPress={() => {
-                if (!name.trim()) return Alert.alert("Required", "Name is required");
-                mutation.mutate({
-                  name: name.trim(),
-                  category: category.trim() || null,
-                  muscleGroup: muscleGroup.trim() || null,
-                  equipment: equip.trim() || null,
-                  instructions: instructions.trim() || null,
-                  videoUrl: videoUrl.trim() || null,
-                });
-              }}
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Exercise</Text>}
-            </TouchableOpacity>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["50%", "85%"]}
+      title="New Exercise"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            mutation.mutate({
+              name: name.trim(),
+              category: category.trim() || null,
+              muscleGroup: muscleGroup.trim() || null,
+              equipment: equip.trim() || null,
+              instructions: instructions.trim() || null,
+              videoUrl: videoUrl.trim() || null,
+            });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Exercise</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <FormField label="Name *" value={name} onChange={setName} placeholder="Exercise name" />
+      <FormField label="Category" value={category} onChange={setCategory} placeholder="e.g. Chest, Back, Legs" />
+      <FormField label="Muscle Group" value={muscleGroup} onChange={setMuscleGroup} placeholder="e.g. Pectorals, Lats" />
+      <FormField label="Equipment" value={equip} onChange={setEquip} placeholder="e.g. Barbell, Dumbbell" />
+      <FormField label="Video URL" value={videoUrl} onChange={setVideoUrl} placeholder="https://..." keyboard="url" />
+      <Text className="text-sm font-medium text-gray-700 mb-1">Instructions</Text>
+      <TextInput
+        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+        value={instructions}
+        onChangeText={setInstructions}
+        placeholder="Step-by-step instructions..."
+        placeholderTextColor="#9ca3af"
+        multiline
+        numberOfLines={4}
+        textAlignVertical="top"
+        style={{ minHeight: 100 }}
+      />
+    </AppBottomSheet>
   );
 }
 

@@ -7,11 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Modal,
   ScrollView,
   RefreshControl,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -21,7 +18,6 @@ import {
   Plus,
   Trash2,
   Edit3,
-  X,
   Copy,
   ClipboardList,
 } from "lucide-react-native";
@@ -29,6 +25,7 @@ import { useCheckInTemplates } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 import type { CheckInTemplate } from "@/types/api";
 
 const FREQUENCIES = ["weekly", "biweekly", "monthly", "daily"];
@@ -82,7 +79,6 @@ export default function CheckInBuilderScreen() {
           <Trash2 size={16} color="#ef4444" />
         </TouchableOpacity>
       </View>
-      {/* Preview questions */}
       <View className="mt-2 border-t border-gray-50 pt-2">
         {item.questions.slice(0, 3).map((q, i) => (
           <Text key={q.id} className="text-xs text-gray-500" numberOfLines={1}>
@@ -155,69 +151,65 @@ function TemplateFormModal({ visible, onClose }: { visible: boolean; onClose: ()
   });
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-            <TouchableOpacity onPress={onClose} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-900 flex-1">New Template</Text>
-          </View>
-          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-            <Text className="text-sm font-medium text-gray-700 mb-1">Template Name *</Text>
-            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Weekly Check-in" placeholderTextColor="#9ca3af" />
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["50%", "85%"]}
+      title="New Template"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Template name is required");
+            const validQ = questions.filter((q) => q.trim());
+            if (validQ.length === 0) return Alert.alert("Required", "At least one question is required");
+            mutation.mutate({ name: name.trim(), frequency, questions: validQ.map((q) => q.trim()) });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Template</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Template Name *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Weekly Check-in" placeholderTextColor="#9ca3af" />
 
-            <Text className="text-sm font-medium text-gray-700 mb-1">Frequency</Text>
-            <View className="flex-row flex-wrap mb-4">
-              {FREQUENCIES.map((f) => (
-                <TouchableOpacity key={f} className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${frequency === f ? "bg-brand-600" : "bg-white border border-gray-200"}`} onPress={() => setFrequency(f)}>
-                  <Text className={`text-xs font-medium capitalize ${frequency === f ? "text-white" : "text-gray-600"}`}>{f}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+      <Text className="text-sm font-medium text-gray-700 mb-1">Frequency</Text>
+      <View className="flex-row flex-wrap mb-4">
+        {FREQUENCIES.map((f) => (
+          <TouchableOpacity key={f} className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${frequency === f ? "bg-brand-600" : "bg-white border border-gray-200"}`} onPress={() => setFrequency(f)}>
+            <Text className={`text-xs font-medium capitalize ${frequency === f ? "text-white" : "text-gray-600"}`}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-            <Text className="text-sm font-medium text-gray-700 mb-2">Questions</Text>
-            {questions.map((q, i) => (
-              <View key={`q-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
-                <Text className="text-xs text-gray-400 mr-2 w-4">{i + 1}.</Text>
-                <TextInput
-                  className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900"
-                  value={q}
-                  onChangeText={(v) => {
-                    const updated = [...questions];
-                    updated[i] = v;
-                    setQuestions(updated);
-                  }}
-                  placeholder="Enter question..."
-                  placeholderTextColor="#9ca3af"
-                />
-                {questions.length > 1 && (
-                  <TouchableOpacity className="p-2 ml-1" onPress={() => setQuestions(questions.filter((_, j) => j !== i))}>
-                    <Trash2 size={14} color="#ef4444" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
-            <TouchableOpacity className="flex-row items-center py-2" onPress={() => setQuestions([...questions, ""])}>
-              <Plus size={16} color="#059669" />
-              <Text className="text-sm text-brand-600 ml-1">Add Question</Text>
+      <Text className="text-sm font-medium text-gray-700 mb-2">Questions</Text>
+      {questions.map((q, i) => (
+        <View key={`q-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
+          <Text className="text-xs text-gray-400 mr-2 w-4">{i + 1}.</Text>
+          <TextInput
+            className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900"
+            value={q}
+            onChangeText={(v) => {
+              const updated = [...questions];
+              updated[i] = v;
+              setQuestions(updated);
+            }}
+            placeholder="Enter question..."
+            placeholderTextColor="#9ca3af"
+          />
+          {questions.length > 1 && (
+            <TouchableOpacity className="p-2 ml-1" onPress={() => setQuestions(questions.filter((_, j) => j !== i))}>
+              <Trash2 size={14} color="#ef4444" />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center mt-4 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-              onPress={() => {
-                if (!name.trim()) return Alert.alert("Required", "Template name is required");
-                const validQ = questions.filter((q) => q.trim());
-                if (validQ.length === 0) return Alert.alert("Required", "At least one question is required");
-                mutation.mutate({ name: name.trim(), frequency, questions: validQ.map((q) => q.trim()) });
-              }}
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Template</Text>}
-            </TouchableOpacity>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+          )}
+        </View>
+      ))}
+      <TouchableOpacity className="flex-row items-center py-2" onPress={() => setQuestions([...questions, ""])}>
+        <Plus size={16} color="#059669" />
+        <Text className="text-sm text-brand-600 ml-1">Add Question</Text>
+      </TouchableOpacity>
+    </AppBottomSheet>
   );
 }
 
@@ -226,19 +218,16 @@ function TemplateEditModal({ item, onClose }: { item: CheckInTemplate | null; on
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState("weekly");
   const [questions, setQuestions] = useState<string[]>([""]);
-  const [init, setInit] = useState(false);
 
   useEffect(() => {
     if (item) {
       setName(item.name);
       setFrequency(item.frequency);
       setQuestions(item.questions.map((q) => q.question));
-      setInit(true);
     } else {
       setName("");
       setFrequency("weekly");
       setQuestions([""]);
-      setInit(false);
     }
   }, [item]);
 
@@ -247,7 +236,7 @@ function TemplateEditModal({ item, onClose }: { item: CheckInTemplate | null; on
     onSuccess: () => {
       haptics.success();
       queryClient.invalidateQueries({ queryKey: ["checkin-templates"] });
-      setInit(false); setName(""); setQuestions([""]);
+      setName(""); setQuestions([""]);
       onClose();
     },
     onError: (err: any) => Alert.alert("Error", err.message),
@@ -256,63 +245,59 @@ function TemplateEditModal({ item, onClose }: { item: CheckInTemplate | null; on
   if (!item) return null;
 
   return (
-    <Modal visible={!!item} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-            <TouchableOpacity onPress={() => { setInit(false); setName(""); setQuestions([""]); onClose(); }} className="mr-3 p-1"><X size={22} color="#111827" /></TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-900 flex-1">Edit Template</Text>
-          </View>
-          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-            <Text className="text-sm font-medium text-gray-700 mb-1">Template Name *</Text>
-            <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="Template name" placeholderTextColor="#9ca3af" />
+    <AppBottomSheet
+      visible={!!item}
+      onClose={() => { setName(""); setQuestions([""]); onClose(); }}
+      snapPoints={["50%", "85%"]}
+      title="Edit Template"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            const validQ = questions.filter((q) => q.trim());
+            if (validQ.length === 0) return Alert.alert("Required", "At least one question required");
+            mutation.mutate({ name: name.trim(), frequency, questions: validQ.map((q) => q.trim()) });
+          }}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Save Changes</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Template Name *</Text>
+      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="Template name" placeholderTextColor="#9ca3af" />
 
-            <Text className="text-sm font-medium text-gray-700 mb-1">Frequency</Text>
-            <View className="flex-row flex-wrap mb-4">
-              {FREQUENCIES.map((f) => (
-                <TouchableOpacity key={f} className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${frequency === f ? "bg-brand-600" : "bg-white border border-gray-200"}`} onPress={() => setFrequency(f)}>
-                  <Text className={`text-xs font-medium capitalize ${frequency === f ? "text-white" : "text-gray-600"}`}>{f}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+      <Text className="text-sm font-medium text-gray-700 mb-1">Frequency</Text>
+      <View className="flex-row flex-wrap mb-4">
+        {FREQUENCIES.map((f) => (
+          <TouchableOpacity key={f} className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${frequency === f ? "bg-brand-600" : "bg-white border border-gray-200"}`} onPress={() => setFrequency(f)}>
+            <Text className={`text-xs font-medium capitalize ${frequency === f ? "text-white" : "text-gray-600"}`}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-            <Text className="text-sm font-medium text-gray-700 mb-2">Questions</Text>
-            {questions.map((q, i) => (
-              <View key={`eq-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
-                <Text className="text-xs text-gray-400 mr-2 w-4">{i + 1}.</Text>
-                <TextInput
-                  className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900"
-                  value={q}
-                  onChangeText={(v) => { const u = [...questions]; u[i] = v; setQuestions(u); }}
-                  placeholder="Question..."
-                  placeholderTextColor="#9ca3af"
-                />
-                {questions.length > 1 && (
-                  <TouchableOpacity className="p-2 ml-1" onPress={() => setQuestions(questions.filter((_, j) => j !== i))}>
-                    <Trash2 size={14} color="#ef4444" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
-            <TouchableOpacity className="flex-row items-center py-2" onPress={() => setQuestions([...questions, ""])}>
-              <Plus size={16} color="#059669" /><Text className="text-sm text-brand-600 ml-1">Add Question</Text>
+      <Text className="text-sm font-medium text-gray-700 mb-2">Questions</Text>
+      {questions.map((q, i) => (
+        <View key={`eq-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
+          <Text className="text-xs text-gray-400 mr-2 w-4">{i + 1}.</Text>
+          <TextInput
+            className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900"
+            value={q}
+            onChangeText={(v) => { const u = [...questions]; u[i] = v; setQuestions(u); }}
+            placeholder="Question..."
+            placeholderTextColor="#9ca3af"
+          />
+          {questions.length > 1 && (
+            <TouchableOpacity className="p-2 ml-1" onPress={() => setQuestions(questions.filter((_, j) => j !== i))}>
+              <Trash2 size={14} color="#ef4444" />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center mt-4 ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
-              onPress={() => {
-                if (!name.trim()) return Alert.alert("Required", "Name is required");
-                const validQ = questions.filter((q) => q.trim());
-                if (validQ.length === 0) return Alert.alert("Required", "At least one question required");
-                mutation.mutate({ name: name.trim(), frequency, questions: validQ.map((q) => q.trim()) });
-              }}
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Save Changes</Text>}
-            </TouchableOpacity>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+          )}
+        </View>
+      ))}
+      <TouchableOpacity className="flex-row items-center py-2" onPress={() => setQuestions([...questions, ""])}>
+        <Plus size={16} color="#059669" /><Text className="text-sm text-brand-600 ml-1">Add Question</Text>
+      </TouchableOpacity>
+    </AppBottomSheet>
   );
 }

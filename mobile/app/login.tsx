@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { router, Redirect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
 import { useAuth } from "@/lib/auth-context";
 
@@ -33,6 +34,7 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     if (!GOOGLE_WEB_CLIENT_ID) return;
@@ -81,6 +83,39 @@ export default function LoginScreen() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setError("");
+    setAppleLoading(true);
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (credential.identityToken) {
+        await loginWithSocial("apple", credential.identityToken);
+      } else {
+        setError("No token received from Apple");
+      }
+    } catch (e: any) {
+      if (e.code === "ERR_REQUEST_CANCELED") {
+        // User cancelled — no error
+      } else {
+        const msg = e.message || "Apple sign-in failed";
+        if (msg.includes("NO_ACCOUNT")) {
+          setError("No account found. Please register on the web first.");
+        } else {
+          setError(msg);
+        }
+      }
+    } finally {
+      setAppleLoading(false);
+    }
+  };
+
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       setError("Email and password are required");
@@ -97,7 +132,7 @@ export default function LoginScreen() {
     }
   };
 
-  const isAnyLoading = loading || googleLoading;
+  const isAnyLoading = loading || googleLoading || appleLoading;
 
   return (
     <KeyboardAvoidingView
@@ -116,7 +151,7 @@ export default function LoginScreen() {
           </View>
         ) : null}
 
-        {/* Google Sign-In */}
+        {/* Social Sign-In */}
         {GOOGLE_WEB_CLIENT_ID ? (
           <>
             <TouchableOpacity
@@ -138,13 +173,38 @@ export default function LoginScreen() {
                 </>
               )}
             </TouchableOpacity>
-
-            <View className="flex-row items-center my-6">
-              <View className="flex-1 h-px bg-gray-200" />
-              <Text className="mx-4 text-sm text-gray-400">or</Text>
-              <View className="flex-1 h-px bg-gray-200" />
-            </View>
           </>
+        ) : null}
+
+        {/* Apple Sign-In (iOS only) */}
+        {Platform.OS === "ios" ? (
+          <TouchableOpacity
+            className={`rounded-lg py-3.5 items-center flex-row justify-center bg-black mt-3 ${
+              isAnyLoading ? "opacity-50" : ""
+            }`}
+            onPress={handleAppleSignIn}
+            disabled={isAnyLoading}
+            activeOpacity={0.8}
+          >
+            {appleLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Text className="text-white text-lg mr-2"></Text>
+                <Text className="text-white font-medium text-base">
+                  Continue with Apple
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        ) : null}
+
+        {(GOOGLE_WEB_CLIENT_ID || Platform.OS === "ios") ? (
+          <View className="flex-row items-center my-6">
+            <View className="flex-1 h-px bg-gray-200" />
+            <Text className="mx-4 text-sm text-gray-400">or</Text>
+            <View className="flex-1 h-px bg-gray-200" />
+          </View>
         ) : null}
 
         {/* Email/Password */}
@@ -197,6 +257,18 @@ export default function LoginScreen() {
           disabled={isAnyLoading}
         >
           <Text className="text-sm text-brand-600">Forgot password?</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="mt-3 items-center"
+          onPress={() => router.push("/signup")}
+          activeOpacity={0.6}
+          disabled={isAnyLoading}
+        >
+          <Text className="text-sm text-gray-500">
+            Don't have an account?{" "}
+            <Text className="text-brand-600 font-medium">Create one</Text>
+          </Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

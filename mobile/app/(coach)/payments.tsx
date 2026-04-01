@@ -7,11 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Modal,
   ScrollView,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -23,12 +20,12 @@ import {
   Clock,
   CheckCircle,
   Plus,
-  X,
 } from "lucide-react-native";
 import { useCoachPayments, useCoachClients } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet } from "@/components/app-bottom-sheet";
 
 type StatusFilter = "all" | "pending" | "overdue" | "paid";
 
@@ -221,7 +218,7 @@ export default function CoachPaymentsScreen() {
 
 function Header({ onAdd }: { onAdd: () => void }) {
   return (
-    <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100 mb-4">
       <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
         <ArrowLeft size={22} color="#111827" />
       </TouchableOpacity>
@@ -319,163 +316,109 @@ function AddPaymentModal({
     });
   };
 
+  const resetForm = () => {
+    setClientId("");
+    setAmount("");
+    setMethod("cash");
+    setStatus("paid");
+    setDescription("");
+    setShowClientPicker(false);
+  };
+
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <AppBottomSheet
+      visible={visible}
+      onClose={() => { resetForm(); onClose(); }}
+      snapPoints={["50%", "85%"]}
+      title="Record Payment"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${createMutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={handleSubmit}
+          disabled={createMutation.isPending}
+          activeOpacity={0.8}
         >
-          {/* Header */}
-          <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-            <TouchableOpacity onPress={onClose} className="mr-3 p-1">
-              <X size={22} color="#111827" />
-            </TouchableOpacity>
-            <Text className="text-lg font-semibold text-gray-900 flex-1">
-              Record Payment
-            </Text>
-          </View>
+          {createMutation.isPending ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white font-semibold text-base">Record Payment</Text>
+          )}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Client</Text>
+      <TouchableOpacity
+        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4"
+        onPress={() => setShowClientPicker(!showClientPicker)}
+        activeOpacity={0.6}
+      >
+        <Text className={selectedClient ? "text-gray-900" : "text-gray-400"}>
+          {selectedClient?.name || "Select client..."}
+        </Text>
+      </TouchableOpacity>
 
-          <ScrollView
-            className="flex-1 px-4 pt-4"
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Client Selector */}
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              Client
-            </Text>
-            <TouchableOpacity
-              className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4"
-              onPress={() => setShowClientPicker(!showClientPicker)}
-              activeOpacity={0.6}
-            >
-              <Text
-                className={
-                  selectedClient ? "text-gray-900" : "text-gray-400"
-                }
+      {showClientPicker && (
+        <View className="bg-white border border-gray-200 rounded-lg mb-4" style={{ maxHeight: 192 }}>
+          <ScrollView nestedScrollEnabled>
+            {(clients || []).map((c) => (
+              <TouchableOpacity
+                key={c.id}
+                className={`px-4 py-2.5 border-b border-gray-50 ${c.id === clientId ? "bg-brand-50" : ""}`}
+                onPress={() => { setClientId(c.id); setShowClientPicker(false); }}
               >
-                {selectedClient?.name || "Select client..."}
-              </Text>
-            </TouchableOpacity>
-
-            {showClientPicker && (
-              <View className="bg-white border border-gray-200 rounded-lg mb-4 max-h-48 overflow-hidden">
-                <ScrollView nestedScrollEnabled>
-                  {(clients || []).map((c) => (
-                    <TouchableOpacity
-                      key={c.id}
-                      className={`px-4 py-2.5 border-b border-gray-50 ${
-                        c.id === clientId ? "bg-brand-50" : ""
-                      }`}
-                      onPress={() => {
-                        setClientId(c.id);
-                        setShowClientPicker(false);
-                      }}
-                    >
-                      <Text className="text-sm text-gray-900">{c.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Amount */}
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              Amount
-            </Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
-              placeholder="0.00"
-              placeholderTextColor="#9ca3af"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-            />
-
-            {/* Method */}
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              Method
-            </Text>
-            <View className="flex-row flex-wrap mb-4">
-              {METHODS.map((m) => (
-                <TouchableOpacity
-                  key={m}
-                  className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${
-                    method === m
-                      ? "bg-brand-600"
-                      : "bg-white border border-gray-200"
-                  }`}
-                  onPress={() => setMethod(m)}
-                >
-                  <Text
-                    className={`text-xs font-medium capitalize ${
-                      method === m ? "text-white" : "text-gray-600"
-                    }`}
-                  >
-                    {m.replace("_", " ")}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Status */}
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              Status
-            </Text>
-            <View className="flex-row mb-4">
-              {(["paid", "pending"] as const).map((s) => (
-                <TouchableOpacity
-                  key={s}
-                  className={`mr-2 px-4 py-2 rounded-lg ${
-                    status === s
-                      ? "bg-brand-600"
-                      : "bg-white border border-gray-200"
-                  }`}
-                  onPress={() => setStatus(s)}
-                >
-                  <Text
-                    className={`text-sm font-medium capitalize ${
-                      status === s ? "text-white" : "text-gray-600"
-                    }`}
-                  >
-                    {s}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Description */}
-            <Text className="text-sm font-medium text-gray-700 mb-1">
-              Description (optional)
-            </Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900"
-              placeholder="Monthly coaching fee..."
-              placeholderTextColor="#9ca3af"
-              value={description}
-              onChangeText={setDescription}
-            />
-
-            {/* Submit */}
-            <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center mb-8 ${
-                createMutation.isPending ? "bg-brand-400" : "bg-brand-600"
-              }`}
-              onPress={handleSubmit}
-              disabled={createMutation.isPending}
-              activeOpacity={0.8}
-            >
-              {createMutation.isPending ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="text-white font-semibold text-base">
-                  Record Payment
-                </Text>
-              )}
-            </TouchableOpacity>
+                <Text className="text-sm text-gray-900">{c.name}</Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+        </View>
+      )}
+
+      <Text className="text-sm font-medium text-gray-700 mb-1">Amount</Text>
+      <TextInput
+        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+        placeholder="0.00"
+        placeholderTextColor="#9ca3af"
+        value={amount}
+        onChangeText={setAmount}
+        keyboardType="decimal-pad"
+      />
+
+      <Text className="text-sm font-medium text-gray-700 mb-1">Method</Text>
+      <View className="flex-row flex-wrap mb-4">
+        {METHODS.map((m) => (
+          <TouchableOpacity
+            key={m}
+            className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${method === m ? "bg-brand-600" : "bg-white border border-gray-200"}`}
+            onPress={() => setMethod(m)}
+          >
+            <Text className={`text-xs font-medium capitalize ${method === m ? "text-white" : "text-gray-600"}`}>
+              {m.replace("_", " ")}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text className="text-sm font-medium text-gray-700 mb-1">Status</Text>
+      <View className="flex-row mb-4">
+        {(["paid", "pending"] as const).map((s) => (
+          <TouchableOpacity
+            key={s}
+            className={`mr-2 px-4 py-2 rounded-lg ${status === s ? "bg-brand-600" : "bg-white border border-gray-200"}`}
+            onPress={() => setStatus(s)}
+          >
+            <Text className={`text-sm font-medium capitalize ${status === s ? "text-white" : "text-gray-600"}`}>{s}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text className="text-sm font-medium text-gray-700 mb-1">Description (optional)</Text>
+      <TextInput
+        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+        placeholder="Monthly coaching fee..."
+        placeholderTextColor="#9ca3af"
+        value={description}
+        onChangeText={setDescription}
+      />
+    </AppBottomSheet>
   );
 }

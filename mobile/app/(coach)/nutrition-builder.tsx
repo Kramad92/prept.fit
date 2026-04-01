@@ -547,7 +547,7 @@ function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onC
   });
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} snapPoints={["75%"]} title="Search Foods">
+    <AppBottomSheet visible={visible} onClose={onClose} snapPoints={["50%", "85%"]} title="Search Foods">
       <View className="-mx-5">
         <View className="px-5 py-2 border-b border-gray-100">
           <View className="flex-row items-center bg-gray-50 rounded-lg px-3">

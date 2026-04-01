@@ -58,8 +58,8 @@ export default function SchedulePage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t.schedule.title}</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">{t.schedule.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t.schedule.subtitle}
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function SchedulePage() {
             label: "Today",
             value: events.filter((e) => e.date.startsWith(todayStr) && e.status !== "cancelled").length,
             icon: CalendarDays,
-            color: "text-brand-600 bg-brand-50",
+            color: "text-brand-400 bg-brand-500/15",
           },
           {
             label: "This Week",
@@ -93,28 +93,28 @@ export default function SchedulePage() {
               return events.filter((e) => e.date >= ws && e.date <= we && e.status !== "cancelled").length;
             })(),
             icon: Clock,
-            color: "text-blue-600 bg-blue-50",
+            color: "text-blue-400 bg-blue-500/15",
           },
           {
             label: "Upcoming",
             value: upcomingEvents.length,
             icon: ChevronRight,
-            color: "text-purple-600 bg-purple-50",
+            color: "text-purple-400 bg-purple-500/15",
           },
           {
             label: "Clients",
             value: clients.length,
             icon: Users,
-            color: "text-emerald-600 bg-emerald-50",
+            color: "text-emerald-400 bg-emerald-500/15",
           },
         ].map((stat) => (
-          <div key={stat.label} className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <div key={stat.label} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${stat.color}`}>
               <stat.icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500">{stat.label}</p>
+              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
           </div>
         ))}
@@ -132,12 +132,12 @@ export default function SchedulePage() {
 
         {/* Day Detail Panel */}
         <div className="space-y-4 self-start">
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-3">
-              <h3 className="font-semibold text-gray-900">
+          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <div className="border-b border-border bg-muted/50 px-4 py-3">
+              <h3 className="font-semibold text-foreground">
                 {format(selectedDate, "EEEE, MMMM d")}
               </h3>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {dayEvents.length} session{dayEvents.length !== 1 ? "s" : ""}
               </p>
             </div>
@@ -145,10 +145,10 @@ export default function SchedulePage() {
             <div className="p-4">
               {dayEvents.length === 0 ? (
                 <div className="flex flex-col items-center py-6 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <Clock className="h-5 w-5 text-gray-400" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <p className="mt-3 text-sm text-gray-500">
+                  <p className="mt-3 text-sm text-muted-foreground">
                     {t.schedule.noSessionsOnDay}
                   </p>
                   <Button
@@ -166,17 +166,17 @@ export default function SchedulePage() {
                   {dayEvents.map((evt) => (
                     <div
                       key={evt.id}
-                      className="group rounded-lg border border-gray-150 bg-gray-50/50 p-3 transition-colors hover:border-brand-200 hover:bg-brand-50/30"
+                      className="group rounded-lg border border-border bg-muted/50 p-3 transition-colors hover:border-brand-200 hover:bg-brand-50/30"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-gray-900">{evt.title}</p>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                          <p className="truncate text-sm font-medium text-foreground">{evt.title}</p>
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
                             {formatTime(evt.startTime)} – {formatTime(evt.endTime)}
                           </div>
                           {evt.clientName && (
-                            <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                            <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                               <Users className="h-3 w-3" />
                               {evt.clientName}
                             </div>
@@ -193,11 +193,11 @@ export default function SchedulePage() {
 
           {/* Upcoming sessions mini-list */}
           {upcomingEvents.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-3">
-                <h3 className="font-semibold text-gray-900">Upcoming</h3>
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              <div className="border-b border-border bg-muted/50 px-4 py-3">
+                <h3 className="font-semibold text-foreground">Upcoming</h3>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border">
                 {upcomingEvents.map((evt) => (
                   <button
                     key={evt.id}
@@ -205,9 +205,9 @@ export default function SchedulePage() {
                       const d = new Date(evt.date + "T12:00:00");
                       setSelectedDate(d);
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-50"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/50"
                   >
-                    <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+                    <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-500/15 text-brand-400">
                       <span className="text-xs font-medium leading-none">
                         {format(new Date(evt.date + "T12:00:00"), "MMM")}
                       </span>
@@ -216,14 +216,14 @@ export default function SchedulePage() {
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-gray-900">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {evt.clientName || evt.title}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {formatTime(evt.startTime)} – {formatTime(evt.endTime)}
                       </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </button>
                 ))}
               </div>
@@ -268,7 +268,7 @@ export default function SchedulePage() {
             }}
           >
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 {t.schedule.sessionTitle} *
               </label>
               <Input
@@ -280,7 +280,7 @@ export default function SchedulePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 {t.common.date} *
               </label>
               <Input
@@ -293,7 +293,7 @@ export default function SchedulePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   {t.schedule.startTime} *
                 </label>
                 <Input
@@ -305,7 +305,7 @@ export default function SchedulePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   {t.schedule.endTime} *
                 </label>
                 <Input
@@ -318,7 +318,7 @@ export default function SchedulePage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 {t.schedule.client} *
               </label>
               <FilterSelect
@@ -330,7 +330,7 @@ export default function SchedulePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 {t.schedule.type}
               </label>
               <FilterSelect
@@ -346,7 +346,7 @@ export default function SchedulePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 {t.common.notes}
               </label>
               <Textarea

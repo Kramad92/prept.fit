@@ -30,12 +30,6 @@ interface OnboardingWizardProps {
   subtitle?: string;
 }
 
-async function completeOnboarding(redirectTo: string) {
-  await fetch("/api/onboarding/complete", { method: "POST" });
-  // Hard redirect to force a fresh session with onboardingComplete=true
-  window.location.href = redirectTo;
-}
-
 export function OnboardingWizard({
   steps,
   onSave,
@@ -44,6 +38,7 @@ export function OnboardingWizard({
   subtitle,
 }: OnboardingWizardProps) {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
@@ -71,12 +66,15 @@ export function OnboardingWizard({
     } catch {
       // save failed but still complete onboarding
     }
-    await completeOnboarding(redirectTo);
+    // Update the JWT token so middleware sees onboardingComplete=true
+    await updateSession({ onboardingComplete: true });
+    window.location.href = redirectTo;
   }
 
   async function handleSkip() {
     setSaving(true);
-    await completeOnboarding(redirectTo);
+    await updateSession({ onboardingComplete: true });
+    window.location.href = redirectTo;
   }
 
   const StepComponent = steps[currentStep].component;

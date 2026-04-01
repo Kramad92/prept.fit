@@ -72,21 +72,21 @@ export function Calendar({ events, onDateSelect, selectedDate }: CalendarProps) 
   });
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-slate-800/60 shadow-lg shadow-black/20">
       {/* Calendar Header */}
-      <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-3 md:px-6 md:py-4">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3 md:px-6 md:py-4">
         <div>
-          <h2 className="text-lg font-bold text-foreground">
+          <h2 className="text-lg font-bold text-white">
             {format(currentMonth, "MMMM yyyy")}
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-slate-400">
             {monthEvents.length} session{monthEvents.length !== 1 ? "s" : ""} this month
           </p>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -98,7 +98,7 @@ export function Calendar({ events, onDateSelect, selectedDate }: CalendarProps) 
           </button>
           <button
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -106,11 +106,11 @@ export function Calendar({ events, onDateSelect, selectedDate }: CalendarProps) 
       </div>
 
       {/* Day Labels */}
-      <div className="grid grid-cols-7 border-b border-border bg-muted/30">
+      <div className="grid grid-cols-7 border-b border-white/[0.06] bg-white/[0.02]">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
           <div
             key={d}
-            className="py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            className="py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500"
           >
             {d}
           </div>
@@ -131,20 +131,22 @@ export function Calendar({ events, onDateSelect, selectedDate }: CalendarProps) 
               key={i}
               onClick={() => onDateSelect(d)}
               className={cn(
-                "relative flex min-h-[4.5rem] flex-col items-start border-b border-r border-border p-1.5 text-left transition-all md:min-h-[5.5rem] md:p-2",
-                !inMonth && "bg-muted/30 text-muted-foreground/30",
-                inMonth && isWeekend && "bg-muted/20",
-                inMonth && !isWeekend && "bg-card",
-                inMonth && "hover:bg-muted/50",
-                selected && "bg-brand-500/10 ring-1 ring-inset ring-brand-500/30",
+                "relative flex min-h-[4.5rem] flex-col items-start border-b border-r border-white/[0.04] p-1.5 text-left transition-all md:min-h-[5.5rem] md:p-2",
+                !inMonth && "bg-slate-900/40 text-slate-700",
+                inMonth && isWeekend && "bg-white/[0.02]",
+                inMonth && !isWeekend && "bg-white/[0.04]",
+                inMonth && "hover:bg-white/[0.08]",
+                selected && !today && "!bg-brand-500/[0.08] ring-1 ring-inset ring-brand-400/25",
+                selected && today && "!bg-brand-500/[0.08]",
               )}
             >
               <span
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-full text-sm transition-colors",
-                  today && "bg-brand-500 font-bold text-white shadow-sm shadow-brand-500/30",
-                  selected && !today && "bg-brand-500/20 font-semibold text-brand-400",
-                  !today && !selected && inMonth && "text-foreground",
+                  today && "bg-brand-500 font-bold text-slate-950 shadow-md shadow-brand-500/40",
+                  selected && !today && "bg-brand-400/20 font-semibold text-brand-300",
+                  !today && !selected && inMonth && "text-slate-300",
+                  !inMonth && "text-slate-700",
                 )}
               >
                 {format(d, "d")}
@@ -163,13 +165,13 @@ export function Calendar({ events, onDateSelect, selectedDate }: CalendarProps) 
                         style.text,
                       )}
                     >
-                      <span className="text-muted-foreground">{formatTime(evt.startTime)}</span>{" "}
+                      <span className="text-slate-500">{formatTime(evt.startTime)}</span>{" "}
                       {evt.clientName || evt.title}
                     </div>
                   );
                 })}
                 {dayEvents.length > 2 && (
-                  <div className="px-1.5 text-[10px] font-medium text-muted-foreground">
+                  <div className="px-1.5 text-[10px] font-medium text-slate-500">
                     +{dayEvents.length - 2} more
                   </div>
                 )}

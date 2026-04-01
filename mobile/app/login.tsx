@@ -9,14 +9,29 @@ import {
   Platform,
 } from "react-native";
 import { router, Redirect } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
-import * as AppleAuthentication from "expo-apple-authentication";
-import { makeRedirectUri } from "expo-auth-session";
 import { useAuth } from "@/lib/auth-context";
 
-WebBrowser.maybeCompleteAuthSession();
+// Native social sign-in modules — unavailable in Expo Go
+let AppleAuthentication: typeof import("expo-apple-authentication") | null = null;
+let GoogleSignin: any = null;
+let isErrorWithCode: any = () => false;
+let statusCodes: any = {};
 
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+try {
+  AppleAuthentication = require("expo-apple-authentication");
+} catch {}
+
+try {
+  const g = require("@react-native-google-signin/google-signin");
+  GoogleSignin = g.GoogleSignin;
+  isErrorWithCode = g.isErrorWithCode;
+  statusCodes = g.statusCodes;
+  GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    offlineAccess: false,
+  });
+} catch {}
 
 export default function LoginScreen() {
   const { login, loginWithSocial, user, isLoading } = useAuth();
@@ -36,45 +51,35 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
 
+  const hasSocialAuth = !!GoogleSignin;
+  const hasAppleAuth = !!AppleAuthentication;
+
   const handleGoogleSignIn = async () => {
-    if (!GOOGLE_WEB_CLIENT_ID) return;
+    if (!GoogleSignin) return;
     setError("");
     setGoogleLoading(true);
-
     try {
-      const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      // Use the app scheme redirect — works in dev builds and production
-      const redirectUri = makeRedirectUri({ scheme: "prept", path: "auth" });
-      const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${encodeURIComponent(GOOGLE_WEB_CLIENT_ID)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&response_type=id_token` +
-        `&scope=${encodeURIComponent("openid email profile")}` +
-        `&nonce=${nonce}` +
-        `&prompt=select_account`;
-
-      console.log("[GoogleAuth] redirectUri:", redirectUri);
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-
-      if (result.type === "success" && result.url) {
-        // id_token is in the URL fragment (#id_token=...)
-        const hash = result.url.split("#")[1] || "";
-        const params = new URLSearchParams(hash);
-        const idToken = params.get("id_token");
-
-        if (idToken) {
-          await loginWithSocial("google", idToken);
-        } else {
-          setError("No token received from Google");
-        }
-      } else if (result.type === "cancel") {
-        // User cancelled — no error
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken;
+      if (!idToken) {
+        setError("No token received from Google");
+        return;
       }
+      await loginWithSocial("google", idToken);
     } catch (e: any) {
+      if (isErrorWithCode(e)) {
+        if (
+          e.code === statusCodes.SIGN_IN_CANCELLED ||
+          e.code === statusCodes.IN_PROGRESS
+        ) {
+          // User cancelled or already in progress — no error
+          return;
+        }
+      }
       const msg = e.message || "Google sign-in failed";
       if (msg.includes("NO_ACCOUNT")) {
-        setError("No account found. Please register on the web first.");
+        setError("No account found. Create one first.");
       } else {
         setError(msg);
       }
@@ -84,6 +89,7 @@ export default function LoginScreen() {
   };
 
   const handleAppleSignIn = async () => {
+    if (!AppleAuthentication) return;
     setError("");
     setAppleLoading(true);
 
@@ -151,8 +157,8 @@ export default function LoginScreen() {
           </View>
         ) : null}
 
-        {/* Social Sign-In */}
-        {GOOGLE_WEB_CLIENT_ID ? (
+        {/* Social Sign-In (hidden in Expo Go where native modules aren't available) */}
+        {hasSocialAuth ? (
           <>
             <TouchableOpacity
               className={`rounded-lg py-3.5 items-center flex-row justify-center border border-gray-300 ${
@@ -173,38 +179,36 @@ export default function LoginScreen() {
                 </>
               )}
             </TouchableOpacity>
+
+            {/* Apple Sign-In (iOS only) */}
+            {Platform.OS === "ios" && hasAppleAuth ? (
+              <TouchableOpacity
+                className={`rounded-lg py-3.5 items-center flex-row justify-center bg-black mt-3 ${
+                  isAnyLoading ? "opacity-50" : ""
+                }`}
+                onPress={handleAppleSignIn}
+                disabled={isAnyLoading}
+                activeOpacity={0.8}
+              >
+                {appleLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Text className="text-white text-lg mr-2"></Text>
+                    <Text className="text-white font-medium text-base">
+                      Continue with Apple
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            ) : null}
+
+            <View className="flex-row items-center my-6">
+              <View className="flex-1 h-px bg-gray-200" />
+              <Text className="mx-4 text-sm text-gray-400">or</Text>
+              <View className="flex-1 h-px bg-gray-200" />
+            </View>
           </>
-        ) : null}
-
-        {/* Apple Sign-In (iOS only) */}
-        {Platform.OS === "ios" ? (
-          <TouchableOpacity
-            className={`rounded-lg py-3.5 items-center flex-row justify-center bg-black mt-3 ${
-              isAnyLoading ? "opacity-50" : ""
-            }`}
-            onPress={handleAppleSignIn}
-            disabled={isAnyLoading}
-            activeOpacity={0.8}
-          >
-            {appleLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Text className="text-white text-lg mr-2"></Text>
-                <Text className="text-white font-medium text-base">
-                  Continue with Apple
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-        ) : null}
-
-        {(GOOGLE_WEB_CLIENT_ID || Platform.OS === "ios") ? (
-          <View className="flex-row items-center my-6">
-            <View className="flex-1 h-px bg-gray-200" />
-            <Text className="mx-4 text-sm text-gray-400">or</Text>
-            <View className="flex-1 h-px bg-gray-200" />
-          </View>
         ) : null}
 
         {/* Email/Password */}

@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Image,
   RefreshControl,
-  TextInput,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,12 +25,17 @@ import {
   AlertCircle,
   Edit3,
   Plus,
+  ChevronRight,
+  Trash2,
+  X,
+  Pause,
+  Play,
 } from "lucide-react-native";
 import { useClientDetail, useWorkoutPlans, useMealPlans, useHabitTemplates } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 
 type Tab = "overview" | "workouts" | "nutrition" | "progress";
 
@@ -43,6 +47,10 @@ export default function ClientDetailScreen() {
   const [showEditClient, setShowEditClient] = useState(false);
   const [showAssignWorkout, setShowAssignWorkout] = useState(false);
   const [showAssignMeal, setShowAssignMeal] = useState(false);
+  const [selectedWorkoutPlan, setSelectedWorkoutPlan] = useState<any>(null);
+  const [selectedMealPlan, setSelectedMealPlan] = useState<any>(null);
+  const [showCreateWorkout, setShowCreateWorkout] = useState(false);
+  const [showCreateMealPlan, setShowCreateMealPlan] = useState(false);
 
   if (isLoading) {
     return (
@@ -189,10 +197,20 @@ export default function ClientDetailScreen() {
             />
           )}
           {activeTab === "workouts" && (
-            <WorkoutsTab plans={client.assignedPlans || []} onAssign={() => setShowAssignWorkout(true)} />
+            <WorkoutsTab
+              plans={client.assignedPlans || []}
+              onAssign={() => setShowAssignWorkout(true)}
+              onOpen={setSelectedWorkoutPlan}
+              onCreate={() => setShowCreateWorkout(true)}
+            />
           )}
           {activeTab === "nutrition" && (
-            <NutritionTab plans={client.assignedMealPlans || []} onAssign={() => setShowAssignMeal(true)} />
+            <NutritionTab
+              plans={client.assignedMealPlans || []}
+              onAssign={() => setShowAssignMeal(true)}
+              onOpen={setSelectedMealPlan}
+              onCreate={() => setShowCreateMealPlan(true)}
+            />
           )}
           {activeTab === "progress" && (
             <ProgressTab
@@ -208,6 +226,32 @@ export default function ClientDetailScreen() {
           <EditClientModal visible={showEditClient} client={client} onClose={() => setShowEditClient(false)} onSuccess={() => { setShowEditClient(false); refetch(); }} />
           <AssignWorkoutModal visible={showAssignWorkout} clientId={id!} onClose={() => setShowAssignWorkout(false)} onSuccess={() => { setShowAssignWorkout(false); refetch(); }} />
           <AssignMealModal visible={showAssignMeal} clientId={id!} onClose={() => setShowAssignMeal(false)} onSuccess={() => { setShowAssignMeal(false); refetch(); }} />
+          <WorkoutPlanDetailSheet
+            visible={!!selectedWorkoutPlan}
+            plan={selectedWorkoutPlan}
+            clientId={id!}
+            onClose={() => setSelectedWorkoutPlan(null)}
+            onRefresh={refetch}
+          />
+          <MealPlanDetailSheet
+            visible={!!selectedMealPlan}
+            plan={selectedMealPlan}
+            clientId={id!}
+            onClose={() => setSelectedMealPlan(null)}
+            onRefresh={refetch}
+          />
+          <CreateWorkoutSheet
+            visible={showCreateWorkout}
+            clientId={id!}
+            onClose={() => setShowCreateWorkout(false)}
+            onSuccess={() => { setShowCreateWorkout(false); refetch(); }}
+          />
+          <CreateMealPlanSheet
+            visible={showCreateMealPlan}
+            clientId={id!}
+            onClose={() => setShowCreateMealPlan(false)}
+            onSuccess={() => { setShowCreateMealPlan(false); refetch(); }}
+          />
         </>
       )}
     </SafeAreaView>
@@ -317,17 +361,27 @@ function InfoRow({
   );
 }
 
-function WorkoutsTab({ plans, onAssign }: { plans: any[]; onAssign: () => void }) {
+function WorkoutsTab({ plans, onAssign, onOpen, onCreate }: { plans: any[]; onAssign: () => void; onOpen: (plan: any) => void; onCreate: () => void }) {
   return (
     <View>
-      <TouchableOpacity
-        className="flex-row items-center justify-center border-2 border-dashed border-brand-300 rounded-xl py-2.5 mb-3"
-        onPress={onAssign}
-        activeOpacity={0.6}
-      >
-        <Plus size={16} color="#059669" />
-        <Text className="text-sm font-medium text-brand-600 ml-1">Assign Workout Plan</Text>
-      </TouchableOpacity>
+      <View className="flex-row mb-3">
+        <TouchableOpacity
+          className="flex-1 flex-row items-center justify-center border-2 border-dashed border-brand-300 rounded-xl py-2.5 mr-2"
+          onPress={onAssign}
+          activeOpacity={0.6}
+        >
+          <Plus size={16} color="#059669" />
+          <Text className="text-sm font-medium text-brand-600 ml-1">Assign</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-1 flex-row items-center justify-center bg-brand-600 rounded-xl py-2.5"
+          onPress={onCreate}
+          activeOpacity={0.6}
+        >
+          <Plus size={16} color="#fff" />
+          <Text className="text-sm font-medium text-white ml-1">Create Custom</Text>
+        </TouchableOpacity>
+      </View>
       {plans.length === 0 ? (
         <View className="items-center py-8">
           <Dumbbell size={36} color="#d1d5db" />
@@ -335,26 +389,31 @@ function WorkoutsTab({ plans, onAssign }: { plans: any[]; onAssign: () => void }
         </View>
       ) : null}
       {plans.map((p) => (
-        <View
+        <TouchableOpacity
           key={p.id}
           className="bg-white rounded-xl border border-gray-100 p-4 mb-3"
+          onPress={() => onOpen(p)}
+          activeOpacity={0.6}
         >
           <View className="flex-row items-center justify-between mb-1">
             <Text className="text-base font-medium text-gray-900 flex-1" numberOfLines={1}>
               {p.customName || p.workoutPlan?.name || "Workout Plan"}
             </Text>
-            <View
-              className={`px-2 py-0.5 rounded-full ${
-                p.isActive ? "bg-green-50" : "bg-gray-100"
-              }`}
-            >
-              <Text
-                className={`text-[10px] font-medium ${
-                  p.isActive ? "text-green-700" : "text-gray-500"
+            <View className="flex-row items-center">
+              <View
+                className={`px-2 py-0.5 rounded-full mr-2 ${
+                  p.isActive ? "bg-green-50" : "bg-gray-100"
                 }`}
               >
-                {p.isActive ? "Active" : "Inactive"}
-              </Text>
+                <Text
+                  className={`text-[10px] font-medium ${
+                    p.isActive ? "text-green-700" : "text-gray-500"
+                  }`}
+                >
+                  {p.isActive ? "Active" : "Inactive"}
+                </Text>
+              </View>
+              <ChevronRight size={16} color="#9ca3af" />
             </View>
           </View>
           {p.workoutPlan?.exercises && (
@@ -367,23 +426,33 @@ function WorkoutsTab({ plans, onAssign }: { plans: any[]; onAssign: () => void }
               Ends {new Date(p.endDate).toLocaleDateString()}
             </Text>
           )}
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );
 }
 
-function NutritionTab({ plans, onAssign }: { plans: any[]; onAssign: () => void }) {
+function NutritionTab({ plans, onAssign, onOpen, onCreate }: { plans: any[]; onAssign: () => void; onOpen: (plan: any) => void; onCreate: () => void }) {
   return (
     <View>
-      <TouchableOpacity
-        className="flex-row items-center justify-center border-2 border-dashed border-brand-300 rounded-xl py-2.5 mb-3"
-        onPress={onAssign}
-        activeOpacity={0.6}
-      >
-        <Plus size={16} color="#059669" />
-        <Text className="text-sm font-medium text-brand-600 ml-1">Assign Meal Plan</Text>
-      </TouchableOpacity>
+      <View className="flex-row mb-3">
+        <TouchableOpacity
+          className="flex-1 flex-row items-center justify-center border-2 border-dashed border-brand-300 rounded-xl py-2.5 mr-2"
+          onPress={onAssign}
+          activeOpacity={0.6}
+        >
+          <Plus size={16} color="#059669" />
+          <Text className="text-sm font-medium text-brand-600 ml-1">Assign</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-1 flex-row items-center justify-center bg-brand-600 rounded-xl py-2.5"
+          onPress={onCreate}
+          activeOpacity={0.6}
+        >
+          <Plus size={16} color="#fff" />
+          <Text className="text-sm font-medium text-white ml-1">Create Custom</Text>
+        </TouchableOpacity>
+      </View>
       {plans.length === 0 ? (
         <View className="items-center py-8">
           <UtensilsCrossed size={36} color="#d1d5db" />
@@ -393,26 +462,31 @@ function NutritionTab({ plans, onAssign }: { plans: any[]; onAssign: () => void 
       {plans.map((p) => {
         const mp = p.mealPlan;
         return (
-          <View
+          <TouchableOpacity
             key={p.id}
             className="bg-white rounded-xl border border-gray-100 p-4 mb-3"
+            onPress={() => onOpen(p)}
+            activeOpacity={0.6}
           >
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-base font-medium text-gray-900 flex-1" numberOfLines={1}>
                 {p.customName || mp?.name || "Meal Plan"}
               </Text>
-              <View
-                className={`px-2 py-0.5 rounded-full ${
-                  p.isActive ? "bg-green-50" : "bg-gray-100"
-                }`}
-              >
-                <Text
-                  className={`text-[10px] font-medium ${
-                    p.isActive ? "text-green-700" : "text-gray-500"
+              <View className="flex-row items-center">
+                <View
+                  className={`px-2 py-0.5 rounded-full mr-2 ${
+                    p.isActive ? "bg-green-50" : "bg-gray-100"
                   }`}
                 >
-                  {p.isActive ? "Active" : "Inactive"}
-                </Text>
+                  <Text
+                    className={`text-[10px] font-medium ${
+                      p.isActive ? "text-green-700" : "text-gray-500"
+                    }`}
+                  >
+                    {p.isActive ? "Active" : "Inactive"}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color="#9ca3af" />
               </View>
             </View>
             {mp && (
@@ -444,7 +518,7 @@ function NutritionTab({ plans, onAssign }: { plans: any[]; onAssign: () => void 
                 {mp.meals.length} meals
               </Text>
             )}
-          </View>
+          </TouchableOpacity>
         );
       })}
     </View>
@@ -578,7 +652,7 @@ function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boo
     <AppBottomSheet
       visible={visible}
       onClose={onClose}
-      snapPoints={["50%", "85%"]}
+      snapPoints={["92%"]}
       title="Edit Client"
       footer={
         <TouchableOpacity
@@ -594,15 +668,15 @@ function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boo
       }
     >
       <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} />
+      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} />
       <Text className="text-sm font-medium text-gray-700 mb-1">Email</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
       <Text className="text-sm font-medium text-gray-700 mb-1">Phone</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
       <Text className="text-sm font-medium text-gray-700 mb-1">Goals</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={goals} onChangeText={setGoals} multiline />
+      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={goals} onChangeText={setGoals} multiline />
       <Text className="text-sm font-medium text-gray-700 mb-1">Notes</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={notes} onChangeText={setNotes} multiline />
+      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={notes} onChangeText={setNotes} multiline />
       <Text className="text-sm font-medium text-gray-700 mb-1">Status</Text>
       <View className="flex-row">
         {["active", "paused", "archived"].map((s) => (
@@ -635,7 +709,6 @@ function AssignWorkoutModal({ visible, clientId, onClose, onSuccess }: { visible
     <AppBottomSheet
       visible={visible}
       onClose={() => { setSelectedId(""); onClose(); }}
-      snapPoints={["50%", "85%"]}
       title="Assign Workout Plan"
       footer={selectedId ? (
         <TouchableOpacity
@@ -679,7 +752,6 @@ function AssignMealModal({ visible, clientId, onClose, onSuccess }: { visible: b
     <AppBottomSheet
       visible={visible}
       onClose={() => { setSelectedId(""); onClose(); }}
-      snapPoints={["50%", "85%"]}
       title="Assign Meal Plan"
       footer={selectedId ? (
         <TouchableOpacity
@@ -699,6 +771,652 @@ function AssignMealModal({ visible, clientId, onClose, onSuccess }: { visible: b
           <Text className="text-xs text-gray-500">{p.mealCount} meals{p.targetCalories ? ` · ${p.targetCalories} kcal` : ""}</Text>
         </TouchableOpacity>
       ))}
+    </AppBottomSheet>
+  );
+}
+
+/* ─── Workout Plan Detail / Edit Sheet ─── */
+function WorkoutPlanDetailSheet({ visible, plan, clientId, onClose, onRefresh }: { visible: boolean; plan: any; clientId: string; onClose: () => void; onRefresh: () => void }) {
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editExercises, setEditExercises] = useState<{ name: string; sets: string; reps: string; weight: string; restSeconds: string; notes: string }[]>([]);
+
+  useEffect(() => {
+    if (plan) {
+      const exercises = plan.clientExercises?.length > 0 ? plan.clientExercises : plan.workoutPlan?.exercises || [];
+      setEditName(plan.customName || plan.workoutPlan?.name || "");
+      setEditExercises(exercises.map((ex: any) => ({
+        name: ex.name || "",
+        sets: ex.sets?.toString() || "",
+        reps: ex.reps || "",
+        weight: ex.weight || "",
+        restSeconds: ex.restSeconds?.toString() || "",
+        notes: ex.notes || "",
+      })));
+      setIsEditing(false);
+    }
+  }, [plan]);
+
+  const saveMutation = useMutation({
+    mutationFn: (data: any) => api.put(`/api/clients/${clientId}/workouts/${plan?.id}`, data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      setIsEditing(false);
+      onRefresh();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: () => api.put(`/api/clients/${clientId}/workouts/${plan?.id}`, { isActive: !plan?.isActive }),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      onRefresh();
+      onClose();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/api/clients/${clientId}/workouts/${plan?.id}`),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      onRefresh();
+      onClose();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  function handleSave() {
+    saveMutation.mutate({
+      customName: editName,
+      exercises: editExercises.filter((ex) => ex.name.trim()).map((ex, i) => ({
+        name: ex.name,
+        sets: ex.sets ? parseInt(ex.sets) : null,
+        reps: ex.reps || null,
+        weight: ex.weight || null,
+        restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
+        notes: ex.notes || null,
+        orderIndex: i,
+      })),
+    });
+  }
+
+  function handleDelete() {
+    Alert.alert("Delete Plan", "Are you sure? This cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate() },
+    ]);
+  }
+
+  function addExercise() {
+    setEditExercises([...editExercises, { name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" }]);
+  }
+
+  function updateExercise(index: number, field: string, value: string) {
+    setEditExercises(editExercises.map((ex, i) => i === index ? { ...ex, [field]: value } : ex));
+  }
+
+  function removeExercise(index: number) {
+    setEditExercises(editExercises.filter((_, i) => i !== index));
+  }
+
+  if (!plan) return null;
+
+  const exercises = plan.clientExercises?.length > 0 ? plan.clientExercises : plan.workoutPlan?.exercises || [];
+
+  return (
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["92%"]}
+      title={plan.customName || plan.workoutPlan?.name || "Workout Plan"}
+      footer={
+        isEditing ? (
+          <View className="flex-row">
+            <TouchableOpacity className="flex-1 rounded-lg py-3 items-center bg-gray-100 mr-2" onPress={() => setIsEditing(false)}>
+              <Text className="text-gray-700 font-semibold text-sm">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className={`flex-1 rounded-lg py-3 items-center ${saveMutation.isPending ? "bg-brand-400" : "bg-brand-600"}`} onPress={handleSave} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-sm">Save Changes</Text>}
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View className="flex-row">
+            <TouchableOpacity className="flex-1 rounded-lg py-3 items-center bg-brand-600 mr-2" onPress={() => setIsEditing(true)}>
+              <Text className="text-white font-semibold text-sm">Edit Plan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className="rounded-lg py-3 px-4 items-center bg-gray-100 mr-2" onPress={() => toggleActiveMutation.mutate()}>
+              {plan.isActive ? <Pause size={18} color="#6b7280" /> : <Play size={18} color="#059669" />}
+            </TouchableOpacity>
+            <TouchableOpacity className="rounded-lg py-3 px-4 items-center bg-red-50" onPress={handleDelete}>
+              <Trash2 size={18} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )
+      }
+    >
+      {isEditing ? (
+        <View>
+          <Text className="text-sm font-medium text-gray-700 mb-1">Plan Name</Text>
+          <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={editName} onChangeText={setEditName} />
+
+          <Text className="text-sm font-semibold text-gray-700 mb-2">Exercises</Text>
+          {editExercises.map((ex, i) => (
+            <View key={i} className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-xs font-medium text-gray-500">Exercise {i + 1}</Text>
+                <TouchableOpacity onPress={() => removeExercise(i)} hitSlop={8}>
+                  <X size={16} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 mb-2 text-sm text-gray-900" placeholder="Exercise name" value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} />
+              <View className="flex-row">
+                <View className="flex-1 mr-2">
+                  <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Sets" value={ex.sets} onChangeText={(v) => updateExercise(i, "sets", v)} keyboardType="numeric" />
+                </View>
+                <View className="flex-1 mr-2">
+                  <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Reps" value={ex.reps} onChangeText={(v) => updateExercise(i, "reps", v)} />
+                </View>
+                <View className="flex-1">
+                  <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Weight" value={ex.weight} onChangeText={(v) => updateExercise(i, "weight", v)} />
+                </View>
+              </View>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 mt-2 text-sm text-gray-900" placeholder="Notes (optional)" value={ex.notes} onChangeText={(v) => updateExercise(i, "notes", v)} />
+            </View>
+          ))}
+          <TouchableOpacity className="flex-row items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-2.5" onPress={addExercise}>
+            <Plus size={16} color="#6b7280" />
+            <Text className="text-sm font-medium text-gray-500 ml-1">Add Exercise</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View>
+          {/* Status */}
+          <View className="flex-row items-center mb-4">
+            <View className={`px-2.5 py-1 rounded-full ${plan.isActive ? "bg-green-50" : "bg-gray-100"}`}>
+              <Text className={`text-xs font-medium ${plan.isActive ? "text-green-700" : "text-gray-500"}`}>
+                {plan.isActive ? "Active" : "Inactive"}
+              </Text>
+            </View>
+            {plan.pausedAt && (
+              <View className="px-2.5 py-1 rounded-full bg-yellow-50 ml-2">
+                <Text className="text-xs font-medium text-yellow-700">Paused</Text>
+              </View>
+            )}
+            {plan.endDate && (
+              <Text className="text-xs text-gray-400 ml-2">
+                Ends {new Date(plan.endDate).toLocaleDateString()}
+              </Text>
+            )}
+          </View>
+
+          {/* Exercise List */}
+          <Text className="text-sm font-semibold text-gray-700 mb-2">
+            Exercises ({exercises.length})
+          </Text>
+          {exercises.map((ex: any, i: number) => (
+            <View key={ex.id || i} className="bg-gray-50 rounded-xl px-4 py-3 mb-2 border border-gray-100">
+              <Text className="text-sm font-medium text-gray-900">{ex.name}</Text>
+              <View className="flex-row mt-1">
+                {ex.sets != null && <Text className="text-xs text-gray-500 mr-3">{ex.sets} sets</Text>}
+                {ex.reps && <Text className="text-xs text-gray-500 mr-3">{ex.reps} reps</Text>}
+                {ex.weight && <Text className="text-xs text-gray-500 mr-3">{ex.weight}</Text>}
+                {ex.restSeconds != null && <Text className="text-xs text-gray-500">{ex.restSeconds}s rest</Text>}
+              </View>
+              {ex.notes && <Text className="text-xs text-gray-400 mt-1">{ex.notes}</Text>}
+            </View>
+          ))}
+        </View>
+      )}
+    </AppBottomSheet>
+  );
+}
+
+/* ─── Meal Plan Detail / Edit Sheet ─── */
+function MealPlanDetailSheet({ visible, plan, clientId, onClose, onRefresh }: { visible: boolean; plan: any; clientId: string; onClose: () => void; onRefresh: () => void }) {
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editCalories, setEditCalories] = useState("");
+  const [editProtein, setEditProtein] = useState("");
+  const [editCarbs, setEditCarbs] = useState("");
+  const [editFat, setEditFat] = useState("");
+
+  useEffect(() => {
+    if (plan) {
+      const mp = plan.mealPlan;
+      setEditName(plan.customName || mp?.name || "");
+      setEditCalories(mp?.targetCalories?.toString() || "");
+      setEditProtein(mp?.targetProtein?.toString() || "");
+      setEditCarbs(mp?.targetCarbs?.toString() || "");
+      setEditFat(mp?.targetFat?.toString() || "");
+      setIsEditing(false);
+    }
+  }, [plan]);
+
+  const saveMutation = useMutation({
+    mutationFn: (data: any) => api.put(`/api/clients/${clientId}/nutrition/${plan?.id}`, data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      setIsEditing(false);
+      onRefresh();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: () => api.put(`/api/clients/${clientId}/nutrition/${plan?.id}`, { isActive: !plan?.isActive }),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      onRefresh();
+      onClose();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/api/clients/${clientId}/nutrition/${plan?.id}`),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      onRefresh();
+      onClose();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  function handleSave() {
+    saveMutation.mutate({
+      customName: editName,
+      targetCalories: editCalories ? parseInt(editCalories) : null,
+      targetProtein: editProtein ? parseInt(editProtein) : null,
+      targetCarbs: editCarbs ? parseInt(editCarbs) : null,
+      targetFat: editFat ? parseInt(editFat) : null,
+    });
+  }
+
+  function handleDelete() {
+    Alert.alert("Delete Meal Plan", "Are you sure? This cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate() },
+    ]);
+  }
+
+  if (!plan) return null;
+
+  const mp = plan.mealPlan;
+  const meals = mp?.meals || [];
+
+  return (
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["92%"]}
+      title={plan.customName || mp?.name || "Meal Plan"}
+      footer={
+        isEditing ? (
+          <View className="flex-row">
+            <TouchableOpacity className="flex-1 rounded-lg py-3 items-center bg-gray-100 mr-2" onPress={() => setIsEditing(false)}>
+              <Text className="text-gray-700 font-semibold text-sm">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className={`flex-1 rounded-lg py-3 items-center ${saveMutation.isPending ? "bg-brand-400" : "bg-brand-600"}`} onPress={handleSave} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-sm">Save Changes</Text>}
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View className="flex-row">
+            <TouchableOpacity className="flex-1 rounded-lg py-3 items-center bg-brand-600 mr-2" onPress={() => setIsEditing(true)}>
+              <Text className="text-white font-semibold text-sm">Edit Plan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className="rounded-lg py-3 px-4 items-center bg-gray-100 mr-2" onPress={() => toggleActiveMutation.mutate()}>
+              {plan.isActive ? <Pause size={18} color="#6b7280" /> : <Play size={18} color="#059669" />}
+            </TouchableOpacity>
+            <TouchableOpacity className="rounded-lg py-3 px-4 items-center bg-red-50" onPress={handleDelete}>
+              <Trash2 size={18} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )
+      }
+    >
+      {isEditing ? (
+        <View>
+          <Text className="text-sm font-medium text-gray-700 mb-1">Plan Name</Text>
+          <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={editName} onChangeText={setEditName} />
+
+          <Text className="text-sm font-semibold text-gray-700 mb-2">Nutrition Targets</Text>
+          <View className="flex-row mb-4">
+            <View className="flex-1 mr-2">
+              <Text className="text-xs text-gray-500 mb-1">Calories</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={editCalories} onChangeText={setEditCalories} keyboardType="numeric" placeholder="kcal" />
+            </View>
+            <View className="flex-1 mr-2">
+              <Text className="text-xs text-gray-500 mb-1">Protein</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={editProtein} onChangeText={setEditProtein} keyboardType="numeric" placeholder="g" />
+            </View>
+            <View className="flex-1 mr-2">
+              <Text className="text-xs text-gray-500 mb-1">Carbs</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={editCarbs} onChangeText={setEditCarbs} keyboardType="numeric" placeholder="g" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs text-gray-500 mb-1">Fat</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={editFat} onChangeText={setEditFat} keyboardType="numeric" placeholder="g" />
+            </View>
+          </View>
+
+          <Text className="text-xs text-gray-400">Meal editing is available on the web app for now.</Text>
+        </View>
+      ) : (
+        <View>
+          {/* Macro Targets */}
+          {mp && (mp.targetCalories || mp.targetProtein || mp.targetCarbs || mp.targetFat) && (
+            <View className="flex-row bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
+              {mp.targetCalories != null && (
+                <View className="flex-1 items-center">
+                  <Text className="text-lg font-bold text-gray-900">{mp.targetCalories}</Text>
+                  <Text className="text-[10px] text-gray-500">cal</Text>
+                </View>
+              )}
+              {mp.targetProtein != null && (
+                <View className="flex-1 items-center">
+                  <Text className="text-lg font-bold text-blue-600">{mp.targetProtein}g</Text>
+                  <Text className="text-[10px] text-gray-500">protein</Text>
+                </View>
+              )}
+              {mp.targetCarbs != null && (
+                <View className="flex-1 items-center">
+                  <Text className="text-lg font-bold text-amber-600">{mp.targetCarbs}g</Text>
+                  <Text className="text-[10px] text-gray-500">carbs</Text>
+                </View>
+              )}
+              {mp.targetFat != null && (
+                <View className="flex-1 items-center">
+                  <Text className="text-lg font-bold text-red-500">{mp.targetFat}g</Text>
+                  <Text className="text-[10px] text-gray-500">fat</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Status */}
+          <View className="flex-row items-center mb-4">
+            <View className={`px-2.5 py-1 rounded-full ${plan.isActive ? "bg-green-50" : "bg-gray-100"}`}>
+              <Text className={`text-xs font-medium ${plan.isActive ? "text-green-700" : "text-gray-500"}`}>
+                {plan.isActive ? "Active" : "Inactive"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Meals */}
+          <Text className="text-sm font-semibold text-gray-700 mb-2">
+            Meals ({meals.length})
+          </Text>
+          {meals.map((meal: any, i: number) => (
+            <View key={meal.id || i} className="bg-gray-50 rounded-xl px-4 py-3 mb-2 border border-gray-100">
+              <Text className="text-sm font-medium text-gray-900">{meal.name}</Text>
+              {meal.time && <Text className="text-xs text-gray-400">{meal.time}</Text>}
+              {meal.foods?.map((food: any, fi: number) => (
+                <View key={fi} className="flex-row items-center justify-between mt-1.5">
+                  <Text className="text-xs text-gray-600 flex-1">{food.name}</Text>
+                  <Text className="text-xs text-gray-400">
+                    {food.calories ? `${Math.round(food.calories)} cal` : ""}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      )}
+    </AppBottomSheet>
+  );
+}
+
+/* ─── Create Custom Workout Sheet ─── */
+function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible: boolean; clientId: string; onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [exercises, setExercises] = useState<{ name: string; sets: string; reps: string; weight: string; restSeconds: string; notes: string }[]>([
+    { name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" },
+  ]);
+
+  useEffect(() => {
+    if (visible) {
+      setName("");
+      setExercises([{ name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" }]);
+    }
+  }, [visible]);
+
+  const mutation = useMutation({
+    mutationFn: (data: any) => api.post(`/api/clients/${clientId}/workouts`, data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      onSuccess();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  function handleSubmit() {
+    if (!name.trim()) return Alert.alert("Required", "Plan name is required");
+    const validExercises = exercises.filter((ex) => ex.name.trim());
+    if (validExercises.length === 0) return Alert.alert("Required", "Add at least one exercise");
+
+    mutation.mutate({
+      name: name.trim(),
+      mode: "solo",
+      exercises: validExercises.map((ex, i) => ({
+        name: ex.name,
+        sets: ex.sets ? parseInt(ex.sets) : null,
+        reps: ex.reps || null,
+        weight: ex.weight || null,
+        restSeconds: ex.restSeconds ? parseInt(ex.restSeconds) : null,
+        notes: ex.notes || null,
+        orderIndex: i,
+      })),
+    });
+  }
+
+  function addExercise() {
+    setExercises([...exercises, { name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" }]);
+  }
+
+  function updateExercise(index: number, field: string, value: string) {
+    setExercises(exercises.map((ex, i) => i === index ? { ...ex, [field]: value } : ex));
+  }
+
+  function removeExercise(index: number) {
+    if (exercises.length <= 1) return;
+    setExercises(exercises.filter((_, i) => i !== index));
+  }
+
+  return (
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["92%"]}
+      title="Create Custom Workout"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={handleSubmit}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Plan</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Plan Name *</Text>
+      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Upper Body A" />
+
+      <Text className="text-sm font-semibold text-gray-700 mb-2">Exercises</Text>
+      {exercises.map((ex, i) => (
+        <View key={i} className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xs font-medium text-gray-500">Exercise {i + 1}</Text>
+            {exercises.length > 1 && (
+              <TouchableOpacity onPress={() => removeExercise(i)} hitSlop={8}>
+                <X size={16} color="#ef4444" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 mb-2 text-sm text-gray-900" placeholder="Exercise name *" value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} />
+          <View className="flex-row">
+            <View className="flex-1 mr-2">
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Sets" value={ex.sets} onChangeText={(v) => updateExercise(i, "sets", v)} keyboardType="numeric" />
+            </View>
+            <View className="flex-1 mr-2">
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Reps" value={ex.reps} onChangeText={(v) => updateExercise(i, "reps", v)} />
+            </View>
+            <View className="flex-1">
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Weight" value={ex.weight} onChangeText={(v) => updateExercise(i, "weight", v)} />
+            </View>
+          </View>
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 mt-2 text-sm text-gray-900" placeholder="Notes (optional)" value={ex.notes} onChangeText={(v) => updateExercise(i, "notes", v)} />
+        </View>
+      ))}
+      <TouchableOpacity className="flex-row items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-2.5 mb-4" onPress={addExercise}>
+        <Plus size={16} color="#6b7280" />
+        <Text className="text-sm font-medium text-gray-500 ml-1">Add Exercise</Text>
+      </TouchableOpacity>
+    </AppBottomSheet>
+  );
+}
+
+/* ─── Create Custom Meal Plan Sheet ─── */
+function CreateMealPlanSheet({ visible, clientId, onClose, onSuccess }: { visible: boolean; clientId: string; onClose: () => void; onSuccess: () => void }) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [calories, setCalories] = useState("");
+  const [protein, setProtein] = useState("");
+  const [carbs, setCarbs] = useState("");
+  const [fat, setFat] = useState("");
+  const [meals, setMeals] = useState<{ name: string; time: string }[]>([
+    { name: "Breakfast", time: "" },
+    { name: "Lunch", time: "" },
+    { name: "Dinner", time: "" },
+  ]);
+
+  useEffect(() => {
+    if (visible) {
+      setName("");
+      setCalories("");
+      setProtein("");
+      setCarbs("");
+      setFat("");
+      setMeals([
+        { name: "Breakfast", time: "" },
+        { name: "Lunch", time: "" },
+        { name: "Dinner", time: "" },
+      ]);
+    }
+  }, [visible]);
+
+  const mutation = useMutation({
+    mutationFn: (data: any) => api.post(`/api/clients/${clientId}/nutrition`, data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-client-detail"] });
+      onSuccess();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  function handleSubmit() {
+    if (!name.trim()) return Alert.alert("Required", "Plan name is required");
+    mutation.mutate({
+      name: name.trim(),
+      targetCalories: calories ? parseInt(calories) : null,
+      targetProtein: protein ? parseInt(protein) : null,
+      targetCarbs: carbs ? parseInt(carbs) : null,
+      targetFat: fat ? parseInt(fat) : null,
+      meals: meals.filter((m) => m.name.trim()).map((m, i) => ({
+        name: m.name,
+        time: m.time || null,
+        orderIndex: i,
+        foods: [],
+      })),
+    });
+  }
+
+  function addMeal() {
+    setMeals([...meals, { name: "", time: "" }]);
+  }
+
+  function updateMeal(index: number, field: string, value: string) {
+    setMeals(meals.map((m, i) => i === index ? { ...m, [field]: value } : m));
+  }
+
+  function removeMeal(index: number) {
+    if (meals.length <= 1) return;
+    setMeals(meals.filter((_, i) => i !== index));
+  }
+
+  return (
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["92%"]}
+      title="Create Custom Meal Plan"
+      footer={
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={handleSubmit}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Plan</Text>}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 mb-1">Plan Name *</Text>
+      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. High Protein Cut" />
+
+      <Text className="text-sm font-semibold text-gray-700 mb-2">Nutrition Targets</Text>
+      <View className="flex-row mb-4">
+        <View className="flex-1 mr-2">
+          <Text className="text-xs text-gray-500 mb-1">Calories</Text>
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={calories} onChangeText={setCalories} keyboardType="numeric" placeholder="kcal" />
+        </View>
+        <View className="flex-1 mr-2">
+          <Text className="text-xs text-gray-500 mb-1">Protein</Text>
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={protein} onChangeText={setProtein} keyboardType="numeric" placeholder="g" />
+        </View>
+        <View className="flex-1 mr-2">
+          <Text className="text-xs text-gray-500 mb-1">Carbs</Text>
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={carbs} onChangeText={setCarbs} keyboardType="numeric" placeholder="g" />
+        </View>
+        <View className="flex-1">
+          <Text className="text-xs text-gray-500 mb-1">Fat</Text>
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" value={fat} onChangeText={setFat} keyboardType="numeric" placeholder="g" />
+        </View>
+      </View>
+
+      <Text className="text-sm font-semibold text-gray-700 mb-2">Meals</Text>
+      {meals.map((meal, i) => (
+        <View key={i} className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xs font-medium text-gray-500">Meal {i + 1}</Text>
+            {meals.length > 1 && (
+              <TouchableOpacity onPress={() => removeMeal(i)} hitSlop={8}>
+                <X size={16} color="#ef4444" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 mb-2 text-sm text-gray-900" placeholder="Meal name *" value={meal.name} onChangeText={(v) => updateMeal(i, "name", v)} />
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900" placeholder="Time (optional, e.g. 8:00 AM)" value={meal.time} onChangeText={(v) => updateMeal(i, "time", v)} />
+        </View>
+      ))}
+      <TouchableOpacity className="flex-row items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-2.5 mb-4" onPress={addMeal}>
+        <Plus size={16} color="#6b7280" />
+        <Text className="text-sm font-medium text-gray-500 ml-1">Add Meal</Text>
+      </TouchableOpacity>
+
+      <Text className="text-xs text-gray-400 mb-2">You can add individual foods to meals from the web app.</Text>
     </AppBottomSheet>
   );
 }

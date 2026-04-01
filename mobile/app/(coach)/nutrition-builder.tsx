@@ -32,7 +32,7 @@ import { useMealPlans, useMealPlanDetail } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import type { MealPlanListItem, FoodSearchResult } from "@/types/api";
 
 interface FoodForm {
@@ -547,12 +547,12 @@ function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onC
   });
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} snapPoints={["50%", "85%"]} title="Search Foods">
+    <AppBottomSheet visible={visible} onClose={onClose} title="Search Foods">
       <View className="-mx-5">
         <View className="px-5 py-2 border-b border-gray-100">
           <View className="flex-row items-center bg-gray-50 rounded-lg px-3">
             <Search size={16} color="#9ca3af" />
-            <TextInput className="flex-1 py-2 px-2 text-sm text-gray-900" value={search} onChangeText={setSearch} placeholder="Search foods..." placeholderTextColor="#9ca3af" autoFocus />
+            <BottomSheetTextInput className="flex-1 py-2 px-2 text-sm text-gray-900" value={search} onChangeText={setSearch} placeholder="Search foods..." placeholderTextColor="#9ca3af" autoFocus />
           </View>
         </View>
         <FlatList

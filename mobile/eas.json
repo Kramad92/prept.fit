@@ -7,18 +7,40 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      },
       "ios": {
         "simulator": true
       }
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_PUBLIC_API_URL": "https://www.prept.fit",
+        "EXPO_PUBLIC_PUSHER_KEY": "73da29a7c553fb7ad4bf",
+        "EXPO_PUBLIC_PUSHER_CLUSTER": "eu",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "99425826925-9gesnmlqht32epfac7rneiqo6llj55gm.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "99425826925-4fc798mhna2me66gv6mq4fa1e75bnap3.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "99425826925-na7deofqtjsfafugd20hsjoiu1mssqe4.apps.googleusercontent.com"
+      },
       "ios": {
         "simulator": false
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_PUBLIC_API_URL": "https://www.prept.fit",
+        "EXPO_PUBLIC_PUSHER_KEY": "73da29a7c553fb7ad4bf",
+        "EXPO_PUBLIC_PUSHER_CLUSTER": "eu",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "99425826925-9gesnmlqht32epfac7rneiqo6llj55gm.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "99425826925-4fc798mhna2me66gv6mq4fa1e75bnap3.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "99425826925-na7deofqtjsfafugd20hsjoiu1mssqe4.apps.googleusercontent.com"
+      }
     }
   },
   "submit": {

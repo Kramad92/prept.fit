@@ -1,13 +1,37 @@
-import { useCallback, useEffect, useRef } from "react";
-import { View, Text, Dimensions } from "react-native";
+import { useCallback, useEffect, useRef, memo } from "react";
+import { View, Text } from "react-native";
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
-  BottomSheetScrollView,
+  BottomSheetTextInput as _BottomSheetTextInput,
+  createBottomSheetScrollableComponent,
+  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
+import type { BottomSheetScrollViewProps } from "@gorhom/bottom-sheet/src/components/bottomSheetScrollable/types";
+import {
+  KeyboardAwareScrollView,
+  type KeyboardAwareScrollViewProps,
+} from "react-native-keyboard-controller";
+import Reanimated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const SCREEN_HEIGHT = Dimensions.get("window").height;
+// SCROLLABLE_TYPE.SCROLLVIEW = 3 (not publicly exported in v5)
+const SCROLLABLE_TYPE_SCROLLVIEW = 3;
+
+const AnimatedScrollView =
+  Reanimated.createAnimatedComponent<KeyboardAwareScrollViewProps>(
+    KeyboardAwareScrollView
+  );
+
+const BottomSheetKAScrollView = memo(
+  createBottomSheetScrollableComponent<
+    BottomSheetScrollViewMethods,
+    BottomSheetScrollViewProps
+  >(SCROLLABLE_TYPE_SCROLLVIEW as any, AnimatedScrollView)
+);
+
+// Re-export so consumers don't need a separate import
+export const BottomSheetTextInput = _BottomSheetTextInput;
 
 interface Props {
   visible: boolean;
@@ -16,7 +40,6 @@ interface Props {
   title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxHeightRatio?: number;
 }
 
 export function AppBottomSheet({
@@ -26,7 +49,6 @@ export function AppBottomSheet({
   title,
   children,
   footer,
-  maxHeightRatio = 0.85,
 }: Props) {
   const ref = useRef<BottomSheetModal>(null);
   const isPresented = useRef(false);
@@ -79,7 +101,14 @@ export function AppBottomSheet({
     () => (
       <View>
         <View className="items-center pt-2 pb-1">
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: "#d1d5db" }} />
+          <View
+            style={{
+              width: 36,
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: "#d1d5db",
+            }}
+          />
         </View>
         {title ? (
           <View className="px-5 pt-1 pb-3 border-b border-gray-100">
@@ -91,35 +120,33 @@ export function AppBottomSheet({
     [title]
   );
 
-  const modalProps: any = {
-    ref,
-    backdropComponent: renderBackdrop,
-    onDismiss: handleDismiss,
-    enablePanDownToClose: true,
-    keyboardBehavior: "extend",
-    keyboardBlurBehavior: "restore",
-    android_keyboardInputMode: "adjustResize",
-    handleComponent: renderHandle,
-    backgroundStyle: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-    footerComponent: footer ? renderFooter : undefined,
-  };
-
-  if (!snapPoints) {
-    modalProps.enableDynamicSizing = true;
-    modalProps.maxDynamicContentSize = SCREEN_HEIGHT * maxHeightRatio;
-  } else {
-    modalProps.snapPoints = snapPoints;
-    modalProps.enableDynamicSizing = false;
-  }
-
   return (
-    <BottomSheetModal {...modalProps}>
-      <BottomSheetScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: footer ? 80 : 16 }}
+    <BottomSheetModal
+      ref={ref}
+      backdropComponent={renderBackdrop}
+      onDismiss={handleDismiss}
+      enablePanDownToClose
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
+      handleComponent={renderHandle}
+      backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+      footerComponent={footer ? renderFooter : undefined}
+      enableOverDrag={false}
+      snapPoints={snapPoints || ["60%"]}
+      enableDynamicSizing={false}
+    >
+      <BottomSheetKAScrollView
+        bottomOffset={footer ? 80 : 20}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: footer ? 80 : 16,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         {children}
-      </BottomSheetScrollView>
+      </BottomSheetKAScrollView>
     </BottomSheetModal>
   );
 }

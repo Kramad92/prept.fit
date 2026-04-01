@@ -36,7 +36,7 @@ import {
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import type { WorkoutPlanListItem } from "@/types/api";
 
 interface ExerciseForm {
@@ -614,12 +614,11 @@ function ExercisePickerModal({
     <AppBottomSheet
       visible={visible}
       onClose={() => { setSearch(""); onClose(); }}
-      snapPoints={["50%", "85%"]}
       title="Pick Exercise"
     >
       <View className="flex-row items-center bg-gray-50 rounded-lg px-3 mb-3 -mx-1">
         <Search size={16} color="#9ca3af" />
-        <TextInput
+        <BottomSheetTextInput
           className="flex-1 py-2 px-2 text-sm text-gray-900"
           value={search}
           onChangeText={setSearch}

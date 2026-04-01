@@ -34,7 +34,7 @@ next-env.d.ts
 
 # claude/anthropic
 claude-*.json
-claude.md
+CLAUDE.md
 
 # local docs
 CHANGELOG.md

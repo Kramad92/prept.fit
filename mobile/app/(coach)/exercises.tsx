@@ -33,13 +33,18 @@ export default function ExercisesScreen() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
+  const [selectedEquipment, setSelectedEquipment] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [detailItem, setDetailItem] = useState<ExerciseLibraryItem | null>(null);
 
   const { data: exercises, isLoading, error, refetch, isRefetching } =
-    useExerciseLibrary(search || undefined, selectedCategory);
+    useExerciseLibrary(search || undefined, selectedCategory, { difficulty: selectedDifficulty, equipment: selectedEquipment });
   const { data: categories } = useExerciseCategories();
+  const { data: equipmentTypes } = useEquipmentTypes();
+
+  const hasFilters = selectedCategory || selectedDifficulty || selectedEquipment;
 
   const renderItem = useCallback(({ item }: { item: ExerciseLibraryItem }) => (
     <TouchableOpacity
@@ -98,29 +103,74 @@ export default function ExercisesScreen() {
             placeholderTextColor="#9ca3af"
           />
           <TouchableOpacity onPress={() => setShowFilters(!showFilters)} className="p-1">
-            <Filter size={16} color={selectedCategory ? "#059669" : "#9ca3af"} />
+            <Filter size={16} color={hasFilters ? "#059669" : "#9ca3af"} />
           </TouchableOpacity>
         </View>
         {showFilters && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
-            <TouchableOpacity
-              className={`mr-2 px-3 py-1 rounded-full ${!selectedCategory ? "bg-brand-600" : "bg-gray-100"}`}
-              onPress={() => setSelectedCategory(undefined)}
-            >
-              <Text className={`text-xs font-medium ${!selectedCategory ? "text-white" : "text-gray-600"}`}>All</Text>
-            </TouchableOpacity>
-            {(categories || []).map((cat) => (
+          <View className="mt-2">
+            {/* Category */}
+            <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
               <TouchableOpacity
-                key={cat.id}
-                className={`mr-2 px-3 py-1 rounded-full ${selectedCategory === cat.name ? "bg-brand-600" : "bg-gray-100"}`}
-                onPress={() => setSelectedCategory(selectedCategory === cat.name ? undefined : cat.name)}
+                className={`mr-1.5 px-2.5 py-1 rounded-full border ${!selectedCategory ? "bg-brand-600 border-brand-600" : "bg-white border-gray-200"}`}
+                onPress={() => setSelectedCategory(undefined)}
               >
-                <Text className={`text-xs font-medium ${selectedCategory === cat.name ? "text-white" : "text-gray-600"}`}>
-                  {cat.name}
-                </Text>
+                <Text className={`text-xs ${!selectedCategory ? "text-white font-medium" : "text-gray-600"}`}>All</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+              {(categories || []).map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  className={`mr-1.5 px-2.5 py-1 rounded-full border ${selectedCategory === cat.name ? "bg-brand-600 border-brand-600" : "bg-white border-gray-200"}`}
+                  onPress={() => setSelectedCategory(selectedCategory === cat.name ? undefined : cat.name)}
+                >
+                  <Text className={`text-xs ${selectedCategory === cat.name ? "text-white font-medium" : "text-gray-600"}`}>
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Difficulty */}
+            <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Difficulty</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+              {DIFFICULTIES.map((d) => (
+                <TouchableOpacity
+                  key={d}
+                  className={`mr-1.5 px-2.5 py-1 rounded-full border ${selectedDifficulty === d ? "bg-brand-600 border-brand-600" : "bg-white border-gray-200"}`}
+                  onPress={() => setSelectedDifficulty(selectedDifficulty === d ? undefined : d)}
+                >
+                  <Text className={`text-xs ${selectedDifficulty === d ? "text-white font-medium" : "text-gray-600"}`}>{d}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Equipment */}
+            {equipmentTypes && equipmentTypes.length > 0 && (
+              <>
+                <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Equipment</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+                  {equipmentTypes.map((eq) => (
+                    <TouchableOpacity
+                      key={eq.id}
+                      className={`mr-1.5 px-2.5 py-1 rounded-full border ${selectedEquipment === eq.name ? "bg-brand-600 border-brand-600" : "bg-white border-gray-200"}`}
+                      onPress={() => setSelectedEquipment(selectedEquipment === eq.name ? undefined : eq.name)}
+                    >
+                      <Text className={`text-xs ${selectedEquipment === eq.name ? "text-white font-medium" : "text-gray-600"}`}>
+                        {eq.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+
+            {/* Clear filters */}
+            {hasFilters && (
+              <TouchableOpacity onPress={() => { setSelectedCategory(undefined); setSelectedDifficulty(undefined); setSelectedEquipment(undefined); }}>
+                <Text className="text-xs text-brand-600 font-medium mb-1">Clear all filters</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
 

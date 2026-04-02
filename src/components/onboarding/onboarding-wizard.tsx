@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export function OnboardingWizard({
   subtitle,
 }: OnboardingWizardProps) {
   const router = useRouter();
+  const { update } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
@@ -64,23 +66,13 @@ export function OnboardingWizard({
     } catch {
       // save failed but still complete onboarding
     }
-    // Update the JWT token directly without triggering a React re-render,
-    // then hard redirect so the next page load picks up the fresh token
-    await fetch("/api/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ onboardingComplete: true }),
-    });
+    await update({ onboardingComplete: true });
     window.location.href = redirectTo;
   }
 
   async function handleSkip() {
     setSaving(true);
-    await fetch("/api/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ onboardingComplete: true }),
-    });
+    await update({ onboardingComplete: true });
     window.location.href = redirectTo;
   }
 

@@ -339,3 +339,110 @@ Return a JSON object:
   });
   return data;
 }
+
+// ---- Program Adjustment (Pass 2: Progressive Overload) ----
+
+interface ProgramExerciseInput {
+  name: string;
+  sets: number | null;
+  reps: string | null;
+  weight: string | null;
+  restSeconds: number | null;
+}
+
+interface WeekProgression {
+  weekNumber: number;
+  exercises: Array<{
+    name: string;
+    sets: number;
+    reps: string;
+    weight: string;
+    restSeconds: number;
+    notes: string;
+  }>;
+}
+
+interface AdjustedProgram {
+  weeks: WeekProgression[];
+}
+
+export async function adjustProgramForClient(
+  clientId: string,
+  program: {
+    name: string;
+    durationWeeks: number;
+    workoutsPerWeek: Array<{
+      weekNumber: number;
+      dayNumber: number;
+      workoutName: string;
+      exercises: ProgramExerciseInput[];
+    }>;
+  },
+  locale: string = "en"
+): Promise<AdjustedProgram> {
+  const ctx = await getClientContext(clientId);
+  const clientInfo = buildClientPrompt(ctx);
+  const langInstruction = getAILanguageInstruction(locale);
+
+  // Group by unique workout to avoid duplicating work
+  const uniqueWorkouts = new Map<string, ProgramExerciseInput[]>();
+  for (const day of program.workoutsPerWeek) {
+    if (!uniqueWorkouts.has(day.workoutName)) {
+      uniqueWorkouts.set(day.workoutName, day.exercises);
+    }
+  }
+
+  const workoutSummary = Array.from(uniqueWorkouts.entries())
+    .map(
+      ([name, exercises]) =>
+        `Workout: ${name}\n${exercises.map((ex, i) => `  ${i + 1}. ${ex.name} — ${ex.sets}x${ex.reps}, weight: ${ex.weight || "not set"}, rest: ${ex.restSeconds}s`).join("\n")}`
+    )
+    .join("\n\n");
+
+  const { data } = await aiJSON<AdjustedProgram>({
+    messages: [
+      {
+        role: "system",
+        content: `You are an expert fitness coach specializing in periodization and progressive overload. Given a workout program template and a client's profile, generate week-by-week progression for all exercises.
+
+CLIENT PROFILE:
+${clientInfo}
+
+PROGRAM: "${program.name}" — ${program.durationWeeks} weeks
+
+PROGRESSIVE OVERLOAD RULES:
+1. Start with appropriate weights/reps for the client's fitness level in Week 1.
+2. Apply progressive overload across weeks:
+   - For hypertrophy (8-12 reps): increase weight by 2.5-5% per week, OR add 1-2 reps, OR add a set.
+   - For strength (3-5 reps): increase weight by 2.5-5% per week.
+   - For endurance (15-20 reps): increase reps or reduce rest.
+3. Include a deload week every 4th week (reduce volume by ~40%, keep intensity moderate).
+4. Never change exercise names — only adjust sets, reps, weight, rest, and notes.
+5. Use realistic weight progressions — a beginner won't add 5kg/week for 8 weeks straight.
+6. Weight format: use "kg" values (e.g., "40kg", "22.5kg") or "bodyweight" where appropriate.
+7. ${langInstruction}
+
+Return a JSON object:
+{
+  "weeks": [
+    {
+      "weekNumber": 1,
+      "exercises": [
+        { "name": "Exercise name", "sets": 3, "reps": "10", "weight": "40kg", "restSeconds": 90, "notes": "Week 1 starting weight. Focus on form." }
+      ]
+    }
+  ]
+}
+
+Include ALL ${program.durationWeeks} weeks. Each week should include ALL exercises from ALL workouts in that week.`,
+      },
+      {
+        role: "user",
+        content: `Generate progressive overload for this ${program.durationWeeks}-week program:\n\n${workoutSummary}`,
+      },
+    ],
+    maxTokens: Math.min(4000, program.durationWeeks * 500 + 1000),
+    temperature: 0.2,
+  });
+  return data;
+}

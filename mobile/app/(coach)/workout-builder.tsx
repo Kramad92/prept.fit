@@ -678,7 +678,7 @@ function ExercisePickerModal({
       {categories && categories.length > 0 && (
         <View className="mb-2">
           <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {categories.map((cat) => (
               <FilterChip
                 key={cat.id}
@@ -710,7 +710,7 @@ function ExercisePickerModal({
       {equipmentTypes && equipmentTypes.length > 0 && (
         <View className="mb-2">
           <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Equipment</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {equipmentTypes.map((eq) => (
               <FilterChip
                 key={eq.id}

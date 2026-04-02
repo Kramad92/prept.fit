@@ -107,7 +107,7 @@ export default function ExercisesScreen() {
           </TouchableOpacity>
         </View>
         {showFilters && (
-          <View className="mt-2">
+          <ScrollView style={{ maxHeight: 200 }} className="mt-2" nestedScrollEnabled>
             {/* Category */}
             <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
@@ -170,7 +170,7 @@ export default function ExercisesScreen() {
                 <Text className="text-xs text-brand-600 font-medium mb-1">Clear all filters</Text>
               </TouchableOpacity>
             )}
-          </View>
+          </ScrollView>
         )}
       </View>
 

@@ -136,7 +136,7 @@ export function AppBottomSheet({
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       handleComponent={renderHandle}
-      backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+      backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: "red" }}
       footerComponent={footer ? renderFooter : undefined}
       enableOverDrag={false}
       snapPoints={snapPoints || ["60%"]}

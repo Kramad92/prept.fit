@@ -48,7 +48,25 @@ export function AppBottomSheet({
     }
   }, [visible]);
 
-  // Track keyboard height for extra scroll padding + auto-scroll to focused input
+  const scrollToFocused = useCallback(() => {
+    setTimeout(() => {
+      const focused = TextInput.State.currentlyFocusedInput();
+      if (!focused || !contentRef.current) return;
+
+      focused.measureLayout(
+        contentRef.current as any,
+        (_x: number, y: number, _w: number, _h: number) => {
+          scrollRef.current?.scrollTo({
+            y: Math.max(0, y - 80),
+            animated: true,
+          });
+        },
+        () => {}
+      );
+    }, 150);
+  }, []);
+
+  // Track keyboard height for extra scroll padding + auto-scroll on keyboard open
   useEffect(() => {
     if (!visible) return;
 
@@ -57,23 +75,7 @@ export function AppBottomSheet({
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
       setKeyboardHeight(e.endCoordinates.height);
-
-      // Auto-scroll to focused input after keyboard animates
-      setTimeout(() => {
-        const focused = TextInput.State.currentlyFocusedInput();
-        if (!focused || !contentRef.current) return;
-
-        focused.measureLayout(
-          contentRef.current as any,
-          (_x: number, y: number, _w: number, h: number) => {
-            scrollRef.current?.scrollTo({
-              y: Math.max(0, y - 80),
-              animated: true,
-            });
-          },
-          () => {}
-        );
-      }, 250);
+      scrollToFocused();
     });
 
     const hideSub = Keyboard.addListener(hideEvent, () => {
@@ -84,7 +86,7 @@ export function AppBottomSheet({
       showSub.remove();
       hideSub.remove();
     };
-  }, [visible]);
+  }, [visible, scrollToFocused]);
 
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -132,7 +134,7 @@ export function AppBottomSheet({
         </View>
         {title ? (
           <View className="px-5 pt-1 pb-3 border-b border-gray-100">
-            <Text className="text-lg font-semibold text-gray-900">{title} (v1)</Text>
+            <Text className="text-lg font-semibold text-gray-900">{title} (v2)</Text>
           </View>
         ) : null}
       </View>
@@ -167,7 +169,10 @@ export function AppBottomSheet({
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <View ref={contentRef}>
+        <View
+          ref={contentRef}
+          onTouchEnd={scrollToFocused}
+        >
           {children}
         </View>
       </BottomSheetScrollView>

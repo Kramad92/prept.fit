@@ -11,6 +11,8 @@ import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { addNotificationResponseListener } from "@/lib/notifications";
 import { queryClient } from "@/lib/query-client";
+import { ThemeProvider } from "@/lib/theme-context";
+import { I18nProvider } from "@/lib/i18n";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -92,16 +94,20 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <ErrorBoundary>
-          <SafeAreaProvider>
-            <QueryClientProvider client={queryClient}>
-              <BottomSheetModalProvider>
-                <AuthProvider>
-                  <NotificationHandler />
-                  <Slot />
-                </AuthProvider>
-              </BottomSheetModalProvider>
-            </QueryClientProvider>
-          </SafeAreaProvider>
+          <ThemeProvider>
+            <I18nProvider>
+              <SafeAreaProvider>
+                <QueryClientProvider client={queryClient}>
+                  <BottomSheetModalProvider>
+                    <AuthProvider>
+                      <NotificationHandler />
+                      <Slot />
+                    </AuthProvider>
+                  </BottomSheetModalProvider>
+                </QueryClientProvider>
+              </SafeAreaProvider>
+            </I18nProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </KeyboardProvider>
     </GestureHandlerRootView>

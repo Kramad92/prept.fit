@@ -15,6 +15,8 @@ import { haptics } from "@/lib/haptics";
 import { CheckCircle, Circle, Flame } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
 import { AppHeader } from "@/components/app-header";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { AssignedHabit } from "@/types/api";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -48,7 +50,6 @@ function computeStreak(habits: AssignedHabit[]): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Check if today is complete — if not, start counting from yesterday
   const todayStr = getDateStr(today);
   const todayDone = habits.every((h) =>
     h.logs.some((l) => logMatchesDate(l.date, todayStr) && l.completed)
@@ -73,6 +74,8 @@ export default function HabitsScreen() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const t = useT();
+  const colors = useThemeColors();
 
   const todayStr = getDateStr(new Date());
   const last7 = useMemo(() => getLast7Days(), []);
@@ -119,11 +122,11 @@ export default function HabitsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="px-4 pt-4">
-          <View className="h-7 w-32 bg-gray-200 rounded mb-2" />
-          <View className="h-4 w-48 bg-gray-100 rounded mb-6" />
-          {[1, 2, 3].map((i) => <View key={i} className="bg-white rounded-xl p-4 mb-3 border border-gray-100 h-16" />)}
+          <View className="h-7 w-32 bg-gray-200 dark:bg-slate-700 rounded mb-2" />
+          <View className="h-4 w-48 bg-gray-100 dark:bg-slate-700 rounded mb-6" />
+          {[1, 2, 3].map((i) => <View key={i} className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-3 border border-gray-100 dark:border-slate-700/40 h-16" />)}
         </View>
       </SafeAreaView>
     );
@@ -131,33 +134,33 @@ export default function HabitsScreen() {
 
   if (isError) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <AppHeader title="Habits" subtitle={dateDisplay} />
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <AppHeader title={t.nav.habits} subtitle={dateDisplay} />
       <ScrollView
         className="flex-1 px-4"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />}
       >
 
         <View className="flex-row gap-3 mb-4">
-          <View className="flex-1 bg-white rounded-xl p-3 border border-gray-100 items-center">
+          <View className="flex-1 bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-100 dark:border-slate-700/40 items-center">
             <Text className="text-xl font-bold text-brand-600">{todayDone}/{activeHabits.length}</Text>
-            <Text className="text-xs text-gray-500">Today</Text>
+            <Text className="text-xs text-gray-500 dark:text-slate-400">{t.common.today}</Text>
           </View>
-          <View className="flex-1 bg-white rounded-xl p-3 border border-gray-100 items-center flex-row justify-center">
+          <View className="flex-1 bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-100 dark:border-slate-700/40 items-center flex-row justify-center">
             <Flame size={18} color="#f59e0b" />
-            <Text className="text-xl font-bold text-gray-900 ml-1">{streak}</Text>
-            <Text className="text-xs text-gray-500 ml-1">day streak</Text>
+            <Text className="text-xl font-bold text-gray-900 dark:text-slate-50 ml-1">{streak}</Text>
+            <Text className="text-xs text-gray-500 dark:text-slate-400 ml-1">day streak</Text>
           </View>
         </View>
 
-        <View className="flex-row justify-between mb-4 bg-white rounded-xl p-3 border border-gray-100">
+        <View className="flex-row justify-between mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 border border-gray-100 dark:border-slate-700/40">
           {last7.map((day) => {
             const ds = getDateStr(day);
             const isToday = ds === todayStr;
@@ -165,9 +168,9 @@ export default function HabitsScreen() {
             const someDone = !allDone && activeHabits.some((h) => h.logs.some((l) => logMatchesDate(l.date, ds) && l.completed));
             return (
               <View key={ds} className="items-center">
-                <Text className={`text-xs mb-1 ${isToday ? "text-brand-600 font-bold" : "text-gray-400"}`}>{DAY_NAMES[day.getDay()]}</Text>
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${allDone ? "bg-brand-500" : someDone ? "bg-brand-200" : isToday ? "bg-gray-200" : "bg-gray-100"}`}>
-                  <Text className={`text-xs font-medium ${allDone ? "text-white" : "text-gray-600"}`}>{day.getDate()}</Text>
+                <Text className={`text-xs mb-1 ${isToday ? "text-brand-600 font-bold" : "text-gray-400 dark:text-slate-500"}`}>{DAY_NAMES[day.getDay()]}</Text>
+                <View className={`w-8 h-8 rounded-full items-center justify-center ${allDone ? "bg-brand-500" : someDone ? "bg-brand-200" : isToday ? "bg-gray-200 dark:bg-slate-700" : "bg-gray-100 dark:bg-slate-700"}`}>
+                  <Text className={`text-xs font-medium ${allDone ? "text-white" : "text-gray-600 dark:text-slate-300"}`}>{day.getDate()}</Text>
                 </View>
               </View>
             );
@@ -176,8 +179,8 @@ export default function HabitsScreen() {
 
         {activeHabits.length === 0 ? (
           <View className="items-center justify-center py-16">
-            <CheckCircle size={48} color="#d1d5db" />
-            <Text className="text-gray-400 mt-3 text-base">No habits assigned</Text>
+            <CheckCircle size={48} color={colors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">{t.portalHabits.noHabits}</Text>
           </View>
         ) : (
           activeHabits.map((habit) => {
@@ -186,7 +189,7 @@ export default function HabitsScreen() {
             return (
               <TouchableOpacity
                 key={habit.id}
-                className={`flex-row items-center bg-white rounded-xl p-4 mb-2 border ${isDone ? "border-brand-200 bg-brand-50" : "border-gray-100"}`}
+                className={`flex-row items-center bg-white dark:bg-slate-800 rounded-xl p-4 mb-2 border ${isDone ? "border-brand-200 bg-brand-50" : "border-gray-100 dark:border-slate-700/40"}`}
                 onPress={() => toggleHabit(habit)}
                 activeOpacity={0.7}
                 disabled={isToggling}
@@ -194,14 +197,14 @@ export default function HabitsScreen() {
                 accessibilityState={{ checked: isDone }}
               >
                 {isToggling ? (
-                  <ActivityIndicator size="small" color="#059669" />
+                  <ActivityIndicator size="small" color={colors.brand} />
                 ) : isDone ? (
-                  <CheckCircle size={24} color="#059669" />
+                  <CheckCircle size={24} color={colors.brand} />
                 ) : (
-                  <Circle size={24} color="#d1d5db" />
+                  <Circle size={24} color={colors.iconMuted} />
                 )}
                 <Text className="text-2xl ml-3">{habit.habit.icon || "✅"}</Text>
-                <Text className={`flex-1 ml-2 text-base ${isDone ? "text-brand-800 line-through" : "text-gray-900"}`}>{habit.habit.name}</Text>
+                <Text className={`flex-1 ml-2 text-base ${isDone ? "text-brand-800 line-through" : "text-gray-900 dark:text-slate-50"}`}>{habit.habit.name}</Text>
               </TouchableOpacity>
             );
           })

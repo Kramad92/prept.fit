@@ -26,12 +26,16 @@ import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
 import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 type StatusFilter = "all" | "pending" | "overdue" | "paid";
 
 const METHODS = ["cash", "bank_transfer", "card", "venmo", "zelle", "other"];
 
 export default function CoachPaymentsScreen() {
+  const t = useT();
+  const colors = useThemeColors();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [showAdd, setShowAdd] = useState(false);
   const statusParam = filter === "all" ? undefined : filter;
@@ -43,7 +47,7 @@ export default function CoachPaymentsScreen() {
       const s = item.status?.toLowerCase();
       return (
         <TouchableOpacity
-          className="flex-row items-center px-4 py-3.5 bg-white border-b border-gray-50"
+          className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
           onPress={() =>
             router.push(
               `/(coach)/clients/${item.clientId || item.client?.id}` as never
@@ -54,10 +58,10 @@ export default function CoachPaymentsScreen() {
           <View
             className={`w-9 h-9 rounded-full items-center justify-center mr-3 ${
               s === "overdue"
-                ? "bg-red-50"
+                ? "bg-red-50 dark:bg-red-900/25"
                 : s === "pending"
-                ? "bg-amber-50"
-                : "bg-green-50"
+                ? "bg-amber-50 dark:bg-amber-900/25"
+                : "bg-green-50 dark:bg-green-900/25"
             }`}
           >
             {s === "overdue" ? (
@@ -69,35 +73,35 @@ export default function CoachPaymentsScreen() {
             )}
           </View>
           <View className="flex-1">
-            <Text className="text-sm font-medium text-gray-900">
+            <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">
               {item.client?.name || "Client"}
             </Text>
-            <Text className="text-xs text-gray-500">
+            <Text className="text-xs text-gray-500 dark:text-slate-400">
               {item.description || "Payment"}
               {item.dueDate &&
                 ` · Due ${new Date(item.dueDate).toLocaleDateString()}`}
             </Text>
           </View>
           <View className="items-end">
-            <Text className="text-sm font-semibold text-gray-900">
+            <Text className="text-sm font-semibold text-gray-900 dark:text-slate-50">
               {item.amount?.toFixed(2)} {item.currency || ""}
             </Text>
             <View
               className={`px-1.5 py-0.5 rounded-full mt-0.5 ${
                 s === "overdue"
-                  ? "bg-red-50"
+                  ? "bg-red-50 dark:bg-red-900/25"
                   : s === "pending"
-                  ? "bg-amber-50"
-                  : "bg-green-50"
+                  ? "bg-amber-50 dark:bg-amber-900/25"
+                  : "bg-green-50 dark:bg-green-900/25"
               }`}
             >
               <Text
                 className={`text-[10px] font-medium capitalize ${
                   s === "overdue"
-                    ? "text-red-700"
+                    ? "text-red-700 dark:text-red-300"
                     : s === "pending"
-                    ? "text-amber-700"
-                    : "text-green-700"
+                    ? "text-amber-700 dark:text-amber-300"
+                    : "text-green-700 dark:text-green-300"
                 }`}
               >
                 {item.status}
@@ -112,10 +116,10 @@ export default function CoachPaymentsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <Header onAdd={() => setShowAdd(true)} />
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={colors.brand} />
         </View>
       </SafeAreaView>
     );
@@ -123,9 +127,9 @@ export default function CoachPaymentsScreen() {
 
   if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <Header onAdd={() => setShowAdd(true)} />
-        <QueryError message="Failed to load payments" onRetry={refetch} />
+        <QueryError message={t.errors.failedToLoad} onRetry={refetch} />
       </SafeAreaView>
     );
   }
@@ -133,28 +137,28 @@ export default function CoachPaymentsScreen() {
   const summary = data?.summary;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <Header onAdd={() => setShowAdd(true)} />
 
       {summary && (
         <View className="flex-row px-4 pb-3">
           <SummaryCard
-            label="Collected"
+            label={t.billing.collected}
             value={summary.totalCollected}
-            color="text-green-700"
-            bg="bg-green-50"
+            color="text-green-700 dark:text-green-300"
+            bg="bg-green-50 dark:bg-green-900/25"
           />
           <SummaryCard
-            label="Pending"
+            label={t.billing.pending}
             value={summary.totalPending}
-            color="text-amber-700"
-            bg="bg-amber-50"
+            color="text-amber-700 dark:text-amber-300"
+            bg="bg-amber-50 dark:bg-amber-900/25"
           />
           <SummaryCard
-            label="Overdue"
+            label={t.billing.overdue}
             value={summary.totalOverdue}
-            color="text-red-700"
-            bg="bg-red-50"
+            color="text-red-700 dark:text-red-300"
+            bg="bg-red-50 dark:bg-red-900/25"
           />
         </View>
       )}
@@ -167,14 +171,14 @@ export default function CoachPaymentsScreen() {
               className={`mr-2 px-3 py-1.5 rounded-full ${
                 filter === f
                   ? "bg-brand-600"
-                  : "bg-white border border-gray-200"
+                  : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"
               }`}
               onPress={() => setFilter(f)}
               activeOpacity={0.6}
             >
               <Text
                 className={`text-xs font-medium capitalize ${
-                  filter === f ? "text-white" : "text-gray-600"
+                  filter === f ? "text-white" : "text-gray-600 dark:text-slate-300"
                 }`}
               >
                 {f}
@@ -193,13 +197,13 @@ export default function CoachPaymentsScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#059669"
+            tintColor={colors.brand}
           />
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <CreditCard size={40} color="#d1d5db" />
-            <Text className="text-gray-400 text-sm mt-3">No payments</Text>
+            <CreditCard size={40} color={colors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">{t.billing.noPayments}</Text>
           </View>
         }
       />
@@ -217,13 +221,15 @@ export default function CoachPaymentsScreen() {
 }
 
 function Header({ onAdd }: { onAdd: () => void }) {
+  const t = useT();
+  const colors = useThemeColors();
   return (
-    <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100 mb-4">
+    <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40 mb-4">
       <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-        <ArrowLeft size={22} color="#111827" />
+        <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
-      <Text className="text-lg font-semibold text-gray-900 flex-1">
-        Payments
+      <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">
+        {t.nav.payments}
       </Text>
       <TouchableOpacity
         onPress={onAdd}
@@ -231,7 +237,7 @@ function Header({ onAdd }: { onAdd: () => void }) {
         activeOpacity={0.7}
       >
         <Plus size={14} color="#fff" />
-        <Text className="text-white text-xs font-semibold ml-1">Record</Text>
+        <Text className="text-white text-xs font-semibold ml-1">{t.billing.recordPayment}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -250,7 +256,7 @@ function SummaryCard({
 }) {
   return (
     <View className={`flex-1 ${bg} rounded-xl p-3 mx-1`}>
-      <Text className="text-[10px] text-gray-500 font-medium">{label}</Text>
+      <Text className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{label}</Text>
       <Text className={`text-base font-bold ${color} mt-0.5`}>
         {value.toFixed(2)}
       </Text>
@@ -267,6 +273,8 @@ function AddPaymentModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const t = useT();
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const { data: clients } = useCoachClients();
   const [clientId, setClientId] = useState("");
@@ -293,18 +301,18 @@ function AddPaymentModal({
       onSuccess();
     },
     onError: (err: any) => {
-      Alert.alert("Error", err.message || "Failed to record payment");
+      Alert.alert(t.common.error, err.message || t.errors.failedToSave);
     },
   });
 
   const handleSubmit = () => {
     if (!clientId) {
-      Alert.alert("Required", "Please select a client");
+      Alert.alert(t.common.required, t.billing.client);
       return;
     }
     const parsedAmount = parseFloat(amount);
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert("Required", "Please enter a valid amount");
+      Alert.alert(t.common.required, t.billing.amount);
       return;
     }
     createMutation.mutate({
@@ -330,7 +338,7 @@ function AddPaymentModal({
       visible={visible}
       onClose={() => { resetForm(); onClose(); }}
       snapPoints={["50%", "85%"]}
-      title="Record Payment"
+      title={t.billing.recordPayment}
       footer={
         <TouchableOpacity
           className={`rounded-lg py-3.5 items-center ${createMutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
@@ -341,81 +349,81 @@ function AddPaymentModal({
           {createMutation.isPending ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white font-semibold text-base">Record Payment</Text>
+            <Text className="text-white font-semibold text-base">{t.billing.recordPayment}</Text>
           )}
         </TouchableOpacity>
       }
     >
-      <Text className="text-sm font-medium text-gray-700 mb-1">Client</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.billing.client}</Text>
       <TouchableOpacity
-        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4"
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4"
         onPress={() => setShowClientPicker(!showClientPicker)}
         activeOpacity={0.6}
       >
-        <Text className={selectedClient ? "text-gray-900" : "text-gray-400"}>
+        <Text className={selectedClient ? "text-gray-900 dark:text-slate-50" : "text-gray-400 dark:text-slate-500"}>
           {selectedClient?.name || "Select client..."}
         </Text>
       </TouchableOpacity>
 
       {showClientPicker && (
-        <View className="bg-white border border-gray-200 rounded-lg mb-4" style={{ maxHeight: 192 }}>
+        <View className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg mb-4" style={{ maxHeight: 192 }}>
           <ScrollView nestedScrollEnabled>
             {(clients || []).map((c) => (
               <TouchableOpacity
                 key={c.id}
-                className={`px-4 py-2.5 border-b border-gray-50 ${c.id === clientId ? "bg-brand-50" : ""}`}
+                className={`px-4 py-2.5 border-b border-gray-50 dark:border-slate-700/40 ${c.id === clientId ? "bg-brand-50" : ""}`}
                 onPress={() => { setClientId(c.id); setShowClientPicker(false); }}
               >
-                <Text className="text-sm text-gray-900">{c.name}</Text>
+                <Text className="text-sm text-gray-900 dark:text-slate-50">{c.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
       )}
 
-      <Text className="text-sm font-medium text-gray-700 mb-1">Amount</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.billing.amount}</Text>
       <TextInput
-        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
         placeholder="0.00"
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={colors.iconMuted}
         value={amount}
         onChangeText={setAmount}
         keyboardType="decimal-pad"
       />
 
-      <Text className="text-sm font-medium text-gray-700 mb-1">Method</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.billing.method}</Text>
       <View className="flex-row flex-wrap mb-4">
         {METHODS.map((m) => (
           <TouchableOpacity
             key={m}
-            className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${method === m ? "bg-brand-600" : "bg-white border border-gray-200"}`}
+            className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${method === m ? "bg-brand-600" : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"}`}
             onPress={() => setMethod(m)}
           >
-            <Text className={`text-xs font-medium capitalize ${method === m ? "text-white" : "text-gray-600"}`}>
+            <Text className={`text-xs font-medium capitalize ${method === m ? "text-white" : "text-gray-600 dark:text-slate-300"}`}>
               {m.replace("_", " ")}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text className="text-sm font-medium text-gray-700 mb-1">Status</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.status}</Text>
       <View className="flex-row mb-4">
         {(["paid", "pending"] as const).map((s) => (
           <TouchableOpacity
             key={s}
-            className={`mr-2 px-4 py-2 rounded-lg ${status === s ? "bg-brand-600" : "bg-white border border-gray-200"}`}
+            className={`mr-2 px-4 py-2 rounded-lg ${status === s ? "bg-brand-600" : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"}`}
             onPress={() => setStatus(s)}
           >
-            <Text className={`text-sm font-medium capitalize ${status === s ? "text-white" : "text-gray-600"}`}>{s}</Text>
+            <Text className={`text-sm font-medium capitalize ${status === s ? "text-white" : "text-gray-600 dark:text-slate-300"}`}>{s}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text className="text-sm font-medium text-gray-700 mb-1">Description (optional)</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.description} ({t.common.optional})</Text>
       <TextInput
-        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
         placeholder="Monthly coaching fee..."
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={colors.iconMuted}
         value={description}
         onChangeText={setDescription}
       />

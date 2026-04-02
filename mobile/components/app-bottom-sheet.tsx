@@ -7,6 +7,7 @@ import {
   BottomSheetTextInput as _BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 // Re-export so consumers don't need a separate import
 export const BottomSheetTextInput = _BottomSheetTextInput;
@@ -37,6 +38,7 @@ export function AppBottomSheet({
   const isPresented = useRef(false);
   const insets = useSafeAreaInsets();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const colors = useThemeColors();
 
   useEffect(() => {
     if (visible && !isPresented.current) {
@@ -113,7 +115,7 @@ export function AppBottomSheet({
     () =>
       footer ? (
         <View
-          className="px-5 pt-3 pb-2 border-t border-gray-100 bg-white"
+          className="px-5 pt-3 pb-2 border-t border-gray-100 dark:border-slate-700/40 bg-white dark:bg-slate-800"
           style={{ paddingBottom: Math.max(insets.bottom, 12) }}
         >
           {footer}
@@ -131,18 +133,18 @@ export function AppBottomSheet({
               width: 36,
               height: 4,
               borderRadius: 2,
-              backgroundColor: "#d1d5db",
+              backgroundColor: colors.inputBorder,
             }}
           />
         </View>
         {title ? (
-          <View className="px-5 pt-1 pb-3 border-b border-gray-100">
-            <Text className="text-lg font-semibold text-gray-900">{title}</Text>
+          <View className="px-5 pt-1 pb-3 border-b border-gray-100 dark:border-slate-700/40">
+            <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{title}</Text>
           </View>
         ) : null}
       </View>
     ),
-    [title]
+    [title, colors.inputBorder]
   );
 
   const footerSpace = footer ? 60 : 16;
@@ -157,7 +159,11 @@ export function AppBottomSheet({
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       handleComponent={renderHandle}
-      backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+      backgroundStyle={{
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        backgroundColor: colors.card,
+      }}
       footerComponent={footer ? renderFooter : undefined}
       enableOverDrag={false}
       snapPoints={snapPoints || ["60%"]}

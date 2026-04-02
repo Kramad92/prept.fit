@@ -19,10 +19,14 @@ import { useAvailability } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export default function AvailabilityScreen() {
+  const t = useT();
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const { data: slots, isLoading, error, refetch, isRefetching } = useAvailability();
   const [addingDay, setAddingDay] = useState<number | null>(null);
@@ -36,7 +40,7 @@ export default function AvailabilityScreen() {
       queryClient.invalidateQueries({ queryKey: ["availability"] });
       setAddingDay(null);
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const deleteMutation = useMutation({
@@ -45,7 +49,7 @@ export default function AvailabilityScreen() {
       haptics.light();
       queryClient.invalidateQueries({ queryKey: ["availability"] });
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const handleAdd = () => {
@@ -73,10 +77,10 @@ export default function AvailabilityScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <Header />
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={colors.brand} />
         </View>
       </SafeAreaView>
     );
@@ -84,15 +88,15 @@ export default function AvailabilityScreen() {
 
   if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <Header />
-        <QueryError message="Failed to load availability" onRetry={refetch} />
+        <QueryError message={t.errors.failedToLoad} onRetry={refetch} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <Header />
       <KeyboardAvoidingView
         className="flex-1"
@@ -102,10 +106,10 @@ export default function AvailabilityScreen() {
         className="flex-1 px-4 pt-4"
         contentContainerStyle={{ paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#059669" />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />}
       >
-        <Text className="text-sm text-gray-500 mb-4">
-          Set your recurring weekly availability for client bookings.
+        <Text className="text-sm text-gray-500 dark:text-slate-400 mb-4">
+          {t.settings.availabilityDesc}
         </Text>
 
         {DAYS.map((day, dayIndex) => {
@@ -113,35 +117,35 @@ export default function AvailabilityScreen() {
           return (
             <View key={day} className="mb-4">
               <View className="flex-row items-center justify-between mb-1.5">
-                <Text className="text-sm font-semibold text-gray-900">{day}</Text>
+                <Text className="text-sm font-semibold text-gray-900 dark:text-slate-50">{day}</Text>
                 <TouchableOpacity
                   onPress={() => { setAddingDay(addingDay === dayIndex ? null : dayIndex); setStartTime("09:00"); setEndTime("17:00"); }}
                   className="p-1"
                 >
-                  <Plus size={18} color="#059669" />
+                  <Plus size={18} color={colors.brand} />
                 </TouchableOpacity>
               </View>
 
               {daySlots.length === 0 && addingDay !== dayIndex && (
-                <View className="bg-white rounded-lg border border-gray-100 px-3 py-2.5">
-                  <Text className="text-xs text-gray-400">No slots</Text>
+                <View className="bg-white dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700/40 px-3 py-2.5">
+                  <Text className="text-xs text-gray-400 dark:text-slate-500">No slots</Text>
                 </View>
               )}
 
               {daySlots.map((slot) => (
-                <View key={slot.id} className="bg-white rounded-lg border border-gray-100 px-3 py-2.5 flex-row items-center mb-1.5">
-                  <Clock size={14} color="#6b7280" />
-                  <Text className="flex-1 ml-2 text-sm text-gray-900">
+                <View key={slot.id} className="bg-white dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700/40 px-3 py-2.5 flex-row items-center mb-1.5">
+                  <Clock size={14} color={colors.icon} />
+                  <Text className="flex-1 ml-2 text-sm text-gray-900 dark:text-slate-50">
                     {slot.startTime} - {slot.endTime}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => Alert.alert("Delete Slot", "Remove this availability slot?", [
-                      { text: "Cancel", style: "cancel" },
-                      { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate(slot.id) },
+                    onPress={() => Alert.alert(t.common.delete, "Remove this availability slot?", [
+                      { text: t.common.cancel, style: "cancel" },
+                      { text: t.common.delete, style: "destructive", onPress: () => deleteMutation.mutate(slot.id) },
                     ])}
                     className="p-1"
                   >
-                    <Trash2 size={16} color="#ef4444" />
+                    <Trash2 size={16} color={colors.destructive} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -150,23 +154,23 @@ export default function AvailabilityScreen() {
                 <View className="bg-brand-50 rounded-lg border border-brand-200 p-3 mt-1">
                   <View className="flex-row items-center mb-2">
                     <View className="flex-1 mr-2">
-                      <Text className="text-xs text-gray-500 mb-0.5">Start</Text>
+                      <Text className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Start</Text>
                       <TextInput
-                        className="bg-white border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-900"
+                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50"
                         value={startTime}
                         onChangeText={setStartTime}
                         placeholder="09:00"
-                        placeholderTextColor="#9ca3af"
+                        placeholderTextColor={colors.iconMuted}
                       />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-xs text-gray-500 mb-0.5">End</Text>
+                      <Text className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">End</Text>
                       <TextInput
-                        className="bg-white border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-900"
+                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50"
                         value={endTime}
                         onChangeText={setEndTime}
                         placeholder="17:00"
-                        placeholderTextColor="#9ca3af"
+                        placeholderTextColor={colors.iconMuted}
                       />
                     </View>
                   </View>
@@ -177,11 +181,11 @@ export default function AvailabilityScreen() {
                       disabled={addMutation.isPending}
                     >
                       <Text className="text-white text-xs font-semibold">
-                        {addMutation.isPending ? "Adding..." : "Add"}
+                        {addMutation.isPending ? t.common.saving : t.common.add}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity className="px-3 py-1.5" onPress={() => setAddingDay(null)}>
-                      <Text className="text-gray-500 text-xs">Cancel</Text>
+                      <Text className="text-gray-500 dark:text-slate-400 text-xs">{t.common.cancel}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -196,12 +200,14 @@ export default function AvailabilityScreen() {
 }
 
 function Header() {
+  const t = useT();
+  const colors = useThemeColors();
   return (
-    <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
       <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-        <ArrowLeft size={22} color="#111827" />
+        <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
-      <Text className="text-lg font-semibold text-gray-900 flex-1">Availability</Text>
+      <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.settings.availability}</Text>
     </View>
   );
 }

@@ -18,6 +18,8 @@ import { useAuth } from "@/lib/auth-context";
 import { haptics } from "@/lib/haptics";
 import { useMessages } from "@/hooks/use-client-data";
 import { QueryError } from "@/components/query-error";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { Message } from "@/types/api";
 
 const PUSHER_KEY = process.env.EXPO_PUBLIC_PUSHER_KEY;
@@ -29,6 +31,8 @@ export default function MessagesScreen() {
   const flatListRef = useRef<FlatList>(null);
   const [text, setText] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const t = useT();
+  const colors = useThemeColors();
 
   const clientId = user?.clientProfileId;
   const { data: serverMessages, isLoading, isError, refetch } = useMessages(clientId ?? undefined);
@@ -142,12 +146,12 @@ export default function MessagesScreen() {
             className={`rounded-2xl px-4 py-2.5 ${
               isMine
                 ? "bg-brand-600 rounded-br-sm"
-                : "bg-white border border-gray-100 rounded-bl-sm"
+                : "bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/40 rounded-bl-sm"
             }`}
           >
             <Text
               className={`text-base ${
-                isMine ? "text-white" : "text-gray-900"
+                isMine ? "text-white" : "text-gray-900 dark:text-slate-50"
               }`}
             >
               {item.content}
@@ -158,7 +162,7 @@ export default function MessagesScreen() {
               isMine ? "justify-end" : "justify-start"
             }`}
           >
-            <Text className="text-xs text-gray-400">
+            <Text className="text-xs text-gray-400 dark:text-slate-500">
               {isTemp ? "Sending..." : formatTime(item.createdAt)}
             </Text>
           </View>
@@ -170,15 +174,15 @@ export default function MessagesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+        <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
           <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-            <ArrowLeft size={22} color="#111827" />
+            <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">Messages</Text>
+          <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.messages}</Text>
         </View>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={colors.brand} />
         </View>
       </SafeAreaView>
     );
@@ -186,12 +190,12 @@ export default function MessagesScreen() {
 
   if (isError) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+        <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
           <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-            <ArrowLeft size={22} color="#111827" />
+            <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">Messages</Text>
+          <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.messages}</Text>
         </View>
         <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
@@ -199,12 +203,12 @@ export default function MessagesScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900">Messages</Text>
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.messages}</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -214,8 +218,8 @@ export default function MessagesScreen() {
       >
         {messages.length === 0 ? (
           <View className="flex-1 items-center justify-center px-8">
-            <Text className="text-gray-400 text-base text-center">
-              No messages yet. Send a message to your coach!
+            <Text className="text-gray-400 dark:text-slate-500 text-base text-center">
+              {t.messages.noMessages}
             </Text>
           </View>
         ) : (
@@ -231,18 +235,18 @@ export default function MessagesScreen() {
           />
         )}
 
-        <View className="flex-row items-end px-3 py-2 bg-white border-t border-gray-100">
+        <View className="flex-row items-end px-3 py-2 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700/40">
           <TextInput
-            className="flex-1 bg-gray-50 rounded-2xl px-4 py-2.5 text-base text-gray-900 max-h-24 border border-gray-200"
-            placeholder="Type a message..."
-            placeholderTextColor="#9ca3af"
+            className="flex-1 bg-gray-50 dark:bg-slate-950 rounded-2xl px-4 py-2.5 text-base text-gray-900 dark:text-slate-50 max-h-24 border border-gray-200 dark:border-slate-700"
+            placeholder={t.messages.typeMessage}
+            placeholderTextColor={colors.iconMuted}
             value={text}
             onChangeText={setText}
             multiline
           />
           <TouchableOpacity
             className={`ml-2 w-10 h-10 rounded-full items-center justify-center ${
-              text.trim() ? "bg-brand-600" : "bg-gray-200"
+              text.trim() ? "bg-brand-600" : "bg-gray-200 dark:bg-slate-700"
             }`}
             onPress={handleSend}
             disabled={!text.trim() || sendMutation.isPending}
@@ -251,7 +255,7 @@ export default function MessagesScreen() {
             {sendMutation.isPending ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Send size={18} color={text.trim() ? "#fff" : "#9ca3af"} />
+              <Send size={18} color={text.trim() ? "#fff" : colors.iconMuted} />
             )}
           </TouchableOpacity>
         </View>

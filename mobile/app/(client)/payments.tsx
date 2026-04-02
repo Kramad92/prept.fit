@@ -20,6 +20,8 @@ import {
 } from "lucide-react-native";
 import { usePayments } from "@/hooks/use-client-data";
 import { QueryError } from "@/components/query-error";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { Payment } from "@/types/api";
 
 type FilterStatus = "all" | "paid" | "pending" | "overdue";
@@ -31,25 +33,25 @@ const STATUS_CONFIG: Record<
   paid: {
     icon: CheckCircle,
     color: "#059669",
-    bg: "bg-green-50",
+    bg: "bg-green-50 dark:bg-green-900/25",
     label: "Paid",
   },
   pending: {
     icon: Clock,
     color: "#f59e0b",
-    bg: "bg-yellow-50",
+    bg: "bg-yellow-50 dark:bg-yellow-900/25",
     label: "Pending",
   },
   overdue: {
     icon: AlertTriangle,
     color: "#ef4444",
-    bg: "bg-red-50",
+    bg: "bg-red-50 dark:bg-red-900/25",
     label: "Overdue",
   },
   cancelled: {
     icon: XCircle,
     color: "#6b7280",
-    bg: "bg-gray-50",
+    bg: "bg-gray-50 dark:bg-slate-950",
     label: "Cancelled",
   },
 };
@@ -59,6 +61,8 @@ export default function PaymentsScreen() {
   const { data, isLoading, isError, refetch } = usePayments();
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [refreshing, setRefreshing] = useState(false);
+  const t = useT();
+  const colors = useThemeColors();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -91,12 +95,12 @@ export default function PaymentsScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900">Payments</Text>
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.payments}</Text>
       </View>
 
       <ScrollView
@@ -105,7 +109,7 @@ export default function PaymentsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#059669"
+            tintColor={colors.brand}
           />
         }
       >
@@ -113,7 +117,7 @@ export default function PaymentsScreen() {
           <QueryError onRetry={() => refetch()} />
         ) : isLoading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#059669" />
+            <ActivityIndicator size="large" color={colors.brand} />
           </View>
         ) : (
           <>
@@ -121,24 +125,24 @@ export default function PaymentsScreen() {
             {summary && (
               <View className="flex-row px-4 pt-4" style={{ gap: 8 }}>
                 <SummaryCard
-                  label="Paid"
+                  label={t.billing.paid}
                   amount={summary.totalPaid}
                   color="#059669"
-                  bgClass="bg-green-50"
+                  bgClass="bg-green-50 dark:bg-green-900/25"
                   currency={derivedCurrency}
                 />
                 <SummaryCard
-                  label="Pending"
+                  label={t.billing.pending}
                   amount={summary.totalPending}
                   color="#f59e0b"
-                  bgClass="bg-yellow-50"
+                  bgClass="bg-yellow-50 dark:bg-yellow-900/25"
                   currency={derivedCurrency}
                 />
                 <SummaryCard
-                  label="Overdue"
+                  label={t.billing.overdue}
                   amount={summary.totalOverdue}
                   color="#ef4444"
-                  bgClass="bg-red-50"
+                  bgClass="bg-red-50 dark:bg-red-900/25"
                   currency={derivedCurrency}
                 />
               </View>
@@ -157,13 +161,13 @@ export default function PaymentsScreen() {
                     className={`mr-2 px-4 py-1.5 rounded-full ${
                       filter === f
                         ? "bg-brand-600"
-                        : "bg-white border border-gray-200"
+                        : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"
                     }`}
                     onPress={() => setFilter(f)}
                   >
                     <Text
                       className={`text-sm font-medium capitalize ${
-                        filter === f ? "text-white" : "text-gray-600"
+                        filter === f ? "text-white" : "text-gray-600 dark:text-slate-300"
                       }`}
                     >
                       {f}
@@ -177,9 +181,9 @@ export default function PaymentsScreen() {
             <View className="px-4 pt-2">
               {filteredPayments.length === 0 ? (
                 <View className="items-center py-16">
-                  <CreditCard size={48} color="#d1d5db" />
-                  <Text className="text-gray-400 mt-3 text-base">
-                    No payments found
+                  <CreditCard size={48} color={colors.iconMuted} />
+                  <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
+                    {t.portalPayments.noPayments}
                   </Text>
                 </View>
               ) : (
@@ -222,12 +226,12 @@ function SummaryCard({
 
   return (
     <View
-      className={`flex-1 rounded-xl p-3 items-center ${bgClass} border border-gray-100`}
+      className={`flex-1 rounded-xl p-3 items-center ${bgClass} border border-gray-100 dark:border-slate-700/40`}
     >
       <Text className="text-lg font-bold" style={{ color }}>
         {formatted}
       </Text>
-      <Text className="text-xs text-gray-500">{label}</Text>
+      <Text className="text-xs text-gray-500 dark:text-slate-400">{label}</Text>
     </View>
   );
 }
@@ -243,20 +247,20 @@ function PaymentCard({
   const Icon = config.icon;
 
   return (
-    <View className="bg-white rounded-xl p-4 mb-2 border border-gray-100 flex-row items-center">
+    <View className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-2 border border-gray-100 dark:border-slate-700/40 flex-row items-center">
       <View
         className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${config.bg}`}
       >
         <Icon size={20} color={config.color} />
       </View>
       <View className="flex-1">
-        <Text className="text-base font-semibold text-gray-900">
+        <Text className="text-base font-semibold text-gray-900 dark:text-slate-50">
           {formatCurrency(payment.amount, payment.currency)}
         </Text>
-        <Text className="text-sm text-gray-500">
+        <Text className="text-sm text-gray-500 dark:text-slate-400">
           {payment.description || payment.period || "Payment"}
         </Text>
-        <Text className="text-xs text-gray-400 mt-0.5">
+        <Text className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
           {new Date(payment.date).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",

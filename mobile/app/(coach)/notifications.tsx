@@ -23,6 +23,8 @@ import {
 import { useCoachNotifications } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { QueryError } from "@/components/query-error";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { AppNotification } from "@/types/api";
 
 const ICON_MAP: Record<string, typeof Bell> = {
@@ -46,6 +48,8 @@ const COLOR_MAP: Record<string, { bg: string; fg: string }> = {
 };
 
 export default function CoachNotificationsScreen() {
+  const t = useT();
+  const themeColors = useThemeColors();
   const queryClient = useQueryClient();
   const { data: notifications, isLoading, error, refetch, isRefetching } =
     useCoachNotifications();
@@ -63,19 +67,19 @@ export default function CoachNotificationsScreen() {
     queryClient.invalidateQueries({ queryKey: ["coach-notifications"] });
 
     // Navigate
-    const t = notif.type;
-    if (t === "new_message") {
+    const tp = notif.type;
+    if (tp === "new_message") {
       const clientId = notif.data?.clientId;
       if (clientId) router.push(`/(coach)/messages/${clientId}` as never);
       else router.push("/(coach)/(tabs)/messages");
-    } else if (t === "check_in_submitted") {
+    } else if (tp === "check_in_submitted") {
       const clientId = notif.data?.clientId;
       if (clientId) router.push(`/(coach)/clients/${clientId}` as never);
-    } else if (t === "booking_request" || t === "session_reminder") {
+    } else if (tp === "booking_request" || tp === "session_reminder") {
       router.push("/(coach)/(tabs)/schedule");
-    } else if (t === "payment_overdue") {
+    } else if (tp === "payment_overdue") {
       router.push("/(coach)/payments" as never);
-    } else if (t === "group_session") {
+    } else if (tp === "group_session") {
       router.push("/(coach)/group-training" as never);
     }
   }, [queryClient]);
@@ -83,35 +87,35 @@ export default function CoachNotificationsScreen() {
   const renderNotification = useCallback(
     ({ item }: { item: AppNotification }) => {
       const Icon = ICON_MAP[item.type] || Bell;
-      const colors = COLOR_MAP[item.type] || COLOR_MAP.default;
+      const iconColors = COLOR_MAP[item.type] || COLOR_MAP.default;
 
       return (
         <TouchableOpacity
-          className={`flex-row items-start px-4 py-3.5 border-b border-gray-50 ${
-            item.isRead ? "bg-white" : "bg-blue-50/30"
+          className={`flex-row items-start px-4 py-3.5 border-b border-gray-50 dark:border-slate-700/40 ${
+            item.isRead ? "bg-white dark:bg-slate-800" : "bg-blue-50/30 dark:bg-blue-900/10"
           }`}
           onPress={() => handlePress(item)}
           activeOpacity={0.6}
         >
           <View
-            className={`w-9 h-9 rounded-full items-center justify-center mr-3 mt-0.5 ${colors.bg}`}
+            className={`w-9 h-9 rounded-full items-center justify-center mr-3 mt-0.5 ${iconColors.bg}`}
           >
-            <Icon size={16} color={colors.fg} />
+            <Icon size={16} color={iconColors.fg} />
           </View>
           <View className="flex-1">
             <Text
               className={`text-sm ${
                 item.isRead
-                  ? "text-gray-900"
-                  : "text-gray-900 font-semibold"
+                  ? "text-gray-900 dark:text-slate-50"
+                  : "text-gray-900 dark:text-slate-50 font-semibold"
               }`}
             >
               {item.title}
             </Text>
-            <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={2}>
+            <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5" numberOfLines={2}>
               {item.body}
             </Text>
-            <Text className="text-[10px] text-gray-400 mt-1">
+            <Text className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">
               {formatRelative(item.createdAt)}
             </Text>
           </View>
@@ -126,10 +130,10 @@ export default function CoachNotificationsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <Header onMarkAll={() => {}} />
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={themeColors.brand} />
         </View>
       </SafeAreaView>
     );
@@ -137,10 +141,10 @@ export default function CoachNotificationsScreen() {
 
   if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <Header onMarkAll={() => {}} />
         <QueryError
-          message="Failed to load notifications"
+          message={t.errors.failedToLoad}
           onRetry={refetch}
         />
       </SafeAreaView>
@@ -150,7 +154,7 @@ export default function CoachNotificationsScreen() {
   const hasUnread = notifications?.some((n) => !n.isRead);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <Header
         onMarkAll={
           hasUnread ? () => markReadMutation.mutate() : undefined
@@ -166,14 +170,14 @@ export default function CoachNotificationsScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#059669"
+            tintColor={themeColors.brand}
           />
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <Bell size={40} color="#d1d5db" />
-            <Text className="text-gray-400 text-sm mt-3">
-              No notifications
+            <Bell size={40} color={themeColors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">
+              {t.notifications.noNotifications}
             </Text>
           </View>
         }
@@ -183,18 +187,20 @@ export default function CoachNotificationsScreen() {
 }
 
 function Header({ onMarkAll }: { onMarkAll?: () => void }) {
+  const t = useT();
+  const colors = useThemeColors();
   return (
-    <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
       <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-        <ArrowLeft size={22} color="#111827" />
+        <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
-      <Text className="text-lg font-semibold text-gray-900 flex-1">
-        Notifications
+      <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">
+        {t.notifications.title}
       </Text>
       {onMarkAll && (
         <TouchableOpacity onPress={onMarkAll} activeOpacity={0.6}>
           <Text className="text-sm text-brand-600 font-medium">
-            Mark all read
+            {t.notifications.markAllRead}
           </Text>
         </TouchableOpacity>
       )}

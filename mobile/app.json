@@ -80,7 +80,8 @@
           "iosUrlScheme": "com.googleusercontent.apps.99425826925-4fc798mhna2me66gv6mq4fa1e75bnap3"
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-localization"
     ],
     "extra": {
       "eas": {

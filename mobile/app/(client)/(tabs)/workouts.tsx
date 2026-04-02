@@ -13,12 +13,16 @@ import { api } from "@/lib/api-client";
 import { Dumbbell, ChevronRight, Filter } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
 import { AppHeader } from "@/components/app-header";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ClientProfile } from "@/types/api";
 
 export default function WorkoutsScreen() {
   const queryClient = useQueryClient();
   const [showAll, setShowAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const t = useT();
+  const colors = useThemeColors();
 
   const { data: profile, isLoading, isError, refetch } = useQuery<ClientProfile>({
     queryKey: ["client-profile"],
@@ -38,13 +42,13 @@ export default function WorkoutsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="px-4 pt-4">
-          <View className="h-7 w-32 bg-gray-200 rounded mb-4" />
+          <View className="h-7 w-32 bg-gray-200 dark:bg-slate-700 rounded mb-4" />
           {[1, 2, 3].map((i) => (
-            <View key={i} className="bg-white rounded-xl p-4 mb-3 border border-gray-100">
-              <View className="h-5 w-40 bg-gray-200 rounded mb-2" />
-              <View className="h-4 w-24 bg-gray-100 rounded" />
+            <View key={i} className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-3 border border-gray-100 dark:border-slate-700/40">
+              <View className="h-5 w-40 bg-gray-200 dark:bg-slate-700 rounded mb-2" />
+              <View className="h-4 w-24 bg-gray-100 dark:bg-slate-700 rounded" />
             </View>
           ))}
         </View>
@@ -54,24 +58,24 @@ export default function WorkoutsScreen() {
 
   if (isError) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <AppHeader
-        title="Workouts"
+        title={t.nav.workouts}
         rightContent={
           <TouchableOpacity
             onPress={() => setShowAll(!showAll)}
-            className="flex-row items-center px-3 py-1.5 rounded-full bg-gray-100 ml-1"
+            className="flex-row items-center px-3 py-1.5 rounded-full bg-gray-100 dark:bg-slate-700 ml-1"
           >
-            <Filter size={14} color="#6b7280" />
-            <Text className="text-xs text-gray-600 ml-1.5 font-medium">
-              {showAll ? "All" : "Active"}
+            <Filter size={14} color={colors.icon} />
+            <Text className="text-xs text-gray-600 dark:text-slate-300 ml-1.5 font-medium">
+              {showAll ? t.common.all : t.clients.active}
             </Text>
           </TouchableOpacity>
         }
@@ -79,15 +83,15 @@ export default function WorkoutsScreen() {
       <ScrollView
         className="flex-1 px-4"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand} />
         }
       >
 
         {plans.length === 0 ? (
           <View className="items-center justify-center py-16">
-            <Dumbbell size={48} color="#d1d5db" />
-            <Text className="text-gray-400 mt-3 text-base">
-              {showAll ? "No workout plans assigned" : "No active plans"}
+            <Dumbbell size={48} color={colors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
+              {showAll ? t.portalWorkouts.noPlans : "No active plans"}
             </Text>
             {!showAll && (profile?.assignedPlans?.length || 0) > 0 && (
               <TouchableOpacity onPress={() => setShowAll(true)} className="mt-2">
@@ -103,29 +107,29 @@ export default function WorkoutsScreen() {
             return (
               <TouchableOpacity
                 key={plan.id}
-                className="bg-white rounded-xl p-4 mb-3 border border-gray-100 flex-row items-center"
+                className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-3 border border-gray-100 dark:border-slate-700/40 flex-row items-center"
                 activeOpacity={0.7}
                 onPress={() => router.push(`/(client)/workouts/${plan.id}`)}
               >
                 <View className="w-10 h-10 rounded-full bg-brand-50 items-center justify-center mr-3">
-                  <Dumbbell size={20} color="#059669" />
+                  <Dumbbell size={20} color={colors.brand} />
                 </View>
                 <View className="flex-1">
                   <View className="flex-row items-center">
-                    <Text className="text-base font-semibold text-gray-900 flex-1" numberOfLines={1}>
+                    <Text className="text-base font-semibold text-gray-900 dark:text-slate-50 flex-1" numberOfLines={1}>
                       {plan.customName || plan.workoutPlan.name}
                     </Text>
                     {!plan.isActive && (
-                      <View className="bg-gray-100 rounded-full px-2 py-0.5 ml-2">
-                        <Text className="text-xs text-gray-500">Inactive</Text>
+                      <View className="bg-gray-100 dark:bg-slate-700 rounded-full px-2 py-0.5 ml-2">
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">{t.clients.inactive}</Text>
                       </View>
                     )}
                   </View>
-                  <Text className="text-sm text-gray-500">
+                  <Text className="text-sm text-gray-500 dark:text-slate-400">
                     {exercises.length} exercise{exercises.length !== 1 ? "s" : ""}
                   </Text>
                 </View>
-                <ChevronRight size={18} color="#d1d5db" />
+                <ChevronRight size={18} color={colors.iconMuted} />
               </TouchableOpacity>
             );
           })

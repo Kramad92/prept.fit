@@ -29,10 +29,12 @@ import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { useClientProfile } from "@/hooks/use-client-data";
 import { Colors } from "@/lib/constants";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ProgressPhoto, MeasurementData } from "@/types/api";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const PHOTO_SIZE = (SCREEN_WIDTH - 48 - 8) / 3; // 3 cols, 16px padding each side, 4px gaps
+const PHOTO_SIZE = (SCREEN_WIDTH - 48 - 8) / 3;
 
 const CATEGORIES = ["All", "front", "back", "side"];
 
@@ -46,6 +48,8 @@ export default function ProgressScreen() {
   const [viewingPhoto, setViewingPhoto] = useState<ProgressPhoto | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const t = useT();
+  const colors = useThemeColors();
 
   const photos = useMemo(() => {
     const all = profile?.progressPhotos || [];
@@ -90,12 +94,12 @@ export default function ProgressScreen() {
       setUploading(false);
       haptics.success();
       queryClient.invalidateQueries({ queryKey: ["client-profile"] });
-      Alert.alert("Uploaded", "Progress photo added successfully.");
+      Alert.alert("Uploaded", t.photos.photoUploaded);
     },
     onError: (err) => {
       setUploading(false);
       haptics.error();
-      Alert.alert("Error", err instanceof Error ? err.message : "Upload failed");
+      Alert.alert(t.common.error, err instanceof Error ? err.message : "Upload failed");
     },
   });
 
@@ -132,9 +136,9 @@ export default function ProgressScreen() {
     Alert.alert("Add Progress Photo", "Choose a source", [
       { text: "Camera", onPress: takePhoto },
       { text: "Photo Library", onPress: pickImage },
-      { text: "Cancel", style: "cancel" },
+      { text: t.common.cancel, style: "cancel" },
     ]);
-  }, [takePhoto, pickImage]);
+  }, [takePhoto, pickImage, t]);
 
   const formatDate = useCallback((dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -178,28 +182,28 @@ export default function ProgressScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+        <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
           <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-            <ArrowLeft size={22} color="#111827" />
+            <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">Progress</Text>
+          <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.progress}</Text>
         </View>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={colors.brand} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900">
-          Progress
+        <Text className="flex-1 text-lg font-semibold text-gray-900 dark:text-slate-50">
+          {t.nav.progress}
         </Text>
         {tab === "photos" && (
           <TouchableOpacity
@@ -208,16 +212,16 @@ export default function ProgressScreen() {
             activeOpacity={0.7}
           >
             {uploading ? (
-              <ActivityIndicator size="small" color="#059669" />
+              <ActivityIndicator size="small" color={colors.brand} />
             ) : (
-              <Camera size={22} color="#059669" />
+              <Camera size={22} color={colors.brand} />
             )}
           </TouchableOpacity>
         )}
       </View>
 
       {/* Tab switcher */}
-      <View className="flex-row px-4 pt-3 pb-1 bg-white">
+      <View className="flex-row px-4 pt-3 pb-1 bg-white dark:bg-slate-800">
         <TouchableOpacity
           className={`flex-1 py-2 items-center border-b-2 ${
             tab === "photos" ? "border-brand-600" : "border-transparent"
@@ -227,14 +231,14 @@ export default function ProgressScreen() {
           <View className="flex-row items-center">
             <ImageIcon
               size={16}
-              color={tab === "photos" ? "#059669" : "#6b7280"}
+              color={tab === "photos" ? colors.brand : colors.icon}
             />
             <Text
               className={`ml-1.5 font-medium ${
-                tab === "photos" ? "text-brand-600" : "text-gray-500"
+                tab === "photos" ? "text-brand-600" : "text-gray-500 dark:text-slate-400"
               }`}
             >
-              Photos
+              {t.photos.title}
             </Text>
           </View>
         </TouchableOpacity>
@@ -247,14 +251,14 @@ export default function ProgressScreen() {
           <View className="flex-row items-center">
             <TrendingUp
               size={16}
-              color={tab === "measurements" ? "#059669" : "#6b7280"}
+              color={tab === "measurements" ? colors.brand : colors.icon}
             />
             <Text
               className={`ml-1.5 font-medium ${
-                tab === "measurements" ? "text-brand-600" : "text-gray-500"
+                tab === "measurements" ? "text-brand-600" : "text-gray-500 dark:text-slate-400"
               }`}
             >
-              Measurements
+              {t.measurements.title}
             </Text>
           </View>
         </TouchableOpacity>
@@ -266,7 +270,7 @@ export default function ProgressScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#059669"
+            tintColor={colors.brand}
           />
         }
       >
@@ -284,13 +288,13 @@ export default function ProgressScreen() {
                   className={`mr-2 px-4 py-1.5 rounded-full ${
                     categoryFilter === cat
                       ? "bg-brand-600"
-                      : "bg-white border border-gray-200"
+                      : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"
                   }`}
                   onPress={() => setCategoryFilter(cat)}
                 >
                   <Text
                     className={`text-sm font-medium capitalize ${
-                      categoryFilter === cat ? "text-white" : "text-gray-600"
+                      categoryFilter === cat ? "text-white" : "text-gray-600 dark:text-slate-300"
                     }`}
                   >
                     {cat}
@@ -301,9 +305,9 @@ export default function ProgressScreen() {
 
             {photos.length === 0 ? (
               <View className="items-center py-16">
-                <ImageIcon size={48} color="#d1d5db" />
-                <Text className="text-gray-400 mt-3 text-base">
-                  No progress photos yet
+                <ImageIcon size={48} color={colors.iconMuted} />
+                <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
+                  {t.photos.noPhotos}
                 </Text>
                 <TouchableOpacity
                   className="mt-4 bg-brand-600 rounded-xl px-6 py-3"
@@ -326,7 +330,7 @@ export default function ProgressScreen() {
                     <Image
                       source={{ uri: photo.url }}
                       style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
-                      className="rounded-lg bg-gray-200"
+                      className="rounded-lg bg-gray-200 dark:bg-slate-700"
                     />
                   </TouchableOpacity>
                 ))}
@@ -338,58 +342,58 @@ export default function ProgressScreen() {
           <View className="px-4 pt-3">
             {/* Latest measurements summary */}
             {latestMeasurement && (
-              <View className="bg-white rounded-xl p-4 mb-4 border border-gray-100">
-                <Text className="text-sm font-medium text-gray-500 mb-3">
+              <View className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-4 border border-gray-100 dark:border-slate-700/40">
+                <Text className="text-sm font-medium text-gray-500 dark:text-slate-400 mb-3">
                   Latest — {formatFullDate(latestMeasurement.date)}
                 </Text>
                 <View className="flex-row flex-wrap" style={{ gap: 12 }}>
                   {latestMeasurement.weight != null && (
                     <MeasurementPill
-                      icon={<Scale size={14} color="#059669" />}
-                      label="Weight"
-                      value={`${latestMeasurement.weight} kg`}
+                      icon={<Scale size={14} color={colors.brand} />}
+                      label={t.measurements.weight}
+                      value={`${latestMeasurement.weight} ${t.measurements.kg}`}
                     />
                   )}
                   {latestMeasurement.bodyFat != null && (
                     <MeasurementPill
                       icon={<TrendingUp size={14} color="#3b82f6" />}
-                      label="Body Fat"
+                      label={t.measurements.bodyFat}
                       value={`${latestMeasurement.bodyFat}%`}
                     />
                   )}
                   {latestMeasurement.chest != null && (
                     <MeasurementPill
                       icon={<Ruler size={14} color="#8b5cf6" />}
-                      label="Chest"
-                      value={`${latestMeasurement.chest} cm`}
+                      label={t.measurements.chest}
+                      value={`${latestMeasurement.chest} ${t.measurements.cm}`}
                     />
                   )}
                   {latestMeasurement.waist != null && (
                     <MeasurementPill
                       icon={<Ruler size={14} color="#f59e0b" />}
-                      label="Waist"
-                      value={`${latestMeasurement.waist} cm`}
+                      label={t.measurements.waist}
+                      value={`${latestMeasurement.waist} ${t.measurements.cm}`}
                     />
                   )}
                   {latestMeasurement.hips != null && (
                     <MeasurementPill
                       icon={<Ruler size={14} color="#ec4899" />}
-                      label="Hips"
-                      value={`${latestMeasurement.hips} cm`}
+                      label={t.measurements.hips}
+                      value={`${latestMeasurement.hips} ${t.measurements.cm}`}
                     />
                   )}
                   {latestMeasurement.arms != null && (
                     <MeasurementPill
                       icon={<Ruler size={14} color="#14b8a6" />}
-                      label="Arms"
-                      value={`${latestMeasurement.arms} cm`}
+                      label={t.measurements.arms}
+                      value={`${latestMeasurement.arms} ${t.measurements.cm}`}
                     />
                   )}
                   {latestMeasurement.thighs != null && (
                     <MeasurementPill
                       icon={<Ruler size={14} color="#6366f1" />}
-                      label="Thighs"
-                      value={`${latestMeasurement.thighs} cm`}
+                      label={t.measurements.thighs}
+                      value={`${latestMeasurement.thighs} ${t.measurements.cm}`}
                     />
                   )}
                 </View>
@@ -398,8 +402,8 @@ export default function ProgressScreen() {
 
             {/* Weight trend chart */}
             {weightData.length >= 2 && (
-              <View className="bg-white rounded-xl p-4 mb-4 border border-gray-100">
-                <Text className="text-base font-semibold text-gray-900 mb-3">
+              <View className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-4 border border-gray-100 dark:border-slate-700/40">
+                <Text className="text-base font-semibold text-gray-900 dark:text-slate-50 mb-3">
                   Weight Trend
                 </Text>
                 <LineChart
@@ -414,8 +418,8 @@ export default function ProgressScreen() {
                   areaChart
                   curved
                   hideRules
-                  yAxisTextStyle={{ color: "#6b7280", fontSize: 10 }}
-                  xAxisLabelTextStyle={{ color: "#9ca3af", fontSize: 9 }}
+                  yAxisTextStyle={{ color: colors.icon, fontSize: 10 }}
+                  xAxisLabelTextStyle={{ color: colors.iconMuted, fontSize: 9 }}
                   spacing={(SCREEN_WIDTH - 100) / Math.max(weightData.length - 1, 1)}
                   noOfSections={4}
                   isAnimated
@@ -425,8 +429,8 @@ export default function ProgressScreen() {
 
             {/* Body fat trend chart */}
             {bodyFatData.length >= 2 && (
-              <View className="bg-white rounded-xl p-4 mb-4 border border-gray-100">
-                <Text className="text-base font-semibold text-gray-900 mb-3">
+              <View className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-4 border border-gray-100 dark:border-slate-700/40">
+                <Text className="text-base font-semibold text-gray-900 dark:text-slate-50 mb-3">
                   Body Fat Trend
                 </Text>
                 <LineChart
@@ -441,8 +445,8 @@ export default function ProgressScreen() {
                   areaChart
                   curved
                   hideRules
-                  yAxisTextStyle={{ color: "#6b7280", fontSize: 10 }}
-                  xAxisLabelTextStyle={{ color: "#9ca3af", fontSize: 9 }}
+                  yAxisTextStyle={{ color: colors.icon, fontSize: 10 }}
+                  xAxisLabelTextStyle={{ color: colors.iconMuted, fontSize: 9 }}
                   spacing={(SCREEN_WIDTH - 100) / Math.max(bodyFatData.length - 1, 1)}
                   noOfSections={4}
                   isAnimated
@@ -452,59 +456,59 @@ export default function ProgressScreen() {
 
             {/* All measurements table */}
             {measurements.length > 0 ? (
-              <View className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-4">
-                <Text className="text-base font-semibold text-gray-900 px-4 pt-4 pb-2">
+              <View className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 overflow-hidden mb-4">
+                <Text className="text-base font-semibold text-gray-900 dark:text-slate-50 px-4 pt-4 pb-2">
                   History
                 </Text>
                 {[...measurements].reverse().map((m, i) => (
                   <View
                     key={m.id}
                     className={`px-4 py-3 ${
-                      i < measurements.length - 1 ? "border-b border-gray-50" : ""
+                      i < measurements.length - 1 ? "border-b border-gray-50 dark:border-slate-700/40" : ""
                     }`}
                   >
-                    <Text className="text-sm font-medium text-gray-900 mb-1">
+                    <Text className="text-sm font-medium text-gray-900 dark:text-slate-50 mb-1">
                       {formatFullDate(m.date)}
                     </Text>
                     <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                       {m.weight != null && (
-                        <Text className="text-xs text-gray-500">
-                          Weight: {m.weight}kg
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
+                          {t.measurements.weight}: {m.weight}{t.measurements.kg}
                         </Text>
                       )}
                       {m.bodyFat != null && (
-                        <Text className="text-xs text-gray-500">
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
                           BF: {m.bodyFat}%
                         </Text>
                       )}
                       {m.chest != null && (
-                        <Text className="text-xs text-gray-500">
-                          Chest: {m.chest}cm
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
+                          {t.measurements.chest}: {m.chest}{t.measurements.cm}
                         </Text>
                       )}
                       {m.waist != null && (
-                        <Text className="text-xs text-gray-500">
-                          Waist: {m.waist}cm
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
+                          {t.measurements.waist}: {m.waist}{t.measurements.cm}
                         </Text>
                       )}
                       {m.hips != null && (
-                        <Text className="text-xs text-gray-500">
-                          Hips: {m.hips}cm
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
+                          {t.measurements.hips}: {m.hips}{t.measurements.cm}
                         </Text>
                       )}
                       {m.arms != null && (
-                        <Text className="text-xs text-gray-500">
-                          Arms: {m.arms}cm
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
+                          {t.measurements.arms}: {m.arms}{t.measurements.cm}
                         </Text>
                       )}
                       {m.thighs != null && (
-                        <Text className="text-xs text-gray-500">
-                          Thighs: {m.thighs}cm
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
+                          {t.measurements.thighs}: {m.thighs}{t.measurements.cm}
                         </Text>
                       )}
                     </View>
                     {m.notes && (
-                      <Text className="text-xs text-gray-400 mt-1">
+                      <Text className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                         {m.notes}
                       </Text>
                     )}
@@ -513,11 +517,11 @@ export default function ProgressScreen() {
               </View>
             ) : (
               <View className="items-center py-16">
-                <TrendingUp size={48} color="#d1d5db" />
-                <Text className="text-gray-400 mt-3 text-base">
-                  No measurements recorded yet
+                <TrendingUp size={48} color={colors.iconMuted} />
+                <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
+                  {t.measurements.noMeasurements}
                 </Text>
-                <Text className="text-gray-400 text-sm mt-1">
+                <Text className="text-gray-400 dark:text-slate-500 text-sm mt-1">
                   Your coach will add these during sessions
                 </Text>
               </View>
@@ -577,11 +581,11 @@ function MeasurementPill({
   value: string;
 }) {
   return (
-    <View className="flex-row items-center bg-gray-50 rounded-lg px-3 py-2">
+    <View className="flex-row items-center bg-gray-50 dark:bg-slate-950 rounded-lg px-3 py-2">
       {icon}
       <View className="ml-2">
-        <Text className="text-xs text-gray-500">{label}</Text>
-        <Text className="text-sm font-semibold text-gray-900">{value}</Text>
+        <Text className="text-xs text-gray-500 dark:text-slate-400">{label}</Text>
+        <Text className="text-sm font-semibold text-gray-900 dark:text-slate-50">{value}</Text>
       </View>
     </View>
   );

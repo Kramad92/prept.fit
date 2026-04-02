@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { router, Redirect } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 // Native social sign-in modules — unavailable in Expo Go
 let AppleAuthentication: typeof import("expo-apple-authentication") | null = null;
@@ -35,6 +37,8 @@ try {
 
 export default function LoginScreen() {
   const { login, loginWithSocial, user, isLoading } = useAuth();
+  const t = useT();
+  const colors = useThemeColors();
 
   if (!isLoading && user) {
     return (
@@ -143,17 +147,17 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white"
+      className="flex-1 bg-white dark:bg-slate-800"
     >
       <View className="flex-1 justify-center px-8">
-        <Text className="text-3xl font-bold text-gray-900 mb-2">Prept</Text>
-        <Text className="text-base text-gray-500 mb-8">
-          Sign in to your account
+        <Text className="text-3xl font-bold text-gray-900 dark:text-slate-50 mb-2">Prept</Text>
+        <Text className="text-base text-gray-500 dark:text-slate-400 mb-8">
+          {t.auth.signInTitle}
         </Text>
 
         {error ? (
-          <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-            <Text className="text-red-700 text-sm">{error}</Text>
+          <View className="bg-red-50 dark:bg-red-900/25 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
+            <Text className="text-red-700 dark:text-red-300 text-sm">{error}</Text>
           </View>
         ) : null}
 
@@ -161,7 +165,7 @@ export default function LoginScreen() {
         {hasSocialAuth ? (
           <>
             <TouchableOpacity
-              className={`rounded-lg py-3.5 items-center flex-row justify-center border border-gray-300 ${
+              className={`rounded-lg py-3.5 items-center flex-row justify-center border border-gray-300 dark:border-slate-600 ${
                 isAnyLoading ? "opacity-50" : ""
               }`}
               onPress={handleGoogleSignIn}
@@ -173,8 +177,8 @@ export default function LoginScreen() {
               ) : (
                 <>
                   <Text className="text-lg mr-2">G</Text>
-                  <Text className="text-gray-700 font-medium text-base">
-                    Continue with Google
+                  <Text className="text-gray-700 dark:text-slate-200 font-medium text-base">
+                    {t.auth.continueWithGoogle}
                   </Text>
                 </>
               )}
@@ -196,7 +200,7 @@ export default function LoginScreen() {
                   <>
                     <Text className="text-white text-lg mr-2"></Text>
                     <Text className="text-white font-medium text-base">
-                      Continue with Apple
+                      {t.auth.continueWithApple}
                     </Text>
                   </>
                 )}
@@ -204,19 +208,19 @@ export default function LoginScreen() {
             ) : null}
 
             <View className="flex-row items-center my-6">
-              <View className="flex-1 h-px bg-gray-200" />
-              <Text className="mx-4 text-sm text-gray-400">or</Text>
-              <View className="flex-1 h-px bg-gray-200" />
+              <View className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
+              <Text className="mx-4 text-sm text-gray-400 dark:text-slate-500">{t.common.or}</Text>
+              <View className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
             </View>
           </>
         ) : null}
 
         {/* Email/Password */}
-        <Text className="text-sm font-medium text-gray-700 mb-1">Email</Text>
+        <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.auth.email}</Text>
         <TextInput
-          className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50 dark:bg-slate-700"
           placeholder="coach@demo.com"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textTertiary}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -225,13 +229,13 @@ export default function LoginScreen() {
           editable={!isAnyLoading}
         />
 
-        <Text className="text-sm font-medium text-gray-700 mb-1">
-          Password
+        <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+          {t.auth.password}
         </Text>
         <TextInput
-          className="border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900"
-          placeholder="Enter your password"
-          placeholderTextColor="#9ca3af"
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-6 text-base text-gray-900 dark:text-slate-50 dark:bg-slate-700"
+          placeholder={t.auth.enterPassword}
+          placeholderTextColor={colors.textTertiary}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -250,7 +254,7 @@ export default function LoginScreen() {
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white font-semibold text-base">Sign In</Text>
+            <Text className="text-white font-semibold text-base">{t.auth.signInButton}</Text>
           )}
         </TouchableOpacity>
 
@@ -260,7 +264,7 @@ export default function LoginScreen() {
           activeOpacity={0.6}
           disabled={isAnyLoading}
         >
-          <Text className="text-sm text-brand-600">Forgot password?</Text>
+          <Text className="text-sm text-brand-600">{t.auth.forgotPassword}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -269,9 +273,9 @@ export default function LoginScreen() {
           activeOpacity={0.6}
           disabled={isAnyLoading}
         >
-          <Text className="text-sm text-gray-500">
-            Don't have an account?{" "}
-            <Text className="text-brand-600 font-medium">Create one</Text>
+          <Text className="text-sm text-gray-500 dark:text-slate-400">
+            {t.auth.dontHaveAccount}{" "}
+            <Text className="text-brand-600 font-medium">{t.auth.getStarted}</Text>
           </Text>
         </TouchableOpacity>
       </View>

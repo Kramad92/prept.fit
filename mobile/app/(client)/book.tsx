@@ -24,6 +24,8 @@ import {
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { useBookingSlots, useClientProfile } from "@/hooks/use-client-data";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { BookingSlot } from "@/types/api";
 
 export default function BookSessionScreen() {
@@ -34,6 +36,8 @@ export default function BookSessionScreen() {
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
   const [notes, setNotes] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const t = useT();
+  const colors = useThemeColors();
 
   // Group slots by date
   const groupedSlots = useMemo(() => {
@@ -59,9 +63,9 @@ export default function BookSessionScreen() {
 
       let label: string;
       if (d.getTime() === today.getTime()) {
-        label = "Today";
+        label = t.common.today;
       } else if (d.getTime() === tomorrow.getTime()) {
-        label = "Tomorrow";
+        label = t.common.tomorrow;
       } else {
         label = d.toLocaleDateString("en-US", {
           weekday: "long",
@@ -73,7 +77,7 @@ export default function BookSessionScreen() {
     }
 
     return groups.sort((a, b) => a.date.localeCompare(b.date));
-  }, [slots]);
+  }, [slots, t]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -96,7 +100,7 @@ export default function BookSessionScreen() {
       setSelectedSlot(null);
       setShowConfirm(false);
       setNotes("");
-      Alert.alert("Booked!", "Your session has been scheduled.");
+      Alert.alert(t.portalBook.booked);
     },
     onError: (err) => {
       haptics.error();
@@ -142,8 +146,8 @@ export default function BookSessionScreen() {
     });
 
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+        <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
           <TouchableOpacity
             onPress={() => {
               setShowConfirm(false);
@@ -151,10 +155,10 @@ export default function BookSessionScreen() {
             }}
             className="mr-3 p-1"
           >
-            <ArrowLeft size={22} color="#111827" />
+            <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">
-            Confirm Booking
+          <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">
+            {t.common.confirm} Booking
           </Text>
         </View>
 
@@ -163,12 +167,12 @@ export default function BookSessionScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <ScrollView className="flex-1 px-4 pt-6" keyboardShouldPersistTaps="handled">
-            <View className="bg-white rounded-xl p-5 border border-gray-100 mb-4">
+            <View className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-gray-100 dark:border-slate-700/40 mb-4">
               <View className="items-center mb-4">
                 <View className="w-16 h-16 rounded-full bg-brand-50 items-center justify-center mb-3">
-                  <Calendar size={28} color="#059669" />
+                  <Calendar size={28} color={colors.brand} />
                 </View>
-                <Text className="text-xl font-bold text-gray-900">
+                <Text className="text-xl font-bold text-gray-900 dark:text-slate-50">
                   {dateLabel}
                 </Text>
                 <Text className="text-lg text-brand-600 font-semibold mt-1">
@@ -178,13 +182,13 @@ export default function BookSessionScreen() {
             </View>
 
             <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Notes (optional)
+              <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
+                {t.common.notes} ({t.common.optional.toLowerCase()})
               </Text>
               <TextInput
-                className="bg-white rounded-xl px-4 py-3 text-base text-gray-900 border border-gray-200 min-h-[80px]"
+                className="bg-white dark:bg-slate-800 rounded-xl px-4 py-3 text-base text-gray-900 dark:text-slate-50 border border-gray-200 dark:border-slate-700 min-h-[80px]"
                 placeholder="Anything your coach should know..."
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.iconMuted}
                 value={notes}
                 onChangeText={setNotes}
                 multiline
@@ -193,7 +197,7 @@ export default function BookSessionScreen() {
             </View>
           </ScrollView>
 
-          <View className="px-4 py-3 bg-white border-t border-gray-100">
+          <View className="px-4 py-3 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700/40">
             <TouchableOpacity
               className={`rounded-xl py-3.5 items-center ${
                 bookMutation.isPending ? "bg-brand-400" : "bg-brand-600"
@@ -208,7 +212,7 @@ export default function BookSessionScreen() {
                 <View className="flex-row items-center">
                   <Check size={18} color="#fff" />
                   <Text className="text-white font-semibold text-base ml-2">
-                    Confirm Booking
+                    {t.common.confirm} Booking
                   </Text>
                 </View>
               )}
@@ -220,13 +224,13 @@ export default function BookSessionScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900">
-          Book Session
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">
+          {t.portalBook.title}
         </Text>
       </View>
 
@@ -236,27 +240,27 @@ export default function BookSessionScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#059669"
+            tintColor={colors.brand}
           />
         }
       >
         {/* Upcoming sessions */}
         {upcomingSessions.length > 0 && (
           <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-500 mb-2">
-              Upcoming Sessions
+            <Text className="text-sm font-medium text-gray-500 dark:text-slate-400 mb-2">
+              {t.portal.upcomingSessions}
             </Text>
             {upcomingSessions.map((session) => (
               <View
                 key={session.id}
                 className="bg-brand-50 rounded-xl p-3 mb-2 border border-brand-100 flex-row items-center"
               >
-                <Calendar size={18} color="#059669" />
+                <Calendar size={18} color={colors.brand} />
                 <View className="flex-1 ml-3">
-                  <Text className="text-sm font-semibold text-gray-900">
+                  <Text className="text-sm font-semibold text-gray-900 dark:text-slate-50">
                     {session.title}
                   </Text>
-                  <Text className="text-xs text-gray-500">
+                  <Text className="text-xs text-gray-500 dark:text-slate-400">
                     {new Date(session.date).toLocaleDateString("en-US", {
                       weekday: "short",
                       month: "short",
@@ -271,45 +275,45 @@ export default function BookSessionScreen() {
         )}
 
         {/* Available slots */}
-        <Text className="text-sm font-medium text-gray-500 mb-2">
-          Available Slots
+        <Text className="text-sm font-medium text-gray-500 dark:text-slate-400 mb-2">
+          {t.portalBook.availableSlots}
         </Text>
 
         {isLoading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#059669" />
+            <ActivityIndicator size="large" color={colors.brand} />
           </View>
         ) : groupedSlots.length === 0 ? (
           <View className="items-center py-16">
-            <Calendar size={48} color="#d1d5db" />
-            <Text className="text-gray-400 mt-3 text-base">
-              No available slots
+            <Calendar size={48} color={colors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
+              {t.portalBook.noSlots}
             </Text>
-            <Text className="text-gray-400 text-sm mt-1">
+            <Text className="text-gray-400 dark:text-slate-500 text-sm mt-1">
               Check back later for new availability
             </Text>
           </View>
         ) : (
           groupedSlots.map((group) => (
             <View key={group.date} className="mb-4">
-              <Text className="text-base font-semibold text-gray-900 mb-2">
+              <Text className="text-base font-semibold text-gray-900 dark:text-slate-50 mb-2">
                 {group.label}
               </Text>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {group.slots.map((slot, i) => (
                   <TouchableOpacity
                     key={`${slot.date}-${slot.startTime}-${i}`}
-                    className="bg-white rounded-xl px-4 py-3 border border-gray-200"
+                    className="bg-white dark:bg-slate-800 rounded-xl px-4 py-3 border border-gray-200 dark:border-slate-700"
                     onPress={() => handleSelectSlot(slot)}
                     activeOpacity={0.7}
                   >
                     <View className="flex-row items-center">
-                      <Clock size={14} color="#059669" />
-                      <Text className="text-sm font-medium text-gray-900 ml-1.5">
+                      <Clock size={14} color={colors.brand} />
+                      <Text className="text-sm font-medium text-gray-900 dark:text-slate-50 ml-1.5">
                         {slot.startTime}
                       </Text>
                     </View>
-                    <Text className="text-xs text-gray-400 mt-0.5">
+                    <Text className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                       {slot.startTime} - {slot.endTime}
                     </Text>
                   </TouchableOpacity>

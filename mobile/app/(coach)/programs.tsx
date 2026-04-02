@@ -29,11 +29,15 @@ import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
 import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ProgramListItem, NutritionProgramListItem } from "@/types/api";
 
 type Tab = "workout" | "nutrition";
 
 export default function ProgramsScreen() {
+  const t = useT();
+  const colors = useThemeColors();
   const [tab, setTab] = useState<Tab>("workout");
   const queryClient = useQueryClient();
   const { data: workoutPrograms, isLoading: wLoading, error: wError, refetch: wRefetch, isRefetching: wRefetching } = usePrograms();
@@ -44,54 +48,54 @@ export default function ProgramsScreen() {
   const wDeleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/api/programs/${id}`),
     onSuccess: () => { haptics.light(); queryClient.invalidateQueries({ queryKey: ["programs"] }); },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const nDeleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/api/nutrition-programs/${id}`),
     onSuccess: () => { haptics.light(); queryClient.invalidateQueries({ queryKey: ["nutrition-programs"] }); },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const renderWorkoutProgram = useCallback(({ item }: { item: ProgramListItem }) => (
-    <View className="bg-white mx-4 mb-2 rounded-xl border border-gray-100 px-4 py-3 flex-row items-center">
-      <View className="w-9 h-9 rounded-full bg-purple-50 items-center justify-center mr-3">
+    <View className="bg-white dark:bg-slate-800 mx-4 mb-2 rounded-xl border border-gray-100 dark:border-slate-700/40 px-4 py-3 flex-row items-center">
+      <View className="w-9 h-9 rounded-full bg-purple-50 dark:bg-purple-900/20 items-center justify-center mr-3">
         <Dumbbell size={16} color="#8b5cf6" />
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-medium text-gray-900">{item.name}</Text>
-        <Text className="text-xs text-gray-500">
-          {item.durationWeeks}w · {item.daysPerWeek} days/week · {item.assignedCount} assigned
+        <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">{item.name}</Text>
+        <Text className="text-xs text-gray-500 dark:text-slate-400">
+          {item.durationWeeks}w · {item.daysPerWeek} {t.programs.daysWeek} · {item.assignedCount} assigned
         </Text>
       </View>
-      <TouchableOpacity className="p-2" onPress={() => Alert.alert("Delete", `Delete "${item.name}"?`, [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => wDeleteMutation.mutate(item.id) },
+      <TouchableOpacity className="p-2" onPress={() => Alert.alert(t.common.delete, `Delete "${item.name}"?`, [
+        { text: t.common.cancel, style: "cancel" },
+        { text: t.common.delete, style: "destructive", onPress: () => wDeleteMutation.mutate(item.id) },
       ])}>
-        <Trash2 size={16} color="#ef4444" />
+        <Trash2 size={16} color={colors.destructive} />
       </TouchableOpacity>
     </View>
-  ), []);
+  ), [t, colors]);
 
   const renderNutritionProgram = useCallback(({ item }: { item: NutritionProgramListItem }) => (
-    <View className="bg-white mx-4 mb-2 rounded-xl border border-gray-100 px-4 py-3 flex-row items-center">
-      <View className="w-9 h-9 rounded-full bg-green-50 items-center justify-center mr-3">
+    <View className="bg-white dark:bg-slate-800 mx-4 mb-2 rounded-xl border border-gray-100 dark:border-slate-700/40 px-4 py-3 flex-row items-center">
+      <View className="w-9 h-9 rounded-full bg-green-50 dark:bg-green-900/25 items-center justify-center mr-3">
         <UtensilsCrossed size={16} color="#10b981" />
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-medium text-gray-900">{item.name}</Text>
-        <Text className="text-xs text-gray-500">
+        <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">{item.name}</Text>
+        <Text className="text-xs text-gray-500 dark:text-slate-400">
           {item.durationWeeks}w · {item.mealsPerDay} meals/day · {item.assignedCount} assigned
         </Text>
       </View>
-      <TouchableOpacity className="p-2" onPress={() => Alert.alert("Delete", `Delete "${item.name}"?`, [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => nDeleteMutation.mutate(item.id) },
+      <TouchableOpacity className="p-2" onPress={() => Alert.alert(t.common.delete, `Delete "${item.name}"?`, [
+        { text: t.common.cancel, style: "cancel" },
+        { text: t.common.delete, style: "destructive", onPress: () => nDeleteMutation.mutate(item.id) },
       ])}>
-        <Trash2 size={16} color="#ef4444" />
+        <Trash2 size={16} color={colors.destructive} />
       </TouchableOpacity>
     </View>
-  ), []);
+  ), [t, colors]);
 
   const isLoading = tab === "workout" ? wLoading : nLoading;
   const errorState = tab === "workout" ? wError : nError;
@@ -99,12 +103,12 @@ export default function ProgramsScreen() {
   const isRefetching = tab === "workout" ? wRefetching : nRefetching;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900 flex-1">Programs</Text>
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.programs.title}</Text>
         <TouchableOpacity
           onPress={() => setShowAI(true)}
           className="bg-purple-600 rounded-lg px-3 py-1.5 flex-row items-center mr-2"
@@ -124,30 +128,30 @@ export default function ProgramsScreen() {
       </View>
 
       {/* Tabs */}
-      <View className="flex-row px-4 py-2 bg-white border-b border-gray-100">
+      <View className="flex-row px-4 py-2 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity className={`mr-4 pb-1 ${tab === "workout" ? "border-b-2 border-brand-600" : ""}`} onPress={() => setTab("workout")}>
-          <Text className={`text-sm font-medium ${tab === "workout" ? "text-brand-600" : "text-gray-500"}`}>Workout</Text>
+          <Text className={`text-sm font-medium ${tab === "workout" ? "text-brand-600" : "text-gray-500 dark:text-slate-400"}`}>{t.workouts.title}</Text>
         </TouchableOpacity>
         <TouchableOpacity className={`pb-1 ${tab === "nutrition" ? "border-b-2 border-brand-600" : ""}`} onPress={() => setTab("nutrition")}>
-          <Text className={`text-sm font-medium ${tab === "nutrition" ? "text-brand-600" : "text-gray-500"}`}>Nutrition</Text>
+          <Text className={`text-sm font-medium ${tab === "nutrition" ? "text-brand-600" : "text-gray-500 dark:text-slate-400"}`}>{t.nutrition.title}</Text>
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color="#059669" /></View>
+        <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color={colors.brand} /></View>
       ) : errorState ? (
-        <QueryError message="Failed to load programs" onRetry={refetch} />
+        <QueryError message={t.errors.failedToLoad} onRetry={refetch} />
       ) : tab === "workout" ? (
         <FlatList
           data={workoutPrograms || []}
           keyExtractor={(item) => item.id}
           renderItem={renderWorkoutProgram}
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#059669" />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />}
           ListEmptyComponent={
             <View className="items-center py-16">
-              <Layers size={40} color="#d1d5db" />
-              <Text className="text-gray-400 text-sm mt-3">No workout programs</Text>
+              <Layers size={40} color={colors.iconMuted} />
+              <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">{t.programs.noPrograms}</Text>
             </View>
           }
         />
@@ -157,11 +161,11 @@ export default function ProgramsScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderNutritionProgram}
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#059669" />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />}
           ListEmptyComponent={
             <View className="items-center py-16">
-              <Layers size={40} color="#d1d5db" />
-              <Text className="text-gray-400 text-sm mt-3">No nutrition programs</Text>
+              <Layers size={40} color={colors.iconMuted} />
+              <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">{t.programs.noPrograms}</Text>
             </View>
           }
         />
@@ -183,6 +187,8 @@ export default function ProgramsScreen() {
 }
 
 function CreateProgramModal({ visible, tab, onClose }: { visible: boolean; tab: Tab; onClose: () => void }) {
+  const t = useT();
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -200,7 +206,7 @@ function CreateProgramModal({ visible, tab, onClose }: { visible: boolean; tab: 
       setName(""); setDescription(""); setDurationWeeks("4"); setPerWeek("3");
       onClose();
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   return (
@@ -213,7 +219,7 @@ function CreateProgramModal({ visible, tab, onClose }: { visible: boolean; tab: 
         <TouchableOpacity
           className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
           onPress={() => {
-            if (!name.trim()) return Alert.alert("Required", "Name is required");
+            if (!name.trim()) return Alert.alert(t.common.required, t.common.name);
             const body: any = {
               name: name.trim(),
               description: description.trim() || null,
@@ -225,24 +231,24 @@ function CreateProgramModal({ visible, tab, onClose }: { visible: boolean; tab: 
           }}
           disabled={mutation.isPending}
         >
-          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Program</Text>}
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">{t.common.create}</Text>}
         </TouchableOpacity>
       }
     >
-      <Text className="text-sm font-medium text-gray-700 mb-1">Name *</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="Program name" placeholderTextColor="#9ca3af" />
-      <Text className="text-sm font-medium text-gray-700 mb-1">Description</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={description} onChangeText={setDescription} placeholder="Optional description" placeholderTextColor="#9ca3af" multiline />
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.name} *</Text>
+      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder="Program name" placeholderTextColor={colors.iconMuted} />
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.description}</Text>
+      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={description} onChangeText={setDescription} placeholder="Optional description" placeholderTextColor={colors.iconMuted} multiline />
       <View className="flex-row">
         <View className="flex-1 mr-2">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Duration (weeks)</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 text-center" value={durationWeeks} onChangeText={setDurationWeeks} keyboardType="number-pad" />
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Duration ({t.programs.weeks})</Text>
+          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center" value={durationWeeks} onChangeText={setDurationWeeks} keyboardType="number-pad" />
         </View>
         <View className="flex-1">
-          <Text className="text-sm font-medium text-gray-700 mb-1">
-            {tab === "workout" ? "Days/week" : "Meals/day"}
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+            {tab === "workout" ? t.programs.daysWeek : "Meals/day"}
           </Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 text-center" value={perWeek} onChangeText={setPerWeek} keyboardType="number-pad" />
+          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center" value={perWeek} onChangeText={setPerWeek} keyboardType="number-pad" />
         </View>
       </View>
     </AppBottomSheet>
@@ -267,6 +273,8 @@ function AIGenerateModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const t = useT();
+  const colors = useThemeColors();
   const [type, setType] = useState<Tab>(defaultType);
   const [prompt, setPrompt] = useState("");
   const [generateNew, setGenerateNew] = useState(true);
@@ -340,7 +348,7 @@ function AIGenerateModal({
           {loading ? (
             <>
               <ActivityIndicator size="small" color="white" />
-              <Text className="text-white font-semibold text-base ml-2">Generating...</Text>
+              <Text className="text-white font-semibold text-base ml-2">{t.workouts.generating}</Text>
             </>
           ) : (
             <>
@@ -352,44 +360,44 @@ function AIGenerateModal({
       }
     >
       {/* Type toggle */}
-      <Text className="text-sm font-medium text-gray-700 mb-2">Program Type</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">Program Type</Text>
       <View className="flex-row mb-4">
         <TouchableOpacity
           className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg mr-2 border ${
-            type === "workout" ? "border-brand-300 bg-brand-50" : "border-gray-200 bg-white"
+            type === "workout" ? "border-brand-300 bg-brand-50" : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800"
           }`}
           onPress={() => { setType("workout"); setFitFeedback(null); }}
           disabled={loading}
         >
-          <Dumbbell size={16} color={type === "workout" ? "#059669" : "#6b7280"} />
-          <Text className={`ml-1.5 text-sm font-medium ${type === "workout" ? "text-brand-700" : "text-gray-500"}`}>
-            Workout
+          <Dumbbell size={16} color={type === "workout" ? colors.brand : colors.icon} />
+          <Text className={`ml-1.5 text-sm font-medium ${type === "workout" ? "text-brand-700" : "text-gray-500 dark:text-slate-400"}`}>
+            {t.workouts.title}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg border ${
-            type === "nutrition" ? "border-brand-300 bg-brand-50" : "border-gray-200 bg-white"
+            type === "nutrition" ? "border-brand-300 bg-brand-50" : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800"
           }`}
           onPress={() => { setType("nutrition"); setFitFeedback(null); }}
           disabled={loading}
         >
-          <UtensilsCrossed size={16} color={type === "nutrition" ? "#059669" : "#6b7280"} />
-          <Text className={`ml-1.5 text-sm font-medium ${type === "nutrition" ? "text-brand-700" : "text-gray-500"}`}>
-            Nutrition
+          <UtensilsCrossed size={16} color={type === "nutrition" ? colors.brand : colors.icon} />
+          <Text className={`ml-1.5 text-sm font-medium ${type === "nutrition" ? "text-brand-700" : "text-gray-500 dark:text-slate-400"}`}>
+            {t.nutrition.title}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Prompt */}
-      <Text className="text-sm font-medium text-gray-700 mb-1">Describe your program</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Describe your program</Text>
       <TextInput
-        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 min-h-[80px]"
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50 min-h-[80px]"
         value={prompt}
-        onChangeText={(t) => { setPrompt(t); setFitFeedback(null); }}
+        onChangeText={(txt) => { setPrompt(txt); setFitFeedback(null); }}
         placeholder={type === "workout"
           ? "e.g. 4-week push/pull/legs strength program..."
           : "e.g. 4-week meal prep, 2200 cal/day, high protein..."}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={colors.iconMuted}
         multiline
         textAlignVertical="top"
         editable={!loading}
@@ -398,9 +406,9 @@ function AIGenerateModal({
       {/* Parameters */}
       <View className="flex-row mb-4">
         <View className="flex-1 mr-2">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Duration (weeks)</Text>
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Duration ({t.programs.weeks})</Text>
           <TextInput
-            className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 text-center"
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center"
             value={durationWeeks}
             onChangeText={setDurationWeeks}
             keyboardType="number-pad"
@@ -408,11 +416,11 @@ function AIGenerateModal({
           />
         </View>
         <View className="flex-1">
-          <Text className="text-sm font-medium text-gray-700 mb-1">
-            {type === "workout" ? "Days/week" : "Meals/day"}
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+            {type === "workout" ? t.programs.daysWeek : "Meals/day"}
           </Text>
           <TextInput
-            className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 text-center"
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center"
             value={daysPerWeek}
             onChangeText={setDaysPerWeek}
             keyboardType="number-pad"
@@ -422,10 +430,10 @@ function AIGenerateModal({
       </View>
 
       {/* Generate new toggle */}
-      <View className="flex-row items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 mb-4">
+      <View className="flex-row items-center justify-between bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-3 mb-4">
         <View className="flex-1 mr-3">
-          <Text className="text-sm font-medium text-gray-900">Generate new plans</Text>
-          <Text className="text-xs text-gray-500">
+          <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">Generate new plans</Text>
+          <Text className="text-xs text-gray-500 dark:text-slate-400">
             Create new plans if no matching ones exist
           </Text>
         </View>
@@ -440,17 +448,17 @@ function AIGenerateModal({
 
       {/* Fit feedback */}
       {fitFeedback && (
-        <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+        <View className="bg-amber-50 dark:bg-amber-900/25 border border-amber-200 rounded-lg p-3 mb-4">
           <View className="flex-row items-start">
             <AlertTriangle size={16} color="#d97706" />
             <View className="flex-1 ml-2">
-              <Text className="text-sm font-medium text-amber-800">
+              <Text className="text-sm font-medium text-amber-800 dark:text-amber-300">
                 {fitFeedback.fit === "poor"
                   ? "Your existing plans don't match this program."
                   : "Your existing plans partially match."}
               </Text>
               {fitFeedback.existingCount > 0 && (
-                <Text className="text-xs text-amber-700 mt-0.5">
+                <Text className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
                   {fitFeedback.existingCount} / {fitFeedback.totalNeeded} plans match
                 </Text>
               )}
@@ -458,15 +466,15 @@ function AIGenerateModal({
           </View>
           {fitFeedback.missingPlans.length > 0 && (
             <View className="ml-6 mt-2">
-              <Text className="text-xs font-medium text-amber-700">Missing plans:</Text>
+              <Text className="text-xs font-medium text-amber-700 dark:text-amber-300">Missing plans:</Text>
               {fitFeedback.missingPlans.map((name, i) => (
-                <Text key={i} className="text-xs text-amber-700 mt-0.5">
+                <Text key={i} className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
                   {"\u2022"} {name}
                 </Text>
               ))}
             </View>
           )}
-          <Text className="text-xs text-amber-600 mt-2 ml-6">
+          <Text className="text-xs text-amber-600 dark:text-amber-400 mt-2 ml-6">
             Enable "Generate new plans" above to create missing plans automatically.
           </Text>
         </View>

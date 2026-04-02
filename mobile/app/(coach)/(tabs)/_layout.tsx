@@ -9,10 +9,14 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCoachUnreadCounts } from "@/hooks/use-coach-data";
 import { useMemo } from "react";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 export default function CoachTabLayout() {
   const insets = useSafeAreaInsets();
   const { data: unreadMap } = useCoachUnreadCounts();
+  const t = useT();
+  const colors = useThemeColors();
 
   const totalUnread = useMemo(() => {
     if (!unreadMap) return 0;
@@ -23,11 +27,12 @@ export default function CoachTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#059669",
-        tabBarInactiveTintColor: "#6b7280",
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.icon,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: "#e5e7eb",
+          borderTopColor: colors.tabBarBorder,
+          backgroundColor: colors.tabBar,
           paddingBottom: insets.bottom + 4,
           paddingTop: 4,
           height: 56 + insets.bottom,
@@ -41,7 +46,7 @@ export default function CoachTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Dashboard",
+          title: t.nav.dashboard,
           tabBarIcon: ({ color, size }) => (
             <LayoutDashboard size={size} color={color} />
           ),
@@ -50,7 +55,7 @@ export default function CoachTabLayout() {
       <Tabs.Screen
         name="clients"
         options={{
-          title: "Clients",
+          title: t.nav.clients,
           tabBarIcon: ({ color, size }) => (
             <Users size={size} color={color} />
           ),
@@ -59,7 +64,7 @@ export default function CoachTabLayout() {
       <Tabs.Screen
         name="schedule"
         options={{
-          title: "Schedule",
+          title: t.nav.schedule,
           tabBarIcon: ({ color, size }) => (
             <Calendar size={size} color={color} />
           ),
@@ -68,18 +73,18 @@ export default function CoachTabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: "Messages",
+          title: t.nav.messages,
           tabBarIcon: ({ color, size }) => (
             <MessageCircle size={size} color={color} />
           ),
           tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
-          tabBarBadgeStyle: { backgroundColor: "#ef4444", fontSize: 10 },
+          tabBarBadgeStyle: { backgroundColor: colors.destructive, fontSize: 10 },
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
-          title: "More",
+          title: t.nav.more,
           tabBarIcon: ({ color, size }) => <Menu size={size} color={color} />,
         }}
       />

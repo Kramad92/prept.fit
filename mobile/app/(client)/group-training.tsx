@@ -28,6 +28,8 @@ import {
   useTrainingGroups,
   useGroupSessions,
 } from "@/hooks/use-client-data";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { GroupSession } from "@/types/api";
 
 type Tab = "sessions" | "groups";
@@ -40,6 +42,8 @@ export default function GroupTrainingScreen() {
   const [tab, setTab] = useState<Tab>("sessions");
   const [refreshing, setRefreshing] = useState(false);
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
+  const t = useT();
+  const colors = useThemeColors();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -62,7 +66,7 @@ export default function GroupTrainingScreen() {
     onError: (err) => {
       haptics.error();
       Alert.alert(
-        "Error",
+        t.common.error,
         err instanceof Error ? err.message : "Could not enroll."
       );
     },
@@ -77,7 +81,7 @@ export default function GroupTrainingScreen() {
     },
     onError: (err) => {
       Alert.alert(
-        "Error",
+        t.common.error,
         err instanceof Error ? err.message : "Could not unenroll."
       );
     },
@@ -95,7 +99,7 @@ export default function GroupTrainingScreen() {
           spotsLeft !== 1 ? "s" : ""
         } left.`,
         [
-          { text: "Cancel", style: "cancel" },
+          { text: t.common.cancel, style: "cancel" },
           {
             text: "Enroll",
             onPress: () => enrollMutation.mutate(session.id),
@@ -103,13 +107,13 @@ export default function GroupTrainingScreen() {
         ]
       );
     },
-    [enrollMutation]
+    [enrollMutation, t]
   );
 
   const handleUnenroll = useCallback(
     (session: GroupSession) => {
       Alert.alert("Leave Session", "Are you sure you want to unenroll?", [
-        { text: "Cancel", style: "cancel" },
+        { text: t.common.cancel, style: "cancel" },
         {
           text: "Unenroll",
           style: "destructive",
@@ -117,24 +121,24 @@ export default function GroupTrainingScreen() {
         },
       ]);
     },
-    [unenrollMutation]
+    [unenrollMutation, t]
   );
 
   const isLoading = tab === "sessions" ? loadingSessions : loadingGroups;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900">
-          Group Training
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">
+          {t.nav.groupTraining}
         </Text>
       </View>
 
       {/* Tab switcher */}
-      <View className="flex-row px-4 pt-3 pb-1 bg-white">
+      <View className="flex-row px-4 pt-3 pb-1 bg-white dark:bg-slate-800">
         <TouchableOpacity
           className={`flex-1 py-2 items-center border-b-2 ${
             tab === "sessions" ? "border-brand-600" : "border-transparent"
@@ -143,10 +147,10 @@ export default function GroupTrainingScreen() {
         >
           <Text
             className={`font-medium ${
-              tab === "sessions" ? "text-brand-600" : "text-gray-500"
+              tab === "sessions" ? "text-brand-600" : "text-gray-500 dark:text-slate-400"
             }`}
           >
-            Sessions
+            {t.groupTraining.sessions}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -157,7 +161,7 @@ export default function GroupTrainingScreen() {
         >
           <Text
             className={`font-medium ${
-              tab === "groups" ? "text-brand-600" : "text-gray-500"
+              tab === "groups" ? "text-brand-600" : "text-gray-500 dark:text-slate-400"
             }`}
           >
             My Groups
@@ -171,13 +175,13 @@ export default function GroupTrainingScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#059669"
+            tintColor={colors.brand}
           />
         }
       >
         {isLoading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#059669" />
+            <ActivityIndicator size="large" color={colors.brand} />
           </View>
         ) : tab === "sessions" ? (
           <SessionsView
@@ -186,6 +190,8 @@ export default function GroupTrainingScreen() {
             onEnroll={handleEnroll}
             onUnenroll={handleUnenroll}
             enrolling={enrollMutation.isPending}
+            colors={colors}
+            t={t}
           />
         ) : (
           <GroupsView
@@ -194,6 +200,7 @@ export default function GroupTrainingScreen() {
             onToggleExpand={(id) =>
               setExpandedGroupId(expandedGroupId === id ? null : id)
             }
+            colors={colors}
           />
         )}
         <View className="h-8" />
@@ -208,19 +215,23 @@ function SessionsView({
   onEnroll,
   onUnenroll,
   enrolling,
+  colors,
+  t,
 }: {
   enrolled: GroupSession[];
   open: GroupSession[];
   onEnroll: (s: GroupSession) => void;
   onUnenroll: (s: GroupSession) => void;
   enrolling: boolean;
+  colors: ReturnType<typeof useThemeColors>;
+  t: ReturnType<typeof useT>;
 }) {
   if (enrolled.length === 0 && open.length === 0) {
     return (
       <View className="items-center py-16">
-        <Users size={48} color="#d1d5db" />
-        <Text className="text-gray-400 mt-3 text-base">
-          No group sessions available
+        <Users size={48} color={colors.iconMuted} />
+        <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
+          {t.groupTraining.noSessions}
         </Text>
       </View>
     );
@@ -230,7 +241,7 @@ function SessionsView({
     <>
       {enrolled.length > 0 && (
         <>
-          <Text className="text-sm font-medium text-gray-500 mb-2">
+          <Text className="text-sm font-medium text-gray-500 dark:text-slate-400 mb-2">
             Your Sessions
           </Text>
           {enrolled.map((session) => (
@@ -240,6 +251,7 @@ function SessionsView({
               enrolled
               onPress={() => onUnenroll(session)}
               disabled={enrolling}
+              colors={colors}
             />
           ))}
         </>
@@ -247,8 +259,8 @@ function SessionsView({
 
       {open.length > 0 && (
         <>
-          <Text className="text-sm font-medium text-gray-500 mb-2 mt-4">
-            Open Sessions
+          <Text className="text-sm font-medium text-gray-500 dark:text-slate-400 mb-2 mt-4">
+            {t.groupTraining.openSessions}
           </Text>
           {open.map((session) => (
             <SessionCard
@@ -257,6 +269,7 @@ function SessionsView({
               enrolled={false}
               onPress={() => onEnroll(session)}
               disabled={enrolling}
+              colors={colors}
             />
           ))}
         </>
@@ -270,53 +283,56 @@ function SessionCard({
   enrolled,
   onPress,
   disabled,
+  colors,
 }: {
   session: GroupSession;
   enrolled: boolean;
   onPress: () => void;
   disabled: boolean;
+  colors: ReturnType<typeof useThemeColors>;
 }) {
+  const t = useT();
   const spotsLeft = session.maxParticipants - session._count.participants;
 
   return (
     <View
-      className={`bg-white rounded-xl p-4 mb-3 border ${
-        enrolled ? "border-brand-200" : "border-gray-100"
+      className={`bg-white dark:bg-slate-800 rounded-xl p-4 mb-3 border ${
+        enrolled ? "border-brand-200" : "border-gray-100 dark:border-slate-700/40"
       }`}
     >
       <View className="flex-row items-start">
         <View
           className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
-            enrolled ? "bg-brand-50" : "bg-gray-50"
+            enrolled ? "bg-brand-50" : "bg-gray-50 dark:bg-slate-950"
           }`}
         >
-          <Users size={20} color={enrolled ? "#059669" : "#6b7280"} />
+          <Users size={20} color={enrolled ? colors.brand : colors.icon} />
         </View>
         <View className="flex-1">
-          <Text className="text-base font-semibold text-gray-900">
+          <Text className="text-base font-semibold text-gray-900 dark:text-slate-50">
             {session.group?.name || "Group Session"}
           </Text>
           <View className="flex-row items-center mt-1">
-            <Calendar size={13} color="#6b7280" />
-            <Text className="text-sm text-gray-500 ml-1">
+            <Calendar size={13} color={colors.icon} />
+            <Text className="text-sm text-gray-500 dark:text-slate-400 ml-1">
               {formatDate(session.date)}
             </Text>
-            <Clock size={13} color="#6b7280" className="ml-2" />
-            <Text className="text-sm text-gray-500 ml-1">
+            <Clock size={13} color={colors.icon} className="ml-2" />
+            <Text className="text-sm text-gray-500 dark:text-slate-400 ml-1">
               {session.startTime} - {session.endTime}
             </Text>
           </View>
           <View className="flex-row items-center mt-1.5" style={{ gap: 8 }}>
             <View className="flex-row items-center">
-              <Users size={12} color="#9ca3af" />
-              <Text className="text-xs text-gray-400 ml-1">
+              <Users size={12} color={colors.iconMuted} />
+              <Text className="text-xs text-gray-400 dark:text-slate-500 ml-1">
                 {session._count.participants}/{session.maxParticipants}
               </Text>
             </View>
             {session.workoutPlan && (
               <View className="flex-row items-center">
-                <Dumbbell size={12} color="#9ca3af" />
-                <Text className="text-xs text-gray-400 ml-1">
+                <Dumbbell size={12} color={colors.iconMuted} />
+                <Text className="text-xs text-gray-400 dark:text-slate-500 ml-1">
                   {session.workoutPlan.name}
                 </Text>
               </View>
@@ -327,7 +343,7 @@ function SessionCard({
 
       <TouchableOpacity
         className={`mt-3 rounded-lg py-2 items-center flex-row justify-center ${
-          enrolled ? "bg-gray-100" : spotsLeft > 0 ? "bg-brand-600" : "bg-gray-300"
+          enrolled ? "bg-gray-100 dark:bg-slate-700" : spotsLeft > 0 ? "bg-brand-600" : "bg-gray-300 dark:bg-slate-600"
         }`}
         onPress={onPress}
         disabled={disabled || (!enrolled && spotsLeft <= 0)}
@@ -335,8 +351,8 @@ function SessionCard({
       >
         {enrolled ? (
           <>
-            <UserMinus size={16} color="#6b7280" />
-            <Text className="text-sm font-medium text-gray-600 ml-1.5">
+            <UserMinus size={16} color={colors.icon} />
+            <Text className="text-sm font-medium text-gray-600 dark:text-slate-300 ml-1.5">
               Unenroll
             </Text>
           </>
@@ -348,7 +364,7 @@ function SessionCard({
             </Text>
           </>
         ) : (
-          <Text className="text-sm font-medium text-gray-500">Full</Text>
+          <Text className="text-sm font-medium text-gray-500 dark:text-slate-400">{t.groupTraining.full}</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -359,6 +375,7 @@ function GroupsView({
   groups,
   expandedId,
   onToggleExpand,
+  colors,
 }: {
   groups: Array<{
     id: string;
@@ -370,12 +387,13 @@ function GroupsView({
   }>;
   expandedId: string | null;
   onToggleExpand: (id: string) => void;
+  colors: ReturnType<typeof useThemeColors>;
 }) {
   if (groups.length === 0) {
     return (
       <View className="items-center py-16">
-        <Users size={48} color="#d1d5db" />
-        <Text className="text-gray-400 mt-3 text-base">
+        <Users size={48} color={colors.iconMuted} />
+        <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
           You haven't joined any groups yet
         </Text>
       </View>
@@ -389,40 +407,40 @@ function GroupsView({
         return (
           <TouchableOpacity
             key={group.id}
-            className="bg-white rounded-xl p-4 mb-3 border border-gray-100"
+            className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-3 border border-gray-100 dark:border-slate-700/40"
             onPress={() => onToggleExpand(group.id)}
             activeOpacity={0.7}
           >
             <View className="flex-row items-center">
               <View className="w-10 h-10 rounded-full bg-brand-50 items-center justify-center mr-3">
-                <Users size={20} color="#059669" />
+                <Users size={20} color={colors.brand} />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-semibold text-gray-900">
+                <Text className="text-base font-semibold text-gray-900 dark:text-slate-50">
                   {group.name}
                 </Text>
-                <Text className="text-sm text-gray-500">
+                <Text className="text-sm text-gray-500 dark:text-slate-400">
                   {group.memberCount} member
                   {group.memberCount !== 1 ? "s" : ""}
                 </Text>
               </View>
               {isExpanded ? (
-                <ChevronUp size={18} color="#9ca3af" />
+                <ChevronUp size={18} color={colors.iconMuted} />
               ) : (
-                <ChevronDown size={18} color="#9ca3af" />
+                <ChevronDown size={18} color={colors.iconMuted} />
               )}
             </View>
 
             {isExpanded && (
-              <View className="mt-3 pt-3 border-t border-gray-100">
+              <View className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700/40">
                 {group.description && (
-                  <Text className="text-sm text-gray-600 mb-2">
+                  <Text className="text-sm text-gray-600 dark:text-slate-300 mb-2">
                     {group.description}
                   </Text>
                 )}
                 <View className="flex-row items-center">
-                  <Calendar size={14} color="#6b7280" />
-                  <Text className="text-sm text-gray-500 ml-1.5">
+                  <Calendar size={14} color={colors.icon} />
+                  <Text className="text-sm text-gray-500 dark:text-slate-400 ml-1.5">
                     {group.nextSession
                       ? `Next: ${formatDate(group.nextSession.date)} at ${
                           group.nextSession.startTime
@@ -430,7 +448,7 @@ function GroupsView({
                       : "No upcoming sessions"}
                   </Text>
                 </View>
-                <Text className="text-xs text-gray-400 mt-1.5">
+                <Text className="text-xs text-gray-400 dark:text-slate-500 mt-1.5">
                   Joined{" "}
                   {new Date(group.joinedAt).toLocaleDateString("en-US", {
                     month: "short",

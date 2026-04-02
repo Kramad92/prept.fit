@@ -1,19 +1,24 @@
 import { Tabs } from "expo-router";
 import { Home, Dumbbell, UtensilsCrossed, CheckCircle, Menu } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 export default function ClientTabLayout() {
   const insets = useSafeAreaInsets();
+  const t = useT();
+  const colors = useThemeColors();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#059669",
-        tabBarInactiveTintColor: "#6b7280",
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.icon,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: "#e5e7eb",
+          borderTopColor: colors.tabBarBorder,
+          backgroundColor: colors.tabBar,
           paddingBottom: insets.bottom + 4,
           paddingTop: 4,
           height: 56 + insets.bottom,
@@ -27,14 +32,14 @@ export default function ClientTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t.nav.home,
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="workouts"
         options={{
-          title: "Workouts",
+          title: t.nav.workouts,
           tabBarIcon: ({ color, size }) => (
             <Dumbbell size={size} color={color} />
           ),
@@ -43,7 +48,7 @@ export default function ClientTabLayout() {
       <Tabs.Screen
         name="nutrition"
         options={{
-          title: "Nutrition",
+          title: t.nav.nutrition,
           tabBarIcon: ({ color, size }) => (
             <UtensilsCrossed size={size} color={color} />
           ),
@@ -52,7 +57,7 @@ export default function ClientTabLayout() {
       <Tabs.Screen
         name="habits"
         options={{
-          title: "Habits",
+          title: t.nav.habits,
           tabBarIcon: ({ color, size }) => (
             <CheckCircle size={size} color={color} />
           ),
@@ -61,7 +66,7 @@ export default function ClientTabLayout() {
       <Tabs.Screen
         name="more"
         options={{
-          title: "More",
+          title: t.nav.more,
           tabBarIcon: ({ color, size }) => <Menu size={size} color={color} />,
         }}
       />

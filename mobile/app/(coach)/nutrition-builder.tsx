@@ -33,6 +33,8 @@ import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
 import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { MealPlanListItem, FoodSearchResult } from "@/types/api";
 
 interface FoodForm {
@@ -57,6 +59,8 @@ function makeKey() {
 }
 
 export default function NutritionBuilderScreen() {
+  const t = useT();
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const { data: plans, isLoading, error, refetch, isRefetching } = useMealPlans();
   const [mode, setMode] = useState<"list" | "form">("list");
@@ -65,13 +69,13 @@ export default function NutritionBuilderScreen() {
   const duplicateMutation = useMutation({
     mutationFn: (id: string) => api.post(`/api/meal-plans/${id}/duplicate`),
     onSuccess: () => { haptics.success(); queryClient.invalidateQueries({ queryKey: ["meal-plans"] }); },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/api/meal-plans/${id}`),
     onSuccess: () => { haptics.light(); queryClient.invalidateQueries({ queryKey: ["meal-plans"] }); },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const openCreate = () => { setEditingId(undefined); setMode("form"); };
@@ -87,29 +91,29 @@ export default function NutritionBuilderScreen() {
   }
 
   const renderPlan = ({ item }: { item: MealPlanListItem }) => (
-    <TouchableOpacity className="bg-white mx-4 mb-2 rounded-xl border border-gray-100 px-4 py-3" onPress={() => openEdit(item.id)} activeOpacity={0.6}>
+    <TouchableOpacity className="bg-white dark:bg-slate-800 mx-4 mb-2 rounded-xl border border-gray-100 dark:border-slate-700/40 px-4 py-3" onPress={() => openEdit(item.id)} activeOpacity={0.6}>
       <View className="flex-row items-center">
         <View className="flex-1">
-          <Text className="text-sm font-medium text-gray-900">{item.name}</Text>
-          <Text className="text-xs text-gray-500 mt-0.5">
-            {item.mealCount} meals · {item.assignedCount} assigned
-            {item.targetCalories ? ` · ${item.targetCalories} kcal` : ""}
+          <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">{item.name}</Text>
+          <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+            {item.mealCount} {t.nutrition.meals} · {item.assignedCount} assigned
+            {item.targetCalories ? ` · ${item.targetCalories} ${t.nutrition.kcal}` : ""}
           </Text>
           {(item.targetProtein || item.targetCarbs || item.targetFat) && (
-            <Text className="text-xs text-gray-400 mt-0.5">
+            <Text className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
               P: {item.targetProtein || 0}g · C: {item.targetCarbs || 0}g · F: {item.targetFat || 0}g
             </Text>
           )}
         </View>
         <View className="flex-row">
           <TouchableOpacity className="p-2" onPress={() => duplicateMutation.mutate(item.id)}>
-            <Copy size={16} color="#6b7280" />
+            <Copy size={16} color={colors.icon} />
           </TouchableOpacity>
-          <TouchableOpacity className="p-2" onPress={() => Alert.alert("Delete", `Delete "${item.name}"?`, [
-            { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate(item.id) },
+          <TouchableOpacity className="p-2" onPress={() => Alert.alert(t.common.delete, `Delete "${item.name}"?`, [
+            { text: t.common.cancel, style: "cancel" },
+            { text: t.common.delete, style: "destructive", onPress: () => deleteMutation.mutate(item.id) },
           ])}>
-            <Trash2 size={16} color="#ef4444" />
+            <Trash2 size={16} color={colors.destructive} />
           </TouchableOpacity>
         </View>
       </View>
@@ -117,28 +121,28 @@ export default function NutritionBuilderScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1"><ArrowLeft size={22} color="#111827" /></TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900 flex-1">Meal Plans</Text>
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1"><ArrowLeft size={22} color={colors.text} /></TouchableOpacity>
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.nutrition.title}</Text>
         <TouchableOpacity onPress={openCreate} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
           <Plus size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">New</Text>
         </TouchableOpacity>
       </View>
       {isLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color="#059669" /></View>
+        <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color={colors.brand} /></View>
       ) : error ? (
-        <QueryError message="Failed to load plans" onRetry={refetch} />
+        <QueryError message={t.errors.failedToLoad} onRetry={refetch} />
       ) : (
         <FlatList data={plans || []} keyExtractor={(item) => item.id} renderItem={renderPlan}
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#059669" />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />}
           ListEmptyComponent={
             <View className="items-center justify-center py-16">
-              <UtensilsCrossed size={40} color="#d1d5db" />
-              <Text className="text-gray-400 text-sm mt-3">No meal plans yet</Text>
+              <UtensilsCrossed size={40} color={colors.iconMuted} />
+              <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">{t.nutrition.noPlans}</Text>
               <TouchableOpacity className="mt-3 bg-brand-600 rounded-lg px-4 py-2" onPress={openCreate}>
-                <Text className="text-white text-sm font-semibold">Create First Plan</Text>
+                <Text className="text-white text-sm font-semibold">{t.nutrition.createPlan}</Text>
               </TouchableOpacity>
             </View>
           }
@@ -149,6 +153,8 @@ export default function NutritionBuilderScreen() {
 }
 
 function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void }) {
+  const t = useT();
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const { data: existing, isLoading } = useMealPlanDetail(editId);
 
@@ -201,7 +207,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
   const saveMutation = useMutation({
     mutationFn: (data: any) => editId ? api.put(`/api/meal-plans/${editId}`, data) : api.post("/api/meal-plans", data),
     onSuccess: () => { haptics.success(); queryClient.invalidateQueries({ queryKey: ["meal-plans"] }); onDone(); },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const addMeal = () => {
@@ -316,7 +322,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
       setAiRefinement("");
       haptics.success();
     } catch (e: any) {
-      setAiError(e.message || "AI generation failed");
+      setAiError(e.message || t.workouts.aiError);
     } finally {
       setAiLoading(false);
     }
@@ -327,7 +333,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
   };
 
   const handleSave = () => {
-    if (!name.trim()) return Alert.alert("Required", "Plan name is required");
+    if (!name.trim()) return Alert.alert(t.common.required, t.nutrition.planName);
     saveMutation.mutate({
       name: name.trim(),
       description: description.trim() || null,
@@ -355,7 +361,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
     const hasData = name.trim() || meals.length > 0;
     if (hasData) {
       Alert.alert("Discard Changes?", "Your unsaved changes will be lost.", [
-        { text: "Cancel", style: "cancel" },
+        { text: t.common.cancel, style: "cancel" },
         { text: "Discard", style: "destructive", onPress: onDone },
       ]);
     } else {
@@ -364,22 +370,22 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
   };
 
   if (editId && isLoading) {
-    return <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}><View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color="#059669" /></View></SafeAreaView>;
+    return <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}><View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color={colors.brand} /></View></SafeAreaView>;
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={handleBack} className="mr-3 p-1"><ArrowLeft size={22} color="#111827" /></TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900 flex-1">{editId ? "Edit Plan" : "New Plan"}</Text>
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
+        <TouchableOpacity onPress={handleBack} className="mr-3 p-1"><ArrowLeft size={22} color={colors.text} /></TouchableOpacity>
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{editId ? t.common.edit : t.nutrition.newPlan}</Text>
         <TouchableOpacity onPress={handleSave} disabled={saveMutation.isPending} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
-          {saveMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">Save</Text></>}
+          {saveMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">{t.common.save}</Text></>}
         </TouchableOpacity>
       </View>
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-          <TextInput className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-base font-semibold text-gray-900 mb-3" value={name} onChangeText={setName} placeholder="Plan name" placeholderTextColor="#9ca3af" />
-          <TextInput className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 mb-3" value={description} onChangeText={setDescription} placeholder="Describe the meal plan (e.g. 'High protein cut 2200 cal 5 meals')..." placeholderTextColor="#9ca3af" multiline />
+          <TextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-3 text-base font-semibold text-gray-900 dark:text-slate-50 mb-3" value={name} onChangeText={setName} placeholder={t.nutrition.planNamePlaceholder} placeholderTextColor={colors.iconMuted} />
+          <TextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-slate-50 mb-3" value={description} onChangeText={setDescription} placeholder={t.nutrition.descriptionPlaceholder} placeholderTextColor={colors.iconMuted} multiline />
 
           {/* AI Generate Section */}
           <View className="mb-3">
@@ -392,12 +398,12 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
               activeOpacity={0.7}
             >
               {aiLoading ? (
-                <ActivityIndicator size="small" color="#059669" />
+                <ActivityIndicator size="small" color={colors.brand} />
               ) : (
-                <Sparkles size={14} color="#059669" />
+                <Sparkles size={14} color={colors.brand} />
               )}
               <Text className="text-xs font-medium text-emerald-700 ml-1.5">
-                {aiLoading ? "Generating..." : aiHasGenerated ? "Regenerate" : "Generate with AI"}
+                {aiLoading ? t.workouts.generating : aiHasGenerated ? t.workouts.regenerateWithAI : t.workouts.generateWithAI}
               </Text>
             </TouchableOpacity>
             {aiError ? (
@@ -406,21 +412,21 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
             {aiHasGenerated && (
               <View className="mt-2">
                 <TextInput
-                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700"
+                  className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-gray-700 dark:text-slate-200"
                   value={aiRefinement}
                   onChangeText={setAiRefinement}
-                  placeholder="Refine: e.g. 'swap chicken for fish', 'add more protein'..."
-                  placeholderTextColor="#9ca3af"
+                  placeholder={t.workouts.refinePromptPlaceholder}
+                  placeholderTextColor={colors.iconMuted}
                   returnKeyType="go"
                   onSubmitEditing={handleAiGenerate}
                 />
                 {aiRefinements.length > 0 && (
                   <View className="flex-row flex-wrap mt-1.5">
                     {aiRefinements.map((r, i) => (
-                      <View key={i} className="flex-row items-center bg-gray-100 rounded-md px-2 py-1 mr-1 mb-1">
-                        <Text className="text-[10px] text-gray-600 mr-1">{r}</Text>
+                      <View key={i} className="flex-row items-center bg-gray-100 dark:bg-slate-700 rounded-md px-2 py-1 mr-1 mb-1">
+                        <Text className="text-[10px] text-gray-600 dark:text-slate-300 mr-1">{r}</Text>
                         <TouchableOpacity onPress={() => removeAiRefinement(i)}>
-                          <X size={10} color="#9ca3af" />
+                          <X size={10} color={colors.iconMuted} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -431,19 +437,19 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
           </View>
 
           {/* Macro Targets */}
-          <Text className="text-xs font-medium text-gray-500 mb-1.5">Daily Targets</Text>
+          <Text className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5">Daily Targets</Text>
           <View className="flex-row mb-4">
             <View className="flex-1 mr-1.5">
-              <TextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" value={targetCalories} onChangeText={setTargetCalories} placeholder="kcal" placeholderTextColor="#9ca3af" keyboardType="number-pad" />
+              <TextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-slate-50 text-center" value={targetCalories} onChangeText={setTargetCalories} placeholder={t.nutrition.kcal} placeholderTextColor={colors.iconMuted} keyboardType="number-pad" />
             </View>
             <View className="flex-1 mr-1.5">
-              <TextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" value={targetProtein} onChangeText={setTargetProtein} placeholder="P (g)" placeholderTextColor="#9ca3af" keyboardType="number-pad" />
+              <TextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-slate-50 text-center" value={targetProtein} onChangeText={setTargetProtein} placeholder="P (g)" placeholderTextColor={colors.iconMuted} keyboardType="number-pad" />
             </View>
             <View className="flex-1 mr-1.5">
-              <TextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" value={targetCarbs} onChangeText={setTargetCarbs} placeholder="C (g)" placeholderTextColor="#9ca3af" keyboardType="number-pad" />
+              <TextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-slate-50 text-center" value={targetCarbs} onChangeText={setTargetCarbs} placeholder="C (g)" placeholderTextColor={colors.iconMuted} keyboardType="number-pad" />
             </View>
             <View className="flex-1">
-              <TextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" value={targetFat} onChangeText={setTargetFat} placeholder="F (g)" placeholderTextColor="#9ca3af" keyboardType="number-pad" />
+              <TextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-slate-50 text-center" value={targetFat} onChangeText={setTargetFat} placeholder="F (g)" placeholderTextColor={colors.iconMuted} keyboardType="number-pad" />
             </View>
           </View>
 
@@ -461,9 +467,9 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
             />
           ))}
 
-          <TouchableOpacity className="border-2 border-dashed border-gray-300 rounded-xl py-3 items-center" onPress={addMeal}>
-            <Plus size={18} color="#9ca3af" />
-            <Text className="text-xs text-gray-400 mt-1">Add Meal</Text>
+          <TouchableOpacity className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl py-3 items-center" onPress={addMeal}>
+            <Plus size={18} color={colors.iconMuted} />
+            <Text className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t.nutrition.addMeal}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -486,44 +492,46 @@ function MealCard({ meal, onUpdateMeal, onRemoveMeal, onAddFood, onAddFoodManual
   onUpdateFood: (foodKey: string, field: keyof FoodForm, value: string) => void;
   onRemoveFood: (foodKey: string) => void;
 }) {
+  const t = useT();
+  const colors = useThemeColors();
   const [expanded, setExpanded] = useState(true);
   const totalCal = meal.foods.reduce((s, f) => s + (parseFloat(f.calories) || 0), 0);
 
   return (
-    <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden">
-      <TouchableOpacity className="flex-row items-center px-3 py-2.5 bg-gray-50 border-b border-gray-100" onPress={() => setExpanded(!expanded)} activeOpacity={0.6}>
-        <TextInput className="flex-1 text-sm font-semibold text-gray-900 py-0" value={meal.name} onChangeText={(v) => onUpdateMeal("name", v)} placeholder="Meal name" placeholderTextColor="#9ca3af" />
-        {totalCal > 0 && <Text className="text-xs text-gray-500 mr-2">{Math.round(totalCal)} kcal</Text>}
-        <TouchableOpacity onPress={onRemoveMeal} className="p-1 mr-1"><Trash2 size={14} color="#ef4444" /></TouchableOpacity>
-        {expanded ? <ChevronUp size={14} color="#9ca3af" /> : <ChevronDown size={14} color="#9ca3af" />}
+    <View className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 mb-3 overflow-hidden">
+      <TouchableOpacity className="flex-row items-center px-3 py-2.5 bg-gray-50 dark:bg-slate-950 border-b border-gray-100 dark:border-slate-700/40" onPress={() => setExpanded(!expanded)} activeOpacity={0.6}>
+        <TextInput className="flex-1 text-sm font-semibold text-gray-900 dark:text-slate-50 py-0" value={meal.name} onChangeText={(v) => onUpdateMeal("name", v)} placeholder="Meal name" placeholderTextColor={colors.iconMuted} />
+        {totalCal > 0 && <Text className="text-xs text-gray-500 dark:text-slate-400 mr-2">{Math.round(totalCal)} kcal</Text>}
+        <TouchableOpacity onPress={onRemoveMeal} className="p-1 mr-1"><Trash2 size={14} color={colors.destructive} /></TouchableOpacity>
+        {expanded ? <ChevronUp size={14} color={colors.iconMuted} /> : <ChevronDown size={14} color={colors.iconMuted} />}
       </TouchableOpacity>
 
       {expanded && (
         <View className="px-3 py-2">
           <View className="flex-row mb-2">
-            <TextInput className="bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-900 w-20" value={meal.time} onChangeText={(v) => onUpdateMeal("time", v)} placeholder="Time (HH:MM)" placeholderTextColor="#9ca3af" />
+            <TextInput className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-xs text-gray-900 dark:text-slate-50 w-20" value={meal.time} onChangeText={(v) => onUpdateMeal("time", v)} placeholder="Time (HH:MM)" placeholderTextColor={colors.iconMuted} />
           </View>
           {meal.foods.map((food) => (
-            <View key={food.key} className="bg-gray-50 rounded-lg p-2 mb-1.5">
+            <View key={food.key} className="bg-gray-50 dark:bg-slate-950 rounded-lg p-2 mb-1.5">
               <View className="flex-row items-center mb-1">
-                <TextInput className="flex-1 text-sm text-gray-900 py-0 font-medium" value={food.name} onChangeText={(v) => onUpdateFood(food.key, "name", v)} placeholder="Food name" placeholderTextColor="#9ca3af" />
-                <TouchableOpacity onPress={() => onRemoveFood(food.key)} className="p-1"><Trash2 size={12} color="#ef4444" /></TouchableOpacity>
+                <TextInput className="flex-1 text-sm text-gray-900 dark:text-slate-50 py-0 font-medium" value={food.name} onChangeText={(v) => onUpdateFood(food.key, "name", v)} placeholder="Food name" placeholderTextColor={colors.iconMuted} />
+                <TouchableOpacity onPress={() => onRemoveFood(food.key)} className="p-1"><Trash2 size={12} color={colors.destructive} /></TouchableOpacity>
               </View>
               <View className="flex-row">
-                <TextInput className="flex-1 bg-white border border-gray-200 rounded px-1.5 py-1 text-[10px] text-gray-900 mr-1 text-center" value={food.portion} onChangeText={(v) => onUpdateFood(food.key, "portion", v)} placeholder="Portion" placeholderTextColor="#9ca3af" />
-                <TextInput className="w-12 bg-white border border-gray-200 rounded px-1 py-1 text-[10px] text-gray-900 mr-1 text-center" value={food.calories} onChangeText={(v) => onUpdateFood(food.key, "calories", v)} placeholder="Cal" placeholderTextColor="#9ca3af" keyboardType="numeric" />
-                <TextInput className="w-10 bg-white border border-gray-200 rounded px-1 py-1 text-[10px] text-gray-900 mr-1 text-center" value={food.protein} onChangeText={(v) => onUpdateFood(food.key, "protein", v)} placeholder="P" placeholderTextColor="#9ca3af" keyboardType="numeric" />
-                <TextInput className="w-10 bg-white border border-gray-200 rounded px-1 py-1 text-[10px] text-gray-900 mr-1 text-center" value={food.carbs} onChangeText={(v) => onUpdateFood(food.key, "carbs", v)} placeholder="C" placeholderTextColor="#9ca3af" keyboardType="numeric" />
-                <TextInput className="w-10 bg-white border border-gray-200 rounded px-1 py-1 text-[10px] text-gray-900 text-center" value={food.fat} onChangeText={(v) => onUpdateFood(food.key, "fat", v)} placeholder="F" placeholderTextColor="#9ca3af" keyboardType="numeric" />
+                <TextInput className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1.5 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.portion} onChangeText={(v) => onUpdateFood(food.key, "portion", v)} placeholder="Portion" placeholderTextColor={colors.iconMuted} />
+                <TextInput className="w-12 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.calories} onChangeText={(v) => onUpdateFood(food.key, "calories", v)} placeholder="Cal" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
+                <TextInput className="w-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.protein} onChangeText={(v) => onUpdateFood(food.key, "protein", v)} placeholder="P" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
+                <TextInput className="w-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.carbs} onChangeText={(v) => onUpdateFood(food.key, "carbs", v)} placeholder="C" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
+                <TextInput className="w-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 text-center" value={food.fat} onChangeText={(v) => onUpdateFood(food.key, "fat", v)} placeholder="F" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
               </View>
             </View>
           ))}
           <View className="flex-row mt-1">
-            <TouchableOpacity className="flex-1 border border-dashed border-gray-300 rounded py-1.5 items-center mr-1" onPress={onAddFoodManual}>
-              <Text className="text-[10px] text-gray-400">+ Manual</Text>
+            <TouchableOpacity className="flex-1 border border-dashed border-gray-300 dark:border-slate-600 rounded py-1.5 items-center mr-1" onPress={onAddFoodManual}>
+              <Text className="text-[10px] text-gray-400 dark:text-slate-500">+ Manual</Text>
             </TouchableOpacity>
             <TouchableOpacity className="flex-1 border border-dashed border-brand-300 rounded py-1.5 items-center" onPress={onAddFood}>
-              <Text className="text-[10px] text-brand-600">+ Search</Text>
+              <Text className="text-[10px] text-brand-600">+ {t.common.search}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -533,6 +541,8 @@ function MealCard({ meal, onUpdateMeal, onRemoveMeal, onAddFood, onAddFoodManual
 }
 
 function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onClose: () => void; onSelect: (food: FoodSearchResult) => void }) {
+  const t = useT();
+  const colors = useThemeColors();
   const [search, setSearch] = useState("");
   const { data: foods } = useQuery({
     queryKey: ["food-search", search],
@@ -547,12 +557,12 @@ function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onC
   });
 
   return (
-    <AppBottomSheet visible={visible} onClose={onClose} title="Search Foods">
+    <AppBottomSheet visible={visible} onClose={onClose} title={t.common.search}>
       <View className="-mx-5">
-        <View className="px-5 py-2 border-b border-gray-100">
-          <View className="flex-row items-center bg-gray-50 rounded-lg px-3">
-            <Search size={16} color="#9ca3af" />
-            <BottomSheetTextInput className="flex-1 py-2 px-2 text-sm text-gray-900" value={search} onChangeText={setSearch} placeholder="Search foods..." placeholderTextColor="#9ca3af" autoFocus />
+        <View className="px-5 py-2 border-b border-gray-100 dark:border-slate-700/40">
+          <View className="flex-row items-center bg-gray-50 dark:bg-slate-950 rounded-lg px-3">
+            <Search size={16} color={colors.iconMuted} />
+            <BottomSheetTextInput className="flex-1 py-2 px-2 text-sm text-gray-900 dark:text-slate-50" value={search} onChangeText={setSearch} placeholder={t.nutrition.searchPlaceholder} placeholderTextColor={colors.iconMuted} autoFocus />
           </View>
         </View>
         <FlatList
@@ -560,15 +570,15 @@ function FoodPickerModal({ visible, onClose, onSelect }: { visible: boolean; onC
           keyExtractor={(item, i) => `${item.name}-${i}`}
           style={{ maxHeight: 400 }}
           renderItem={({ item }) => (
-            <TouchableOpacity className="px-5 py-3 border-b border-gray-50 bg-white" onPress={() => onSelect(item)} activeOpacity={0.6}>
-              <Text className="text-sm text-gray-900">{item.name}</Text>
-              <Text className="text-xs text-gray-500">
-                {item.portion}{item.calories != null ? ` · ${item.calories} kcal` : ""}
+            <TouchableOpacity className="px-5 py-3 border-b border-gray-50 dark:border-slate-700/40 bg-white dark:bg-slate-800" onPress={() => onSelect(item)} activeOpacity={0.6}>
+              <Text className="text-sm text-gray-900 dark:text-slate-50">{item.name}</Text>
+              <Text className="text-xs text-gray-500 dark:text-slate-400">
+                {item.portion}{item.calories != null ? ` · ${item.calories} ${t.nutrition.kcal}` : ""}
                 {item.protein != null ? ` · P:${item.protein}g` : ""}
               </Text>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={<View className="items-center py-12"><Text className="text-sm text-gray-400">{search.length < 2 ? "Type to search..." : "No foods found"}</Text></View>}
+          ListEmptyComponent={<View className="items-center py-12"><Text className="text-sm text-gray-400 dark:text-slate-500">{search.length < 2 ? "Type to search..." : t.common.noResults}</Text></View>}
         />
       </View>
     </AppBottomSheet>

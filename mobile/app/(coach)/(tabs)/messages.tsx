@@ -17,6 +17,8 @@ import {
 } from "@/hooks/use-coach-data";
 import { QueryError } from "@/components/query-error";
 import { AppHeader } from "@/components/app-header";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 interface ConversationItem {
   clientId: string;
@@ -31,6 +33,8 @@ export default function CoachMessagesScreen() {
     useCoachClients();
   const { data: latestMap } = useLatestMessages();
   const { data: unreadMap } = useCoachUnreadCounts();
+  const t = useT();
+  const colors = useThemeColors();
 
   const conversations = useMemo(() => {
     if (!clients) return [];
@@ -59,7 +63,7 @@ export default function CoachMessagesScreen() {
   const renderItem = useCallback(
     ({ item }: { item: ConversationItem }) => (
       <TouchableOpacity
-        className="flex-row items-center px-4 py-3.5 bg-white border-b border-gray-50"
+        className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
         onPress={() =>
           router.push(`/(coach)/messages/${item.clientId}` as never)
         }
@@ -67,12 +71,12 @@ export default function CoachMessagesScreen() {
       >
         <View
           className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
-            item.unreadCount > 0 ? "bg-brand-100" : "bg-gray-100"
+            item.unreadCount > 0 ? "bg-brand-100" : "bg-gray-100 dark:bg-slate-700"
           }`}
         >
           <Text
             className={`font-semibold text-base ${
-              item.unreadCount > 0 ? "text-brand-700" : "text-gray-500"
+              item.unreadCount > 0 ? "text-brand-700" : "text-gray-500 dark:text-slate-400"
             }`}
           >
             {item.clientName.charAt(0).toUpperCase()}
@@ -83,14 +87,14 @@ export default function CoachMessagesScreen() {
             <Text
               className={`text-base ${
                 item.unreadCount > 0
-                  ? "font-semibold text-gray-900"
-                  : "font-medium text-gray-900"
+                  ? "font-semibold text-gray-900 dark:text-slate-50"
+                  : "font-medium text-gray-900 dark:text-slate-50"
               }`}
             >
               {item.clientName}
             </Text>
             {item.lastMessageAt && (
-              <Text className="text-xs text-gray-400">
+              <Text className="text-xs text-gray-400 dark:text-slate-500">
                 {formatRelative(item.lastMessageAt)}
               </Text>
             )}
@@ -98,7 +102,7 @@ export default function CoachMessagesScreen() {
           {item.lastMessage && (
             <Text
               className={`text-sm mt-0.5 ${
-                item.unreadCount > 0 ? "text-gray-700" : "text-gray-500"
+                item.unreadCount > 0 ? "text-gray-700 dark:text-slate-200" : "text-gray-500 dark:text-slate-400"
               }`}
               numberOfLines={1}
             >
@@ -120,9 +124,9 @@ export default function CoachMessagesScreen() {
 
   if (loadingClients) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={colors.brand} />
         </View>
       </SafeAreaView>
     );
@@ -130,15 +134,15 @@ export default function CoachMessagesScreen() {
 
   if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-        <QueryError message="Failed to load messages" onRetry={refetch} />
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+        <QueryError message={t.errors.failedToLoad} onRetry={refetch} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <AppHeader title="Messages" />
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <AppHeader title={t.messages.title} />
 
       <FlatList
         data={conversations}
@@ -149,14 +153,14 @@ export default function CoachMessagesScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#059669"
+            tintColor={colors.brand}
           />
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <MessageCircle size={40} color="#d1d5db" />
-            <Text className="text-gray-400 text-sm mt-3">
-              No conversations yet
+            <MessageCircle size={40} color={colors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">
+              {t.messages.noConversations}
             </Text>
           </View>
         }

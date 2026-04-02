@@ -24,6 +24,8 @@ import {
 import { api } from "@/lib/api-client";
 import { useNotifications } from "@/hooks/use-client-data";
 import { QueryError } from "@/components/query-error";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { AppNotification } from "@/types/api";
 
 const ICON_MAP: Record<string, typeof Bell> = {
@@ -52,6 +54,8 @@ export default function NotificationsScreen() {
   const queryClient = useQueryClient();
   const { data: notifications, isLoading, isError, refetch } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
+  const t = useT();
+  const colors = useThemeColors();
 
   const sorted = useMemo(
     () =>
@@ -85,7 +89,6 @@ export default function NotificationsScreen() {
       if (!notification.isRead) {
         markReadMutation.mutate([notification.id]);
       }
-      // Navigate based on type
       switch (notification.type) {
         case "new_message":
           router.push("/(client)/messages");
@@ -127,13 +130,13 @@ export default function NotificationsScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900">
-          Notifications
+        <Text className="flex-1 text-lg font-semibold text-gray-900 dark:text-slate-50">
+          {t.notifications.title}
         </Text>
         {unreadCount > 0 && (
           <TouchableOpacity
@@ -141,7 +144,7 @@ export default function NotificationsScreen() {
             activeOpacity={0.7}
           >
             <Text className="text-sm text-brand-600 font-medium">
-              Mark all read
+              {t.notifications.markAllRead}
             </Text>
           </TouchableOpacity>
         )}
@@ -153,7 +156,7 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#059669"
+            tintColor={colors.brand}
           />
         }
       >
@@ -161,26 +164,26 @@ export default function NotificationsScreen() {
           <QueryError onRetry={() => refetch()} />
         ) : isLoading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#059669" />
+            <ActivityIndicator size="large" color={colors.brand} />
           </View>
         ) : sorted.length === 0 ? (
           <View className="items-center py-16">
-            <Bell size={48} color="#d1d5db" />
-            <Text className="text-gray-400 mt-3 text-base">
-              No notifications yet
+            <Bell size={48} color={colors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
+              {t.notifications.noNotifications}
             </Text>
           </View>
         ) : (
           <View className="px-4 pt-2">
             {sorted.map((notification) => {
               const IconComponent = ICON_MAP[notification.type] || Bell;
-              const iconColor = COLOR_MAP[notification.type] || "#6b7280";
+              const iconColor = COLOR_MAP[notification.type] || colors.icon;
               return (
                 <TouchableOpacity
                   key={notification.id}
                   className={`flex-row p-4 mb-2 rounded-xl border ${
                     notification.isRead
-                      ? "bg-white border-gray-100"
+                      ? "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700/40"
                       : "bg-brand-50 border-brand-100"
                   }`}
                   onPress={() => handleTap(notification)}
@@ -196,16 +199,16 @@ export default function NotificationsScreen() {
                     <Text
                       className={`text-base ${
                         notification.isRead
-                          ? "text-gray-900"
-                          : "text-gray-900 font-semibold"
+                          ? "text-gray-900 dark:text-slate-50"
+                          : "text-gray-900 dark:text-slate-50 font-semibold"
                       }`}
                     >
                       {notification.title}
                     </Text>
-                    <Text className="text-sm text-gray-500 mt-0.5" numberOfLines={2}>
+                    <Text className="text-sm text-gray-500 dark:text-slate-400 mt-0.5" numberOfLines={2}>
                       {notification.body}
                     </Text>
-                    <Text className="text-xs text-gray-400 mt-1">
+                    <Text className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                       {formatTimeAgo(notification.createdAt)}
                     </Text>
                   </View>

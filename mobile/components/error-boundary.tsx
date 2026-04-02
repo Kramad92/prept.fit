@@ -29,12 +29,12 @@ export class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center px-8">
+        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950 items-center justify-center px-8">
           <AlertTriangle size={48} color="#ef4444" />
-          <Text className="text-xl font-bold text-gray-900 mt-4">
+          <Text className="text-xl font-bold text-gray-900 dark:text-slate-50 mt-4">
             Something went wrong
           </Text>
-          <Text className="text-sm text-gray-500 text-center mt-2">
+          <Text className="text-sm text-gray-500 dark:text-slate-400 text-center mt-2">
             {this.state.error?.message || "An unexpected error occurred"}
           </Text>
           <TouchableOpacity

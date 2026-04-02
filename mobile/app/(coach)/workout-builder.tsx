@@ -42,6 +42,8 @@ import { QueryError } from "@/components/query-error";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import type { WorkoutPlanListItem } from "@/types/api";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 interface ExerciseForm {
   key: string;
@@ -59,6 +61,8 @@ function makeKey() {
 }
 
 export default function WorkoutBuilderScreen() {
+  const t = useT();
+  const colors = useThemeColors();
   const { editId } = useLocalSearchParams<{ editId?: string }>();
   const queryClient = useQueryClient();
   const { data: plans, isLoading: listLoading, error: listError, refetch, isRefetching } = useWorkoutPlans();
@@ -71,7 +75,7 @@ export default function WorkoutBuilderScreen() {
       haptics.success();
       queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const deleteMutation = useMutation({
@@ -80,7 +84,7 @@ export default function WorkoutBuilderScreen() {
       haptics.light();
       queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const openCreate = () => {
@@ -105,16 +109,16 @@ export default function WorkoutBuilderScreen() {
 
   const renderPlan = ({ item }: { item: WorkoutPlanListItem }) => (
     <TouchableOpacity
-      className="bg-white mx-4 mb-2 rounded-xl border border-gray-100 px-4 py-3"
+      className="bg-white dark:bg-slate-800 mx-4 mb-2 rounded-xl border border-gray-100 dark:border-slate-700/40 px-4 py-3"
       onPress={() => openEdit(item.id)}
       activeOpacity={0.6}
     >
       <View className="flex-row items-center">
         <View className="flex-1">
-          <Text className="text-sm font-medium text-gray-900">{item.name}</Text>
-          <Text className="text-xs text-gray-500 mt-0.5">
-            {item.exerciseCount} exercises · {item.assignedCount} assigned
-            {item.isTemplate ? " · Template" : ""}
+          <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">{item.name}</Text>
+          <Text className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+            {item.exerciseCount} {t.workouts.exercises_count} · {item.assignedCount} {t.workouts.assign.toLowerCase()}ed
+            {item.isTemplate ? ` · ${t.workouts.template}` : ""}
           </Text>
         </View>
         <View className="flex-row">
@@ -122,16 +126,16 @@ export default function WorkoutBuilderScreen() {
             className="p-2"
             onPress={() => duplicateMutation.mutate(item.id)}
           >
-            <Copy size={16} color="#6b7280" />
+            <Copy size={16} color={colors.icon} />
           </TouchableOpacity>
           <TouchableOpacity
             className="p-2"
-            onPress={() => Alert.alert("Delete", `Delete "${item.name}"?`, [
-              { text: "Cancel", style: "cancel" },
-              { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate(item.id) },
+            onPress={() => Alert.alert(t.common.delete, `${t.workouts.deleteConfirm}`, [
+              { text: t.common.cancel, style: "cancel" },
+              { text: t.common.delete, style: "destructive", onPress: () => deleteMutation.mutate(item.id) },
             ])}
           >
-            <Trash2 size={16} color="#ef4444" />
+            <Trash2 size={16} color={colors.destructive} />
           </TouchableOpacity>
         </View>
       </View>
@@ -139,34 +143,34 @@ export default function WorkoutBuilderScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900 flex-1">Workout Plans</Text>
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.workouts.title}</Text>
         <TouchableOpacity onPress={openCreate} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
           <Plus size={14} color="#fff" />
-          <Text className="text-white text-xs font-semibold ml-1">New</Text>
+          <Text className="text-white text-xs font-semibold ml-1">{t.workouts.newPlan}</Text>
         </TouchableOpacity>
       </View>
       {listLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color="#059669" /></View>
+        <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color={colors.brand} /></View>
       ) : listError ? (
-        <QueryError message="Failed to load plans" onRetry={refetch} />
+        <QueryError message={t.errors.failedToLoad} onRetry={refetch} />
       ) : (
         <FlatList
           data={plans || []}
           keyExtractor={(item) => item.id}
           renderItem={renderPlan}
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#059669" />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brand} />}
           ListEmptyComponent={
             <View className="items-center justify-center py-16">
-              <Dumbbell size={40} color="#d1d5db" />
-              <Text className="text-gray-400 text-sm mt-3">No workout plans yet</Text>
+              <Dumbbell size={40} color={colors.iconMuted} />
+              <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">{t.workouts.noPlans}</Text>
               <TouchableOpacity className="mt-3 bg-brand-600 rounded-lg px-4 py-2" onPress={openCreate}>
-                <Text className="text-white text-sm font-semibold">Create First Plan</Text>
+                <Text className="text-white text-sm font-semibold">{t.workouts.createPlan}</Text>
               </TouchableOpacity>
             </View>
           }
@@ -177,6 +181,8 @@ export default function WorkoutBuilderScreen() {
 }
 
 function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }) {
+  const t = useT();
+  const colors = useThemeColors();
   const queryClient = useQueryClient();
   const { data: existing, isLoading } = useWorkoutPlanDetail(editId);
 
@@ -228,7 +234,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
       queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
       onDone();
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
   const addExercise = (exerciseName?: string) => {
@@ -305,7 +311,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
       setAiRefinement("");
       haptics.success();
     } catch (e: any) {
-      setAiError(e.message || "AI generation failed");
+      setAiError(e.message || t.workouts.aiError);
     } finally {
       setAiLoading(false);
     }
@@ -316,7 +322,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
   };
 
   const handleSave = () => {
-    if (!name.trim()) return Alert.alert("Required", "Plan name is required");
+    if (!name.trim()) return Alert.alert(t.common.required, t.workouts.planName);
     saveMutation.mutate({
       name: name.trim(),
       description: description.trim() || null,
@@ -338,7 +344,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
     const hasData = name.trim() || exercises.length > 0;
     if (hasData) {
       Alert.alert("Discard Changes?", "Your unsaved changes will be lost.", [
-        { text: "Cancel", style: "cancel" },
+        { text: t.common.cancel, style: "cancel" },
         { text: "Discard", style: "destructive", onPress: onDone },
       ]);
     } else {
@@ -348,22 +354,22 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
 
   if (editId && isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={colors.brand} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
         <TouchableOpacity onPress={handleBack} className="mr-3 p-1">
-          <ArrowLeft size={22} color="#111827" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900 flex-1">
-          {editId ? "Edit Plan" : "New Plan"}
+        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">
+          {editId ? t.workouts.editWorkoutPlan : t.workouts.newPlan}
         </Text>
         <TouchableOpacity
           onPress={handleSave}
@@ -376,7 +382,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
           ) : (
             <>
               <Save size={14} color="#fff" />
-              <Text className="text-white text-xs font-semibold ml-1">Save</Text>
+              <Text className="text-white text-xs font-semibold ml-1">{t.common.save}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -389,18 +395,18 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
         bottomOffset={20}
       >
           <TextInput
-            className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-base font-semibold text-gray-900 mb-3"
+            className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-3 text-base font-semibold text-gray-900 dark:text-slate-50 mb-3"
             value={name}
             onChangeText={setName}
-            placeholder="Plan name"
-            placeholderTextColor="#9ca3af"
+            placeholder={t.workouts.planNamePlaceholder}
+            placeholderTextColor={colors.textTertiary}
           />
           <TextInput
-            className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 mb-3"
+            className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-slate-50 mb-3"
             value={description}
             onChangeText={setDescription}
-            placeholder="Describe the workout (e.g. 'Upper body push day for intermediate')..."
-            placeholderTextColor="#9ca3af"
+            placeholder={t.workouts.aiPromptPlaceholder}
+            placeholderTextColor={colors.textTertiary}
             multiline
           />
 
@@ -408,7 +414,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
           <View className="mb-3">
             <View className="flex-row items-center">
               <TouchableOpacity
-                className={`flex-row items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 mr-2 ${
+                className={`flex-row items-center rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/25 px-3 py-2 mr-2 ${
                   !description.trim() || aiLoading ? "opacity-50" : ""
                 }`}
                 onPress={handleAiGenerate}
@@ -416,22 +422,22 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
                 activeOpacity={0.7}
               >
                 {aiLoading ? (
-                  <ActivityIndicator size="small" color="#059669" />
+                  <ActivityIndicator size="small" color={colors.brand} />
                 ) : (
-                  <Sparkles size={14} color="#059669" />
+                  <Sparkles size={14} color={colors.brand} />
                 )}
-                <Text className="text-xs font-medium text-emerald-700 ml-1.5">
-                  {aiLoading ? "Generating..." : aiHasGenerated ? "Regenerate" : "Generate with AI"}
+                <Text className="text-xs font-medium text-emerald-700 dark:text-emerald-300 ml-1.5">
+                  {aiLoading ? t.workouts.generating : aiHasGenerated ? t.workouts.regenerateWithAI : t.workouts.generateWithAI}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-row items-center"
                 onPress={() => setIncludeVideos(!includeVideos)}
               >
-                <View className={`w-4 h-4 rounded border mr-1.5 items-center justify-center ${includeVideos ? "bg-brand-600 border-brand-600" : "border-gray-300"}`}>
+                <View className={`w-4 h-4 rounded border mr-1.5 items-center justify-center ${includeVideos ? "bg-brand-600 border-brand-600" : "border-gray-300 dark:border-slate-600"}`}>
                   {includeVideos && <Text className="text-white text-[8px] font-bold">✓</Text>}
                 </View>
-                <Text className="text-xs text-gray-500">Videos</Text>
+                <Text className="text-xs text-gray-500 dark:text-slate-400">Videos</Text>
               </TouchableOpacity>
             </View>
             {aiError ? (
@@ -440,21 +446,21 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
             {aiHasGenerated && (
               <View className="mt-2">
                 <TextInput
-                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700"
+                  className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-gray-700 dark:text-slate-200"
                   value={aiRefinement}
                   onChangeText={setAiRefinement}
-                  placeholder="Refine: e.g. 'add more leg exercises', 'reduce rest times'..."
-                  placeholderTextColor="#9ca3af"
+                  placeholder={t.workouts.refinePromptPlaceholder}
+                  placeholderTextColor={colors.textTertiary}
                   returnKeyType="go"
                   onSubmitEditing={handleAiGenerate}
                 />
                 {aiRefinements.length > 0 && (
                   <View className="flex-row flex-wrap mt-1.5">
                     {aiRefinements.map((r, i) => (
-                      <View key={i} className="flex-row items-center bg-gray-100 rounded-md px-2 py-1 mr-1 mb-1">
-                        <Text className="text-[10px] text-gray-600 mr-1">{r}</Text>
+                      <View key={i} className="flex-row items-center bg-gray-100 dark:bg-slate-700 rounded-md px-2 py-1 mr-1 mb-1">
+                        <Text className="text-[10px] text-gray-600 dark:text-slate-300 mr-1">{r}</Text>
                         <TouchableOpacity onPress={() => removeAiRefinement(i)}>
-                          <X size={10} color="#9ca3af" />
+                          <X size={10} color={colors.iconMuted} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -468,10 +474,10 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
             className="flex-row items-center mb-4"
             onPress={() => setIsTemplate(!isTemplate)}
           >
-            <View className={`w-5 h-5 rounded border mr-2 items-center justify-center ${isTemplate ? "bg-brand-600 border-brand-600" : "border-gray-300"}`}>
+            <View className={`w-5 h-5 rounded border mr-2 items-center justify-center ${isTemplate ? "bg-brand-600 border-brand-600" : "border-gray-300 dark:border-slate-600"}`}>
               {isTemplate && <Text className="text-white text-xs font-bold">✓</Text>}
             </View>
-            <Text className="text-sm text-gray-700">Save as template</Text>
+            <Text className="text-sm text-gray-700 dark:text-slate-200">{t.workouts.template}</Text>
           </TouchableOpacity>
 
           {/* Exercise list */}
@@ -487,18 +493,18 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
 
           <View className="flex-row">
             <TouchableOpacity
-              className="flex-1 border-2 border-dashed border-gray-300 rounded-xl py-3 items-center mr-2"
+              className="flex-1 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl py-3 items-center mr-2"
               onPress={() => addExercise()}
             >
-              <Plus size={18} color="#9ca3af" />
-              <Text className="text-xs text-gray-400 mt-1">Add Exercise</Text>
+              <Plus size={18} color={colors.iconMuted} />
+              <Text className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t.workouts.addBlank}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 border-2 border-dashed border-brand-300 rounded-xl py-3 items-center"
               onPress={() => setShowExercisePicker(true)}
             >
-              <Search size={18} color="#059669" />
-              <Text className="text-xs text-brand-600 mt-1">From Library</Text>
+              <Search size={18} color={colors.brand} />
+              <Text className="text-xs text-brand-600 mt-1">{t.workouts.fromLibrary}</Text>
             </TouchableOpacity>
           </View>
       </KeyboardAwareScrollView>
@@ -523,81 +529,83 @@ function ExerciseCard({
   onUpdate: (field: keyof ExerciseForm, value: string) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+  const colors = useThemeColors();
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden">
+    <View className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 mb-3 overflow-hidden">
       <TouchableOpacity
-        className="flex-row items-center px-3 py-2.5 bg-gray-50 border-b border-gray-100"
+        className="flex-row items-center px-3 py-2.5 bg-gray-50 dark:bg-slate-950 border-b border-gray-100 dark:border-slate-700/40"
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.6}
       >
-        <Text className="text-xs font-medium text-gray-500 mr-2">#{index + 1}</Text>
+        <Text className="text-xs font-medium text-gray-500 dark:text-slate-400 mr-2">#{index + 1}</Text>
         <TextInput
-          className="flex-1 text-sm font-medium text-gray-900 py-0"
+          className="flex-1 text-sm font-medium text-gray-900 dark:text-slate-50 py-0"
           value={exercise.name}
           onChangeText={(v) => onUpdate("name", v)}
-          placeholder="Exercise name"
-          placeholderTextColor="#9ca3af"
+          placeholder={t.workouts.exerciseName}
+          placeholderTextColor={colors.textTertiary}
         />
         <TouchableOpacity onPress={onRemove} className="p-1 ml-1">
-          <Trash2 size={16} color="#ef4444" />
+          <Trash2 size={16} color={colors.destructive} />
         </TouchableOpacity>
-        {expanded ? <ChevronUp size={16} color="#9ca3af" /> : <ChevronDown size={16} color="#9ca3af" />}
+        {expanded ? <ChevronUp size={16} color={colors.iconMuted} /> : <ChevronDown size={16} color={colors.iconMuted} />}
       </TouchableOpacity>
 
       {expanded && (
         <View className="px-3 py-3">
           <View className="flex-row mb-2">
             <View className="flex-1 mr-2">
-              <Text className="text-[10px] text-gray-500 mb-0.5">Sets</Text>
+              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.sets}</Text>
               <TextInput
-                className="bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-900 text-center"
+                className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.sets}
                 onChangeText={(v) => onUpdate("sets", v)}
                 keyboardType="number-pad"
                 placeholder="3"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
             <View className="flex-1 mr-2">
-              <Text className="text-[10px] text-gray-500 mb-0.5">Reps</Text>
+              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.reps}</Text>
               <TextInput
-                className="bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-900 text-center"
+                className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.reps}
                 onChangeText={(v) => onUpdate("reps", v)}
                 placeholder="10"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
             <View className="flex-1 mr-2">
-              <Text className="text-[10px] text-gray-500 mb-0.5">Weight</Text>
+              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.weight}</Text>
               <TextInput
-                className="bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-900 text-center"
+                className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.weight}
                 onChangeText={(v) => onUpdate("weight", v)}
                 placeholder="kg"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
             <View className="flex-1">
-              <Text className="text-[10px] text-gray-500 mb-0.5">Rest (s)</Text>
+              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.restSec}</Text>
               <TextInput
-                className="bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-900 text-center"
+                className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.restSeconds}
                 onChangeText={(v) => onUpdate("restSeconds", v)}
                 keyboardType="number-pad"
                 placeholder="60"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
           </View>
           <TextInput
-            className="bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-900"
+            className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50"
             value={exercise.notes}
             onChangeText={(v) => onUpdate("notes", v)}
-            placeholder="Notes (optional)"
-            placeholderTextColor="#9ca3af"
+            placeholder={t.workouts.formCues}
+            placeholderTextColor={colors.textTertiary}
           />
         </View>
       )}
@@ -609,9 +617,9 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`px-2.5 py-1 rounded-full mr-1.5 mb-1.5 border ${active ? "bg-brand-600 border-brand-600" : "bg-white border-gray-200"}`}
+      className={`px-2.5 py-1 rounded-full mr-1.5 mb-1.5 border ${active ? "bg-brand-600 border-brand-600" : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700"}`}
     >
-      <Text className={`text-xs ${active ? "text-white font-medium" : "text-gray-600"}`}>{label}</Text>
+      <Text className={`text-xs ${active ? "text-white font-medium" : "text-gray-600 dark:text-slate-300"}`}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -625,6 +633,8 @@ function ExercisePickerModal({
   onClose: () => void;
   onSelect: (name: string) => void;
 }) {
+  const t = useT();
+  const colors = useThemeColors();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
@@ -653,25 +663,25 @@ function ExercisePickerModal({
 
   const stickyHeader = (
     <>
-      <View className="flex-row items-center bg-gray-50 rounded-lg px-3 mb-3">
-        <Search size={16} color="#9ca3af" />
+      <View className="flex-row items-center bg-gray-50 dark:bg-slate-950 rounded-lg px-3 mb-3">
+        <Search size={16} color={colors.iconMuted} />
         <BottomSheetTextInput
-          className="flex-1 py-2.5 px-2 text-sm text-gray-900"
+          className="flex-1 py-2.5 px-2 text-sm text-gray-900 dark:text-slate-50"
           value={search}
           onChangeText={setSearch}
-          placeholder="Search exercises..."
-          placeholderTextColor="#9ca3af"
+          placeholder={t.exerciseLibrary.searchPlaceholder}
+          placeholderTextColor={colors.textTertiary}
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch("")}>
-            <X size={14} color="#9ca3af" />
+            <X size={14} color={colors.iconMuted} />
           </TouchableOpacity>
         )}
       </View>
 
       {categories && categories.length > 0 && (
         <View className="mb-2">
-          <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
+          <Text className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1">{t.exerciseLibrary.category}</Text>
           <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {categories.map((cat) => (
               <FilterChip key={cat.id} label={cat.name} active={selectedCategory === cat.name} onPress={() => setSelectedCategory(selectedCategory === cat.name ? undefined : cat.name)} />
@@ -681,7 +691,7 @@ function ExercisePickerModal({
       )}
 
       <View className="mb-2">
-        <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Difficulty</Text>
+        <Text className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1">{t.exerciseLibrary.difficulty}</Text>
         <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
           {difficulties.map((d) => (
             <FilterChip key={d} label={d} active={selectedDifficulty === d} onPress={() => setSelectedDifficulty(selectedDifficulty === d ? undefined : d)} />
@@ -691,7 +701,7 @@ function ExercisePickerModal({
 
       {equipmentTypes && equipmentTypes.length > 0 && (
         <View className="mb-2">
-          <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Equipment</Text>
+          <Text className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1">{t.exerciseLibrary.equipment}</Text>
           <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {equipmentTypes.map((eq) => (
               <FilterChip key={eq.id} label={eq.name} active={selectedEquipment === eq.name} onPress={() => setSelectedEquipment(selectedEquipment === eq.name ? undefined : eq.name)} />
@@ -702,32 +712,32 @@ function ExercisePickerModal({
 
       {hasFilters && (
         <TouchableOpacity className="mb-2" onPress={() => { setSelectedCategory(undefined); setSelectedDifficulty(undefined); setSelectedEquipment(undefined); }}>
-          <Text className="text-xs text-brand-600 font-medium">Clear filters</Text>
+          <Text className="text-xs text-brand-600 font-medium">{t.common.clearFilters}</Text>
         </TouchableOpacity>
       )}
 
-      <View className="border-t border-gray-100 pt-1">
-        <Text className="text-[10px] text-gray-400">{exercises?.length ?? 0} exercises</Text>
+      <View className="border-t border-gray-100 dark:border-slate-700/40 pt-1">
+        <Text className="text-[10px] text-gray-400 dark:text-slate-500">{exercises?.length ?? 0} {t.exerciseLibrary.exerciseCount}</Text>
       </View>
     </>
   );
 
   return (
-    <AppBottomSheet visible={visible} onClose={() => { setSearch(""); onClose(); }} snapPoints={["85%"]} title="Browse Exercise Library" stickyHeader={stickyHeader}>
+    <AppBottomSheet visible={visible} onClose={() => { setSearch(""); onClose(); }} snapPoints={["85%"]} title={t.exerciseLibrary.browseLibrary} stickyHeader={stickyHeader}>
       {(exercises || []).length === 0 ? (
         <View className="items-center py-10">
-          <Text className="text-sm text-gray-400">No exercises found</Text>
+          <Text className="text-sm text-gray-400 dark:text-slate-500">{t.exerciseLibrary.noExercisesFound}</Text>
         </View>
       ) : (
         (exercises || []).slice(0, 50).map((item) => (
           <TouchableOpacity
             key={item.id}
-            className="py-2.5 border-b border-gray-50"
+            className="py-2.5 border-b border-gray-50 dark:border-slate-700/40"
             onPress={() => { onSelect(item.name); setSearch(""); }}
             activeOpacity={0.6}
           >
-            <Text className="text-sm text-gray-900">{item.name}</Text>
-            <Text className="text-[10px] text-gray-400 mt-0.5">
+            <Text className="text-sm text-gray-900 dark:text-slate-50">{item.name}</Text>
+            <Text className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
               {[item.category, item.muscleGroup, item.equipment, item.difficulty].filter(Boolean).join(" · ")}
             </Text>
           </TouchableOpacity>

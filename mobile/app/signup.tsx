@@ -13,9 +13,13 @@ import { router, Redirect } from "expo-router";
 import { ArrowLeft, CheckCircle } from "lucide-react-native";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 
 export default function SignupScreen() {
   const { user, isLoading: authLoading } = useAuth();
+  const t = useT();
+  const colors = useThemeColors();
 
   if (!authLoading && user) {
     return (
@@ -66,7 +70,7 @@ export default function SignupScreen() {
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
+      setError(t.auth.passwordsDoNotMatch);
       return;
     }
 
@@ -90,17 +94,17 @@ export default function SignupScreen() {
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 bg-white"
+        className="flex-1 bg-white dark:bg-slate-800"
       >
         <View className="flex-1 justify-center px-8">
           <View className="items-center mb-6">
-            <View className="w-16 h-16 rounded-full bg-green-50 items-center justify-center mb-4">
-              <CheckCircle size={32} color="#10b981" />
+            <View className="w-16 h-16 rounded-full bg-green-50 dark:bg-green-900/25 items-center justify-center mb-4">
+              <CheckCircle size={32} color={colors.brand} />
             </View>
-            <Text className="text-xl font-bold text-gray-900 mb-2">
+            <Text className="text-xl font-bold text-gray-900 dark:text-slate-50 mb-2">
               Account Created
             </Text>
-            <Text className="text-sm text-gray-500 text-center">
+            <Text className="text-sm text-gray-500 dark:text-slate-400 text-center">
               We've sent a verification email to {email}. Please verify your
               email, then sign in.
             </Text>
@@ -111,7 +115,7 @@ export default function SignupScreen() {
             activeOpacity={0.8}
           >
             <Text className="text-white font-semibold text-base">
-              Go to Login
+              {t.auth.backToLogin}
             </Text>
           </TouchableOpacity>
         </View>
@@ -122,7 +126,7 @@ export default function SignupScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white"
+      className="flex-1 bg-white dark:bg-slate-800"
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 32, paddingVertical: 48 }}
@@ -132,50 +136,50 @@ export default function SignupScreen() {
           onPress={() => router.back()}
           className="absolute top-16 left-0 p-2"
         >
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
 
-        <Text className="text-3xl font-bold text-gray-900 mb-2">Prept</Text>
-        <Text className="text-base text-gray-500 mb-8">
-          Create your coaching account
+        <Text className="text-3xl font-bold text-gray-900 dark:text-slate-50 mb-2">Prept</Text>
+        <Text className="text-base text-gray-500 dark:text-slate-400 mb-8">
+          {t.auth.createAccountTitle}
         </Text>
 
         {error ? (
-          <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-            <Text className="text-red-700 text-sm">{error}</Text>
+          <View className="bg-red-50 dark:bg-red-900/25 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
+            <Text className="text-red-700 dark:text-red-300 text-sm">{error}</Text>
           </View>
         ) : null}
 
-        <Text className="text-sm font-medium text-gray-700 mb-1">
-          Your Name
+        <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+          {t.auth.yourName}
         </Text>
         <TextInput
-          className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50 dark:bg-slate-700"
           placeholder="John Smith"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textTertiary}
           value={name}
           onChangeText={setName}
           autoComplete="name"
           editable={!loading}
         />
 
-        <Text className="text-sm font-medium text-gray-700 mb-1">
-          Business Name
+        <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+          {t.auth.businessName}
         </Text>
         <TextInput
-          className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50 dark:bg-slate-700"
           placeholder="Smith Fitness"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textTertiary}
           value={businessName}
           onChangeText={setBusinessName}
           editable={!loading}
         />
 
-        <Text className="text-sm font-medium text-gray-700 mb-1">Email</Text>
+        <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.auth.email}</Text>
         <TextInput
-          className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900"
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50 dark:bg-slate-700"
           placeholder="coach@example.com"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textTertiary}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -184,30 +188,30 @@ export default function SignupScreen() {
           editable={!loading}
         />
 
-        <Text className="text-sm font-medium text-gray-700 mb-1">
-          Password
+        <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+          {t.auth.password}
         </Text>
         <TextInput
-          className="border border-gray-300 rounded-lg px-4 py-3 mb-2 text-base text-gray-900"
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-2 text-base text-gray-900 dark:text-slate-50 dark:bg-slate-700"
           placeholder="Min 10 chars, letter + number"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textTertiary}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           autoComplete="new-password"
           editable={!loading}
         />
-        <Text className="text-xs text-gray-400 mb-4">
-          At least 10 characters with a letter and a number
+        <Text className="text-xs text-gray-400 dark:text-slate-500 mb-4">
+          {t.auth.minChars}
         </Text>
 
-        <Text className="text-sm font-medium text-gray-700 mb-1">
-          Confirm Password
+        <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+          {t.auth.confirmPassword}
         </Text>
         <TextInput
-          className="border border-gray-300 rounded-lg px-4 py-3 mb-6 text-base text-gray-900"
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-6 text-base text-gray-900 dark:text-slate-50 dark:bg-slate-700"
           placeholder="Re-enter your password"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textTertiary}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
@@ -227,7 +231,7 @@ export default function SignupScreen() {
             <ActivityIndicator color="white" />
           ) : (
             <Text className="text-white font-semibold text-base">
-              Create Account
+              {t.auth.createAccount}
             </Text>
           )}
         </TouchableOpacity>
@@ -238,9 +242,9 @@ export default function SignupScreen() {
           activeOpacity={0.6}
           disabled={loading}
         >
-          <Text className="text-sm text-gray-500">
-            Already have an account?{" "}
-            <Text className="text-brand-600 font-medium">Sign in</Text>
+          <Text className="text-sm text-gray-500 dark:text-slate-400">
+            {t.auth.alreadyHaveAccount}{" "}
+            <Text className="text-brand-600 font-medium">{t.common.signIn}</Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>

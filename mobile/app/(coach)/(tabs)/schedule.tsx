@@ -24,6 +24,8 @@ import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
 import { AppBottomSheet } from "@/components/app-bottom-sheet";
 import { AppHeader } from "@/components/app-header";
+import { useT } from "@/lib/i18n";
+import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { CoachScheduleItem } from "@/types/api";
 
 const STATUS_OPTIONS = [
@@ -37,6 +39,8 @@ export default function CoachScheduleScreen() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [showCreateSession, setShowCreateSession] = useState(false);
   const queryClient = useQueryClient();
+  const t = useT();
+  const colors = useThemeColors();
 
   const currentMonth = useMemo(() => {
     const d = new Date();
@@ -71,7 +75,7 @@ export default function CoachScheduleScreen() {
       queryClient.invalidateQueries({ queryKey: ["coach-dashboard"] });
     },
     onError: () => {
-      Alert.alert("Error", "Failed to update session status");
+      Alert.alert(t.common.error, t.errors.failedToSave);
     },
   });
 
@@ -98,11 +102,11 @@ export default function CoachScheduleScreen() {
                 `/(coach)/clients/${session.clientId}` as never
               ),
           },
-          { text: "Cancel", style: "cancel" as const },
+          { text: t.common.cancel, style: "cancel" as const },
         ]
       );
     },
-    [statusMutation]
+    [statusMutation, t]
   );
 
   // Group sessions by date
@@ -126,9 +130,9 @@ export default function CoachScheduleScreen() {
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <AppHeader
-        title="Schedule"
+        title={t.schedule.title}
         rightContent={
           <TouchableOpacity
             onPress={() => setShowCreateSession(true)}
@@ -136,7 +140,7 @@ export default function CoachScheduleScreen() {
             activeOpacity={0.7}
           >
             <Plus size={14} color="#fff" />
-            <Text className="text-white text-xs font-semibold ml-1">New</Text>
+            <Text className="text-white text-xs font-semibold ml-1">{t.schedule.newSession}</Text>
           </TouchableOpacity>
         }
       />
@@ -145,25 +149,25 @@ export default function CoachScheduleScreen() {
           onPress={() => setMonthOffset((o) => o - 1)}
           className="p-2"
         >
-          <ChevronLeft size={20} color="#6b7280" />
+          <ChevronLeft size={20} color={colors.icon} />
         </TouchableOpacity>
-        <Text className="text-base font-medium text-gray-900 mx-4 min-w-[160px] text-center">
+        <Text className="text-base font-medium text-gray-900 dark:text-slate-50 mx-4 min-w-[160px] text-center">
           {monthLabel}
         </Text>
         <TouchableOpacity
           onPress={() => setMonthOffset((o) => o + 1)}
           className="p-2"
         >
-          <ChevronRight size={20} color="#6b7280" />
+          <ChevronRight size={20} color={colors.icon} />
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={colors.brand} />
         </View>
       ) : error ? (
-        <QueryError message="Failed to load schedule" onRetry={refetch} />
+        <QueryError message={t.errors.failedToLoad} onRetry={refetch} />
       ) : (
         <ScrollView
           className="flex-1"
@@ -176,15 +180,15 @@ export default function CoachScheduleScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="#059669"
+              tintColor={colors.brand}
             />
           }
         >
           {groupedByDate.length === 0 ? (
             <View className="items-center justify-center py-16">
-              <Calendar size={40} color="#d1d5db" />
-              <Text className="text-gray-400 text-sm mt-3">
-                No sessions this month
+              <Calendar size={40} color={colors.iconMuted} />
+              <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">
+                {t.schedule.noSessionsOnDay}
               </Text>
             </View>
           ) : (
@@ -195,38 +199,38 @@ export default function CoachScheduleScreen() {
                     className={`text-sm font-semibold ${
                       group.date === today
                         ? "text-brand-600"
-                        : "text-gray-500"
+                        : "text-gray-500 dark:text-slate-400"
                     }`}
                   >
-                    {group.date === today ? "Today" : group.label}
+                    {group.date === today ? t.common.today : group.label}
                   </Text>
-                  <View className="flex-1 h-px bg-gray-200 ml-3" />
+                  <View className="flex-1 h-px bg-gray-200 dark:bg-slate-700 ml-3" />
                 </View>
-                <View className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                <View className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 overflow-hidden">
                   {group.items.map((s, i) => (
                     <TouchableOpacity
                       key={s.id}
                       className={`flex-row items-center px-4 py-3 ${
                         i < group.items.length - 1
-                          ? "border-b border-gray-50"
+                          ? "border-b border-gray-50 dark:border-slate-700/40"
                           : ""
                       }`}
                       onPress={() => showStatusOptions(s)}
                       activeOpacity={0.6}
                     >
                       <View className="mr-3 items-center w-14">
-                        <Text className="text-sm font-medium text-gray-900">
+                        <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">
                           {s.startTime}
                         </Text>
-                        <Text className="text-[10px] text-gray-400">
+                        <Text className="text-[10px] text-gray-400 dark:text-slate-500">
                           {s.endTime}
                         </Text>
                       </View>
                       <View className="flex-1">
-                        <Text className="text-sm font-medium text-gray-900">
+                        <Text className="text-sm font-medium text-gray-900 dark:text-slate-50">
                           {s.clientName}
                         </Text>
-                        <Text className="text-xs text-gray-500">
+                        <Text className="text-xs text-gray-500 dark:text-slate-400">
                           {s.title || s.type}
                         </Text>
                       </View>
@@ -262,6 +266,8 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
   const [endTime, setEndTime] = useState("10:00");
   const [notes, setNotes] = useState("");
   const [showClientPicker, setShowClientPicker] = useState(false);
+  const t = useT();
+  const colors = useThemeColors();
 
   const selectedClient = clients?.find((c) => c.id === clientId);
 
@@ -274,31 +280,31 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
       setClientId(""); setTitle("Training Session"); setNotes("");
       onSuccess();
     },
-    onError: (err: any) => Alert.alert("Error", err.message || "Failed to create session"),
+    onError: (err: any) => Alert.alert(t.common.error, err.message || t.errors.failedToSave),
   });
 
   return (
     <AppBottomSheet
       visible={visible}
       onClose={onClose}
-      title="New Session"
+      title={t.schedule.newSession}
       snapPoints={["50%", "85%"]}
       footer={
         <TouchableOpacity
           className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
           onPress={() => {
-            if (!clientId) return Alert.alert("Required", "Select a client");
-            if (!date.trim()) return Alert.alert("Required", "Date is required");
+            if (!clientId) return Alert.alert(t.common.required, t.schedule.selectClient);
+            if (!date.trim()) return Alert.alert(t.common.required, t.common.date);
             const datePattern = /^\d{4}-\d{2}-\d{2}$/;
             const timePattern = /^\d{2}:\d{2}$/;
             if (!datePattern.test(date.trim())) {
-              return Alert.alert("Invalid Date", "Date must be in YYYY-MM-DD format.");
+              return Alert.alert(t.common.error, "Date must be in YYYY-MM-DD format.");
             }
             if (!timePattern.test(startTime.trim()) || !timePattern.test(endTime.trim())) {
-              return Alert.alert("Invalid Time", "Times must be in HH:MM format (e.g. 09:00).");
+              return Alert.alert(t.common.error, "Times must be in HH:MM format (e.g. 09:00).");
             }
             if (startTime.trim() >= endTime.trim()) {
-              return Alert.alert("Invalid Time Range", "Start time must be before end time.");
+              return Alert.alert(t.common.error, "Start time must be before end time.");
             }
             mutation.mutate({
               clientId,
@@ -311,29 +317,29 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
           }}
           disabled={mutation.isPending}
         >
-          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">Create Session</Text>}
+          {mutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">{t.schedule.createSession}</Text>}
         </TouchableOpacity>
       }
     >
-      <Text className="text-sm font-medium text-gray-700 mb-1">Client *</Text>
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.client} *</Text>
       <TouchableOpacity
-        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-2"
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-2"
         onPress={() => setShowClientPicker(!showClientPicker)}
       >
-        <Text className={selectedClient ? "text-gray-900" : "text-gray-400"}>
-          {selectedClient?.name || "Select client..."}
+        <Text className={selectedClient ? "text-gray-900 dark:text-slate-50" : "text-gray-400 dark:text-slate-500"}>
+          {selectedClient?.name || t.schedule.selectClient}
         </Text>
       </TouchableOpacity>
       {showClientPicker && (
-        <View className="bg-white border border-gray-200 rounded-lg mb-4" style={{ maxHeight: 200 }}>
+        <View className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg mb-4" style={{ maxHeight: 200 }}>
           <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
             {(clients || []).map((c) => (
               <TouchableOpacity
                 key={c.id}
-                className={`px-4 py-3 border-b border-gray-50 ${c.id === clientId ? "bg-brand-50" : ""}`}
+                className={`px-4 py-3 border-b border-gray-50 dark:border-slate-700/40 ${c.id === clientId ? "bg-brand-50" : ""}`}
                 onPress={() => { setClientId(c.id); setShowClientPicker(false); }}
               >
-                <Text className="text-sm text-gray-900">{c.name}</Text>
+                <Text className="text-sm text-gray-900 dark:text-slate-50">{c.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -341,25 +347,25 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
       )}
       {!showClientPicker && <View className="mb-2" />}
 
-      <Text className="text-sm font-medium text-gray-700 mb-1">Title</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={title} onChangeText={setTitle} placeholder="Session title" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.sessionTitle}</Text>
+      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={title} onChangeText={setTitle} placeholder={t.schedule.titlePlaceholder} placeholderTextColor={colors.iconMuted} />
 
-      <Text className="text-sm font-medium text-gray-700 mb-1">Date (YYYY-MM-DD)</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={date} onChangeText={setDate} placeholder="2024-01-15" placeholderTextColor="#9ca3af" />
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.date} (YYYY-MM-DD)</Text>
+      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={date} onChangeText={setDate} placeholder="2024-01-15" placeholderTextColor={colors.iconMuted} />
 
       <View className="flex-row mb-4">
         <View className="flex-1 mr-2">
-          <Text className="text-sm font-medium text-gray-700 mb-1">Start Time</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900" value={startTime} onChangeText={setStartTime} placeholder="09:00" placeholderTextColor="#9ca3af" />
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.startTime}</Text>
+          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={startTime} onChangeText={setStartTime} placeholder="09:00" placeholderTextColor={colors.iconMuted} />
         </View>
         <View className="flex-1">
-          <Text className="text-sm font-medium text-gray-700 mb-1">End Time</Text>
-          <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900" value={endTime} onChangeText={setEndTime} placeholder="10:00" placeholderTextColor="#9ca3af" />
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.endTime}</Text>
+          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={endTime} onChangeText={setEndTime} placeholder="10:00" placeholderTextColor={colors.iconMuted} />
         </View>
       </View>
 
-      <Text className="text-sm font-medium text-gray-700 mb-1">Notes (optional)</Text>
-      <TextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900" value={notes} onChangeText={setNotes} placeholder="Session notes..." placeholderTextColor="#9ca3af" multiline />
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.notes} ({t.common.optional.toLowerCase()})</Text>
+      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={notes} onChangeText={setNotes} placeholder={t.common.notesPlaceholder} placeholderTextColor={colors.iconMuted} multiline />
     </AppBottomSheet>
   );
 }
@@ -368,16 +374,16 @@ function SessionStatusBadge({ status }: { status: string }) {
   const s = status.toLowerCase();
   const bg =
     s === "completed"
-      ? "bg-green-50"
+      ? "bg-green-50 dark:bg-green-900/25"
       : s === "cancelled" || s === "no-show"
-      ? "bg-red-50"
-      : "bg-blue-50";
+      ? "bg-red-50 dark:bg-red-900/25"
+      : "bg-blue-50 dark:bg-blue-900/25";
   const text =
     s === "completed"
-      ? "text-green-700"
+      ? "text-green-700 dark:text-green-300"
       : s === "cancelled" || s === "no-show"
-      ? "text-red-700"
-      : "text-blue-700";
+      ? "text-red-700 dark:text-red-400"
+      : "text-blue-700 dark:text-blue-300";
   const label =
     s === "no-show"
       ? "No Show"

@@ -134,7 +134,7 @@ export function AppBottomSheet({
         </View>
         {title ? (
           <View className="px-5 pt-1 pb-3 border-b border-gray-100">
-            <Text className="text-lg font-semibold text-gray-900">{title} (v2)</Text>
+            <Text className="text-lg font-semibold text-gray-900">{title}</Text>
           </View>
         ) : null}
       </View>

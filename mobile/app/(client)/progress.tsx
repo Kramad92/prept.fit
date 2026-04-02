@@ -9,6 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,6 +26,8 @@ import {
   X,
   Scale,
   Ruler,
+  Plus,
+  Check,
 } from "lucide-react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { api } from "@/lib/api-client";
@@ -45,6 +50,13 @@ export default function ProgressScreen() {
   const [viewingPhoto, setViewingPhoto] = useState<ProgressPhoto | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // Photo metadata modal state
+  const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
+  const [photoCaption, setPhotoCaption] = useState("");
+  const [photoCategory, setPhotoCategory] = useState<string | null>(null);
+  // Measurement modal state
+  const [showAddMeasurement, setShowAddMeasurement] = useState(false);
+  const [measurementFields, setMeasurementFields] = useState<Record<string, string>>({});
   const t = useT();
   const colors = useThemeColors();
   const { width: screenWidth } = useWindowDimensions();
@@ -72,7 +84,7 @@ export default function ProgressScreen() {
   }, [queryClient]);
 
   const uploadMutation = useMutation({
-    mutationFn: async (uri: string) => {
+    mutationFn: async ({ uri, caption, category }: { uri: string; caption?: string; category?: string }) => {
       setUploading(true);
       const fileName = uri.split("/").pop() || "photo.jpg";
       const formData = new FormData();
@@ -87,7 +99,11 @@ export default function ProgressScreen() {
         "/api/upload",
         formData
       );
-      await api.post("/api/portal/photos", { key: upload.key });
+      await api.post("/api/portal/photos", {
+        key: upload.key,
+        caption: caption || undefined,
+        category: category || undefined,
+      });
     },
     onSuccess: () => {
       setUploading(false);
@@ -102,6 +118,22 @@ export default function ProgressScreen() {
     },
   });
 
+  const measurementMutation = useMutation({
+    mutationFn: async (data: Record<string, string>) => {
+      await api.post("/api/portal/measurements", data);
+    },
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["client-profile"] });
+      setShowAddMeasurement(false);
+      setMeasurementFields({});
+    },
+    onError: (err) => {
+      haptics.error();
+      Alert.alert(t.common.error, err instanceof Error ? err.message : "Failed to save");
+    },
+  });
+
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -113,9 +145,11 @@ export default function ProgressScreen() {
       quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
-      uploadMutation.mutate(result.assets[0].uri);
+      setPendingPhotoUri(result.assets[0].uri);
+      setPhotoCaption("");
+      setPhotoCategory(null);
     }
-  }, [uploadMutation]);
+  }, []);
 
   const takePhoto = useCallback(async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -127,9 +161,21 @@ export default function ProgressScreen() {
       quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
-      uploadMutation.mutate(result.assets[0].uri);
+      setPendingPhotoUri(result.assets[0].uri);
+      setPhotoCaption("");
+      setPhotoCategory(null);
     }
-  }, [uploadMutation]);
+  }, []);
+
+  const confirmUpload = useCallback(() => {
+    if (!pendingPhotoUri) return;
+    uploadMutation.mutate({
+      uri: pendingPhotoUri,
+      caption: photoCaption || undefined,
+      category: photoCategory || undefined,
+    });
+    setPendingPhotoUri(null);
+  }, [pendingPhotoUri, photoCaption, photoCategory, uploadMutation]);
 
   const handleAddPhoto = useCallback(() => {
     Alert.alert("Add Progress Photo", "Choose a source", [
@@ -454,6 +500,21 @@ export default function ProgressScreen() {
             )}
 
             {/* All measurements table */}
+            {/* Add measurement button */}
+            <TouchableOpacity
+              className="bg-brand-600 rounded-xl px-4 py-3 flex-row items-center justify-center mb-4"
+              onPress={() => {
+                setMeasurementFields({});
+                setShowAddMeasurement(true);
+              }}
+              activeOpacity={0.7}
+            >
+              <Plus size={18} color="#fff" />
+              <Text className="text-white font-semibold ml-2">
+                {t.measurements.addMeasurement}
+              </Text>
+            </TouchableOpacity>
+
             {measurements.length > 0 ? (
               <View className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 overflow-hidden mb-4">
                 <Text className="text-base font-semibold text-gray-900 dark:text-slate-50 px-4 pt-4 pb-2">
@@ -520,9 +581,6 @@ export default function ProgressScreen() {
                 <Text className="text-gray-400 dark:text-slate-500 mt-3 text-base">
                   {t.measurements.noMeasurements}
                 </Text>
-                <Text className="text-gray-400 dark:text-slate-500 text-sm mt-1">
-                  Your coach will add these during sessions
-                </Text>
               </View>
             )}
             <View className="h-8" />
@@ -566,6 +624,195 @@ export default function ProgressScreen() {
           )}
         </View>
       </Modal>
+
+      {/* Photo metadata modal — shown after picking a photo */}
+      <Modal visible={!!pendingPhotoUri} transparent animationType="slide">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1 justify-end bg-black/50"
+        >
+          <View className="bg-white dark:bg-slate-800 rounded-t-2xl px-4 pt-5 pb-8">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">
+                Photo Details
+              </Text>
+              <TouchableOpacity
+                onPress={() => setPendingPhotoUri(null)}
+                className="p-2"
+              >
+                <X size={20} color={colors.icon} />
+              </TouchableOpacity>
+            </View>
+
+            {pendingPhotoUri && (
+              <Image
+                source={{ uri: pendingPhotoUri }}
+                className="w-full h-48 rounded-xl bg-gray-200 dark:bg-slate-700 mb-4"
+                resizeMode="cover"
+              />
+            )}
+
+            {/* Caption */}
+            <Text className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              {t.photos.caption}
+            </Text>
+            <TextInput
+              className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-slate-50 mb-4"
+              placeholder="Add a caption..."
+              placeholderTextColor={colors.iconMuted}
+              value={photoCaption}
+              onChangeText={setPhotoCaption}
+            />
+
+            {/* Category */}
+            <Text className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+              Category
+            </Text>
+            <View className="flex-row flex-wrap mb-5" style={{ gap: 8 }}>
+              {["front", "back", "side", "other"].map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  className={`px-4 py-2 rounded-full border ${
+                    photoCategory === cat
+                      ? "bg-brand-600 border-brand-600"
+                      : "bg-gray-50 dark:bg-slate-900 border-gray-200 dark:border-slate-700"
+                  }`}
+                  onPress={() =>
+                    setPhotoCategory(photoCategory === cat ? null : cat)
+                  }
+                >
+                  <Text
+                    className={`text-sm font-medium capitalize ${
+                      photoCategory === cat
+                        ? "text-white"
+                        : "text-gray-600 dark:text-slate-300"
+                    }`}
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              className="bg-brand-600 rounded-xl py-3.5 items-center"
+              onPress={confirmUpload}
+              disabled={uploading}
+              activeOpacity={0.7}
+            >
+              {uploading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white font-semibold text-base">
+                  {t.photos.upload}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Add Measurement modal */}
+      <Modal visible={showAddMeasurement} transparent animationType="slide">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1 justify-end bg-black/50"
+        >
+          <View className="bg-white dark:bg-slate-800 rounded-t-2xl px-4 pt-5 pb-8 max-h-[85%]">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">
+                {t.measurements.addMeasurement}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowAddMeasurement(false)}
+                className="p-2"
+              >
+                <X size={20} color={colors.icon} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <MeasurementInput
+                label={`${t.measurements.weight} (${t.measurements.kg})`}
+                placeholder="75.0"
+                value={measurementFields.weight}
+                onChangeText={(v) => setMeasurementFields((p) => ({ ...p, weight: v }))}
+              />
+              <MeasurementInput
+                label={`${t.measurements.bodyFat} (%)`}
+                placeholder="18.0"
+                value={measurementFields.bodyFat}
+                onChangeText={(v) => setMeasurementFields((p) => ({ ...p, bodyFat: v }))}
+              />
+              <View className="flex-row" style={{ gap: 12 }}>
+                <View className="flex-1">
+                  <MeasurementInput
+                    label={`${t.measurements.chest} (${t.measurements.cm})`}
+                    placeholder="95.0"
+                    value={measurementFields.chest}
+                    onChangeText={(v) => setMeasurementFields((p) => ({ ...p, chest: v }))}
+                  />
+                </View>
+                <View className="flex-1">
+                  <MeasurementInput
+                    label={`${t.measurements.waist} (${t.measurements.cm})`}
+                    placeholder="80.0"
+                    value={measurementFields.waist}
+                    onChangeText={(v) => setMeasurementFields((p) => ({ ...p, waist: v }))}
+                  />
+                </View>
+              </View>
+              <View className="flex-row" style={{ gap: 12 }}>
+                <View className="flex-1">
+                  <MeasurementInput
+                    label={`${t.measurements.hips} (${t.measurements.cm})`}
+                    placeholder="95.0"
+                    value={measurementFields.hips}
+                    onChangeText={(v) => setMeasurementFields((p) => ({ ...p, hips: v }))}
+                  />
+                </View>
+                <View className="flex-1">
+                  <MeasurementInput
+                    label={`${t.measurements.arms} (${t.measurements.cm})`}
+                    placeholder="35.0"
+                    value={measurementFields.arms}
+                    onChangeText={(v) => setMeasurementFields((p) => ({ ...p, arms: v }))}
+                  />
+                </View>
+              </View>
+              <MeasurementInput
+                label={`${t.measurements.thighs} (${t.measurements.cm})`}
+                placeholder="55.0"
+                value={measurementFields.thighs}
+                onChangeText={(v) => setMeasurementFields((p) => ({ ...p, thighs: v }))}
+              />
+              <MeasurementInput
+                label="Notes"
+                placeholder="Any observations..."
+                value={measurementFields.notes}
+                onChangeText={(v) => setMeasurementFields((p) => ({ ...p, notes: v }))}
+                multiline
+              />
+              <View className="h-2" />
+            </ScrollView>
+
+            <TouchableOpacity
+              className="bg-brand-600 rounded-xl py-3.5 items-center mt-3"
+              onPress={() => measurementMutation.mutate(measurementFields)}
+              disabled={measurementMutation.isPending}
+              activeOpacity={0.7}
+            >
+              {measurementMutation.isPending ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white font-semibold text-base">
+                  {t.common.save}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -586,6 +833,39 @@ function MeasurementPill({
         <Text className="text-xs text-gray-500 dark:text-slate-400">{label}</Text>
         <Text className="text-sm font-semibold text-gray-900 dark:text-slate-50">{value}</Text>
       </View>
+    </View>
+  );
+}
+
+function MeasurementInput({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  multiline,
+}: {
+  label: string;
+  placeholder: string;
+  value?: string;
+  onChangeText: (v: string) => void;
+  multiline?: boolean;
+}) {
+  return (
+    <View className="mb-3">
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+        {label}
+      </Text>
+      <TextInput
+        className={`bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-slate-50 ${
+          multiline ? "min-h-[60px]" : ""
+        }`}
+        placeholder={placeholder}
+        placeholderTextColor="#9ca3af"
+        value={value || ""}
+        onChangeText={onChangeText}
+        keyboardType={multiline ? "default" : "decimal-pad"}
+        multiline={multiline}
+      />
     </View>
   );
 }

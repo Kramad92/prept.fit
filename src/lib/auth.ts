@@ -120,7 +120,59 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      // No existing user — redirect to complete registration
+      // No existing user — check for a pending invitation first
+      const pendingInvite = await prisma.inviteToken.findFirst({
+        where: {
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+          client: {
+            email,
+            userId: null,
+          },
+        },
+        include: { client: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (pendingInvite) {
+        // Create CLIENT user, link to client profile, mark invite used, link OAuth account
+        const newUser = await prisma.$transaction(async (tx) => {
+          const created = await tx.user.create({
+            data: {
+              email,
+              name: user.name || pendingInvite.client.name,
+              role: "CLIENT",
+              emailVerified: new Date(),
+              tenantId: pendingInvite.client.tenantId,
+              clientProfile: { connect: { id: pendingInvite.client.id } },
+            },
+          });
+
+          await tx.inviteToken.update({
+            where: { id: pendingInvite.id },
+            data: { usedAt: new Date() },
+          });
+
+          await tx.account.create({
+            data: {
+              userId: created.id,
+              provider: account!.provider,
+              providerAccountId: account!.providerAccountId,
+            },
+          });
+
+          return created;
+        });
+
+        // Block inactive clients
+        if (pendingInvite.client.status !== "active") {
+          return "/login?error=PORTAL_DISABLED";
+        }
+
+        return true;
+      }
+
+      // No invitation found — redirect to coach registration
       return `/register/complete?provider=${account!.provider}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(user.name || "")}`;
     },
 

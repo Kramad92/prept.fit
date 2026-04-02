@@ -18,6 +18,8 @@ interface Props {
   title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  /** Fixed content rendered above the scrollable area */
+  stickyHeader?: React.ReactNode;
 }
 
 export function AppBottomSheet({
@@ -27,6 +29,7 @@ export function AppBottomSheet({
   title,
   children,
   footer,
+  stickyHeader,
 }: Props) {
   const ref = useRef<BottomSheetModal>(null);
   const scrollRef = useRef<any>(null);
@@ -160,11 +163,16 @@ export function AppBottomSheet({
       snapPoints={snapPoints || ["60%"]}
       enableDynamicSizing={false}
     >
+      {stickyHeader && (
+        <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+          {stickyHeader}
+        </View>
+      )}
       <BottomSheetScrollView
         ref={scrollRef}
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingTop: 16,
+          paddingTop: stickyHeader ? 8 : 16,
           paddingBottom: footerSpace + keyboardHeight,
         }}
         keyboardShouldPersistTaps="handled"

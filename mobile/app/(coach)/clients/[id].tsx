@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1287,7 +1288,7 @@ function ExercisePickerSheet({ visible, onClose, onSelect }: { visible: boolean;
       {categories && categories.length > 0 && (
         <View className="mb-2">
           <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+          <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {categories.map((cat) => (
               <FilterChip
                 key={cat.id}
@@ -1296,14 +1297,14 @@ function ExercisePickerSheet({ visible, onClose, onSelect }: { visible: boolean;
                 onPress={() => setSelectedCategory(selectedCategory === cat.name ? undefined : cat.name)}
               />
             ))}
-          </ScrollView>
+          </GHScrollView>
         </View>
       )}
 
       {/* Difficulty filters */}
       <View className="mb-2">
         <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Difficulty</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+        <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
           {difficulties.map((d) => (
             <FilterChip
               key={d}
@@ -1312,14 +1313,14 @@ function ExercisePickerSheet({ visible, onClose, onSelect }: { visible: boolean;
               onPress={() => setSelectedDifficulty(selectedDifficulty === d ? undefined : d)}
             />
           ))}
-        </ScrollView>
+        </GHScrollView>
       </View>
 
       {/* Equipment filters */}
       {equipmentTypes && equipmentTypes.length > 0 && (
         <View className="mb-2">
           <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Equipment</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+          <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {equipmentTypes.map((eq) => (
               <FilterChip
                 key={eq.id}
@@ -1328,7 +1329,7 @@ function ExercisePickerSheet({ visible, onClose, onSelect }: { visible: boolean;
                 onPress={() => setSelectedEquipment(selectedEquipment === eq.name ? undefined : eq.name)}
               />
             ))}
-          </ScrollView>
+          </GHScrollView>
         </View>
       )}
 

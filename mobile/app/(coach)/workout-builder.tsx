@@ -12,6 +12,7 @@ import {
   Platform,
   RefreshControl,
 } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -671,31 +672,31 @@ function ExercisePickerModal({
       {categories && categories.length > 0 && (
         <View className="mb-2">
           <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+          <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {categories.map((cat) => (
               <FilterChip key={cat.id} label={cat.name} active={selectedCategory === cat.name} onPress={() => setSelectedCategory(selectedCategory === cat.name ? undefined : cat.name)} />
             ))}
-          </ScrollView>
+          </GHScrollView>
         </View>
       )}
 
       <View className="mb-2">
         <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Difficulty</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+        <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
           {difficulties.map((d) => (
             <FilterChip key={d} label={d} active={selectedDifficulty === d} onPress={() => setSelectedDifficulty(selectedDifficulty === d ? undefined : d)} />
           ))}
-        </ScrollView>
+        </GHScrollView>
       </View>
 
       {equipmentTypes && equipmentTypes.length > 0 && (
         <View className="mb-2">
           <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Equipment</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+          <GHScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
             {equipmentTypes.map((eq) => (
               <FilterChip key={eq.id} label={eq.name} active={selectedEquipment === eq.name} onPress={() => setSelectedEquipment(selectedEquipment === eq.name ? undefined : eq.name)} />
             ))}
-          </ScrollView>
+          </GHScrollView>
         </View>
       )}
 

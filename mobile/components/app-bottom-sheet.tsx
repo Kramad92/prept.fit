@@ -1,34 +1,12 @@
-import { useCallback, useEffect, useRef, memo } from "react";
-import { View, Text } from "react-native";
+import { useCallback, useEffect, useRef } from "react";
+import { View, Text, TextInput, Keyboard, Platform } from "react-native";
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
+  BottomSheetScrollView,
   BottomSheetTextInput as _BottomSheetTextInput,
-  createBottomSheetScrollableComponent,
-  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
-import type { BottomSheetScrollViewProps } from "@gorhom/bottom-sheet/src/components/bottomSheetScrollable/types";
-import {
-  KeyboardAwareScrollView,
-  type KeyboardAwareScrollViewProps,
-} from "react-native-keyboard-controller";
-import Reanimated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-// SCROLLABLE_TYPE.SCROLLVIEW = 3 (not publicly exported in v5)
-const SCROLLABLE_TYPE_SCROLLVIEW = 3;
-
-const AnimatedScrollView =
-  Reanimated.createAnimatedComponent<KeyboardAwareScrollViewProps>(
-    KeyboardAwareScrollView
-  );
-
-const BottomSheetKAScrollView = memo(
-  createBottomSheetScrollableComponent<
-    BottomSheetScrollViewMethods,
-    BottomSheetScrollViewProps
-  >(SCROLLABLE_TYPE_SCROLLVIEW as any, AnimatedScrollView)
-);
 
 // Re-export so consumers don't need a separate import
 export const BottomSheetTextInput = _BottomSheetTextInput;
@@ -51,6 +29,8 @@ export function AppBottomSheet({
   footer,
 }: Props) {
   const ref = useRef<BottomSheetModal>(null);
+  const scrollViewRef = useRef<any>(null);
+  const contentRef = useRef<View>(null);
   const isPresented = useRef(false);
   const insets = useSafeAreaInsets();
 
@@ -65,6 +45,32 @@ export function AppBottomSheet({
       ref.current?.dismiss();
       isPresented.current = false;
     }
+  }, [visible]);
+
+  // Auto-scroll to focused input when keyboard appears
+  useEffect(() => {
+    if (!visible) return;
+
+    const event = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const sub = Keyboard.addListener(event, () => {
+      setTimeout(() => {
+        const focused = TextInput.State.currentlyFocusedInput();
+        if (!focused || !contentRef.current) return;
+
+        focused.measureLayout(
+          contentRef.current as any,
+          (_x: number, y: number, _w: number, h: number) => {
+            scrollViewRef.current?.scrollTo({
+              y: Math.max(0, y - 80),
+              animated: true,
+            });
+          },
+          () => {}
+        );
+      }, 150);
+    });
+
+    return () => sub.remove();
   }, [visible]);
 
   const renderBackdrop = useCallback(
@@ -126,7 +132,8 @@ export function AppBottomSheet({
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
       enablePanDownToClose
-      keyboardBehavior="extend"
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       handleComponent={renderHandle}
       backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
@@ -135,8 +142,8 @@ export function AppBottomSheet({
       snapPoints={snapPoints || ["60%"]}
       enableDynamicSizing={false}
     >
-      <BottomSheetKAScrollView
-        bottomOffset={footer ? 60 : 16}
+      <BottomSheetScrollView
+        ref={scrollViewRef}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
@@ -144,8 +151,10 @@ export function AppBottomSheet({
         }}
         keyboardShouldPersistTaps="handled"
       >
-        {children}
-      </BottomSheetKAScrollView>
+        <View ref={contentRef}>
+          {children}
+        </View>
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, Keyboard, Platform } from "react-native";
 import {
   BottomSheetModal,
@@ -29,10 +29,11 @@ export function AppBottomSheet({
   footer,
 }: Props) {
   const ref = useRef<BottomSheetModal>(null);
-  const scrollViewRef = useRef<any>(null);
+  const scrollRef = useRef<any>(null);
   const contentRef = useRef<View>(null);
   const isPresented = useRef(false);
   const insets = useSafeAreaInsets();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     if (visible && !isPresented.current) {
@@ -47,12 +48,17 @@ export function AppBottomSheet({
     }
   }, [visible]);
 
-  // Auto-scroll to focused input when keyboard appears
+  // Track keyboard height for extra scroll padding + auto-scroll to focused input
   useEffect(() => {
     if (!visible) return;
 
-    const event = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const sub = Keyboard.addListener(event, () => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+
+      // Auto-scroll to focused input after keyboard animates
       setTimeout(() => {
         const focused = TextInput.State.currentlyFocusedInput();
         if (!focused || !contentRef.current) return;
@@ -60,17 +66,24 @@ export function AppBottomSheet({
         focused.measureLayout(
           contentRef.current as any,
           (_x: number, y: number, _w: number, h: number) => {
-            scrollViewRef.current?.scrollTo({
+            scrollRef.current?.scrollTo({
               y: Math.max(0, y - 80),
               animated: true,
             });
           },
           () => {}
         );
-      }, 150);
+      }, 250);
     });
 
-    return () => sub.remove();
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, [visible]);
 
   const renderBackdrop = useCallback(
@@ -87,6 +100,7 @@ export function AppBottomSheet({
 
   const handleDismiss = useCallback(() => {
     isPresented.current = false;
+    setKeyboardHeight(0);
     onClose();
   }, [onClose]);
 
@@ -126,6 +140,8 @@ export function AppBottomSheet({
     [title]
   );
 
+  const footerSpace = footer ? 60 : 16;
+
   return (
     <BottomSheetModal
       ref={ref}
@@ -136,18 +152,18 @@ export function AppBottomSheet({
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       handleComponent={renderHandle}
-      backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: "red" }}
+      backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
       footerComponent={footer ? renderFooter : undefined}
       enableOverDrag={false}
       snapPoints={snapPoints || ["60%"]}
       enableDynamicSizing={false}
     >
       <BottomSheetScrollView
-        ref={scrollViewRef}
+        ref={scrollRef}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: footer ? 60 : 16,
+          paddingBottom: footerSpace + keyboardHeight,
         }}
         keyboardShouldPersistTaps="handled"
       >

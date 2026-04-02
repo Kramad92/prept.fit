@@ -32,10 +32,13 @@ import {
   useWorkoutPlans,
   useWorkoutPlanDetail,
   useExerciseLibrary,
+  useExerciseCategories,
+  useEquipmentTypes,
 } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import type { WorkoutPlanListItem } from "@/types/api";
 
@@ -378,8 +381,12 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+        bottomOffset={20}
+      >
           <TextInput
             className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-base font-semibold text-gray-900 mb-3"
             value={name}
@@ -493,8 +500,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
               <Text className="text-xs text-brand-600 mt-1">From Library</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
 
       <ExercisePickerModal
         visible={showExercisePicker}
@@ -598,6 +604,17 @@ function ExerciseCard({
   );
 }
 
+function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className={`px-2.5 py-1 rounded-full mr-1.5 mb-1.5 border ${active ? "bg-brand-600 border-brand-600" : "bg-white border-gray-200"}`}
+    >
+      <Text className={`text-xs ${active ? "text-white font-medium" : "text-gray-600"}`}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 function ExercisePickerModal({
   visible,
   onClose,
@@ -608,41 +625,137 @@ function ExercisePickerModal({
   onSelect: (name: string) => void;
 }) {
   const [search, setSearch] = useState("");
-  const { data: exercises } = useExerciseLibrary(search || undefined);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
+  const [selectedEquipment, setSelectedEquipment] = useState<string | undefined>();
+
+  const { data: categories } = useExerciseCategories();
+  const { data: equipmentTypes } = useEquipmentTypes();
+  const { data: exercises } = useExerciseLibrary(
+    search.length >= 2 ? search : undefined,
+    selectedCategory,
+    { difficulty: selectedDifficulty, equipment: selectedEquipment }
+  );
+
+  const difficulties = ["Beginner", "Novice", "Intermediate", "Advanced", "Expert"];
+
+  useEffect(() => {
+    if (visible) {
+      setSearch("");
+      setSelectedCategory(undefined);
+      setSelectedDifficulty(undefined);
+      setSelectedEquipment(undefined);
+    }
+  }, [visible]);
+
+  const hasFilters = selectedCategory || selectedDifficulty || selectedEquipment;
 
   return (
     <AppBottomSheet
       visible={visible}
       onClose={() => { setSearch(""); onClose(); }}
-      title="Pick Exercise"
+      snapPoints={["85%"]}
+      title="Browse Exercise Library"
     >
-      <View className="flex-row items-center bg-gray-50 rounded-lg px-3 mb-3 -mx-1">
+      {/* Search */}
+      <View className="flex-row items-center bg-gray-50 rounded-lg px-3 mb-3">
         <Search size={16} color="#9ca3af" />
         <BottomSheetTextInput
-          className="flex-1 py-2 px-2 text-sm text-gray-900"
+          className="flex-1 py-2.5 px-2 text-sm text-gray-900"
           value={search}
           onChangeText={setSearch}
           placeholder="Search exercises..."
           placeholderTextColor="#9ca3af"
         />
-      </View>
-      {(exercises || []).slice(0, 50).length === 0 ? (
-        <View className="items-center py-12">
-          <Text className="text-sm text-gray-400">No exercises found</Text>
-        </View>
-      ) : (
-        (exercises || []).slice(0, 50).map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            className="py-3 border-b border-gray-50"
-            onPress={() => { onSelect(item.name); setSearch(""); }}
-            activeOpacity={0.6}
-          >
-            <Text className="text-sm text-gray-900">{item.name}</Text>
-            <Text className="text-xs text-gray-500">{[item.category, item.muscleGroup].filter(Boolean).join(" · ")}</Text>
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch("")}>
+            <X size={14} color="#9ca3af" />
           </TouchableOpacity>
-        ))
+        )}
+      </View>
+
+      {/* Category filters */}
+      {categories && categories.length > 0 && (
+        <View className="mb-2">
+          <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {categories.map((cat) => (
+              <FilterChip
+                key={cat.id}
+                label={cat.name}
+                active={selectedCategory === cat.name}
+                onPress={() => setSelectedCategory(selectedCategory === cat.name ? undefined : cat.name)}
+              />
+            ))}
+          </ScrollView>
+        </View>
       )}
+
+      {/* Difficulty filters */}
+      <View className="mb-2">
+        <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Difficulty</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {difficulties.map((d) => (
+            <FilterChip
+              key={d}
+              label={d}
+              active={selectedDifficulty === d}
+              onPress={() => setSelectedDifficulty(selectedDifficulty === d ? undefined : d)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Equipment filters */}
+      {equipmentTypes && equipmentTypes.length > 0 && (
+        <View className="mb-2">
+          <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Equipment</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {equipmentTypes.map((eq) => (
+              <FilterChip
+                key={eq.id}
+                label={eq.name}
+                active={selectedEquipment === eq.name}
+                onPress={() => setSelectedEquipment(selectedEquipment === eq.name ? undefined : eq.name)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Clear filters */}
+      {hasFilters && (
+        <TouchableOpacity
+          className="mb-2"
+          onPress={() => { setSelectedCategory(undefined); setSelectedDifficulty(undefined); setSelectedEquipment(undefined); }}
+        >
+          <Text className="text-xs text-brand-600 font-medium">Clear filters</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Results */}
+      <View className="border-t border-gray-100 pt-2 mt-1">
+        <Text className="text-[10px] text-gray-400 mb-2">{exercises?.length ?? 0} exercises</Text>
+        {(exercises || []).length === 0 ? (
+          <View className="items-center py-10">
+            <Text className="text-sm text-gray-400">No exercises found</Text>
+          </View>
+        ) : (
+          (exercises || []).slice(0, 50).map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              className="py-2.5 border-b border-gray-50"
+              onPress={() => { onSelect(item.name); setSearch(""); }}
+              activeOpacity={0.6}
+            >
+              <Text className="text-sm text-gray-900">{item.name}</Text>
+              <Text className="text-[10px] text-gray-400 mt-0.5">
+                {[item.category, item.muscleGroup, item.equipment, item.difficulty].filter(Boolean).join(" · ")}
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </View>
     </AppBottomSheet>
   );
 }

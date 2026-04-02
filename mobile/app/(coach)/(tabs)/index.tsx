@@ -103,7 +103,7 @@ export default function CoachDashboardScreen() {
             icon={TrendingUp}
             label={t.dashboard.thisWeek}
             value={data.weeklyWorkoutCompletion.logged}
-            sub={`${data.weeklyWorkoutCompletion.logged > 0 ? `/ ${data.weeklyWorkoutCompletion.total}` : ""} logged`}
+            sub={`${data.weeklyWorkoutCompletion.activePlans > 0 ? `/ ${data.weeklyWorkoutCompletion.activePlans}` : ""} logged`}
             colors={colors}
           />
         </View>
@@ -330,7 +330,7 @@ export default function CoachDashboardScreen() {
                 <TouchableOpacity
                   key={c.id}
                   className={`flex-row items-center px-4 py-3 ${i < Math.min(data.checkIns.length, 5) - 1 ? "border-b border-gray-50 dark:border-slate-700/40" : ""}`}
-                  onPress={() => router.push({ pathname: "/(coach)/clients/[id]", params: { id: c.clientId } } as any)}
+                  onPress={() => router.push("/(coach)/check-in-submissions" as any)}
                   activeOpacity={0.6}
                 >
                   <View className="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-900/25 items-center justify-center mr-3">

@@ -47,6 +47,7 @@ export interface ClientMeal {
 export interface Meal {
   id: string;
   name: string;
+  description: string | null;
   time: string | null;
   foods: Food[];
   orderIndex: number;
@@ -60,6 +61,10 @@ export interface AssignedWorkoutPlan {
   isActive: boolean;
   startDate: string | null;
   endDate: string | null;
+  pausedAt: string | null;
+  accessPolicy: string;
+  allowDownload: boolean;
+  clientWorkoutProgramId: string | null;
   workoutPlan: {
     id: string;
     name: string;
@@ -89,6 +94,76 @@ export interface AssignedMealPlan {
   clientMeals: ClientMeal[];
 }
 
+export interface WorkoutProgramDay {
+  id: string;
+  weekNumber: number;
+  dayNumber: number;
+  label: string | null;
+  workoutPlanId: string | null;
+  workoutPlan: { id: string; name: string; description: string | null } | null;
+}
+
+export interface AssignedWorkoutProgram {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  accessPolicy: string;
+  isActive: boolean;
+  currentWeek: number;
+  currentDay: number;
+  notes: string | null;
+  program: {
+    id: string;
+    name: string;
+    description: string | null;
+    durationWeeks: number;
+    daysPerWeek: number;
+    days: WorkoutProgramDay[];
+  };
+  clientWorkoutPlans: AssignedWorkoutPlan[];
+}
+
+export interface NutritionProgramDay {
+  id: string;
+  weekNumber: number;
+  dayNumber: number;
+  label: string | null;
+  mealPlanId: string | null;
+  mealPlan: { id: string; name: string; description: string | null } | null;
+}
+
+export interface AssignedNutritionProgram {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  accessPolicy: string;
+  isActive: boolean;
+  currentWeek: number;
+  currentDay: number;
+  notes: string | null;
+  program: {
+    id: string;
+    name: string;
+    description: string | null;
+    durationWeeks: number;
+    mealsPerDay: number;
+    days: NutritionProgramDay[];
+  };
+  clientMealPlans: AssignedMealPlan[];
+}
+
+export interface NutritionLog {
+  id: string;
+  date: string;
+  mealName: string;
+  foods: string;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  notes: string | null;
+}
+
 export interface ScheduleItem {
   id: string;
   title: string;
@@ -108,7 +183,7 @@ export interface ProgressPhoto {
   category: string | null;
 }
 
-export interface MeasurementData {
+export interface Measurement {
   id: string;
   date: string;
   weight: number | null;
@@ -137,9 +212,11 @@ export interface ClientProfile {
     logo: string | null;
   };
   progressPhotos: ProgressPhoto[];
-  measurements: MeasurementData[];
+  measurements: Measurement[];
   assignedPlans: AssignedWorkoutPlan[];
   assignedMealPlans: AssignedMealPlan[];
+  assignedPrograms: AssignedWorkoutProgram[];
+  assignedNutritionPrograms: AssignedNutritionProgram[];
   schedules: ScheduleItem[];
 }
 
@@ -300,6 +377,9 @@ export interface Payment {
   status: string;
   period: string | null;
   description: string | null;
+  notes: string | null;
+  clientId: string;
+  client?: { id: string; name: string };
 }
 
 export interface PaymentResponse {
@@ -448,7 +528,7 @@ export interface ClientDetail {
     takenAt: string;
     notes: string | null;
   }>;
-  measurements: MeasurementData[];
+  measurements: Measurement[];
   assignedPlans: AssignedWorkoutPlan[];
   assignedMealPlans: AssignedMealPlan[];
 }

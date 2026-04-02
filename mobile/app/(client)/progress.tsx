@@ -36,7 +36,7 @@ import { useClientProfile } from "@/hooks/use-client-data";
 import { Colors } from "@/lib/constants";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import type { ProgressPhoto, MeasurementData } from "@/types/api";
+import type { ProgressPhoto, Measurement } from "@/types/api";
 
 const CATEGORIES = ["All", "front", "back", "side"];
 

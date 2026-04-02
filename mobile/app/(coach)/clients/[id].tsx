@@ -1010,6 +1010,29 @@ function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boo
     onError: (err: any) => Alert.alert(t.common.error, err.message),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/api/clients/${client.id}`),
+    onSuccess: () => {
+      haptics.light();
+      queryClient.invalidateQueries({ queryKey: ["coach-clients"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-dashboard"] });
+      onClose();
+      router.back();
+    },
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
+  });
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Client",
+      `Are you sure you want to delete "${client.name}"? This action cannot be undone.`,
+      [
+        { text: t.common.cancel, style: "cancel" },
+        { text: t.common.delete, style: "destructive", onPress: () => deleteMutation.mutate() },
+      ]
+    );
+  };
+
   return (
     <AppBottomSheet
       visible={visible}
@@ -1040,12 +1063,24 @@ function EditClientModal({ visible, client, onClose, onSuccess }: { visible: boo
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.notes}</Text>
       <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={notes} onChangeText={setNotes} multiline />
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.status}</Text>
-      <View className="flex-row">
+      <View className="flex-row mb-6">
         {["active", "paused", "archived"].map((s) => (
           <TouchableOpacity key={s} className={`mr-2 px-3 py-1.5 rounded-full ${status === s ? "bg-brand-600" : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"}`} onPress={() => setStatus(s)}>
             <Text className={`text-xs font-medium capitalize ${status === s ? "text-white" : "text-gray-600 dark:text-slate-300"}`}>{s}</Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      {/* Delete */}
+      <View className="pt-4 border-t border-gray-100 dark:border-slate-700/40">
+        <TouchableOpacity
+          className="flex-row items-center justify-center py-3 bg-red-50 dark:bg-red-900/20 rounded-lg"
+          onPress={handleDelete}
+          activeOpacity={0.7}
+        >
+          <Trash2 size={16} color="#ef4444" />
+          <Text className="text-sm font-medium text-red-600 dark:text-red-400 ml-2">Delete Client</Text>
+        </TouchableOpacity>
       </View>
     </AppBottomSheet>
   );

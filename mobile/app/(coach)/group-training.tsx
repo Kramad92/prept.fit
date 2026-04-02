@@ -19,15 +19,18 @@ import {
   ChevronRight,
   CheckCircle,
   XCircle,
+  Plus,
 } from "lucide-react-native";
 import {
   useCoachTrainingGroups,
   useCoachGroupSessions,
   useCoachGroupSessionDetail,
+  useWorkoutPlans,
 } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { CoachTrainingGroup, CoachGroupSession } from "@/types/api";
@@ -170,6 +173,7 @@ function SessionsList({
 }) {
   const t = useT();
   const colors = useThemeColors();
+  const [showCreate, setShowCreate] = useState(false);
   const { data: sessions, isLoading, error, refetch, isRefetching } =
     useCoachGroupSessions(groupId);
 
@@ -195,52 +199,69 @@ function SessionsList({
   );
 
   return (
-    <FlatList
-      data={sorted}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefetching}
-          onRefresh={refetch}
-          tintColor={colors.brand}
-        />
-      }
-      renderItem={({ item }: { item: CoachGroupSession }) => (
-        <TouchableOpacity
-          className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 p-4 mb-3"
-          onPress={() => onSelectSession(item.id)}
-          activeOpacity={0.6}
-        >
-          <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-base font-medium text-gray-900 dark:text-slate-50 flex-1">
-              {item.title || item.group?.name || "Session"}
+    <>
+      <FlatList
+        data={sorted}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={colors.brand}
+          />
+        }
+        ListHeaderComponent={
+          <TouchableOpacity
+            className="bg-brand-600 rounded-xl py-3 items-center mb-4 flex-row justify-center"
+            onPress={() => setShowCreate(true)}
+            activeOpacity={0.7}
+          >
+            <Plus size={18} color="#fff" />
+            <Text className="text-white font-semibold text-sm ml-2">New Session</Text>
+          </TouchableOpacity>
+        }
+        renderItem={({ item }: { item: CoachGroupSession }) => (
+          <TouchableOpacity
+            className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 p-4 mb-3"
+            onPress={() => onSelectSession(item.id)}
+            activeOpacity={0.6}
+          >
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-base font-medium text-gray-900 dark:text-slate-50 flex-1">
+                {item.title || item.group?.name || "Session"}
+              </Text>
+              <SessionBadge status={item.status} />
+            </View>
+            <Text className="text-sm text-gray-500 dark:text-slate-400">
+              {new Date(item.date).toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}{" "}
+              · {item.startTime} – {item.endTime}
             </Text>
-            <SessionBadge status={item.status} />
+            <View className="flex-row items-center mt-2">
+              <Users size={12} color={colors.iconMuted} />
+              <Text className="text-xs text-gray-500 dark:text-slate-400 ml-1">
+                {item._count.participants}/{item.maxParticipants} {t.groupTraining.participants}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+          <View className="items-center justify-center py-16">
+            <Calendar size={40} color={colors.iconMuted} />
+            <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">{t.groupTraining.noSessions}</Text>
           </View>
-          <Text className="text-sm text-gray-500 dark:text-slate-400">
-            {new Date(item.date).toLocaleDateString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            })}{" "}
-            · {item.startTime} – {item.endTime}
-          </Text>
-          <View className="flex-row items-center mt-2">
-            <Users size={12} color={colors.iconMuted} />
-            <Text className="text-xs text-gray-500 dark:text-slate-400 ml-1">
-              {item._count.participants}/{item.maxParticipants} {t.groupTraining.participants}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
-      ListEmptyComponent={
-        <View className="items-center justify-center py-16">
-          <Calendar size={40} color={colors.iconMuted} />
-          <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">{t.groupTraining.noSessions}</Text>
-        </View>
-      }
-    />
+        }
+      />
+      <CreateSessionSheet
+        visible={showCreate}
+        groupId={groupId}
+        onClose={() => setShowCreate(false)}
+      />
+    </>
   );
 }
 
@@ -378,6 +399,251 @@ function AttendanceView({ sessionId }: { sessionId: string }) {
         )}
       </View>
     </ScrollView>
+  );
+}
+
+function CreateSessionSheet({
+  visible,
+  groupId,
+  onClose,
+}: {
+  visible: boolean;
+  groupId?: string;
+  onClose: () => void;
+}) {
+  const t = useT();
+  const colors = useThemeColors();
+  const queryClient = useQueryClient();
+  const { data: workoutPlans } = useWorkoutPlans();
+
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [location, setLocation] = useState("");
+  const [notes, setNotes] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("20");
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
+
+  const reset = () => {
+    setTitle("");
+    setDate("");
+    setStartTime("");
+    setEndTime("");
+    setLocation("");
+    setNotes("");
+    setMaxParticipants("20");
+    setIsOpen(false);
+    setSelectedPlanId(null);
+    setShowPlanPicker(false);
+  };
+
+  const mutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      api.post("/api/group-sessions", data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-group-sessions"] });
+      reset();
+      onClose();
+    },
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
+  });
+
+  const handleCreate = () => {
+    if (!title.trim()) {
+      Alert.alert(t.common.required, "Title is required");
+      return;
+    }
+    if (!date.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date.trim())) {
+      Alert.alert(t.common.required, "Date is required (YYYY-MM-DD)");
+      return;
+    }
+    if (!startTime.trim() || !endTime.trim()) {
+      Alert.alert(t.common.required, "Start and end times are required (HH:MM)");
+      return;
+    }
+    mutation.mutate({
+      title: title.trim(),
+      date: date.trim(),
+      startTime: startTime.trim(),
+      endTime: endTime.trim(),
+      location: location.trim() || null,
+      notes: notes.trim() || null,
+      maxParticipants: parseInt(maxParticipants, 10) || 20,
+      isOpen,
+      groupId: groupId || null,
+      workoutPlanId: selectedPlanId,
+    });
+  };
+
+  const selectedPlan = workoutPlans?.find((p: any) => p.id === selectedPlanId);
+
+  return (
+    <AppBottomSheet
+      visible={visible}
+      onClose={() => { reset(); onClose(); }}
+      snapPoints={["60%", "90%"]}
+      title="New Session"
+      footer={
+        <TouchableOpacity
+          className={`rounded-xl py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={handleCreate}
+          disabled={mutation.isPending}
+          activeOpacity={0.7}
+        >
+          {mutation.isPending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text className="text-white font-semibold text-base">Create Session</Text>
+          )}
+        </TouchableOpacity>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Title *</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+        placeholder="Session title"
+        placeholderTextColor={colors.iconMuted}
+        value={title}
+        onChangeText={setTitle}
+      />
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Date *</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+        placeholder="YYYY-MM-DD"
+        placeholderTextColor={colors.iconMuted}
+        value={date}
+        onChangeText={setDate}
+        keyboardType="numbers-and-punctuation"
+      />
+
+      <View className="flex-row gap-3 mb-4">
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Start *</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50"
+            placeholder="HH:MM"
+            placeholderTextColor={colors.iconMuted}
+            value={startTime}
+            onChangeText={setStartTime}
+            keyboardType="numbers-and-punctuation"
+          />
+        </View>
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">End *</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50"
+            placeholder="HH:MM"
+            placeholderTextColor={colors.iconMuted}
+            value={endTime}
+            onChangeText={setEndTime}
+            keyboardType="numbers-and-punctuation"
+          />
+        </View>
+      </View>
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Location</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+        placeholder="e.g. Main gym"
+        placeholderTextColor={colors.iconMuted}
+        value={location}
+        onChangeText={setLocation}
+      />
+
+      <View className="flex-row gap-3 mb-4">
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Max Participants</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50"
+            placeholder="20"
+            placeholderTextColor={colors.iconMuted}
+            value={maxParticipants}
+            onChangeText={setMaxParticipants}
+            keyboardType="number-pad"
+          />
+        </View>
+        <View className="flex-1 justify-end">
+          <TouchableOpacity
+            className={`flex-row items-center justify-center rounded-lg py-3 px-4 border ${
+              isOpen
+                ? "bg-brand-50 dark:bg-brand-900/20 border-brand-300 dark:border-brand-700"
+                : "bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600"
+            }`}
+            onPress={() => setIsOpen(!isOpen)}
+            activeOpacity={0.7}
+          >
+            <Text
+              className={`text-sm font-medium ${
+                isOpen
+                  ? "text-brand-700 dark:text-brand-300"
+                  : "text-gray-500 dark:text-slate-400"
+              }`}
+            >
+              {isOpen ? "Open to All" : "Members Only"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Workout Plan Selector */}
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Workout Plan</Text>
+      <TouchableOpacity
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-1"
+        onPress={() => setShowPlanPicker(!showPlanPicker)}
+        activeOpacity={0.7}
+      >
+        <Text
+          className={`text-base ${
+            selectedPlan
+              ? "text-gray-900 dark:text-slate-50"
+              : "text-gray-400 dark:text-slate-500"
+          }`}
+        >
+          {selectedPlan ? selectedPlan.name : "None (optional)"}
+        </Text>
+      </TouchableOpacity>
+      {showPlanPicker && workoutPlans && workoutPlans.length > 0 && (
+        <View className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg mb-4 max-h-36 overflow-hidden">
+          <ScrollView nestedScrollEnabled>
+            <TouchableOpacity
+              className="px-4 py-2.5 border-b border-gray-100 dark:border-slate-700"
+              onPress={() => { setSelectedPlanId(null); setShowPlanPicker(false); }}
+            >
+              <Text className="text-sm text-gray-500 dark:text-slate-400">None</Text>
+            </TouchableOpacity>
+            {workoutPlans.map((plan: any) => (
+              <TouchableOpacity
+                key={plan.id}
+                className={`px-4 py-2.5 border-b border-gray-100 dark:border-slate-700 ${
+                  selectedPlanId === plan.id ? "bg-brand-50 dark:bg-brand-900/20" : ""
+                }`}
+                onPress={() => { setSelectedPlanId(plan.id); setShowPlanPicker(false); }}
+              >
+                <Text className="text-sm text-gray-900 dark:text-slate-50">{plan.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+      {!showPlanPicker && <View className="mb-4" />}
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Notes</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+        placeholder="Optional notes"
+        placeholderTextColor={colors.iconMuted}
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+        numberOfLines={3}
+        style={{ minHeight: 60, textAlignVertical: "top" }}
+      />
+    </AppBottomSheet>
   );
 }
 

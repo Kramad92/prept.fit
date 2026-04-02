@@ -9,6 +9,7 @@ import {
   Alert,
   ScrollView,
   RefreshControl,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -19,6 +20,9 @@ import {
   Plus,
   Dumbbell,
   Filter,
+  Edit3,
+  Trash2,
+  Video,
 } from "lucide-react-native";
 import { useExerciseLibrary, useExerciseCategories, useEquipmentTypes } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
@@ -208,33 +212,149 @@ export default function ExercisesScreen() {
 
 function ExerciseDetailModal({ item, onClose }: { item: ExerciseLibraryItem | null; onClose: () => void }) {
   const t = useT();
+  const colors = useThemeColors();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [muscleGroup, setMuscleGroup] = useState("");
+  const [equip, setEquip] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+
+  const startEdit = useCallback(() => {
+    if (!item) return;
+    setName(item.name);
+    setCategory(item.category || "");
+    setMuscleGroup(item.muscleGroup || "");
+    setEquip(item.equipment || "");
+    setInstructions(item.instructions || "");
+    setVideoUrl(item.videoUrl || "");
+    setEditing(true);
+  }, [item]);
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => api.put(`/api/exercise-library/${item?.id}`, data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["exercise-library"] });
+      setEditing(false);
+      onClose();
+    },
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/api/exercise-library/${item?.id}`),
+    onSuccess: () => {
+      haptics.light();
+      queryClient.invalidateQueries({ queryKey: ["exercise-library"] });
+      onClose();
+    },
+    onError: (err: any) => Alert.alert(t.common.error, err.message),
+  });
+
+  const handleClose = () => {
+    setEditing(false);
+    onClose();
+  };
+
   if (!item) return null;
+
   return (
-    <AppBottomSheet visible={!!item} onClose={onClose} snapPoints={["50%", "85%"]} title={item.name}>
-      <View className="flex-row flex-wrap mb-4">
-        {item.category && <Tag label={item.category} bg="bg-blue-50 dark:bg-blue-900/25" text="text-blue-700 dark:text-blue-300" />}
-        {item.muscleGroup && <Tag label={item.muscleGroup} bg="bg-purple-50 dark:bg-purple-900/20" text="text-purple-700 dark:text-purple-300" />}
-        {item.equipment && <Tag label={item.equipment} bg="bg-amber-50 dark:bg-amber-900/25" text="text-amber-700 dark:text-amber-300" />}
-        {item.difficulty && <Tag label={item.difficulty} bg="bg-green-50 dark:bg-green-900/25" text="text-green-700 dark:text-green-300" />}
-        {item.bodyRegion && <Tag label={item.bodyRegion} bg="bg-pink-50 dark:bg-pink-900/20" text="text-pink-700 dark:text-pink-300" />}
-      </View>
-      {item.secondaryMuscles && (
-        <Detail label="Secondary Muscles" value={item.secondaryMuscles} />
-      )}
-      {item.secondaryEquipment && (
-        <Detail label="Secondary Equipment" value={item.secondaryEquipment} />
-      )}
-      {item.instructions && (
-        <View className="mt-2">
-          <Text className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{t.exerciseLibrary.instructions}</Text>
-          <Text className="text-sm text-gray-700 dark:text-slate-200 leading-5">{item.instructions}</Text>
-        </View>
-      )}
-      {item.videoUrl && (
-        <View className="mt-4">
-          <Text className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{t.exerciseLibrary.videoUrl}</Text>
-          <Text className="text-sm text-brand-600">{item.videoUrl}</Text>
-        </View>
+    <AppBottomSheet
+      visible={!!item}
+      onClose={handleClose}
+      snapPoints={["50%", "85%"]}
+      title={editing ? "Edit Exercise" : item.name}
+      footer={editing ? (
+        <TouchableOpacity
+          className={`rounded-lg py-3.5 items-center ${updateMutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+          onPress={() => {
+            if (!name.trim()) return Alert.alert(t.common.required, t.exerciseLibrary.exerciseName);
+            updateMutation.mutate({
+              name: name.trim(),
+              category: category.trim() || null,
+              muscleGroup: muscleGroup.trim() || null,
+              equipment: equip.trim() || null,
+              instructions: instructions.trim() || null,
+              videoUrl: videoUrl.trim() || null,
+            });
+          }}
+          disabled={updateMutation.isPending}
+        >
+          {updateMutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold text-base">{t.common.save}</Text>}
+        </TouchableOpacity>
+      ) : undefined}
+    >
+      {editing ? (
+        <>
+          <FormField label={`${t.common.name} *`} value={name} onChange={setName} placeholder={t.exerciseLibrary.namePlaceholder} />
+          <FormField label={t.exerciseLibrary.category} value={category} onChange={setCategory} placeholder="e.g. Chest, Back, Legs" />
+          <FormField label={t.exerciseLibrary.muscleGroup} value={muscleGroup} onChange={setMuscleGroup} placeholder="e.g. Pectorals, Lats" />
+          <FormField label={t.exerciseLibrary.equipment} value={equip} onChange={setEquip} placeholder="e.g. Barbell, Dumbbell" />
+          <FormField label={t.exerciseLibrary.videoUrl} value={videoUrl} onChange={setVideoUrl} placeholder="https://..." keyboard="url" />
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.exerciseLibrary.instructions}</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+            value={instructions}
+            onChangeText={setInstructions}
+            placeholder={t.exerciseLibrary.instructionsPlaceholder}
+            placeholderTextColor={colors.iconMuted}
+            multiline
+            textAlignVertical="top"
+            style={{ minHeight: 80 }}
+          />
+        </>
+      ) : (
+        <>
+          {/* Action buttons */}
+          <View className="flex-row mb-4 gap-2">
+            <TouchableOpacity
+              className="flex-row items-center bg-gray-100 dark:bg-slate-700 rounded-lg px-3 py-2"
+              onPress={startEdit}
+            >
+              <Edit3 size={14} color={colors.icon} />
+              <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 ml-1.5">{t.common.edit}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-row items-center bg-red-50 dark:bg-red-900/25 rounded-lg px-3 py-2"
+              onPress={() => Alert.alert(t.common.delete, `Delete "${item.name}"?`, [
+                { text: t.common.cancel, style: "cancel" },
+                { text: t.common.delete, style: "destructive", onPress: () => deleteMutation.mutate() },
+              ])}
+            >
+              <Trash2 size={14} color={colors.destructive} />
+              <Text className="text-sm font-medium text-red-600 dark:text-red-400 ml-1.5">{t.common.delete}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row flex-wrap mb-4">
+            {item.category && <Tag label={item.category} bg="bg-blue-50 dark:bg-blue-900/25" text="text-blue-700 dark:text-blue-300" />}
+            {item.muscleGroup && <Tag label={item.muscleGroup} bg="bg-purple-50 dark:bg-purple-900/20" text="text-purple-700 dark:text-purple-300" />}
+            {item.equipment && <Tag label={item.equipment} bg="bg-amber-50 dark:bg-amber-900/25" text="text-amber-700 dark:text-amber-300" />}
+            {item.difficulty && <Tag label={item.difficulty} bg="bg-green-50 dark:bg-green-900/25" text="text-green-700 dark:text-green-300" />}
+            {item.bodyRegion && <Tag label={item.bodyRegion} bg="bg-pink-50 dark:bg-pink-900/20" text="text-pink-700 dark:text-pink-300" />}
+          </View>
+          {item.secondaryMuscles && <Detail label="Secondary Muscles" value={item.secondaryMuscles} />}
+          {item.secondaryEquipment && <Detail label="Secondary Equipment" value={item.secondaryEquipment} />}
+          {item.instructions && (
+            <View className="mt-2">
+              <Text className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{t.exerciseLibrary.instructions}</Text>
+              <Text className="text-sm text-gray-700 dark:text-slate-200 leading-5">{item.instructions}</Text>
+            </View>
+          )}
+          {item.videoUrl && (
+            <TouchableOpacity
+              className="flex-row items-center mt-4 bg-brand-50 dark:bg-brand-900/20 rounded-lg px-3 py-2.5"
+              onPress={() => Linking.openURL(item.videoUrl!).catch(() => {})}
+              activeOpacity={0.7}
+            >
+              <Video size={18} color={colors.brand} />
+              <Text className="text-sm font-medium text-brand-700 dark:text-brand-300 ml-2">Watch Video</Text>
+            </TouchableOpacity>
+          )}
+        </>
       )}
     </AppBottomSheet>
   );

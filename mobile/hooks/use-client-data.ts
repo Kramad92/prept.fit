@@ -12,6 +12,8 @@ import type {
   TrainingGroup,
   GroupSessionsResponse,
   PaymentResponse,
+  NutritionLog,
+  FoodSearchResult,
 } from "@/types/api";
 
 export function useClientProfile() {
@@ -119,5 +121,28 @@ export function usePayments() {
   return useQuery<PaymentResponse>({
     queryKey: ["payments"],
     queryFn: () => api.get<PaymentResponse>("/api/portal/payments"),
+  });
+}
+
+export function useNutritionLogs(days = 14) {
+  return useQuery<NutritionLog[]>({
+    queryKey: ["nutrition-logs", days],
+    queryFn: () => api.get<NutritionLog[]>(`/api/nutrition-logs?days=${days}`),
+  });
+}
+
+export function useFoodSearch(query: string) {
+  return useQuery<FoodSearchResult[]>({
+    queryKey: ["food-search", query],
+    queryFn: () => api.get<FoodSearchResult[]>(`/api/food-search?q=${encodeURIComponent(query)}`),
+    enabled: query.length >= 2,
+  });
+}
+
+export function useFoodLibrary(search?: string) {
+  const params = search ? `?search=${encodeURIComponent(search)}` : "";
+  return useQuery<FoodSearchResult[]>({
+    queryKey: ["food-library", search],
+    queryFn: () => api.get<FoodSearchResult[]>(`/api/food-library${params}`),
   });
 }

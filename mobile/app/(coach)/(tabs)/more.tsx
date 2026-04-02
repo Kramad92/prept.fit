@@ -15,6 +15,7 @@ import {
   UtensilsCrossed,
   Heart,
   ClipboardList,
+  ClipboardCheck,
   Layers,
   Library,
   Search,
@@ -57,6 +58,7 @@ export default function CoachMoreScreen() {
           { icon: Layers, label: t.programs.title, href: "/(coach)/programs" },
           { icon: Heart, label: t.habits.title, href: "/(coach)/habit-builder" },
           { icon: ClipboardList, label: t.checkIns.title, href: "/(coach)/checkin-builder" },
+          { icon: ClipboardCheck, label: "Client Check-ins", href: "/(coach)/check-in-submissions" },
         ],
       },
       {

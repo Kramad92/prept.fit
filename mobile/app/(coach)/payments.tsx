@@ -20,6 +20,7 @@ import {
   Clock,
   CheckCircle,
   Plus,
+  Trash2,
 } from "lucide-react-native";
 import { useCoachPayments, useCoachClients } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
@@ -28,6 +29,7 @@ import { QueryError } from "@/components/query-error";
 import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import type { Payment } from "@/types/api";
 
 type StatusFilter = "all" | "pending" | "overdue" | "paid";
 
@@ -38,6 +40,7 @@ export default function CoachPaymentsScreen() {
   const colors = useThemeColors();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [showAdd, setShowAdd] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const statusParam = filter === "all" ? undefined : filter;
   const { data, isLoading, error, refetch, isRefetching } =
     useCoachPayments(statusParam);
@@ -48,9 +51,7 @@ export default function CoachPaymentsScreen() {
       return (
         <TouchableOpacity
           className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
-          onPress={() =>
-            router.push({ pathname: "/(coach)/clients/[id]", params: { id: item.clientId || item.client?.id } } as any)
-          }
+          onPress={() => setEditingPayment(item)}
           activeOpacity={0.6}
         >
           <View
@@ -214,6 +215,13 @@ export default function CoachPaymentsScreen() {
           refetch();
         }}
       />
+      {editingPayment && (
+        <EditPaymentSheet
+          payment={editingPayment}
+          visible={!!editingPayment}
+          onClose={() => setEditingPayment(null)}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -280,6 +288,9 @@ function AddPaymentModal({
   const [method, setMethod] = useState("cash");
   const [status, setStatus] = useState<"paid" | "pending">("paid");
   const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [period, setPeriod] = useState("");
   const [showClientPicker, setShowClientPicker] = useState(false);
 
   const selectedClient = clients?.find((c) => c.id === clientId);
@@ -290,12 +301,7 @@ function AddPaymentModal({
       haptics.success();
       queryClient.invalidateQueries({ queryKey: ["coach-payments"] });
       queryClient.invalidateQueries({ queryKey: ["coach-dashboard"] });
-      // Reset form
-      setClientId("");
-      setAmount("");
-      setMethod("cash");
-      setStatus("paid");
-      setDescription("");
+      resetForm();
       onSuccess();
     },
     onError: (err: any) => {
@@ -319,6 +325,9 @@ function AddPaymentModal({
       method,
       status,
       description: description.trim() || null,
+      notes: notes.trim() || null,
+      dueDate: dueDate.trim() || null,
+      period: period.trim() || null,
     });
   };
 
@@ -328,6 +337,9 @@ function AddPaymentModal({
     setMethod("cash");
     setStatus("paid");
     setDescription("");
+    setNotes("");
+    setDueDate("");
+    setPeriod("");
     setShowClientPicker(false);
   };
 
@@ -419,11 +431,244 @@ function AddPaymentModal({
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.description} ({t.common.optional})</Text>
       <BottomSheetTextInput
-        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-3 text-base text-gray-900 dark:text-slate-50"
         placeholder="Monthly coaching fee..."
         placeholderTextColor={colors.iconMuted}
         value={description}
         onChangeText={setDescription}
+      />
+
+      <View className="flex-row gap-3 mb-3">
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Due Date</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50"
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor={colors.iconMuted}
+            value={dueDate}
+            onChangeText={setDueDate}
+            keyboardType="numbers-and-punctuation"
+          />
+        </View>
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Period</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50"
+            placeholder="e.g. April 2026"
+            placeholderTextColor={colors.iconMuted}
+            value={period}
+            onChangeText={setPeriod}
+          />
+        </View>
+      </View>
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.notes} ({t.common.optional})</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+        placeholder="Internal notes..."
+        placeholderTextColor={colors.iconMuted}
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+        numberOfLines={2}
+        style={{ minHeight: 48, textAlignVertical: "top" }}
+      />
+    </AppBottomSheet>
+  );
+}
+
+function EditPaymentSheet({
+  payment,
+  visible,
+  onClose,
+}: {
+  payment: Payment;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const t = useT();
+  const colors = useThemeColors();
+  const queryClient = useQueryClient();
+
+  const [amount, setAmount] = useState(String(payment.amount));
+  const [method, setMethod] = useState(payment.method || "cash");
+  const [status, setStatus] = useState(payment.status);
+  const [description, setDescription] = useState(payment.description || "");
+  const [notes, setNotes] = useState(payment.notes || "");
+  const [dueDate, setDueDate] = useState(
+    payment.dueDate ? payment.dueDate.slice(0, 10) : ""
+  );
+  const [period, setPeriod] = useState(payment.period || "");
+
+  const clientId = payment.clientId || payment.client?.id;
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) =>
+      api.put(`/api/clients/${clientId}/payments/${payment.id}`, data),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-dashboard"] });
+      onClose();
+    },
+    onError: (err: any) => Alert.alert(t.common.error, err.message || t.errors.failedToSave),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () =>
+      api.delete(`/api/clients/${clientId}/payments/${payment.id}`),
+    onSuccess: () => {
+      haptics.success();
+      queryClient.invalidateQueries({ queryKey: ["coach-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-dashboard"] });
+      onClose();
+    },
+    onError: (err: any) => Alert.alert(t.common.error, err.message || t.errors.failedToSave),
+  });
+
+  const handleSave = () => {
+    const parsedAmount = parseFloat(amount);
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      Alert.alert(t.common.required, t.billing.amount);
+      return;
+    }
+    updateMutation.mutate({
+      amount: parsedAmount,
+      method,
+      status,
+      description: description.trim() || null,
+      notes: notes.trim() || null,
+      dueDate: dueDate.trim() || null,
+      period: period.trim() || null,
+    });
+  };
+
+  const handleDelete = () => {
+    Alert.alert("Delete Payment", "Are you sure you want to delete this payment?", [
+      { text: t.common.cancel, style: "cancel" },
+      { text: t.common.delete, style: "destructive", onPress: () => deleteMutation.mutate() },
+    ]);
+  };
+
+  return (
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      snapPoints={["55%", "90%"]}
+      title="Edit Payment"
+      footer={
+        <View className="flex-row gap-3">
+          <TouchableOpacity
+            className="flex-1 rounded-xl py-3.5 items-center border border-red-300 dark:border-red-700"
+            onPress={handleDelete}
+            disabled={deleteMutation.isPending}
+            activeOpacity={0.7}
+          >
+            <View className="flex-row items-center">
+              <Trash2 size={16} color="#ef4444" />
+              <Text className="text-red-600 font-semibold text-base ml-2">Delete</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`flex-1 rounded-xl py-3.5 items-center ${updateMutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
+            onPress={handleSave}
+            disabled={updateMutation.isPending}
+            activeOpacity={0.7}
+          >
+            {updateMutation.isPending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white font-semibold text-base">Save</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      }
+    >
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
+        {payment.client?.name || "Client"}
+      </Text>
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1 mt-3">{t.billing.amount}</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-3 text-base text-gray-900 dark:text-slate-50"
+        placeholder="0.00"
+        placeholderTextColor={colors.iconMuted}
+        value={amount}
+        onChangeText={setAmount}
+        keyboardType="decimal-pad"
+      />
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.billing.method}</Text>
+      <View className="flex-row flex-wrap mb-3">
+        {METHODS.map((m) => (
+          <TouchableOpacity
+            key={m}
+            className={`mr-2 mb-2 px-3 py-1.5 rounded-full ${method === m ? "bg-brand-600" : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"}`}
+            onPress={() => setMethod(m)}
+          >
+            <Text className={`text-xs font-medium capitalize ${method === m ? "text-white" : "text-gray-600 dark:text-slate-300"}`}>
+              {m.replace("_", " ")}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.status}</Text>
+      <View className="flex-row mb-3">
+        {(["paid", "pending", "overdue", "cancelled"] as const).map((s) => (
+          <TouchableOpacity
+            key={s}
+            className={`mr-2 px-3 py-1.5 rounded-full ${status === s ? "bg-brand-600" : "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700"}`}
+            onPress={() => setStatus(s)}
+          >
+            <Text className={`text-xs font-medium capitalize ${status === s ? "text-white" : "text-gray-600 dark:text-slate-300"}`}>{s}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.description}</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-3 text-base text-gray-900 dark:text-slate-50"
+        placeholder="Payment description..."
+        placeholderTextColor={colors.iconMuted}
+        value={description}
+        onChangeText={setDescription}
+      />
+
+      <View className="flex-row gap-3 mb-3">
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Due Date</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50"
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor={colors.iconMuted}
+            value={dueDate}
+            onChangeText={setDueDate}
+            keyboardType="numbers-and-punctuation"
+          />
+        </View>
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Period</Text>
+          <BottomSheetTextInput
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50"
+            placeholder="e.g. April 2026"
+            placeholderTextColor={colors.iconMuted}
+            value={period}
+            onChangeText={setPeriod}
+          />
+        </View>
+      </View>
+
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.notes}</Text>
+      <BottomSheetTextInput
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
+        placeholder="Internal notes..."
+        placeholderTextColor={colors.iconMuted}
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+        numberOfLines={2}
+        style={{ minHeight: 48, textAlignVertical: "top" }}
       />
     </AppBottomSheet>
   );

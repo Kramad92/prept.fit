@@ -245,6 +245,14 @@ export function useHabitTemplates() {
   });
 }
 
+// Check-in submissions (coach view)
+export function useCoachCheckIns() {
+  return useQuery<import("@/types/api").CheckIn[]>({
+    queryKey: ["coach-check-ins"],
+    queryFn: () => api.get<import("@/types/api").CheckIn[]>("/api/check-ins"),
+  });
+}
+
 // Check-in templates
 export function useCheckInTemplates() {
   return useQuery<CheckInTemplate[]>({

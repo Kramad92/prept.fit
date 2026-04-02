@@ -8,8 +8,8 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
-  Dimensions,
   Modal,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -33,9 +33,6 @@ import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ProgressPhoto, MeasurementData } from "@/types/api";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const PHOTO_SIZE = (SCREEN_WIDTH - 48 - 8) / 3;
-
 const CATEGORIES = ["All", "front", "back", "side"];
 
 type Tab = "photos" | "measurements";
@@ -50,6 +47,8 @@ export default function ProgressScreen() {
   const [uploading, setUploading] = useState(false);
   const t = useT();
   const colors = useThemeColors();
+  const { width: screenWidth } = useWindowDimensions();
+  const photoSize = (screenWidth - 32 - 8) / 3;
 
   const photos = useMemo(() => {
     const all = profile?.progressPhotos || [];
@@ -184,7 +183,7 @@ export default function ProgressScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
             <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.progress}</Text>
@@ -199,7 +198,7 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="flex-1 text-lg font-semibold text-gray-900 dark:text-slate-50">
@@ -329,7 +328,7 @@ export default function ProgressScreen() {
                   >
                     <Image
                       source={{ uri: photo.url }}
-                      style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
+                      style={{ width: photoSize, height: photoSize }}
                       className="rounded-lg bg-gray-200 dark:bg-slate-700"
                     />
                   </TouchableOpacity>
@@ -408,7 +407,7 @@ export default function ProgressScreen() {
                 </Text>
                 <LineChart
                   data={weightData}
-                  width={SCREEN_WIDTH - 80}
+                  width={screenWidth - 80}
                   height={180}
                   color={Colors.brand[600]}
                   dataPointsColor={Colors.brand[600]}
@@ -418,9 +417,9 @@ export default function ProgressScreen() {
                   areaChart
                   curved
                   hideRules
-                  yAxisTextStyle={{ color: colors.icon, fontSize: 10 }}
-                  xAxisLabelTextStyle={{ color: colors.iconMuted, fontSize: 9 }}
-                  spacing={(SCREEN_WIDTH - 100) / Math.max(weightData.length - 1, 1)}
+                  yAxisTextStyle={{ color: colors.icon, fontSize: 11 }}
+                  xAxisLabelTextStyle={{ color: colors.iconMuted, fontSize: 11 }}
+                  spacing={(screenWidth - 100) / Math.max(weightData.length - 1, 1)}
                   noOfSections={4}
                   isAnimated
                 />
@@ -435,7 +434,7 @@ export default function ProgressScreen() {
                 </Text>
                 <LineChart
                   data={bodyFatData}
-                  width={SCREEN_WIDTH - 80}
+                  width={screenWidth - 80}
                   height={180}
                   color="#3b82f6"
                   dataPointsColor="#3b82f6"
@@ -445,9 +444,9 @@ export default function ProgressScreen() {
                   areaChart
                   curved
                   hideRules
-                  yAxisTextStyle={{ color: colors.icon, fontSize: 10 }}
-                  xAxisLabelTextStyle={{ color: colors.iconMuted, fontSize: 9 }}
-                  spacing={(SCREEN_WIDTH - 100) / Math.max(bodyFatData.length - 1, 1)}
+                  yAxisTextStyle={{ color: colors.icon, fontSize: 11 }}
+                  xAxisLabelTextStyle={{ color: colors.iconMuted, fontSize: 11 }}
+                  spacing={(screenWidth - 100) / Math.max(bodyFatData.length - 1, 1)}
                   noOfSections={4}
                   isAnimated
                 />
@@ -545,8 +544,8 @@ export default function ProgressScreen() {
               <Image
                 source={{ uri: viewingPhoto.url }}
                 style={{
-                  width: SCREEN_WIDTH - 32,
-                  height: SCREEN_WIDTH - 32,
+                  width: screenWidth - 32,
+                  height: screenWidth - 32,
                 }}
                 resizeMode="contain"
               />

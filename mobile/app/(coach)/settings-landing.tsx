@@ -363,13 +363,13 @@ function Header({ onSave, saving, disabled }: { onSave?: () => void; saving?: bo
   const colors = useThemeColors();
   return (
     <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
         <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
       <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.settings.landingPage}</Text>
       {onSave && !disabled && (
         <TouchableOpacity onPress={onSave} disabled={saving} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
-          {saving ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">{t.common.save}</Text></>}
+          {saving ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={16} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">{t.common.save}</Text></>}
         </TouchableOpacity>
       )}
     </View>

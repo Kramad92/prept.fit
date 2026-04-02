@@ -25,6 +25,7 @@ import { api } from "@/lib/api-client";
 import { QueryError } from "@/components/query-error";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { formatRelative } from "@/lib/format";
 import type { AppNotification } from "@/types/api";
 
 const ICON_MAP: Record<string, typeof Bell> = {
@@ -38,13 +39,13 @@ const ICON_MAP: Record<string, typeof Bell> = {
 };
 
 const COLOR_MAP: Record<string, { bg: string; fg: string }> = {
-  new_message: { bg: "bg-blue-50", fg: "#3b82f6" },
-  check_in_submitted: { bg: "bg-purple-50", fg: "#8b5cf6" },
-  session_reminder: { bg: "bg-brand-50", fg: "#059669" },
-  booking_request: { bg: "bg-brand-50", fg: "#059669" },
-  payment_overdue: { bg: "bg-red-50", fg: "#ef4444" },
-  group_session: { bg: "bg-amber-50", fg: "#f59e0b" },
-  default: { bg: "bg-gray-50", fg: "#6b7280" },
+  new_message: { bg: "bg-blue-50 dark:bg-blue-900/25", fg: "#3b82f6" },
+  check_in_submitted: { bg: "bg-purple-50 dark:bg-purple-900/20", fg: "#8b5cf6" },
+  session_reminder: { bg: "bg-brand-50 dark:bg-brand-900/20", fg: "#059669" },
+  booking_request: { bg: "bg-brand-50 dark:bg-brand-900/20", fg: "#059669" },
+  payment_overdue: { bg: "bg-red-50 dark:bg-red-900/25", fg: "#ef4444" },
+  group_session: { bg: "bg-amber-50 dark:bg-amber-900/25", fg: "#f59e0b" },
+  default: { bg: "bg-gray-50 dark:bg-slate-700", fg: "#6b7280" },
 };
 
 export default function CoachNotificationsScreen() {
@@ -70,17 +71,17 @@ export default function CoachNotificationsScreen() {
     const tp = notif.type;
     if (tp === "new_message") {
       const clientId = notif.data?.clientId;
-      if (clientId) router.push(`/(coach)/messages/${clientId}` as never);
+      if (clientId) router.push({ pathname: "/(coach)/messages/[clientId]", params: { clientId } } as any);
       else router.push("/(coach)/(tabs)/messages");
     } else if (tp === "check_in_submitted") {
       const clientId = notif.data?.clientId;
-      if (clientId) router.push(`/(coach)/clients/${clientId}` as never);
+      if (clientId) router.push({ pathname: "/(coach)/clients/[id]", params: { id: clientId } } as any);
     } else if (tp === "booking_request" || tp === "session_reminder") {
       router.push("/(coach)/(tabs)/schedule");
     } else if (tp === "payment_overdue") {
-      router.push("/(coach)/payments" as never);
+      router.push("/(coach)/payments");
     } else if (tp === "group_session") {
-      router.push("/(coach)/group-training" as never);
+      router.push("/(coach)/group-training");
     }
   }, [queryClient]);
 
@@ -175,7 +176,7 @@ export default function CoachNotificationsScreen() {
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <Bell size={40} color={themeColors.iconMuted} />
+            <Bell size={48} color={themeColors.iconMuted} />
             <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">
               {t.notifications.noNotifications}
             </Text>
@@ -191,7 +192,7 @@ function Header({ onMarkAll }: { onMarkAll?: () => void }) {
   const colors = useThemeColors();
   return (
     <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
         <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
       <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">
@@ -208,16 +209,3 @@ function Header({ onMarkAll }: { onMarkAll?: () => void }) {
   );
 }
 
-function formatRelative(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "Just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return `${diffDay}d ago`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}

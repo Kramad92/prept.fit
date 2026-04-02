@@ -89,7 +89,7 @@ export default function MoreScreen() {
                 index < menuItems.length - 1 ? "border-b border-gray-100 dark:border-slate-700/40" : ""
               }`}
               activeOpacity={0.6}
-              onPress={() => router.push(item.href as never)}
+              onPress={() => router.push(item.href as any)}
             >
               <item.icon size={20} color={colors.icon} />
               <Text className="flex-1 ml-3 text-base text-gray-900 dark:text-slate-50">

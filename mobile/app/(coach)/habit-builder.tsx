@@ -18,7 +18,7 @@ import { useHabitTemplates } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { HabitTemplate } from "@/types/api";
@@ -86,12 +86,12 @@ export default function HabitBuilderScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.habits.title}</Text>
         <TouchableOpacity onPress={() => setShowCreate(true)} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
-          <Plus size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">New</Text>
+          <Plus size={16} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">New</Text>
         </TouchableOpacity>
       </View>
 
@@ -177,9 +177,9 @@ function HabitFormModal({ visible, onClose }: { visible: boolean; onClose: () =>
       }
     >
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.habits.habitName} *</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.habits.habitNamePlaceholder} placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.habits.habitNamePlaceholder} placeholderTextColor={colors.iconMuted} />
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.habits.icon} (emoji)</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={icon} onChangeText={setIcon} placeholder="\u{1F4A7}" placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={icon} onChangeText={setIcon} placeholder="\u{1F4A7}" placeholderTextColor={colors.iconMuted} />
     </AppBottomSheet>
   );
 }
@@ -234,9 +234,9 @@ function HabitEditModal({ item, onClose }: { item: HabitTemplate | null; onClose
       }
     >
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.habits.habitName} *</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.habits.habitNamePlaceholder} placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.habits.habitNamePlaceholder} placeholderTextColor={colors.iconMuted} />
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.habits.icon} (emoji)</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={icon} onChangeText={setIcon} placeholder="\u{1F4A7}" placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={icon} onChangeText={setIcon} placeholder="\u{1F4A7}" placeholderTextColor={colors.iconMuted} />
     </AppBottomSheet>
   );
 }

@@ -41,7 +41,7 @@ export default function CoachClientsScreen() {
       <TouchableOpacity
         className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
         onPress={() =>
-          router.push(`/(coach)/clients/${item.id}` as never)
+          router.push({ pathname: "/(coach)/clients/[id]", params: { id: item.id } } as any)
         }
         activeOpacity={0.6}
       >

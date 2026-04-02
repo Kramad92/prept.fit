@@ -37,7 +37,7 @@ function NotificationHandler() {
       switch (data.type) {
         case "new_message":
           if (isCoach && data.clientId) {
-            router.push(`/(coach)/messages/${data.clientId}` as never);
+            router.push({ pathname: "/(coach)/messages/[clientId]", params: { clientId: data.clientId } } as any);
           } else {
             router.push("/(client)/messages");
           }
@@ -57,7 +57,7 @@ function NotificationHandler() {
           break;
         case "check_in_submitted":
           if (isCoach && data.clientId) {
-            router.push(`/(coach)/clients/${data.clientId}` as never);
+            router.push({ pathname: "/(coach)/clients/[id]", params: { id: data.clientId } } as any);
           } else {
             router.push("/(client)/check-ins");
           }
@@ -67,14 +67,14 @@ function NotificationHandler() {
           break;
         case "payment_overdue":
           if (isCoach) {
-            router.push("/(coach)/payments" as never);
+            router.push("/(coach)/payments");
           } else {
             router.push("/(client)/payments");
           }
           break;
         case "group_session":
           if (isCoach) {
-            router.push("/(coach)/group-training" as never);
+            router.push("/(coach)/group-training");
           } else {
             router.push("/(client)/group-training");
           }

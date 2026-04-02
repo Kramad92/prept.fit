@@ -145,12 +145,12 @@ export default function WorkoutBuilderScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.workouts.title}</Text>
         <TouchableOpacity onPress={openCreate} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
-          <Plus size={14} color="#fff" />
+          <Plus size={16} color="#fff" />
           <Text className="text-white text-xs font-semibold ml-1">{t.workouts.newPlan}</Text>
         </TouchableOpacity>
       </View>
@@ -365,7 +365,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={handleBack} className="mr-3 p-1">
+        <TouchableOpacity onPress={handleBack} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">
@@ -381,7 +381,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <>
-              <Save size={14} color="#fff" />
+              <Save size={16} color="#fff" />
               <Text className="text-white text-xs font-semibold ml-1">{t.common.save}</Text>
             </>
           )}
@@ -435,7 +435,7 @@ function WorkoutForm({ editId, onDone }: { editId?: string; onDone: () => void }
                 onPress={() => setIncludeVideos(!includeVideos)}
               >
                 <View className={`w-4 h-4 rounded border mr-1.5 items-center justify-center ${includeVideos ? "bg-brand-600 border-brand-600" : "border-gray-300 dark:border-slate-600"}`}>
-                  {includeVideos && <Text className="text-white text-[8px] font-bold">✓</Text>}
+                  {includeVideos && <Text className="text-white text-[11px] font-bold">✓</Text>}
                 </View>
                 <Text className="text-xs text-gray-500 dark:text-slate-400">Videos</Text>
               </TouchableOpacity>
@@ -558,7 +558,7 @@ function ExerciseCard({
         <View className="px-3 py-3">
           <View className="flex-row mb-2">
             <View className="flex-1 mr-2">
-              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.sets}</Text>
+              <Text className="text-[11px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.sets}</Text>
               <TextInput
                 className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.sets}
@@ -569,7 +569,7 @@ function ExerciseCard({
               />
             </View>
             <View className="flex-1 mr-2">
-              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.reps}</Text>
+              <Text className="text-[11px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.reps}</Text>
               <TextInput
                 className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.reps}
@@ -579,7 +579,7 @@ function ExerciseCard({
               />
             </View>
             <View className="flex-1 mr-2">
-              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.weight}</Text>
+              <Text className="text-[11px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.weight}</Text>
               <TextInput
                 className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.weight}
@@ -589,7 +589,7 @@ function ExerciseCard({
               />
             </View>
             <View className="flex-1">
-              <Text className="text-[10px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.restSec}</Text>
+              <Text className="text-[11px] text-gray-500 dark:text-slate-400 mb-0.5">{t.workouts.restSec}</Text>
               <TextInput
                 className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50 text-center"
                 value={exercise.restSeconds}

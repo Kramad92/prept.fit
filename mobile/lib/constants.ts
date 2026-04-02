@@ -76,6 +76,13 @@ export const ThemeColors = {
     pinkText: "#be185d",
     redBg: "#fef2f2",
     redText: "#b91c1c",
+    // Icon tint colors
+    blueIcon: "#3b82f6",
+    purpleIcon: "#8b5cf6",
+    amberIcon: "#f59e0b",
+    pinkIcon: "#ec4899",
+    tealIcon: "#14b8a6",
+    indigoIcon: "#6366f1",
   },
   dark: {
     background: "#020617",       // slate-950 (surface-secondary)
@@ -109,6 +116,13 @@ export const ThemeColors = {
     pinkText: "#f9a8d4",
     redBg: "rgba(127,29,29,0.25)",
     redText: "#fca5a5",
+    // Icon tint colors
+    blueIcon: "#60a5fa",
+    purpleIcon: "#a78bfa",
+    amberIcon: "#fbbf24",
+    pinkIcon: "#f472b6",
+    tealIcon: "#2dd4bf",
+    indigoIcon: "#818cf8",
   },
 } as const;
 

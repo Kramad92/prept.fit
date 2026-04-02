@@ -30,7 +30,7 @@ export default function GlobalSearchScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <View className="flex-1 flex-row items-center bg-gray-50 dark:bg-slate-950 rounded-lg px-3">
@@ -72,7 +72,7 @@ export default function GlobalSearchScreen() {
               <TouchableOpacity
                 key={c.id}
                 className="flex-row items-center px-3 py-2.5 border-b border-gray-50 dark:border-slate-700/40"
-                onPress={() => router.push(`/(coach)/clients/${c.id}` as never)}
+                onPress={() => router.push({ pathname: "/(coach)/clients/[id]", params: { id: c.id } } as any)}
                 activeOpacity={0.6}
               >
                 <View className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/25 items-center justify-center mr-3">

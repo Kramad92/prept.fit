@@ -155,7 +155,7 @@ export function AppBottomSheet({
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
       enablePanDownToClose
-      keyboardBehavior="interactive"
+      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       handleComponent={renderHandle}

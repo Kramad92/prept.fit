@@ -132,7 +132,7 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="flex-1 text-lg font-semibold text-gray-900 dark:text-slate-50">
@@ -184,7 +184,7 @@ export default function NotificationsScreen() {
                   className={`flex-row p-4 mb-2 rounded-xl border ${
                     notification.isRead
                       ? "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700/40"
-                      : "bg-brand-50 border-brand-100"
+                      : "bg-brand-50 dark:bg-brand-900/20 border-brand-100 dark:border-brand-800/30"
                   }`}
                   onPress={() => handleTap(notification)}
                   activeOpacity={0.7}

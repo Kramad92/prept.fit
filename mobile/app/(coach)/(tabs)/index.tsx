@@ -31,6 +31,7 @@ import { QueryError } from "@/components/query-error";
 import { AppHeader } from "@/components/app-header";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { formatRelative } from "@/lib/format";
 
 export default function CoachDashboardScreen() {
   const { user } = useAuth();
@@ -102,7 +103,7 @@ export default function CoachDashboardScreen() {
             icon={TrendingUp}
             label={t.dashboard.thisWeek}
             value={data.weeklyWorkoutCompletion.logged}
-            sub={t.dashboard.thisWeek}
+            sub={`${data.weeklyWorkoutCompletion.logged > 0 ? `/ ${data.weeklyWorkoutCompletion.total}` : ""} logged`}
             colors={colors}
           />
         </View>
@@ -127,7 +128,7 @@ export default function CoachDashboardScreen() {
                     : ""
                 }`}
               >
-                <View className="w-9 h-9 rounded-full bg-brand-50 items-center justify-center mr-3">
+                <View className="w-9 h-9 rounded-full bg-brand-50 dark:bg-brand-900/20 items-center justify-center mr-3">
                   <Calendar size={16} color={colors.brand} />
                 </View>
                 <View className="flex-1">
@@ -183,9 +184,7 @@ export default function CoachDashboardScreen() {
                       : ""
                   }`}
                   onPress={() =>
-                    router.push(
-                      `/(coach)/messages/${m.clientId}` as never
-                    )
+                    router.push({ pathname: "/(coach)/messages/[clientId]", params: { clientId: m.clientId } } as any)
                   }
                   activeOpacity={0.6}
                 >
@@ -212,14 +211,14 @@ export default function CoachDashboardScreen() {
           <>
             <SectionHeader
               title={t.dashboard.paymentsOverview}
-              onPress={() => router.push("/(coach)/payments" as never)}
+              onPress={() => router.push("/(coach)/payments")}
               colors={colors}
             />
             <View className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 mb-5 overflow-hidden">
               {data.payments.overdueCount > 0 && (
                 <TouchableOpacity
                   className="flex-row items-center px-4 py-3 border-b border-gray-50 dark:border-slate-700/40"
-                  onPress={() => router.push("/(coach)/payments" as never)}
+                  onPress={() => router.push("/(coach)/payments")}
                   activeOpacity={0.6}
                 >
                   <View className="w-9 h-9 rounded-full bg-red-50 dark:bg-red-900/25 items-center justify-center mr-3">
@@ -239,7 +238,7 @@ export default function CoachDashboardScreen() {
               {data.payments.pendingCount > 0 && (
                 <TouchableOpacity
                   className="flex-row items-center px-4 py-3"
-                  onPress={() => router.push("/(coach)/payments" as never)}
+                  onPress={() => router.push("/(coach)/payments")}
                   activeOpacity={0.6}
                 >
                   <View className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/25 items-center justify-center mr-3">
@@ -269,7 +268,7 @@ export default function CoachDashboardScreen() {
                 <TouchableOpacity
                   key={b.id}
                   className={`flex-row items-center px-4 py-3 ${i < Math.min(data.birthdays.length, 5) - 1 ? "border-b border-gray-50 dark:border-slate-700/40" : ""}`}
-                  onPress={() => router.push(`/(coach)/clients/${b.id}` as never)}
+                  onPress={() => router.push({ pathname: "/(coach)/clients/[id]", params: { id: b.id } } as any)}
                   activeOpacity={0.6}
                 >
                   <View className="w-9 h-9 rounded-full bg-pink-50 dark:bg-pink-900/20 items-center justify-center mr-3">
@@ -301,7 +300,7 @@ export default function CoachDashboardScreen() {
                 <TouchableOpacity
                   key={p.id}
                   className={`flex-row items-center px-4 py-3 ${i < Math.min(data.expiringPlans.length, 5) - 1 ? "border-b border-gray-50 dark:border-slate-700/40" : ""}`}
-                  onPress={() => router.push(`/(coach)/clients/${p.clientId}` as never)}
+                  onPress={() => router.push({ pathname: "/(coach)/clients/[id]", params: { id: p.clientId } } as any)}
                   activeOpacity={0.6}
                 >
                   <View className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/25 items-center justify-center mr-3">
@@ -331,7 +330,7 @@ export default function CoachDashboardScreen() {
                 <TouchableOpacity
                   key={c.id}
                   className={`flex-row items-center px-4 py-3 ${i < Math.min(data.checkIns.length, 5) - 1 ? "border-b border-gray-50 dark:border-slate-700/40" : ""}`}
-                  onPress={() => router.push(`/(coach)/clients/${c.clientId}` as never)}
+                  onPress={() => router.push({ pathname: "/(coach)/clients/[id]", params: { id: c.clientId } } as any)}
                   activeOpacity={0.6}
                 >
                   <View className="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-900/25 items-center justify-center mr-3">
@@ -356,7 +355,7 @@ export default function CoachDashboardScreen() {
                 <TouchableOpacity
                   key={p.id}
                   className={`flex-row items-center px-4 py-3 ${i < Math.min(data.profileStats.incomplete.length, 5) - 1 ? "border-b border-gray-50 dark:border-slate-700/40" : ""}`}
-                  onPress={() => router.push(`/(coach)/clients/${p.id}` as never)}
+                  onPress={() => router.push({ pathname: "/(coach)/clients/[id]", params: { id: p.id } } as any)}
                   activeOpacity={0.6}
                 >
                   <View className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-700 items-center justify-center mr-3">
@@ -400,7 +399,7 @@ export default function CoachDashboardScreen() {
                         : "bg-gray-50 dark:bg-slate-700"
                     }`}
                   >
-                    <ActivityIcon type={a.type} />
+                    <ActivityIcon type={a.type} colors={colors} />
                   </View>
                   <View className="flex-1">
                     <Text
@@ -500,29 +499,17 @@ function EmptyCard({ text }: { text: string }) {
   );
 }
 
-function ActivityIcon({ type }: { type: string }) {
+function ActivityIcon({ type, colors }: { type: string; colors: any }) {
   switch (type) {
     case "payment":
-      return <CreditCard size={16} color="#10b981" />;
+      return <CreditCard size={16} color={colors.brand} />;
     case "workout":
-      return <Dumbbell size={16} color="#8b5cf6" />;
+      return <Dumbbell size={16} color={colors.purpleIcon} />;
     case "checkin":
-      return <Clock size={16} color="#3b82f6" />;
+      return <Clock size={16} color={colors.blueIcon} />;
     default:
-      return <MessageCircle size={16} color="#6b7280" />;
+      return <MessageCircle size={16} color={colors.icon} />;
   }
 }
 
-function formatRelative(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "now";
-  if (diffMin < 60) return `${diffMin}m`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return `${diffDay}d`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+

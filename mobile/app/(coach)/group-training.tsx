@@ -53,7 +53,7 @@ export default function CoachGroupTrainingScreen() {
             }
             else router.back();
           }}
-          className="mr-3 p-1"
+          className="mr-3 p-2.5"
         >
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>

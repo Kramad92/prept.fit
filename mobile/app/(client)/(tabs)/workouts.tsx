@@ -7,15 +7,14 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { api } from "@/lib/api-client";
 import { Dumbbell, ChevronRight, Filter } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
 import { AppHeader } from "@/components/app-header";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import type { ClientProfile } from "@/types/api";
+import { useClientProfile } from "@/hooks/use-client-data";
 
 export default function WorkoutsScreen() {
   const queryClient = useQueryClient();
@@ -24,10 +23,7 @@ export default function WorkoutsScreen() {
   const t = useT();
   const colors = useThemeColors();
 
-  const { data: profile, isLoading, isError, refetch } = useQuery<ClientProfile>({
-    queryKey: ["client-profile"],
-    queryFn: () => api.get<ClientProfile>("/api/portal/me"),
-  });
+  const { data: profile, isLoading, isError, refetch } = useClientProfile();
 
   const plans = useMemo(() => {
     const all = profile?.assignedPlans || [];

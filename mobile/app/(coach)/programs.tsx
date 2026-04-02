@@ -28,7 +28,7 @@ import { usePrograms, useNutritionPrograms } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ProgramListItem, NutritionProgramListItem } from "@/types/api";
@@ -105,7 +105,7 @@ export default function ProgramsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.programs.title}</Text>
@@ -236,19 +236,19 @@ function CreateProgramModal({ visible, tab, onClose }: { visible: boolean; tab: 
       }
     >
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.name} *</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder="Program name" placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder="Program name" placeholderTextColor={colors.iconMuted} />
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.description}</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={description} onChangeText={setDescription} placeholder="Optional description" placeholderTextColor={colors.iconMuted} multiline />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={description} onChangeText={setDescription} placeholder="Optional description" placeholderTextColor={colors.iconMuted} multiline />
       <View className="flex-row">
         <View className="flex-1 mr-2">
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Duration ({t.programs.weeks})</Text>
-          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center" value={durationWeeks} onChangeText={setDurationWeeks} keyboardType="number-pad" />
+          <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center" value={durationWeeks} onChangeText={setDurationWeeks} keyboardType="number-pad" />
         </View>
         <View className="flex-1">
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
             {tab === "workout" ? t.programs.daysWeek : "Meals/day"}
           </Text>
-          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center" value={perWeek} onChangeText={setPerWeek} keyboardType="number-pad" />
+          <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center" value={perWeek} onChangeText={setPerWeek} keyboardType="number-pad" />
         </View>
       </View>
     </AppBottomSheet>
@@ -390,7 +390,7 @@ function AIGenerateModal({
 
       {/* Prompt */}
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Describe your program</Text>
-      <TextInput
+      <BottomSheetTextInput
         className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50 min-h-[80px]"
         value={prompt}
         onChangeText={(txt) => { setPrompt(txt); setFitFeedback(null); }}
@@ -407,7 +407,7 @@ function AIGenerateModal({
       <View className="flex-row mb-4">
         <View className="flex-1 mr-2">
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Duration ({t.programs.weeks})</Text>
-          <TextInput
+          <BottomSheetTextInput
             className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center"
             value={durationWeeks}
             onChangeText={setDurationWeeks}
@@ -419,7 +419,7 @@ function AIGenerateModal({
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
             {type === "workout" ? t.programs.daysWeek : "Meals/day"}
           </Text>
-          <TextInput
+          <BottomSheetTextInput
             className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50 text-center"
             value={daysPerWeek}
             onChangeText={setDaysPerWeek}

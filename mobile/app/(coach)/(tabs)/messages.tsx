@@ -19,6 +19,7 @@ import { QueryError } from "@/components/query-error";
 import { AppHeader } from "@/components/app-header";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { formatRelative } from "@/lib/format";
 
 interface ConversationItem {
   clientId: string;
@@ -65,7 +66,7 @@ export default function CoachMessagesScreen() {
       <TouchableOpacity
         className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
         onPress={() =>
-          router.push(`/(coach)/messages/${item.clientId}` as never)
+          router.push({ pathname: "/(coach)/messages/[clientId]", params: { clientId: item.clientId } } as any)
         }
         activeOpacity={0.6}
       >
@@ -158,7 +159,7 @@ export default function CoachMessagesScreen() {
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
-            <MessageCircle size={40} color={colors.iconMuted} />
+            <MessageCircle size={48} color={colors.iconMuted} />
             <Text className="text-gray-400 dark:text-slate-500 text-sm mt-3">
               {t.messages.noConversations}
             </Text>
@@ -167,18 +168,4 @@ export default function CoachMessagesScreen() {
       />
     </SafeAreaView>
   );
-}
-
-function formatRelative(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "now";
-  if (diffMin < 60) return `${diffMin}m`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return `${diffDay}d`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }

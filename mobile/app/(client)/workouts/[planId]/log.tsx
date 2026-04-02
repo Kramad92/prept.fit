@@ -12,13 +12,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { ArrowLeft, Check, ChevronRight, Timer, Plus, Trophy } from "lucide-react-native";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import type { ClientProfile, ClientExercise, Exercise } from "@/types/api";
+import { useClientProfile } from "@/hooks/use-client-data";
+import { QueryError } from "@/components/query-error";
+import type { ClientExercise, Exercise } from "@/types/api";
 
 interface SetLog {
   reps: string;
@@ -39,10 +41,7 @@ export default function WorkoutLogScreen() {
   const t = useT();
   const colors = useThemeColors();
 
-  const { data: profile } = useQuery<ClientProfile>({
-    queryKey: ["client-profile"],
-    queryFn: () => api.get<ClientProfile>("/api/portal/me"),
-  });
+  const { data: profile, isError: profileError } = useClientProfile();
 
   const plan = useMemo(
     () => profile?.assignedPlans?.find((p) => p.id === planId),
@@ -227,6 +226,15 @@ export default function WorkoutLogScreen() {
     },
   });
 
+  if (profileError) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <QueryError message="Failed to load workout" onRetry={() => queryClient.invalidateQueries({ queryKey: ["client-profile"] })} />
+      </SafeAreaView>
+    );
+  }
+
   if (!plan || exercises.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
@@ -319,7 +327,7 @@ export default function WorkoutLogScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={handleBack} className="mr-3 p-1">
+        <TouchableOpacity onPress={handleBack} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <View className="flex-1">

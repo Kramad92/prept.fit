@@ -123,10 +123,10 @@ export default function NutritionBuilderScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1"><ArrowLeft size={22} color={colors.text} /></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5"><ArrowLeft size={22} color={colors.text} /></TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.nutrition.title}</Text>
         <TouchableOpacity onPress={openCreate} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
-          <Plus size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">New</Text>
+          <Plus size={16} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">New</Text>
         </TouchableOpacity>
       </View>
       {isLoading ? (
@@ -376,10 +376,10 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={handleBack} className="mr-3 p-1"><ArrowLeft size={22} color={colors.text} /></TouchableOpacity>
+        <TouchableOpacity onPress={handleBack} className="mr-3 p-2.5"><ArrowLeft size={22} color={colors.text} /></TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{editId ? t.common.edit : t.nutrition.newPlan}</Text>
         <TouchableOpacity onPress={handleSave} disabled={saveMutation.isPending} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
-          {saveMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">{t.common.save}</Text></>}
+          {saveMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : <><Save size={16} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">{t.common.save}</Text></>}
         </TouchableOpacity>
       </View>
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -424,7 +424,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
                   <View className="flex-row flex-wrap mt-1.5">
                     {aiRefinements.map((r, i) => (
                       <View key={i} className="flex-row items-center bg-gray-100 dark:bg-slate-700 rounded-md px-2 py-1 mr-1 mb-1">
-                        <Text className="text-[10px] text-gray-600 dark:text-slate-300 mr-1">{r}</Text>
+                        <Text className="text-[11px] text-gray-600 dark:text-slate-300 mr-1">{r}</Text>
                         <TouchableOpacity onPress={() => removeAiRefinement(i)}>
                           <X size={10} color={colors.iconMuted} />
                         </TouchableOpacity>
@@ -515,23 +515,23 @@ function MealCard({ meal, onUpdateMeal, onRemoveMeal, onAddFood, onAddFoodManual
             <View key={food.key} className="bg-gray-50 dark:bg-slate-950 rounded-lg p-2 mb-1.5">
               <View className="flex-row items-center mb-1">
                 <TextInput className="flex-1 text-sm text-gray-900 dark:text-slate-50 py-0 font-medium" value={food.name} onChangeText={(v) => onUpdateFood(food.key, "name", v)} placeholder="Food name" placeholderTextColor={colors.iconMuted} />
-                <TouchableOpacity onPress={() => onRemoveFood(food.key)} className="p-1"><Trash2 size={12} color={colors.destructive} /></TouchableOpacity>
+                <TouchableOpacity onPress={() => onRemoveFood(food.key)} className="p-1" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><Trash2 size={12} color={colors.destructive} /></TouchableOpacity>
               </View>
               <View className="flex-row">
-                <TextInput className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1.5 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.portion} onChangeText={(v) => onUpdateFood(food.key, "portion", v)} placeholder="Portion" placeholderTextColor={colors.iconMuted} />
-                <TextInput className="w-12 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.calories} onChangeText={(v) => onUpdateFood(food.key, "calories", v)} placeholder="Cal" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
-                <TextInput className="w-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.protein} onChangeText={(v) => onUpdateFood(food.key, "protein", v)} placeholder="P" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
-                <TextInput className="w-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.carbs} onChangeText={(v) => onUpdateFood(food.key, "carbs", v)} placeholder="C" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
-                <TextInput className="w-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[10px] text-gray-900 dark:text-slate-50 text-center" value={food.fat} onChangeText={(v) => onUpdateFood(food.key, "fat", v)} placeholder="F" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
+                <TextInput className="flex-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1.5 py-1 text-[11px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.portion} onChangeText={(v) => onUpdateFood(food.key, "portion", v)} placeholder="Portion" placeholderTextColor={colors.iconMuted} />
+                <TextInput className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[11px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.calories} onChangeText={(v) => onUpdateFood(food.key, "calories", v)} placeholder="Cal" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
+                <TextInput className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[11px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.protein} onChangeText={(v) => onUpdateFood(food.key, "protein", v)} placeholder="P" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
+                <TextInput className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[11px] text-gray-900 dark:text-slate-50 mr-1 text-center" value={food.carbs} onChangeText={(v) => onUpdateFood(food.key, "carbs", v)} placeholder="C" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
+                <TextInput className="flex-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-1 py-1 text-[11px] text-gray-900 dark:text-slate-50 text-center" value={food.fat} onChangeText={(v) => onUpdateFood(food.key, "fat", v)} placeholder="F" placeholderTextColor={colors.iconMuted} keyboardType="numeric" />
               </View>
             </View>
           ))}
           <View className="flex-row mt-1">
             <TouchableOpacity className="flex-1 border border-dashed border-gray-300 dark:border-slate-600 rounded py-1.5 items-center mr-1" onPress={onAddFoodManual}>
-              <Text className="text-[10px] text-gray-400 dark:text-slate-500">+ Manual</Text>
+              <Text className="text-[11px] text-gray-400 dark:text-slate-500">+ Manual</Text>
             </TouchableOpacity>
             <TouchableOpacity className="flex-1 border border-dashed border-brand-300 rounded py-1.5 items-center" onPress={onAddFood}>
-              <Text className="text-[10px] text-brand-600">+ {t.common.search}</Text>
+              <Text className="text-[11px] text-brand-600">+ {t.common.search}</Text>
             </TouchableOpacity>
           </View>
         </View>

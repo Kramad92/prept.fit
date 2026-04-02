@@ -189,7 +189,7 @@ export default function HabitsScreen() {
             return (
               <TouchableOpacity
                 key={habit.id}
-                className={`flex-row items-center bg-white dark:bg-slate-800 rounded-xl p-4 mb-2 border ${isDone ? "border-brand-200 bg-brand-50" : "border-gray-100 dark:border-slate-700/40"}`}
+                className={`flex-row items-center bg-white dark:bg-slate-800 rounded-xl p-4 mb-2 border ${isDone ? "border-brand-200 bg-brand-50 dark:bg-brand-900/20" : "border-gray-100 dark:border-slate-700/40"}`}
                 onPress={() => toggleHabit(habit)}
                 activeOpacity={0.7}
                 disabled={isToggling}

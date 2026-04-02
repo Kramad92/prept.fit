@@ -25,7 +25,7 @@ import { useCheckInTemplates } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { CheckInTemplate } from "@/types/api";
@@ -99,12 +99,12 @@ export default function CheckInBuilderScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.checkIns.title}</Text>
         <TouchableOpacity onPress={() => setShowForm(true)} className="bg-brand-600 rounded-lg px-3 py-1.5 flex-row items-center" activeOpacity={0.7}>
-          <Plus size={14} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">New</Text>
+          <Plus size={16} color="#fff" /><Text className="text-white text-xs font-semibold ml-1">New</Text>
         </TouchableOpacity>
       </View>
 
@@ -178,7 +178,7 @@ function TemplateFormModal({ visible, onClose }: { visible: boolean; onClose: ()
       }
     >
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.checkIns.templateName} *</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.checkIns.templateNamePlaceholder} placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.checkIns.templateNamePlaceholder} placeholderTextColor={colors.iconMuted} />
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.checkIns.frequency}</Text>
       <View className="flex-row flex-wrap mb-4">
@@ -193,7 +193,7 @@ function TemplateFormModal({ visible, onClose }: { visible: boolean; onClose: ()
       {questions.map((q, i) => (
         <View key={`q-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
           <Text className="text-xs text-gray-400 dark:text-slate-500 mr-2 w-4">{i + 1}.</Text>
-          <TextInput
+          <BottomSheetTextInput
             className="flex-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-slate-50"
             value={q}
             onChangeText={(v) => {
@@ -274,7 +274,7 @@ function TemplateEditModal({ item, onClose }: { item: CheckInTemplate | null; on
       }
     >
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.checkIns.templateName} *</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.checkIns.templateNamePlaceholder} placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={name} onChangeText={setName} placeholder={t.checkIns.templateNamePlaceholder} placeholderTextColor={colors.iconMuted} />
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.checkIns.frequency}</Text>
       <View className="flex-row flex-wrap mb-4">
@@ -289,7 +289,7 @@ function TemplateEditModal({ item, onClose }: { item: CheckInTemplate | null; on
       {questions.map((q, i) => (
         <View key={`eq-${i}-${q.slice(0, 8)}`} className="flex-row items-center mb-2">
           <Text className="text-xs text-gray-400 dark:text-slate-500 mr-2 w-4">{i + 1}.</Text>
-          <TextInput
+          <BottomSheetTextInput
             className="flex-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-slate-50"
             value={q}
             onChangeText={(v) => { const u = [...questions]; u[i] = v; setQuestions(u); }}

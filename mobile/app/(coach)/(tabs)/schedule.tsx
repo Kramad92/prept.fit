@@ -22,7 +22,7 @@ import { useCoachSchedule, useCoachClients } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { AppHeader } from "@/components/app-header";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -98,9 +98,7 @@ export default function CoachScheduleScreen() {
           {
             text: "View Client",
             onPress: () =>
-              router.push(
-                `/(coach)/clients/${session.clientId}` as never
-              ),
+              router.push({ pathname: "/(coach)/clients/[id]", params: { id: session.clientId } } as any),
           },
           { text: t.common.cancel, style: "cancel" as const },
         ]
@@ -336,7 +334,7 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
             {(clients || []).map((c) => (
               <TouchableOpacity
                 key={c.id}
-                className={`px-4 py-3 border-b border-gray-50 dark:border-slate-700/40 ${c.id === clientId ? "bg-brand-50" : ""}`}
+                className={`px-4 py-3 border-b border-gray-50 dark:border-slate-700/40 ${c.id === clientId ? "bg-brand-50 dark:bg-brand-900/20" : ""}`}
                 onPress={() => { setClientId(c.id); setShowClientPicker(false); }}
               >
                 <Text className="text-sm text-gray-900 dark:text-slate-50">{c.name}</Text>
@@ -348,24 +346,24 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
       {!showClientPicker && <View className="mb-2" />}
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.sessionTitle}</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={title} onChangeText={setTitle} placeholder={t.schedule.titlePlaceholder} placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={title} onChangeText={setTitle} placeholder={t.schedule.titlePlaceholder} placeholderTextColor={colors.iconMuted} />
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.date} (YYYY-MM-DD)</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={date} onChangeText={setDate} placeholder="2024-01-15" placeholderTextColor={colors.iconMuted} />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={date} onChangeText={setDate} placeholder="2024-01-15" placeholderTextColor={colors.iconMuted} />
 
       <View className="flex-row mb-4">
         <View className="flex-1 mr-2">
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.startTime}</Text>
-          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={startTime} onChangeText={setStartTime} placeholder="09:00" placeholderTextColor={colors.iconMuted} />
+          <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={startTime} onChangeText={setStartTime} placeholder="09:00" placeholderTextColor={colors.iconMuted} />
         </View>
         <View className="flex-1">
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.endTime}</Text>
-          <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={endTime} onChangeText={setEndTime} placeholder="10:00" placeholderTextColor={colors.iconMuted} />
+          <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={endTime} onChangeText={setEndTime} placeholder="10:00" placeholderTextColor={colors.iconMuted} />
         </View>
       </View>
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.notes} ({t.common.optional.toLowerCase()})</Text>
-      <TextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={notes} onChangeText={setNotes} placeholder={t.common.notesPlaceholder} placeholderTextColor={colors.iconMuted} multiline />
+      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={notes} onChangeText={setNotes} placeholder={t.common.notesPlaceholder} placeholderTextColor={colors.iconMuted} multiline />
     </AppBottomSheet>
   );
 }

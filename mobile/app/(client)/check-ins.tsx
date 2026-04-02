@@ -126,7 +126,7 @@ export default function CheckInsScreen() {
                 },
               ]);
             }}
-            className="mr-3 p-1"
+            className="mr-3 p-2.5"
           >
             <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
@@ -196,7 +196,7 @@ export default function CheckInsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-          <TouchableOpacity onPress={() => setMode("list")} className="mr-3 p-1">
+          <TouchableOpacity onPress={() => setMode("list")} className="mr-3 p-2.5">
             <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">
@@ -248,7 +248,7 @@ export default function CheckInsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="flex-1 text-lg font-semibold text-gray-900 dark:text-slate-50">

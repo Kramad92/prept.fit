@@ -21,15 +21,7 @@ import { AppHeader } from "@/components/app-header";
 import { router } from "expo-router";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-
-function SkeletonCard() {
-  return (
-    <View className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-3 border border-gray-100 dark:border-slate-700/40">
-      <View className="h-4 w-24 bg-gray-200 dark:bg-slate-700 rounded mb-3" />
-      <View className="h-5 w-48 bg-gray-100 dark:bg-slate-700 rounded" />
-    </View>
-  );
-}
+import { SkeletonCard } from "@/components/skeleton";
 
 export default function HomeScreen() {
   const { user } = useAuth();

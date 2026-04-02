@@ -7,14 +7,14 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import { useQueryClient } from "@tanstack/react-query";
 import { UtensilsCrossed, ChevronDown, ChevronUp, Flame } from "lucide-react-native";
 import { QueryError } from "@/components/query-error";
 import { AppHeader } from "@/components/app-header";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
-import type { ClientProfile, AssignedMealPlan, ClientMeal, Food, Meal } from "@/types/api";
+import { useClientProfile } from "@/hooks/use-client-data";
+import type { AssignedMealPlan, ClientMeal, Food, Meal } from "@/types/api";
 
 function MacroPill({ label, value }: { label: string; value: number | null }) {
   if (value == null) return null;
@@ -111,10 +111,7 @@ export default function NutritionScreen() {
   const t = useT();
   const colors = useThemeColors();
 
-  const { data: profile, isLoading, isError, refetch } = useQuery<ClientProfile>({
-    queryKey: ["client-profile"],
-    queryFn: () => api.get<ClientProfile>("/api/portal/me"),
-  });
+  const { data: profile, isLoading, isError, refetch } = useClientProfile();
 
   const activePlans = useMemo(() => profile?.assignedMealPlans?.filter((p) => p.isActive) || [], [profile]);
   const inactivePlans = useMemo(() => profile?.assignedMealPlans?.filter((p) => !p.isActive) || [], [profile]);
@@ -166,7 +163,7 @@ export default function NutritionScreen() {
       >
 
         {totalMacros.calories > 0 && (
-          <View className="bg-brand-50 rounded-xl p-4 mb-4 border border-brand-100">
+          <View className="bg-brand-50 dark:bg-brand-900/20 rounded-xl p-4 mb-4 border border-brand-100">
             <View className="flex-row items-center mb-2">
               <Flame size={16} color={colors.brand} />
               <Text className="text-sm font-medium text-brand-800 ml-1">Daily Targets</Text>

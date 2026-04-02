@@ -153,7 +153,7 @@ export default function BookSessionScreen() {
               setShowConfirm(false);
               setSelectedSlot(null);
             }}
-            className="mr-3 p-1"
+            className="mr-3 p-2.5"
           >
             <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
@@ -169,7 +169,7 @@ export default function BookSessionScreen() {
           <ScrollView className="flex-1 px-4 pt-6" keyboardShouldPersistTaps="handled">
             <View className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-gray-100 dark:border-slate-700/40 mb-4">
               <View className="items-center mb-4">
-                <View className="w-16 h-16 rounded-full bg-brand-50 items-center justify-center mb-3">
+                <View className="w-16 h-16 rounded-full bg-brand-50 dark:bg-brand-900/20 items-center justify-center mb-3">
                   <Calendar size={28} color={colors.brand} />
                 </View>
                 <Text className="text-xl font-bold text-gray-900 dark:text-slate-50">
@@ -226,7 +226,7 @@ export default function BookSessionScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">
@@ -253,7 +253,7 @@ export default function BookSessionScreen() {
             {upcomingSessions.map((session) => (
               <View
                 key={session.id}
-                className="bg-brand-50 rounded-xl p-3 mb-2 border border-brand-100 flex-row items-center"
+                className="bg-brand-50 dark:bg-brand-900/20 rounded-xl p-3 mb-2 border border-brand-100 flex-row items-center"
               >
                 <Calendar size={18} color={colors.brand} />
                 <View className="flex-1 ml-3">

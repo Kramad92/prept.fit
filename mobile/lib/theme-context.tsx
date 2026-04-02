@@ -23,7 +23,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemScheme = useSystemColorScheme();
   const { setColorScheme } = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>("system");
-  const [ready, setReady] = useState(false);
 
   const isDark = mode === "system"
     ? systemScheme === "dark"
@@ -43,7 +42,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           setModeState(saved);
         }
       } catch {}
-      setReady(true);
     })();
   }, []);
 
@@ -53,8 +51,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       await SecureStore.setItemAsync(STORAGE_KEY, m);
     } catch {}
   }, []);
-
-  if (!ready) return null;
 
   return (
     <ThemeContext.Provider value={{ mode, isDark, setMode }}>

@@ -144,6 +144,7 @@ export default function AvailabilityScreen() {
                       { text: t.common.delete, style: "destructive", onPress: () => deleteMutation.mutate(slot.id) },
                     ])}
                     className="p-1"
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     <Trash2 size={16} color={colors.destructive} />
                   </TouchableOpacity>
@@ -204,7 +205,7 @@ function Header() {
   const colors = useThemeColors();
   return (
     <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
         <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
       <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.settings.availability}</Text>

@@ -151,7 +151,7 @@ export default function ClientDetailScreen() {
           <View className="flex-row mt-4">
             <TouchableOpacity
               className="flex-1 flex-row items-center justify-center bg-brand-600 rounded-lg py-2.5 mr-2"
-              onPress={() => router.push(`/(coach)/messages/${id}` as never)}
+              onPress={() => router.push({ pathname: "/(coach)/messages/[clientId]", params: { clientId: id } } as any)}
               activeOpacity={0.7}
             >
               <MessageCircle size={16} color="#fff" />
@@ -273,7 +273,7 @@ function Header({ title }: { title?: string }) {
   const colors = useThemeColors();
   return (
     <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
         <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
       <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50" numberOfLines={1}>
@@ -810,6 +810,8 @@ function WorkoutPlanDetailSheet({ visible, plan, clientId, onClose, onRefresh }:
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editExercises, setEditExercises] = useState<{ name: string; sets: string; reps: string; weight: string; restSeconds: string; notes: string }[]>([]);
+  const [showExercisePicker, setShowExercisePicker] = useState(false);
+  const [browseTargetIndex, setBrowseTargetIndex] = useState<number>(0);
 
   useEffect(() => {
     if (plan) {
@@ -943,7 +945,7 @@ function WorkoutPlanDetailSheet({ visible, plan, clientId, onClose, onRefresh }:
                   <X size={16} color={colors.destructive} />
                 </TouchableOpacity>
               </View>
-              <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2.5 mb-2 text-sm text-gray-900 dark:text-slate-50" placeholder={t.workouts.exerciseName} value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} />
+              <ExerciseNameInput value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} onBrowse={() => { setBrowseTargetIndex(i); setShowExercisePicker(true); }} />
               <View className="flex-row">
                 <View className="flex-1 mr-2">
                   <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-slate-50" placeholder={t.workouts.sets} value={ex.sets} onChangeText={(v) => updateExercise(i, "sets", v)} keyboardType="numeric" />
@@ -958,10 +960,21 @@ function WorkoutPlanDetailSheet({ visible, plan, clientId, onClose, onRefresh }:
               <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 mt-2 text-sm text-gray-900 dark:text-slate-50" placeholder={t.workouts.formCues} value={ex.notes} onChangeText={(v) => updateExercise(i, "notes", v)} />
             </View>
           ))}
-          <TouchableOpacity className="flex-row items-center justify-center border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl py-2.5" onPress={addExercise}>
-            <Plus size={16} color={colors.icon} />
-            <Text className="text-sm font-medium text-gray-500 dark:text-slate-400 ml-1">{t.workouts.addExerciseManually}</Text>
-          </TouchableOpacity>
+          <View className="flex-row mt-1">
+            <TouchableOpacity className="flex-1 flex-row items-center justify-center border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl py-2.5 mr-2" onPress={addExercise}>
+              <Plus size={16} color={colors.icon} />
+              <Text className="text-sm font-medium text-gray-500 dark:text-slate-400 ml-1">{t.workouts.addBlank}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className="flex-1 flex-row items-center justify-center border-2 border-dashed border-brand-300 dark:border-brand-700 rounded-xl py-2.5 bg-brand-50 dark:bg-brand-900/15" onPress={() => { setBrowseTargetIndex(editExercises.length); addExercise(); setShowExercisePicker(true); }}>
+              <Search size={16} color={colors.brand} />
+              <Text className="text-sm font-medium text-brand-600 dark:text-brand-400 ml-1">{t.workouts.fromLibrary}</Text>
+            </TouchableOpacity>
+          </View>
+          <ExercisePickerSheet
+            visible={showExercisePicker}
+            onClose={() => setShowExercisePicker(false)}
+            onSelect={(name) => { updateExercise(browseTargetIndex, "name", name); setShowExercisePicker(false); }}
+          />
         </View>
       ) : (
         <View>

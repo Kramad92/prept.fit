@@ -106,10 +106,10 @@ export default function SettingsScreen() {
   const handleSave = () => {
     saveMutation.mutate({
       name: name.trim(),
-      bio: bio.trim() || null,
-      email: email.trim() || null,
-      phone: phone.trim() || null,
-      website: website.trim() || null,
+      bio: bio.trim() || undefined,
+      email: email.trim() || undefined,
+      phone: phone.trim() || undefined,
+      website: website.trim() || undefined,
       timezone,
       locale,
       units,
@@ -260,7 +260,7 @@ export default function SettingsScreen() {
                   {TIMEZONES.map((tz) => (
                     <TouchableOpacity
                       key={tz}
-                      className={`px-3 py-2.5 border-b border-gray-50 dark:border-slate-700/40 ${tz === timezone ? "bg-brand-50" : ""}`}
+                      className={`px-3 py-2.5 border-b border-gray-50 dark:border-slate-700/40 ${tz === timezone ? "bg-brand-50 dark:bg-brand-900/20" : ""}`}
                       onPress={() => { setTimezone(tz); setShowTimezones(false); }}
                     >
                       <Text className="text-sm text-gray-900 dark:text-slate-50">{tz}</Text>
@@ -327,7 +327,7 @@ function Header({ onSave, saving, disabled }: { onSave: () => void; saving: bool
   const colors = useThemeColors();
   return (
     <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
         <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
       <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.settings.title}</Text>
@@ -355,7 +355,7 @@ function NavLink({ icon: Icon, label, href, last }: { icon: any; label: string; 
   return (
     <TouchableOpacity
       className={`flex-row items-center px-4 py-3.5 ${last ? "" : "border-b border-gray-100 dark:border-slate-700/40"}`}
-      onPress={() => router.push(href as never)}
+      onPress={() => router.push(href as any)}
       activeOpacity={0.6}
     >
       <Icon size={20} color={colors.icon} />

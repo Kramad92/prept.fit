@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,17 +12,14 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Send } from "lucide-react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import Pusher from "pusher-js/react-native";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { haptics } from "@/lib/haptics";
 import { useCoachClients } from "@/hooks/use-coach-data";
+import { useChatChannel } from "@/hooks/use-chat-channel";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { Message } from "@/types/api";
-
-const PUSHER_KEY = process.env.EXPO_PUBLIC_PUSHER_KEY;
-const PUSHER_CLUSTER = process.env.EXPO_PUBLIC_PUSHER_CLUSTER || "mt1";
 
 export default function CoachChatScreen() {
   const t = useT();
@@ -58,39 +55,8 @@ export default function CoachChatScreen() {
     );
   }, [serverMessages, localMessages]);
 
-  // Pusher
-  useEffect(() => {
-    if (!PUSHER_KEY || !user?.tenantId || !clientId) return;
-    const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER });
-    const channel = pusher.subscribe(`chat-${user.tenantId}-${clientId}`);
-
-    channel.bind("new-message", (msg: Message) => {
-      if (msg.senderId === user.id) return;
-      queryClient.setQueryData<Message[]>(
-        ["messages", clientId],
-        (old) => (old ? [...old, msg] : [msg])
-      );
-    });
-
-    channel.bind("message-read", () => {
-      queryClient.invalidateQueries({ queryKey: ["messages", clientId] });
-    });
-
-    return () => {
-      channel.unbind_all();
-      pusher.unsubscribe(`chat-${user.tenantId}-${clientId}`);
-      pusher.disconnect();
-    };
-  }, [PUSHER_KEY, user?.tenantId, clientId, user?.id, queryClient]);
-
-  // Polling fallback
-  useEffect(() => {
-    if (PUSHER_KEY) return;
-    const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["messages", clientId] });
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [clientId, queryClient]);
+  // Real-time chat subscription
+  useChatChannel(user?.tenantId, clientId, user?.id);
 
   // Mark messages as read
   const lastMarkedCount = useRef(0);
@@ -100,7 +66,6 @@ export default function CoachChatScreen() {
       if (markReadTimer.current) clearTimeout(markReadTimer.current);
       markReadTimer.current = setTimeout(() => {
         lastMarkedCount.current = messages.length;
-        api.put("/api/messages/read", { clientId }).catch(() => {});
         queryClient.invalidateQueries({ queryKey: ["coach-unread-counts"] });
         queryClient.invalidateQueries({ queryKey: ["coach-latest-messages"] });
       }, 2000);
@@ -209,7 +174,7 @@ export default function CoachChatScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
             <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{clientName}</Text>
@@ -225,7 +190,7 @@ export default function CoachChatScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
             <ArrowLeft size={22} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{clientName}</Text>
@@ -243,7 +208,7 @@ export default function CoachChatScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{clientName}</Text>

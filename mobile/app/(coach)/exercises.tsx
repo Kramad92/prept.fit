@@ -24,7 +24,7 @@ import { useExerciseLibrary, useExerciseCategories, useEquipmentTypes } from "@/
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ExerciseLibraryItem } from "@/types/api";
@@ -81,7 +81,7 @@ export default function ExercisesScreen() {
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
           <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">{t.exerciseLibrary.title}</Text>
@@ -296,7 +296,7 @@ function CreateExerciseModal({ visible, onClose }: { visible: boolean; onClose: 
       <FormField label={t.exerciseLibrary.equipment} value={equip} onChange={setEquip} placeholder="e.g. Barbell, Dumbbell" />
       <FormField label={t.exerciseLibrary.videoUrl} value={videoUrl} onChange={setVideoUrl} placeholder="https://..." keyboard="url" />
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.exerciseLibrary.instructions}</Text>
-      <TextInput
+      <BottomSheetTextInput
         className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
         value={instructions}
         onChangeText={setInstructions}
@@ -316,7 +316,7 @@ function FormField({ label, value, onChange, placeholder, keyboard }: { label: s
   return (
     <>
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{label}</Text>
-      <TextInput
+      <BottomSheetTextInput
         className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
         value={value}
         onChangeText={onChange}

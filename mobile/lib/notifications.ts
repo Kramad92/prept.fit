@@ -13,7 +13,7 @@ if (!isAndroidExpoGo) {
   try {
     Notifications = require("expo-notifications");
   } catch {
-    console.warn("[push] expo-notifications not available in this environment");
+    if (__DEV__) console.warn("[push] expo-notifications not available in this environment");
   }
 }
 
@@ -37,7 +37,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
   // Push doesn't work on simulator
   if (!Device.isDevice) {
-    console.log("[push] Skipping — not a physical device");
+    if (__DEV__) console.log("[push] Skipping — not a physical device");
     return null;
   }
 
@@ -52,7 +52,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   if (finalStatus !== "granted") {
-    console.log("[push] Permission not granted");
+    if (__DEV__) console.log("[push] Permission not granted");
     return null;
   }
 
@@ -78,7 +78,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
       platform: Platform.OS,
     });
 
-    console.log("[push] Token registered successfully");
+    if (__DEV__) console.log("[push] Token registered successfully");
     return token;
   } catch (error) {
     console.error("[push] Failed to register:", error);
@@ -93,7 +93,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
 export async function unregisterPushToken(): Promise<void> {
   try {
     await api.delete("/api/notifications/register-device");
-    console.log("[push] Unregistered tokens");
+    if (__DEV__) console.log("[push] Unregistered tokens");
   } catch {
     // Ignore errors during logout
   }

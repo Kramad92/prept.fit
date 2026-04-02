@@ -25,7 +25,7 @@ import { useCoachPayments, useCoachClients } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
-import { AppBottomSheet } from "@/components/app-bottom-sheet";
+import { AppBottomSheet, BottomSheetTextInput } from "@/components/app-bottom-sheet";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 
@@ -49,9 +49,7 @@ export default function CoachPaymentsScreen() {
         <TouchableOpacity
           className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
           onPress={() =>
-            router.push(
-              `/(coach)/clients/${item.clientId || item.client?.id}` as never
-            )
+            router.push({ pathname: "/(coach)/clients/[id]", params: { id: item.clientId || item.client?.id } } as any)
           }
           activeOpacity={0.6}
         >
@@ -225,7 +223,7 @@ function Header({ onAdd }: { onAdd: () => void }) {
   const colors = useThemeColors();
   return (
     <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40 mb-4">
-      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
         <ArrowLeft size={22} color={colors.text} />
       </TouchableOpacity>
       <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50 flex-1">
@@ -371,7 +369,7 @@ function AddPaymentModal({
             {(clients || []).map((c) => (
               <TouchableOpacity
                 key={c.id}
-                className={`px-4 py-2.5 border-b border-gray-50 dark:border-slate-700/40 ${c.id === clientId ? "bg-brand-50" : ""}`}
+                className={`px-4 py-2.5 border-b border-gray-50 dark:border-slate-700/40 ${c.id === clientId ? "bg-brand-50 dark:bg-brand-900/20" : ""}`}
                 onPress={() => { setClientId(c.id); setShowClientPicker(false); }}
               >
                 <Text className="text-sm text-gray-900 dark:text-slate-50">{c.name}</Text>
@@ -382,7 +380,7 @@ function AddPaymentModal({
       )}
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.billing.amount}</Text>
-      <TextInput
+      <BottomSheetTextInput
         className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
         placeholder="0.00"
         placeholderTextColor={colors.iconMuted}
@@ -420,7 +418,7 @@ function AddPaymentModal({
       </View>
 
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.description} ({t.common.optional})</Text>
-      <TextInput
+      <BottomSheetTextInput
         className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50"
         placeholder="Monthly coaching fee..."
         placeholderTextColor={colors.iconMuted}

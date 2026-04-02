@@ -567,6 +567,15 @@ model NutritionLog {
   photoUrl  String?  // optional meal photo
   createdAt DateTime @default(now())
 
+  // Macro verification (AI background job via Vercel Cron)
+  verifiedAt       DateTime?
+  flagged          Boolean   @default(false)
+  flagReason       String?
+  expectedCalories Int?
+  expectedProtein  Int?
+  expectedCarbs    Int?
+  expectedFat      Int?
+
   clientId  String
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
@@ -667,6 +676,10 @@ model ClientExercise {
   videoUrl      String?
   orderIndex    Int      @default(0)
   createdAt     DateTime @default(now())
+
+  // Program variation fields (Pass 2: progressive overload)
+  weekNumber        Int?     // Which program week this belongs to
+  progressionSource String?  // "auto" | "coach" | "manual"
 
   clientId      String
   client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -921,6 +934,10 @@ model WorkoutProgramDay {
 
   workoutPlanId String?
   workoutPlan   WorkoutPlan? @relation(fields: [workoutPlanId], references: [id], onDelete: SetNull)
+
+  // AI-generated exercise swaps for variety across weeks
+  // JSON: [{originalName, swapName, swapLibraryId, reason}]
+  exerciseSwaps Json?
 
   @@index([programId])
   @@map("workout_program_days")

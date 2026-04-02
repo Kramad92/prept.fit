@@ -125,10 +125,87 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "NO_ACCOUNT", message: "No account found. Please register on the web first." },
-        { status: 404 }
-      );
+      // Check for pending client invite matching this email
+      const pendingClient = await prisma.client.findFirst({
+        where: { email: verified.email, userId: null },
+        include: { tenant: true },
+      });
+
+      if (!pendingClient) {
+        return NextResponse.json(
+          { error: "NO_ACCOUNT", message: "No account found. Please register on the web first." },
+          { status: 404 }
+        );
+      }
+
+      // Auto-create CLIENT account for invited user signing in via OAuth
+      const newUser = await prisma.user.create({
+        data: {
+          email: verified.email,
+          name: verified.name || pendingClient.name,
+          role: "CLIENT",
+          tenantId: pendingClient.tenantId,
+          emailVerified: new Date(),
+        },
+      });
+
+      // Link OAuth account
+      await prisma.account.create({
+        data: {
+          userId: newUser.id,
+          provider,
+          providerAccountId: verified.providerAccountId,
+        },
+      });
+
+      // Link all pending client profiles with this email to the new user
+      await prisma.client.updateMany({
+        where: { email: verified.email, userId: null },
+        data: { userId: newUser.id },
+      });
+
+      // Mark all pending invite tokens for this client as used
+      await prisma.inviteToken.updateMany({
+        where: {
+          clientId: pendingClient.id,
+          usedAt: null,
+        },
+        data: { usedAt: new Date() },
+      });
+
+      // Find the active profile to build the token payload
+      const activeProfile = await prisma.client.findFirst({
+        where: { userId: newUser.id, status: "active" },
+      });
+
+      const userPayload = {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+        tenantId: pendingClient.tenantId,
+        tenantSlug: pendingClient.tenant.slug,
+        clientProfileId: activeProfile?.id || pendingClient.id,
+      };
+
+      // Generate tokens and return
+      const accessToken = await generateAccessToken(userPayload);
+      const rawRefreshToken = randomBytes(64).toString("hex");
+      const hashedRefreshToken = hashToken(rawRefreshToken);
+
+      await prisma.refreshToken.create({
+        data: {
+          token: hashedRefreshToken,
+          userId: newUser.id,
+          expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000),
+        },
+      });
+
+      return NextResponse.json({
+        accessToken,
+        refreshToken: rawRefreshToken,
+        user: userPayload,
+      });
     }
 
     // Block inactive clients — only if ALL profiles are inactive

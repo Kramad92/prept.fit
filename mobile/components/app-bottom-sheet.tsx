@@ -126,8 +126,7 @@ export function AppBottomSheet({
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
       enablePanDownToClose
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
+      keyboardBehavior="extend"
       android_keyboardInputMode="adjustResize"
       handleComponent={renderHandle}
       backgroundStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
@@ -137,11 +136,11 @@ export function AppBottomSheet({
       enableDynamicSizing={false}
     >
       <BottomSheetKAScrollView
-        bottomOffset={footer ? 80 : 20}
+        bottomOffset={footer ? 60 : 16}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: footer ? 80 : 16,
+          paddingBottom: footer ? 60 : 16,
         }}
         keyboardShouldPersistTaps="handled"
       >

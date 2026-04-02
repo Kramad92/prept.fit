@@ -20,13 +20,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   // Find unverified logs from the last 6 hours that have at least one macro
   const logs = await prisma.nutritionLog.findMany({
     where: {
       verifiedAt: null,
-      createdAt: { gte: sixHoursAgo },
+      createdAt: { gte: oneDayAgo },
       OR: [
         { calories: { not: null } },
         { protein: { not: null } },

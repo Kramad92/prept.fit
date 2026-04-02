@@ -90,7 +90,7 @@ Return a JSON object:
 
       // Check deviations > 25%
       const deviations: string[] = [];
-      function checkDeviation(name: string, logged: number | null, exp: number) {
+      const checkDeviation = (name: string, logged: number | null, exp: number) => {
         if (logged === null || exp === 0) return;
         const pct = Math.abs(logged - exp) / exp;
         if (pct > 0.25) {
@@ -98,7 +98,7 @@ Return a JSON object:
             `${name}: logged ${logged}, expected ~${exp} (${Math.round(pct * 100)}% off)`
           );
         }
-      }
+      };
 
       checkDeviation("Calories", log.calories, expected.calories);
       checkDeviation("Protein", log.protein, expected.protein);

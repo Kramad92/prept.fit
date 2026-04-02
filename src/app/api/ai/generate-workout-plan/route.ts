@@ -85,7 +85,7 @@ async function fetchTaxonomy(tenantId: string): Promise<ExerciseTaxonomy> {
   });
 
   const distinct = (values: (string | null)[]) =>
-    [...new Set(values.filter((v): v is string => !!v))].sort();
+    Array.from(new Set(values.filter((v): v is string => !!v))).sort();
 
   return {
     difficulties: distinct(exercises.map((e) => e.difficulty)),
@@ -171,8 +171,7 @@ async function filterExercises(
   tenantId: string,
   spec: ExerciseFilterSpec
 ): Promise<LibraryExercise[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = { tenantId };
+  const where: Record<string, unknown> = { tenantId };
 
   if (spec.muscleGroups?.length) where.muscleGroup = { in: spec.muscleGroups };
   if (spec.equipment?.length) where.equipment = { in: spec.equipment };

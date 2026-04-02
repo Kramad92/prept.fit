@@ -33,7 +33,7 @@ import {
   Search,
   Sparkles,
 } from "lucide-react-native";
-import { useClientDetail, useWorkoutPlans, useMealPlans, useHabitTemplates, useExerciseLibrary } from "@/hooks/use-coach-data";
+import { useClientDetail, useWorkoutPlans, useMealPlans, useHabitTemplates, useExerciseLibrary, useExerciseCategories, useEquipmentTypes } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
@@ -1180,7 +1180,7 @@ function MealPlanDetailSheet({ visible, plan, clientId, onClose, onRefresh }: { 
 }
 
 /* ─── Exercise Name Input with Library Autocomplete ─── */
-function ExerciseNameInput({ value, onChangeText }: { value: string; onChangeText: (v: string) => void }) {
+function ExerciseNameInput({ value, onChangeText, onBrowse }: { value: string; onChangeText: (v: string) => void; onBrowse: () => void }) {
   const [focused, setFocused] = useState(false);
   const searchQuery = value.length >= 2 ? value : undefined;
   const { data: suggestions } = useExerciseLibrary(searchQuery);
@@ -1188,15 +1188,22 @@ function ExerciseNameInput({ value, onChangeText }: { value: string; onChangeTex
 
   return (
     <View>
-      <BottomSheetTextInput
-        className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900"
-        placeholder="Search or type exercise name *"
-        placeholderTextColor="#9ca3af"
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setTimeout(() => setFocused(false), 200)}
-      />
+      <View className="flex-row items-center">
+        <View className="flex-1">
+          <BottomSheetTextInput
+            className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900"
+            placeholder="Search or type exercise name *"
+            placeholderTextColor="#9ca3af"
+            value={value}
+            onChangeText={onChangeText}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setTimeout(() => setFocused(false), 200)}
+          />
+        </View>
+        <TouchableOpacity onPress={onBrowse} className="ml-2 bg-brand-50 border border-brand-200 rounded-lg p-2.5">
+          <Search size={16} color="#059669" />
+        </TouchableOpacity>
+      </View>
       {showSuggestions && (
         <View className="bg-white border border-gray-200 rounded-lg mt-1 max-h-36 overflow-hidden">
           {suggestions.slice(0, 5).map((item) => (
@@ -1207,13 +1214,158 @@ function ExerciseNameInput({ value, onChangeText }: { value: string; onChangeTex
             >
               <Text className="text-sm text-gray-900">{item.name}</Text>
               {(item.category || item.muscleGroup) && (
-                <Text className="text-[10px] text-gray-400">{[item.category, item.muscleGroup].filter(Boolean).join(" · ")}</Text>
+                <Text className="text-[10px] text-gray-400">{[item.category, item.muscleGroup, item.equipment].filter(Boolean).join(" · ")}</Text>
               )}
             </TouchableOpacity>
           ))}
         </View>
       )}
     </View>
+  );
+}
+
+/* ─── Filter Chip ─── */
+function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className={`px-2.5 py-1 rounded-full mr-1.5 mb-1.5 border ${active ? "bg-brand-600 border-brand-600" : "bg-white border-gray-200"}`}
+    >
+      <Text className={`text-xs ${active ? "text-white font-medium" : "text-gray-600"}`}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+/* ─── Exercise Picker Sheet with Filters ─── */
+function ExercisePickerSheet({ visible, onClose, onSelect }: { visible: boolean; onClose: () => void; onSelect: (name: string) => void }) {
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
+  const [selectedEquipment, setSelectedEquipment] = useState<string | undefined>();
+
+  const { data: categories } = useExerciseCategories();
+  const { data: equipmentTypes } = useEquipmentTypes();
+  const { data: exercises } = useExerciseLibrary(
+    search.length >= 2 ? search : undefined,
+    selectedCategory,
+    { difficulty: selectedDifficulty, equipment: selectedEquipment }
+  );
+
+  const difficulties = ["Beginner", "Novice", "Intermediate", "Advanced", "Expert"];
+
+  useEffect(() => {
+    if (visible) {
+      setSearch("");
+      setSelectedCategory(undefined);
+      setSelectedDifficulty(undefined);
+      setSelectedEquipment(undefined);
+    }
+  }, [visible]);
+
+  const hasFilters = selectedCategory || selectedDifficulty || selectedEquipment;
+
+  return (
+    <AppBottomSheet visible={visible} onClose={onClose} snapPoints={["85%"]} title="Browse Exercise Library">
+      {/* Search */}
+      <View className="flex-row items-center bg-gray-50 rounded-lg px-3 mb-3">
+        <Search size={16} color="#9ca3af" />
+        <BottomSheetTextInput
+          className="flex-1 py-2.5 px-2 text-sm text-gray-900"
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search exercises..."
+          placeholderTextColor="#9ca3af"
+        />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch("")}>
+            <X size={14} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Category filters */}
+      {categories && categories.length > 0 && (
+        <View className="mb-2">
+          <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {categories.map((cat) => (
+              <FilterChip
+                key={cat.id}
+                label={cat.name}
+                active={selectedCategory === cat.name}
+                onPress={() => setSelectedCategory(selectedCategory === cat.name ? undefined : cat.name)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Difficulty filters */}
+      <View className="mb-2">
+        <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Difficulty</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {difficulties.map((d) => (
+            <FilterChip
+              key={d}
+              label={d}
+              active={selectedDifficulty === d}
+              onPress={() => setSelectedDifficulty(selectedDifficulty === d ? undefined : d)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Equipment filters */}
+      {equipmentTypes && equipmentTypes.length > 0 && (
+        <View className="mb-2">
+          <Text className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Equipment</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {equipmentTypes.map((eq) => (
+              <FilterChip
+                key={eq.id}
+                label={eq.name}
+                active={selectedEquipment === eq.name}
+                onPress={() => setSelectedEquipment(selectedEquipment === eq.name ? undefined : eq.name)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Clear filters */}
+      {hasFilters && (
+        <TouchableOpacity
+          className="mb-2"
+          onPress={() => { setSelectedCategory(undefined); setSelectedDifficulty(undefined); setSelectedEquipment(undefined); }}
+        >
+          <Text className="text-xs text-brand-600 font-medium">Clear filters</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Results */}
+      <View className="border-t border-gray-100 pt-2 mt-1">
+        <Text className="text-[10px] text-gray-400 mb-2">{exercises?.length ?? 0} exercises</Text>
+        {(exercises || []).length === 0 ? (
+          <View className="items-center py-10">
+            <Text className="text-sm text-gray-400">No exercises found</Text>
+          </View>
+        ) : (
+          (exercises || []).slice(0, 50).map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              className="py-2.5 border-b border-gray-50"
+              onPress={() => { onSelect(item.name); }}
+              activeOpacity={0.6}
+            >
+              <Text className="text-sm text-gray-900">{item.name}</Text>
+              <Text className="text-[10px] text-gray-400 mt-0.5">
+                {[item.category, item.muscleGroup, item.equipment, item.difficulty].filter(Boolean).join(" · ")}
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </View>
+    </AppBottomSheet>
   );
 }
 
@@ -1225,6 +1377,9 @@ function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible
   const [exercises, setExercises] = useState<{ name: string; sets: string; reps: string; weight: string; restSeconds: string; notes: string }[]>([
     { name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" },
   ]);
+
+  const [showExercisePicker, setShowExercisePicker] = useState(false);
+  const [browseTargetIndex, setBrowseTargetIndex] = useState<number | null>(null);
 
   // AI generation state
   const [aiLoading, setAiLoading] = useState(false);
@@ -1238,6 +1393,8 @@ function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible
       setName("");
       setDescription("");
       setExercises([{ name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" }]);
+      setShowExercisePicker(false);
+      setBrowseTargetIndex(null);
       setAiLoading(false);
       setAiError("");
       setAiHasGenerated(false);
@@ -1414,7 +1571,7 @@ function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible
               </TouchableOpacity>
             )}
           </View>
-          <ExerciseNameInput value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} />
+          <ExerciseNameInput value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} onBrowse={() => { setBrowseTargetIndex(i); setShowExercisePicker(true); }} />
           <View className="flex-row mt-2">
             <View className="flex-1 mr-2">
               <Text className="text-[10px] text-gray-500 mb-0.5">Sets</Text>
@@ -1436,10 +1593,29 @@ function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible
           <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 mt-2 text-sm text-gray-900" placeholder="Form cues, notes..." placeholderTextColor="#9ca3af" value={ex.notes} onChangeText={(v) => updateExercise(i, "notes", v)} />
         </View>
       ))}
-      <TouchableOpacity className="flex-row items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-2.5 mb-4" onPress={addExercise}>
-        <Plus size={16} color="#6b7280" />
-        <Text className="text-sm font-medium text-gray-500 ml-1">Add Exercise</Text>
-      </TouchableOpacity>
+      <View className="flex-row mb-4">
+        <TouchableOpacity className="flex-1 flex-row items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-2.5 mr-2" onPress={addExercise}>
+          <Plus size={16} color="#6b7280" />
+          <Text className="text-sm font-medium text-gray-500 ml-1">Add Blank</Text>
+        </TouchableOpacity>
+        <TouchableOpacity className="flex-1 flex-row items-center justify-center border-2 border-dashed border-brand-300 rounded-xl py-2.5" onPress={() => { setBrowseTargetIndex(null); setShowExercisePicker(true); }}>
+          <Search size={16} color="#059669" />
+          <Text className="text-sm font-medium text-brand-600 ml-1">From Library</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ExercisePickerSheet
+        visible={showExercisePicker}
+        onClose={() => setShowExercisePicker(false)}
+        onSelect={(selectedName) => {
+          if (browseTargetIndex !== null) {
+            updateExercise(browseTargetIndex, "name", selectedName);
+          } else {
+            setExercises((prev) => [...prev, { name: selectedName, sets: "", reps: "", weight: "", restSeconds: "", notes: "" }]);
+          }
+          setShowExercisePicker(false);
+        }}
+      />
     </AppBottomSheet>
   );
 }

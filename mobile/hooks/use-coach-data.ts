@@ -167,13 +167,16 @@ export function useAvailability() {
 }
 
 // Exercise library
-export function useExerciseLibrary(search?: string, category?: string) {
+export function useExerciseLibrary(search?: string, category?: string, filters?: { difficulty?: string; equipment?: string; bodyRegion?: string }) {
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   if (category) params.set("category", category);
+  if (filters?.difficulty) params.set("difficulty", filters.difficulty);
+  if (filters?.equipment) params.set("equipment", filters.equipment);
+  if (filters?.bodyRegion) params.set("bodyRegion", filters.bodyRegion);
   const qs = params.toString();
   return useQuery<ExerciseLibraryItem[]>({
-    queryKey: ["exercise-library", search, category],
+    queryKey: ["exercise-library", search, category, filters?.difficulty, filters?.equipment, filters?.bodyRegion],
     queryFn: () => api.get<ExerciseLibraryItem[]>(`/api/exercise-library${qs ? `?${qs}` : ""}`),
   });
 }

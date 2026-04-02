@@ -10,6 +10,9 @@ export async function GET(req: NextRequest) {
 
   const search = req.nextUrl.searchParams.get("search");
   const category = req.nextUrl.searchParams.get("category");
+  const difficulty = req.nextUrl.searchParams.get("difficulty");
+  const equipment = req.nextUrl.searchParams.get("equipment");
+  const bodyRegion = req.nextUrl.searchParams.get("bodyRegion");
 
   const exercises = await prisma.exerciseLibrary.findMany({
     where: {
@@ -24,6 +27,9 @@ export async function GET(req: NextRequest) {
           }
         : {}),
       ...(category ? { category } : {}),
+      ...(difficulty ? { difficulty } : {}),
+      ...(equipment ? { equipment } : {}),
+      ...(bodyRegion ? { bodyRegion } : {}),
     },
     orderBy: { name: "asc" },
   });

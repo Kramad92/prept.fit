@@ -30,8 +30,10 @@ import {
   X,
   Pause,
   Play,
+  Search,
+  Sparkles,
 } from "lucide-react-native";
-import { useClientDetail, useWorkoutPlans, useMealPlans, useHabitTemplates } from "@/hooks/use-coach-data";
+import { useClientDetail, useWorkoutPlans, useMealPlans, useHabitTemplates, useExerciseLibrary } from "@/hooks/use-coach-data";
 import { api } from "@/lib/api-client";
 import { haptics } from "@/lib/haptics";
 import { QueryError } from "@/components/query-error";
@@ -1177,18 +1179,70 @@ function MealPlanDetailSheet({ visible, plan, clientId, onClose, onRefresh }: { 
   );
 }
 
+/* ─── Exercise Name Input with Library Autocomplete ─── */
+function ExerciseNameInput({ value, onChangeText }: { value: string; onChangeText: (v: string) => void }) {
+  const [focused, setFocused] = useState(false);
+  const searchQuery = value.length >= 2 ? value : undefined;
+  const { data: suggestions } = useExerciseLibrary(searchQuery);
+  const showSuggestions = focused && value.length >= 2 && suggestions && suggestions.length > 0;
+
+  return (
+    <View>
+      <BottomSheetTextInput
+        className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900"
+        placeholder="Search or type exercise name *"
+        placeholderTextColor="#9ca3af"
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 200)}
+      />
+      {showSuggestions && (
+        <View className="bg-white border border-gray-200 rounded-lg mt-1 max-h-36 overflow-hidden">
+          {suggestions.slice(0, 5).map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              className="px-3 py-2 border-b border-gray-50"
+              onPress={() => { onChangeText(item.name); setFocused(false); }}
+            >
+              <Text className="text-sm text-gray-900">{item.name}</Text>
+              {(item.category || item.muscleGroup) && (
+                <Text className="text-[10px] text-gray-400">{[item.category, item.muscleGroup].filter(Boolean).join(" · ")}</Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 /* ─── Create Custom Workout Sheet ─── */
 function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible: boolean; clientId: string; onClose: () => void; onSuccess: () => void }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [exercises, setExercises] = useState<{ name: string; sets: string; reps: string; weight: string; restSeconds: string; notes: string }[]>([
     { name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" },
   ]);
 
+  // AI generation state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiHasGenerated, setAiHasGenerated] = useState(false);
+  const [aiRefinement, setAiRefinement] = useState("");
+  const [aiRefinements, setAiRefinements] = useState<string[]>([]);
+
   useEffect(() => {
     if (visible) {
       setName("");
+      setDescription("");
       setExercises([{ name: "", sets: "", reps: "", weight: "", restSeconds: "", notes: "" }]);
+      setAiLoading(false);
+      setAiError("");
+      setAiHasGenerated(false);
+      setAiRefinement("");
+      setAiRefinements([]);
     }
   }, [visible]);
 
@@ -1201,6 +1255,45 @@ function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible
     },
     onError: (err: any) => Alert.alert("Error", err.message),
   });
+
+  async function handleAiGenerate() {
+    if (!description.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiError("");
+    try {
+      const allRefinements = [...aiRefinements];
+      if (aiRefinement.trim()) allRefinements.push(aiRefinement.trim());
+      const fullPrompt = allRefinements.length > 0
+        ? `${description.trim()}\n\nAdditional instructions:\n${allRefinements.map((r, i) => `${i + 1}. ${r}`).join("\n")}`
+        : description.trim();
+
+      const res = await api.post<{
+        name: string;
+        description: string;
+        exercises: Array<{ name: string; sets: number; reps: string; weight: string; restSeconds: number; notes: string }>;
+      }>("/api/ai/generate-workout-plan", { prompt: fullPrompt, locale: "en", includeVideos: false });
+
+      if (!name.trim()) setName(res.name);
+      setExercises(
+        res.exercises.map((ex) => ({
+          name: ex.name,
+          sets: ex.sets?.toString() || "3",
+          reps: ex.reps || "8-12",
+          weight: ex.weight || "",
+          restSeconds: ex.restSeconds?.toString() || "60",
+          notes: ex.notes || "",
+        }))
+      );
+      if (aiRefinement.trim()) setAiRefinements((prev) => [...prev, aiRefinement.trim()]);
+      setAiHasGenerated(true);
+      setAiRefinement("");
+      haptics.success();
+    } catch (e: any) {
+      setAiError(e.message || "AI generation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   function handleSubmit() {
     if (!name.trim()) return Alert.alert("Required", "Plan name is required");
@@ -1252,7 +1345,63 @@ function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible
       }
     >
       <Text className="text-sm font-medium text-gray-700 mb-1">Plan Name *</Text>
-      <BottomSheetTextInput className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-4 text-base text-gray-900" value={name} onChangeText={setName} placeholder="e.g. Upper Body A" />
+      <BottomSheetTextInput
+        className="bg-white border border-gray-300 rounded-lg px-4 py-3 mb-3 text-base text-gray-900"
+        value={name}
+        onChangeText={setName}
+        placeholder="e.g. Upper Body Strength"
+        placeholderTextColor="#9ca3af"
+      />
+
+      {/* AI Generation */}
+      <Text className="text-sm font-medium text-gray-700 mb-1">Describe Workout</Text>
+      <BottomSheetTextInput
+        className="bg-white border border-gray-200 rounded-lg px-4 py-3 mb-2 text-sm text-gray-900"
+        value={description}
+        onChangeText={setDescription}
+        placeholder="e.g. 'Push day, chest focus, intermediate level'"
+        placeholderTextColor="#9ca3af"
+        multiline
+      />
+      <View className="flex-row items-center mb-3">
+        <TouchableOpacity
+          className={`flex-row items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 ${!description.trim() || aiLoading ? "opacity-50" : ""}`}
+          onPress={handleAiGenerate}
+          disabled={!description.trim() || aiLoading}
+          activeOpacity={0.7}
+        >
+          {aiLoading ? <ActivityIndicator size="small" color="#059669" /> : <Sparkles size={14} color="#059669" />}
+          <Text className="text-xs font-medium text-emerald-700 ml-1.5">
+            {aiLoading ? "Generating..." : aiHasGenerated ? "Regenerate" : "Generate with AI"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {aiError ? <Text className="text-xs text-red-500 mb-2">{aiError}</Text> : null}
+      {aiHasGenerated && (
+        <View className="mb-3">
+          <BottomSheetTextInput
+            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700"
+            value={aiRefinement}
+            onChangeText={setAiRefinement}
+            placeholder="Refine: e.g. 'add more leg exercises', 'reduce rest'..."
+            placeholderTextColor="#9ca3af"
+            returnKeyType="go"
+            onSubmitEditing={handleAiGenerate}
+          />
+          {aiRefinements.length > 0 && (
+            <View className="flex-row flex-wrap mt-1.5">
+              {aiRefinements.map((r, i) => (
+                <View key={i} className="flex-row items-center bg-gray-100 rounded-md px-2 py-1 mr-1 mb-1">
+                  <Text className="text-[10px] text-gray-600 mr-1">{r}</Text>
+                  <TouchableOpacity onPress={() => setAiRefinements((prev) => prev.filter((_, j) => j !== i))}>
+                    <X size={10} color="#9ca3af" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
 
       <Text className="text-sm font-semibold text-gray-700 mb-2">Exercises</Text>
       {exercises.map((ex, i) => (
@@ -1265,19 +1414,26 @@ function CreateWorkoutSheet({ visible, clientId, onClose, onSuccess }: { visible
               </TouchableOpacity>
             )}
           </View>
-          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2.5 mb-2 text-sm text-gray-900" placeholder="Exercise name *" value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} />
-          <View className="flex-row">
+          <ExerciseNameInput value={ex.name} onChangeText={(v) => updateExercise(i, "name", v)} />
+          <View className="flex-row mt-2">
             <View className="flex-1 mr-2">
-              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Sets" value={ex.sets} onChangeText={(v) => updateExercise(i, "sets", v)} keyboardType="numeric" />
+              <Text className="text-[10px] text-gray-500 mb-0.5">Sets</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" placeholder="3" placeholderTextColor="#9ca3af" value={ex.sets} onChangeText={(v) => updateExercise(i, "sets", v)} keyboardType="numeric" />
             </View>
             <View className="flex-1 mr-2">
-              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Reps" value={ex.reps} onChangeText={(v) => updateExercise(i, "reps", v)} />
+              <Text className="text-[10px] text-gray-500 mb-0.5">Reps</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" placeholder="8-12" placeholderTextColor="#9ca3af" value={ex.reps} onChangeText={(v) => updateExercise(i, "reps", v)} />
+            </View>
+            <View className="flex-1 mr-2">
+              <Text className="text-[10px] text-gray-500 mb-0.5">Weight</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" placeholder="kg" placeholderTextColor="#9ca3af" value={ex.weight} onChangeText={(v) => updateExercise(i, "weight", v)} />
             </View>
             <View className="flex-1">
-              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900" placeholder="Weight" value={ex.weight} onChangeText={(v) => updateExercise(i, "weight", v)} />
+              <Text className="text-[10px] text-gray-500 mb-0.5">Rest (s)</Text>
+              <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 text-center" placeholder="60" placeholderTextColor="#9ca3af" value={ex.restSeconds} onChangeText={(v) => updateExercise(i, "restSeconds", v)} keyboardType="numeric" />
             </View>
           </View>
-          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 mt-2 text-sm text-gray-900" placeholder="Notes (optional)" value={ex.notes} onChangeText={(v) => updateExercise(i, "notes", v)} />
+          <BottomSheetTextInput className="bg-white border border-gray-200 rounded-lg px-3 py-2 mt-2 text-sm text-gray-900" placeholder="Form cues, notes..." placeholderTextColor="#9ca3af" value={ex.notes} onChangeText={(v) => updateExercise(i, "notes", v)} />
         </View>
       ))}
       <TouchableOpacity className="flex-row items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-2.5 mb-4" onPress={addExercise}>

@@ -5,9 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
   Platform,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { router, Redirect } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 import { useT } from "@/lib/i18n";
@@ -146,12 +146,13 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-800">
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingVertical: 40 }}
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingVertical: 40, paddingHorizontal: 32 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        automaticallyAdjustKeyboardInsets
-        className="px-8"
+        enableOnAndroid
+        extraScrollHeight={Platform.OS === "ios" ? 120 : 80}
+        enableAutomaticScroll
       >
         <Text className="text-3xl font-bold text-gray-900 dark:text-slate-50 mb-2">Prept</Text>
         <Text className="text-base text-gray-500 dark:text-slate-400 mb-8">
@@ -281,7 +282,7 @@ export default function LoginScreen() {
             <Text className="text-brand-600 font-medium">{t.auth.getStarted}</Text>
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

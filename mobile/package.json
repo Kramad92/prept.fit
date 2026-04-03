@@ -38,6 +38,7 @@
     "react-native-css-interop": "^0.2.2",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-gifted-charts": "^1.4.76",
+    "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-keyboard-controller": "1.18.5",
     "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-reanimated": "~4.1.1",

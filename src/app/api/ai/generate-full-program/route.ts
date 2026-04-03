@@ -141,7 +141,7 @@ async function handleProgram(
     : durationWeeks * 7;
 
   const maxUniquePlans = type === "workout"
-    ? Math.min(daysPerWeek * Math.min(durationWeeks, 2), 7)
+    ? Math.min(daysPerWeek * Math.min(durationWeeks, 2), 10)
     : Math.min(5, 4);
 
   const planType = type === "workout" ? "workout" : "meal";

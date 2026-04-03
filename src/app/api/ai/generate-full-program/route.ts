@@ -93,10 +93,6 @@ interface GeneratedPlanData {
   usage: { tokensIn: number; tokensOut: number; provider: string };
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -275,6 +271,21 @@ Return JSON:
 
   // ---- Step 4: Generate missing plans into memory ----
 
+  // Classify exercises ONCE for the whole program (not per-plan)
+  let filtered: FilteredExercise[] = [];
+  let exerciseNames = new Set<string>();
+  let libraryContext = "";
+  let libraryLookup = new Map<string, string>();
+
+  if (type === "workout") {
+    const result = await getFilteredExercises(tenantId, prompt);
+    filtered = result.exercises;
+    exerciseNames = result.exerciseNames;
+    const ctx = buildExerciseContext(filtered);
+    libraryContext = ctx.libraryContext;
+    libraryLookup = ctx.libraryLookup;
+  }
+
   // Build plan resolution: existing ID or generated data
   interface ResolvedPlan {
     existingId?: string;
@@ -282,7 +293,6 @@ Return JSON:
   }
 
   const resolved: ResolvedPlan[] = [];
-  let genCount = 0;
 
   for (let i = 0; i < plans.length; i++) {
     const planDef = plans[i];
@@ -293,19 +303,10 @@ Return JSON:
         resolved.push({ existingId });
         continue;
       }
-      // AI said "existing" but plan doesn't actually exist — fall through to generate
       console.warn(`Blueprint referenced existing plan "${planDef.name}" but it wasn't found — will generate instead`);
     }
 
-    // Generate this plan
-    if (genCount > 0) await delay(5000);
-    genCount++;
-
     if (type === "workout") {
-      // Two-stage filtering: classify the plan's prompt → filter library → generate with focused context
-      const filterPrompt = `${planDef.name}. ${planDef.prompt}`;
-      const { exercises: filtered, exerciseNames } = await getFilteredExercises(tenantId, filterPrompt);
-      const { libraryContext, libraryLookup } = buildExerciseContext(filtered);
       const data = await generateWorkout(planDef, locale, langInstruction, libraryContext, libraryLookup, exerciseNames, filtered);
       resolved.push({ generated: data });
     } else {

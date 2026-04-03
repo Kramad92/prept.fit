@@ -4,7 +4,7 @@ type LimiterType = "auth" | "email" | "ai" | "upload" | "public";
 
 const LIMITS: Record<LimiterType, { tokens: number; window: string }> = {
   auth: { tokens: 5, window: "15 m" },
-  email: { tokens: 20, window: "1 h" },
+  email: { tokens: 100, window: "1 h" },
   ai: { tokens: 20, window: "1 h" },
   upload: { tokens: 30, window: "1 h" },
   public: { tokens: 5, window: "15 m" },

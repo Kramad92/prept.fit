@@ -141,7 +141,7 @@ async function handleProgram(
     : durationWeeks * 7;
 
   const maxUniquePlans = type === "workout"
-    ? Math.min(daysPerWeek * Math.min(durationWeeks, 2), 10)
+    ? Math.min(daysPerWeek * Math.min(durationWeeks, 2), 7)
     : Math.min(5, 4);
 
   const planType = type === "workout" ? "workout" : "meal";
@@ -271,13 +271,14 @@ Return JSON:
 
   // ---- Step 4: Generate missing plans into memory ----
 
-  // Classify exercises ONCE for the whole program (not per-plan)
+  // Build exercise context for workout generation
   let filtered: FilteredExercise[] = [];
   let exerciseNames = new Set<string>();
   let libraryContext = "";
   let libraryLookup = new Map<string, string>();
 
   if (type === "workout") {
+    // Use two-stage filtering to narrow the exercise pool
     const result = await getFilteredExercises(tenantId, prompt);
     filtered = result.exercises;
     exerciseNames = result.exerciseNames;

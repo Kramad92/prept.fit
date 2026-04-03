@@ -210,12 +210,24 @@ export async function getFilteredExercises(
   prompt: string,
   preferences?: string
 ): Promise<{ exercises: FilteredExercise[]; exerciseNames: Set<string> }> {
-  const taxonomy = await fetchTaxonomy(tenantId);
+  // If library is small enough (<= 50), skip the classification AI call entirely
+  const totalCount = await prisma.exerciseLibrary.count({ where: { tenantId } });
 
   let exercises: FilteredExercise[] = [];
-  if (Object.values(taxonomy).some((arr) => arr.length > 0)) {
-    const filterSpec = await classifyPrompt(prompt, preferences, taxonomy);
-    exercises = await filterWithFallback(tenantId, filterSpec);
+
+  if (totalCount <= 50) {
+    // Small library — send everything, no need to classify
+    exercises = await prisma.exerciseLibrary.findMany({
+      where: { tenantId },
+      select: EXERCISE_SELECT,
+    }) as FilteredExercise[];
+  } else {
+    // Large library — use two-stage filtering to narrow down
+    const taxonomy = await fetchTaxonomy(tenantId);
+    if (Object.values(taxonomy).some((arr) => arr.length > 0)) {
+      const filterSpec = await classifyPrompt(prompt, preferences, taxonomy);
+      exercises = await filterWithFallback(tenantId, filterSpec);
+    }
   }
 
   if (exercises.length === 0) {

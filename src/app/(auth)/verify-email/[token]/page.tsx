@@ -64,7 +64,7 @@ export default function VerifyEmailPage() {
       </div>
 
       <div className="relative w-full max-w-sm text-center">
-        <img src="/logo.png" alt="Prept" className="mx-auto h-12 mb-4" />
+        <img src="/logo-stacked.png" alt="Prept" className="mx-auto h-28 mb-4" />
 
         {status === "loading" && (
           <p className="text-gray-500 dark:text-slate-400">Validating link...</p>

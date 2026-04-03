@@ -105,7 +105,7 @@ export default function ResetPasswordPage() {
 
       <div className="relative w-full max-w-sm">
         <div className="mb-8 text-center">
-          <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
+          <img src="/logo-stacked.png" alt="Prept" className="mx-auto h-28" />
         </div>
 
         <div className="relative">

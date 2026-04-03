@@ -98,8 +98,7 @@ function CompleteRegistrationContent() {
 
       <div className="relative w-full max-w-sm">
         <div className="mb-8 text-center">
-          <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
-          <h2 className="mt-2 text-xl font-bold text-gray-900 dark:text-white">Prept</h2>
+          <img src="/logo-stacked.png" alt="Prept" className="mx-auto h-28" />
           <h2 className="mt-3 text-xl font-semibold text-gray-900 dark:text-white">
             {t.auth.completeRegistration}
           </h2>

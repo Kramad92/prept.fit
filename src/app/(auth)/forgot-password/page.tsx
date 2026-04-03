@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
 
       <div className="relative w-full max-w-sm">
         <div className="mb-8 text-center">
-          <img src="/logo.png" alt="Prept" className="mx-auto h-12" />
+          <img src="/logo-stacked.png" alt="Prept" className="mx-auto h-28" />
           <h2 className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{t.auth.forgotPasswordTitle}</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             {t.auth.forgotPasswordSubtitle}

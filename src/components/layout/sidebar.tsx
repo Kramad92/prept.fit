@@ -66,7 +66,6 @@ export function Sidebar() {
       <div className="flex flex-1 flex-col border-r border-gray-200 bg-white">
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
           <img src="/logo.png" alt="Prept" className="h-8" />
-          <span className="text-lg font-bold text-gray-900">Prept</span>
         </div>
 
         <div className="px-3 pt-3">

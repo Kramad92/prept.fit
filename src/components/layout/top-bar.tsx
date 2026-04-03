@@ -17,7 +17,6 @@ export function TopBar() {
       <div className="flex h-14 items-center justify-between px-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <img src="/logo.png" alt="Prept" className="h-7" />
-          <span className="text-base font-bold text-gray-900">Prept</span>
         </Link>
         <div className="flex items-center gap-2">
           <button

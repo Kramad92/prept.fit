@@ -353,7 +353,7 @@ Return JSON:
               description: gen.workoutData.description,
               isTemplate: true,
               tenantId,
-              exercises: { create: gen.workoutData.exercises },
+              exercises: { create: gen.workoutData.exercises.map(({ isFromLibrary, ...rest }: any) => rest) },
             },
           });
           planIds.push(created.id);

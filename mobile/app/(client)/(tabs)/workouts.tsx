@@ -206,8 +206,11 @@ function ProgramCard({ program }: { program: AssignedWorkoutProgram }) {
                       activeOpacity={0.7}
                       onPress={() => {
                         // Find the matching client workout plan for this day
+                        // Deep-copied plans have sourceTemplate.id pointing to the original template plan
                         const cwp = program.clientWorkoutPlans.find(
-                          (p) => p.workoutPlan.id === day.workoutPlanId
+                          (p) =>
+                            p.workoutPlan.sourceTemplate?.id === day.workoutPlanId ||
+                            p.workoutPlan.id === day.workoutPlanId
                         );
                         if (cwp) router.push(`/(client)/workouts/${cwp.id}`);
                       }}

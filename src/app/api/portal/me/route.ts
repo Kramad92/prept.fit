@@ -59,7 +59,10 @@ export async function GET() {
           clientWorkoutPlans: {
             include: {
               workoutPlan: {
-                include: { exercises: { orderBy: { orderIndex: "asc" } } },
+                include: {
+                  exercises: { orderBy: { orderIndex: "asc" } },
+                  sourceTemplate: { select: { id: true, name: true } },
+                },
               },
               clientExercises: { orderBy: { orderIndex: "asc" } },
             },

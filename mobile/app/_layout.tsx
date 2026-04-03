@@ -13,6 +13,7 @@ import { addNotificationResponseListener } from "@/lib/notifications";
 import { queryClient } from "@/lib/query-client";
 import { ThemeProvider } from "@/lib/theme-context";
 import { I18nProvider } from "@/lib/i18n";
+import { useSecurityCheck } from "@/hooks/use-security-check";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -89,6 +90,7 @@ function NotificationHandler() {
 }
 
 export default function RootLayout() {
+  useSecurityCheck();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

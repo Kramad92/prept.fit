@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import { router, Redirect } from "expo-router";
@@ -146,13 +145,12 @@ export default function LoginScreen() {
   const isAnyLoading = loading || googleLoading || appleLoading;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white dark:bg-slate-800"
-    >
+    <View className="flex-1 bg-white dark:bg-slate-800">
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingVertical: 40 }}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets
         className="px-8"
       >
         <Text className="text-3xl font-bold text-gray-900 dark:text-slate-50 mb-2">Prept</Text>
@@ -284,6 +282,6 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

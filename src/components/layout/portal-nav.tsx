@@ -211,7 +211,7 @@ export function PortalDesktopNav() {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
       <div className="flex flex-1 flex-col border-r border-gray-200 bg-white">
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
-          <img src="/logo-icon.svg" alt="Prept" className="h-7 w-7" />
+          <img src="/logo-icon.png" alt="Prept" className="h-7 w-7" />
           <span className="text-xl font-bold text-gray-900">{t.nav.myPortal}</span>
         </div>
 
@@ -252,8 +252,8 @@ export function PortalDesktopNav() {
                   className={cn(
                     "rounded px-2 py-0.5 text-xs font-medium transition-colors",
                     locale === l
-                      ? "bg-brand-100 text-brand-700"
-                      : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                      ? "bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300"
+                      : "text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-300"
                   )}
                 >
                   {LOCALE_LABELS[l]}

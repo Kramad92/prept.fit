@@ -13,6 +13,11 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "Prept",
   description: "Your personal training platform",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.ico",
+    apple: "/logo-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

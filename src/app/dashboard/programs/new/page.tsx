@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Plus, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
-import { AIGenerateProgram } from "@/components/ai/ai-generate-program";
+import { CreateProgramModal } from "@/components/ai/create-program-modal";
 
 interface WorkoutOption {
   id: string;
@@ -48,6 +48,7 @@ export default function NewProgramPage() {
   const [workouts, setWorkouts] = useState<WorkoutOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [aiDescription, setAiDescription] = useState("");
+  const [showAIModal, setShowAIModal] = useState(false);
 
   useEffect(() => {
     api.get<WorkoutOption[]>("/api/workouts").then(setWorkouts).catch(() => {});
@@ -94,38 +95,6 @@ export default function NewProgramPage() {
       prev.map((s) =>
         s.weekNumber === week && s.dayNumber === day ? { ...s, label } : s
       )
-    );
-  }
-
-  function handleAIGenerate(data: {
-    name: string;
-    description: string;
-    days: {
-      weekNumber: number;
-      dayNumber: number;
-      label: string;
-      workoutPlanId: string | null;
-      workoutName: string | null;
-    }[];
-  }) {
-    if (!name) setName(data.name);
-    setAiDescription(data.description || "");
-
-    setDays((prev) =>
-      prev.map((slot) => {
-        const aiDay = data.days.find(
-          (d) => d.weekNumber === slot.weekNumber && d.dayNumber === slot.dayNumber
-        );
-        if (aiDay) {
-          return {
-            ...slot,
-            label: aiDay.label || slot.label,
-            workoutPlanId: aiDay.workoutPlanId,
-            workoutName: aiDay.workoutName,
-          };
-        }
-        return slot;
-      })
     );
   }
 
@@ -219,8 +188,8 @@ export default function NewProgramPage() {
               placeholder={t.programs.descriptionPlaceholder}
               rows={2}
             />
-            <div className="mt-2">
-              {shouldAutoFill ? (
+            <div className="mt-2 flex gap-2">
+              {shouldAutoFill && (
                 <button
                   type="button"
                   onClick={handleAutoFill}
@@ -228,14 +197,15 @@ export default function NewProgramPage() {
                 >
                   {t.programs.generateWithAI}
                 </button>
-              ) : workouts.length > 0 ? (
-                <AIGenerateProgram
-                  prompt={description}
-                  durationWeeks={durationWeeks}
-                  daysPerWeek={daysPerWeek}
-                  onGenerate={handleAIGenerate}
-                />
-              ) : null}
+              )}
+              <button
+                type="button"
+                onClick={() => setShowAIModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {t.programs.aiCreateProgram || "AI Program Builder"}
+              </button>
             </div>
           </div>
           {aiDescription && (
@@ -379,6 +349,11 @@ export default function NewProgramPage() {
           </Button>
         </div>
       </div>
+
+      <CreateProgramModal
+        open={showAIModal}
+        onClose={() => setShowAIModal(false)}
+      />
     </div>
   );
 }

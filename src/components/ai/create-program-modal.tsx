@@ -299,7 +299,7 @@ export function CreateProgramModal({ open, onClose, defaultType = "workout" }: C
             <Button
               onClick={handleSubmit}
               disabled={!prompt.trim() || loading}
-              className="flex-1"
+              className="flex-1 bg-brand-600 text-white hover:bg-brand-700 border border-brand-500"
             >
               {loading ? (
                 <>

@@ -144,7 +144,7 @@ async function handleProgram(
     : durationWeeks * 7;
 
   const maxUniquePlans = type === "workout"
-    ? Math.min(daysPerWeek, 5)
+    ? Math.min(daysPerWeek * Math.min(durationWeeks, 2), 10)
     : Math.min(5, 4);
 
   const planType = type === "workout" ? "workout" : "meal";
@@ -210,6 +210,14 @@ Rules:
 - For "existing" plans: use the EXACT name from the list above.
 - Be strict about matching — don't force-fit a "Full Body Kettlebell" plan when the user asked for an isolated "Shoulder Day". Only mark as "existing" if the plan genuinely fits.
 - ${langInstruction}
+${type === "workout" && durationWeeks > 1 ? `
+WEEK-TO-WEEK VARIETY (CRITICAL):
+- Do NOT repeat the exact same schedule every week. Each week should feel different.
+- Create VARIANT plans that target the same muscle groups but with different exercises or emphasis.
+  Example: "Upper Push A — Barbell Focus" (Week 1) and "Upper Push B — Dumbbell Focus" (Week 2).
+- Rotate which variants appear on which days across weeks so no two weeks are identical.
+- Aim for at least ${Math.min(daysPerWeek, 3)} variant pairs (A/B versions) to keep the program fresh.
+- This is a periodized program — progressive variation across weeks is essential, not optional.` : ""}
 
 Return JSON:
 {
@@ -227,8 +235,8 @@ Return JSON:
       },
       { role: "user", content: prompt },
     ],
-    maxTokens: 3000,
-    temperature: 0.3,
+    maxTokens: durationWeeks > 1 ? 4000 : 3000,
+    temperature: 0.4,
   });
 
   if (blueprint.error === "off_topic") {

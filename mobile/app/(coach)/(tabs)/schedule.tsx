@@ -7,8 +7,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  TextInput,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -254,6 +254,33 @@ export default function CoachScheduleScreen() {
   );
 }
 
+function formatDateDisplay(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatTimeDisplay(timeStr: string): string {
+  const [h, m] = timeStr.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function timeStringToDate(timeStr: string): Date {
+  const [h, m] = timeStr.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function dateToTimeString(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function dateToDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean; onClose: () => void; onSuccess: () => void }) {
   const queryClient = useQueryClient();
   const { data: clients } = useCoachClients();
@@ -264,6 +291,9 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
   const [endTime, setEndTime] = useState("10:00");
   const [notes, setNotes] = useState("");
   const [showClientPicker, setShowClientPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
   const t = useT();
   const colors = useThemeColors();
 
@@ -292,24 +322,15 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
           className={`rounded-lg py-3.5 items-center ${mutation.isPending ? "bg-brand-400" : "bg-brand-600"}`}
           onPress={() => {
             if (!clientId) return Alert.alert(t.common.required, t.schedule.selectClient);
-            if (!date.trim()) return Alert.alert(t.common.required, t.common.date);
-            const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-            const timePattern = /^\d{2}:\d{2}$/;
-            if (!datePattern.test(date.trim())) {
-              return Alert.alert(t.common.error, "Date must be in YYYY-MM-DD format.");
-            }
-            if (!timePattern.test(startTime.trim()) || !timePattern.test(endTime.trim())) {
-              return Alert.alert(t.common.error, "Times must be in HH:MM format (e.g. 09:00).");
-            }
-            if (startTime.trim() >= endTime.trim()) {
+            if (startTime >= endTime) {
               return Alert.alert(t.common.error, "Start time must be before end time.");
             }
             mutation.mutate({
               clientId,
               title: title.trim() || "Training Session",
-              date: date.trim(),
-              startTime: startTime.trim(),
-              endTime: endTime.trim(),
+              date,
+              startTime,
+              endTime,
               notes: notes.trim() || null,
             });
           }}
@@ -348,17 +369,53 @@ function CreateSessionModal({ visible, onClose, onSuccess }: { visible: boolean;
       <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.sessionTitle}</Text>
       <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={title} onChangeText={setTitle} placeholder={t.schedule.titlePlaceholder} placeholderTextColor={colors.iconMuted} />
 
-      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.date} (YYYY-MM-DD)</Text>
-      <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4 text-base text-gray-900 dark:text-slate-50" value={date} onChangeText={setDate} placeholder="2024-01-15" placeholderTextColor={colors.iconMuted} />
+      <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.common.date}</Text>
+      <TouchableOpacity
+        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 mb-4"
+        onPress={() => setShowDatePicker(true)}
+      >
+        <Text className="text-base text-gray-900 dark:text-slate-50">{formatDateDisplay(date)}</Text>
+      </TouchableOpacity>
+      <DateTimePickerModal
+        isVisible={showDatePicker}
+        mode="date"
+        date={new Date(date + "T12:00:00")}
+        onConfirm={(d) => { setDate(dateToDateString(d)); setShowDatePicker(false); }}
+        onCancel={() => setShowDatePicker(false)}
+      />
 
       <View className="flex-row mb-4">
         <View className="flex-1 mr-2">
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.startTime}</Text>
-          <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={startTime} onChangeText={setStartTime} placeholder="09:00" placeholderTextColor={colors.iconMuted} />
+          <TouchableOpacity
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3"
+            onPress={() => setShowStartPicker(true)}
+          >
+            <Text className="text-base text-gray-900 dark:text-slate-50">{formatTimeDisplay(startTime)}</Text>
+          </TouchableOpacity>
+          <DateTimePickerModal
+            isVisible={showStartPicker}
+            mode="time"
+            date={timeStringToDate(startTime)}
+            onConfirm={(d) => { setStartTime(dateToTimeString(d)); setShowStartPicker(false); }}
+            onCancel={() => setShowStartPicker(false)}
+          />
         </View>
         <View className="flex-1">
           <Text className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{t.schedule.endTime}</Text>
-          <BottomSheetTextInput className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-base text-gray-900 dark:text-slate-50" value={endTime} onChangeText={setEndTime} placeholder="10:00" placeholderTextColor={colors.iconMuted} />
+          <TouchableOpacity
+            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3"
+            onPress={() => setShowEndPicker(true)}
+          >
+            <Text className="text-base text-gray-900 dark:text-slate-50">{formatTimeDisplay(endTime)}</Text>
+          </TouchableOpacity>
+          <DateTimePickerModal
+            isVisible={showEndPicker}
+            mode="time"
+            date={timeStringToDate(endTime)}
+            onConfirm={(d) => { setEndTime(dateToTimeString(d)); setShowEndPicker(false); }}
+            onCancel={() => setShowEndPicker(false)}
+          />
         </View>
       </View>
 

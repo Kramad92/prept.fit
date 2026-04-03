@@ -5,12 +5,12 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  TextInput,
   Alert,
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +32,8 @@ export default function AvailabilityScreen() {
   const [addingDay, setAddingDay] = useState<number | null>(null);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
 
   const addMutation = useMutation({
     mutationFn: (data: any) => api.post("/api/availability", data),
@@ -54,11 +56,6 @@ export default function AvailabilityScreen() {
 
   const handleAdd = () => {
     if (addingDay === null) return;
-    const timePattern = /^\d{2}:\d{2}$/;
-    if (!timePattern.test(startTime) || !timePattern.test(endTime)) {
-      Alert.alert("Invalid Time", "Times must be in HH:MM format (e.g. 09:00).");
-      return;
-    }
     if (startTime >= endTime) {
       Alert.alert("Invalid Time Range", "Start time must be before end time.");
       return;
@@ -156,22 +153,34 @@ export default function AvailabilityScreen() {
                   <View className="flex-row items-center mb-2">
                     <View className="flex-1 mr-2">
                       <Text className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Start</Text>
-                      <TextInput
-                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50"
-                        value={startTime}
-                        onChangeText={setStartTime}
-                        placeholder="09:00"
-                        placeholderTextColor={colors.iconMuted}
+                      <TouchableOpacity
+                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5"
+                        onPress={() => setShowStartPicker(true)}
+                      >
+                        <Text className="text-sm text-gray-900 dark:text-slate-50">{formatTimeDisplay(startTime)}</Text>
+                      </TouchableOpacity>
+                      <DateTimePickerModal
+                        isVisible={showStartPicker}
+                        mode="time"
+                        date={timeStringToDate(startTime)}
+                        onConfirm={(d) => { setStartTime(dateToTimeString(d)); setShowStartPicker(false); }}
+                        onCancel={() => setShowStartPicker(false)}
                       />
                     </View>
                     <View className="flex-1">
                       <Text className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">End</Text>
-                      <TextInput
-                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-slate-50"
-                        value={endTime}
-                        onChangeText={setEndTime}
-                        placeholder="17:00"
-                        placeholderTextColor={colors.iconMuted}
+                      <TouchableOpacity
+                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5"
+                        onPress={() => setShowEndPicker(true)}
+                      >
+                        <Text className="text-sm text-gray-900 dark:text-slate-50">{formatTimeDisplay(endTime)}</Text>
+                      </TouchableOpacity>
+                      <DateTimePickerModal
+                        isVisible={showEndPicker}
+                        mode="time"
+                        date={timeStringToDate(endTime)}
+                        onConfirm={(d) => { setEndTime(dateToTimeString(d)); setShowEndPicker(false); }}
+                        onCancel={() => setShowEndPicker(false)}
                       />
                     </View>
                   </View>
@@ -198,6 +207,24 @@ export default function AvailabilityScreen() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+function formatTimeDisplay(timeStr: string): string {
+  const [h, m] = timeStr.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function timeStringToDate(timeStr: string): Date {
+  const [h, m] = timeStr.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function dateToTimeString(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 function Header() {

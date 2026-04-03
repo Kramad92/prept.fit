@@ -45,7 +45,7 @@ export default function MessagesScreen() {
   }, [serverMessages, localMessages]);
 
   // Real-time chat subscription
-  useChatChannel(user?.tenantId, clientId, user?.id);
+  useChatChannel(user?.tenantId ?? undefined, clientId ?? undefined, user?.id ?? undefined);
 
   const sendMutation = useMutation({
     mutationFn: (content: string) =>

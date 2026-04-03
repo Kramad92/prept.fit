@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -149,7 +150,11 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1 bg-white dark:bg-slate-800"
     >
-      <View className="flex-1 justify-center px-8">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+        keyboardShouldPersistTaps="handled"
+        className="px-8"
+      >
         <Text className="text-3xl font-bold text-gray-900 dark:text-slate-50 mb-2">Prept</Text>
         <Text className="text-base text-gray-500 dark:text-slate-400 mb-8">
           {t.auth.signInTitle}
@@ -278,7 +283,7 @@ export default function LoginScreen() {
             <Text className="text-brand-600 font-medium">{t.auth.getStarted}</Text>
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

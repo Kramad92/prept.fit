@@ -64,8 +64,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
       include: { tenant: true, clientProfiles: true },
     });
 

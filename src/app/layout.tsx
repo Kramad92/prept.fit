@@ -14,9 +14,11 @@ export const metadata: Metadata = {
   title: "Prept",
   description: "Your personal training platform",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.ico",
-    apple: "/logo-icon.png",
+    icon: [
+      { url: "/favicon.png", type: "image/png", sizes: "180x180" },
+      { url: "/favicon.ico", sizes: "48x48" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 

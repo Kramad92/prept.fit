@@ -7,6 +7,7 @@ import { validateBody } from "@/lib/validations";
 import { getAILanguageInstruction, getAIExerciseNameInstruction } from "@/lib/ai-locale";
 import { logAiUsage } from "@/lib/usage";
 import { rateLimit } from "@/lib/rate-limit";
+import { getFilteredExercises, buildExerciseContext, fuzzyMatchExercise, type FilteredExercise } from "@/lib/exercise-filter";
 
 // Allow longer execution for multi-step generation
 export const maxDuration = 120;
@@ -274,26 +275,6 @@ Return JSON:
 
   // ---- Step 4: Generate missing plans into memory ----
 
-  let libraryContext = "";
-  let libraryLookup = new Map<string, string>();
-  if (type === "workout") {
-    const libraryExercises = await prisma.exerciseLibrary.findMany({
-      where: { tenantId },
-      select: { name: true, nameI18n: true, videoUrl: true, category: true },
-      take: 200,
-    });
-    if (libraryExercises.length > 0) {
-      libraryContext = `\nYou have access to the coach's exercise library. If an exercise matches one from this list, use the EXACT same name:\n${libraryExercises.map((e) => {
-        const i18n = e.nameI18n as Record<string, string> | null;
-        const altName = i18n ? Object.values(i18n)[0] : null;
-        return `- ${e.name}${altName ? ` / ${altName}` : ""}${e.category ? ` (${e.category})` : ""}`;
-      }).join("\n")}\n`;
-      for (const ex of libraryExercises) {
-        if (ex.videoUrl) libraryLookup.set(ex.name.toLowerCase(), ex.videoUrl);
-      }
-    }
-  }
-
   // Build plan resolution: existing ID or generated data
   interface ResolvedPlan {
     existingId?: string;
@@ -321,7 +302,11 @@ Return JSON:
     genCount++;
 
     if (type === "workout") {
-      const data = await generateWorkout(planDef, locale, langInstruction, libraryContext, libraryLookup);
+      // Two-stage filtering: classify the plan's prompt → filter library → generate with focused context
+      const filterPrompt = `${planDef.name}. ${planDef.prompt}`;
+      const { exercises: filtered, exerciseNames } = await getFilteredExercises(tenantId, filterPrompt);
+      const { libraryContext, libraryLookup } = buildExerciseContext(filtered);
+      const data = await generateWorkout(planDef, locale, langInstruction, libraryContext, libraryLookup, exerciseNames, filtered);
       resolved.push({ generated: data });
     } else {
       const data = await generateMealPlan(planDef, locale, langInstruction, mealsPerDay);
@@ -470,6 +455,8 @@ async function generateWorkout(
   langInstruction: string,
   libraryContext: string,
   libraryLookup: Map<string, string>,
+  exerciseNames: Set<string>,
+  filteredExercises: FilteredExercise[],
 ) {
   const exerciseNameInstruction = getAIExerciseNameInstruction(locale);
 
@@ -482,10 +469,10 @@ ${libraryContext}
 Rules:
 - Each exercise must have: name, nameEn (English name for reference), sets (number), reps (string like "8-12" or "10"), weight (string like "bodyweight", "moderate", or leave empty ""), restSeconds (number), notes (string with detailed form cues)
 - CRITICAL: The "name" and "nameEn" fields must ONLY contain the standard exercise name. NEVER include substitution context or phrases like "X is replaced with Y".
-- Avoid duplicate or overly similar exercises.
+- Avoid duplicate or overly similar exercises (e.g. do not include both Barbell Bench Press and Barbell Close Grip Bench Press unless specifically requested).
 - Include 5-10 exercises per workout
 - Order exercises logically (compound first, isolation after)
-- Use appropriate set/rep schemes for the goal
+- Use appropriate set/rep schemes for the goal (strength: 3-5x3-5, hypertrophy: 3-4x8-12, endurance: 2-3x15-20)
 - Include rest periods appropriate for the training style
 - The "notes" field MUST contain helpful form cues (2-3 sentences)
 - ${exerciseNameInstruction}
@@ -518,15 +505,32 @@ Return a JSON object with this exact structure:
   });
 
   const exercises = result.exercises.map((ex, idx) => {
-    const libraryVideo = libraryLookup.get(ex.name.toLowerCase());
+    // Try exact match first, then fuzzy match
+    let videoUrl = libraryLookup.get(ex.name.toLowerCase()) || null;
+    let isFromLibrary =
+      exerciseNames.has(ex.name.toLowerCase()) ||
+      exerciseNames.has(ex.nameEn?.toLowerCase() || "");
+    let matchedName = ex.name;
+
+    if (!isFromLibrary) {
+      const fuzzy = fuzzyMatchExercise(ex.name, filteredExercises) ||
+        (ex.nameEn ? fuzzyMatchExercise(ex.nameEn, filteredExercises) : null);
+      if (fuzzy) {
+        matchedName = fuzzy.exercise.name;
+        videoUrl = fuzzy.exercise.videoUrl || videoUrl;
+        isFromLibrary = true;
+      }
+    }
+
     return {
-      name: ex.name,
+      name: matchedName,
       sets: ex.sets || null,
       reps: ex.reps || null,
       weight: ex.weight || null,
       restSeconds: ex.restSeconds || null,
       notes: ex.notes || null,
-      videoUrl: libraryVideo || null,
+      videoUrl,
+      isFromLibrary,
       orderIndex: idx,
     };
   });

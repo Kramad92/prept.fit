@@ -47,7 +47,7 @@ export default function CoachClientsScreen() {
   const renderClient = useCallback(
     ({ item }: { item: ClientListItem }) => (
       <TouchableOpacity
-        className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
+        className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 mb-2"
         onPress={() =>
           router.push({ pathname: "/(coach)/clients/[id]", params: { id: item.id } } as any)
         }
@@ -146,7 +146,7 @@ export default function CoachClientsScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderClient}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 20 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}

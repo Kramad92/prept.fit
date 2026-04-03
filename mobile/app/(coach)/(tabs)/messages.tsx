@@ -64,7 +64,7 @@ export default function CoachMessagesScreen() {
   const renderItem = useCallback(
     ({ item }: { item: ConversationItem }) => (
       <TouchableOpacity
-        className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 border-b border-gray-50 dark:border-slate-700/40"
+        className="flex-row items-center px-4 py-3.5 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/40 mb-2"
         onPress={() =>
           router.push({ pathname: "/(coach)/messages/[clientId]", params: { clientId: item.clientId } } as any)
         }
@@ -149,7 +149,7 @@ export default function CoachMessagesScreen() {
         data={conversations}
         keyExtractor={(item) => item.clientId}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 20 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}

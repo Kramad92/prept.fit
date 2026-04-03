@@ -390,7 +390,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
           {/* AI Generate Section */}
           <View className="mb-3">
             <TouchableOpacity
-              className={`flex-row items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 self-start ${
+              className={`flex-row items-center rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 self-start ${
                 !description.trim() || aiLoading ? "opacity-50" : ""
               }`}
               onPress={handleAiGenerate}
@@ -402,7 +402,7 @@ function MealPlanForm({ editId, onDone }: { editId?: string; onDone: () => void 
               ) : (
                 <Sparkles size={14} color={colors.brand} />
               )}
-              <Text className="text-xs font-medium text-emerald-700 ml-1.5">
+              <Text className="text-xs font-medium text-emerald-700 dark:text-emerald-300 ml-1.5">
                 {aiLoading ? t.workouts.generating : aiHasGenerated ? t.workouts.regenerateWithAI : t.workouts.generateWithAI}
               </Text>
             </TouchableOpacity>

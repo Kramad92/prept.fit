@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,17 +6,19 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { ArrowLeft, Send } from "lucide-react-native";
+import { ArrowLeft, Send, User as UserIcon } from "lucide-react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { haptics } from "@/lib/haptics";
-import { useMessages } from "@/hooks/use-client-data";
+import { useMessages, useClientProfile } from "@/hooks/use-client-data";
 import { useChatChannel } from "@/hooks/use-chat-channel";
+import { addNotificationReceivedListener } from "@/lib/notifications";
 import { QueryError } from "@/components/query-error";
 import { useT } from "@/lib/i18n";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -44,8 +46,23 @@ export default function MessagesScreen() {
     );
   }, [serverMessages, localMessages]);
 
+  const { data: profile } = useClientProfile();
+  const coachName = profile?.tenant?.name ?? t.nav.messages;
+  const coachPhoto = profile?.tenant?.coachPhoto ?? profile?.tenant?.logo;
+
   // Real-time chat subscription
   useChatChannel(user?.tenantId ?? undefined, clientId ?? undefined, user?.id ?? undefined);
+
+  // Refresh messages when a foreground push notification arrives
+  useEffect(() => {
+    const sub = addNotificationReceivedListener((notification) => {
+      const data = notification.request?.content?.data as Record<string, string> | undefined;
+      if (data?.type === "new_message") {
+        queryClient.invalidateQueries({ queryKey: ["messages", clientId] });
+      }
+    });
+    return () => sub.remove();
+  }, [clientId, queryClient]);
 
   const sendMutation = useMutation({
     mutationFn: (content: string) =>
@@ -107,6 +124,11 @@ export default function MessagesScreen() {
         <View
           className={`mb-2 max-w-[80%] ${isMine ? "self-end" : "self-start"}`}
         >
+          {!isMine && item.sender?.name && (
+            <Text className="text-xs text-gray-500 dark:text-slate-400 mb-0.5 ml-1">
+              {item.sender.name}
+            </Text>
+          )}
           <View
             className={`rounded-2xl px-4 py-2.5 ${
               isMine
@@ -137,15 +159,36 @@ export default function MessagesScreen() {
     [user?.id, formatTime]
   );
 
+  const chatHeader = (
+    <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
+      <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
+        <ArrowLeft size={22} color={colors.text} />
+      </TouchableOpacity>
+      {coachPhoto ? (
+        <Image
+          source={{ uri: coachPhoto }}
+          className="w-9 h-9 rounded-full mr-2.5"
+        />
+      ) : (
+        <View className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900/30 items-center justify-center mr-2.5">
+          <UserIcon size={18} color={colors.brand} />
+        </View>
+      )}
+      <View className="flex-1">
+        <Text className="text-base font-semibold text-gray-900 dark:text-slate-50" numberOfLines={1}>
+          {coachName}
+        </Text>
+        <Text className="text-xs text-gray-500 dark:text-slate-400">
+          {t.portalMessages.chatWithCoach}
+        </Text>
+      </View>
+    </View>
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
-        <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
-            <ArrowLeft size={22} color={colors.text} />
-          </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.messages}</Text>
-        </View>
+        {chatHeader}
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.brand} />
         </View>
@@ -156,12 +199,7 @@ export default function MessagesScreen() {
   if (isError) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
-        <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
-            <ArrowLeft size={22} color={colors.text} />
-          </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.messages}</Text>
-        </View>
+        {chatHeader}
         <QueryError onRetry={() => refetch()} />
       </SafeAreaView>
     );
@@ -169,12 +207,7 @@ export default function MessagesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-slate-950" edges={["top"]}>
-      <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700/40">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-2.5">
-          <ArrowLeft size={22} color={colors.text} />
-        </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900 dark:text-slate-50">{t.nav.messages}</Text>
-      </View>
+      {chatHeader}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

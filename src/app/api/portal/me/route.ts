@@ -13,14 +13,56 @@ export async function GET() {
 
   const now = new Date();
 
+  // Push expiration filtering to Postgres for scalability.
+  // Paused plans and subscription_tied require JS post-filtering (column comparison / client status).
+  const planWhereFilter = {
+    isActive: true,
+    AND: [
+      {
+        OR: [
+          { accessPolicy: "unlimited" },
+          { accessPolicy: "subscription_tied" },
+          { accessPolicy: "date_range", endDate: { gte: now } },
+          { accessPolicy: "date_range", pausedAt: { not: null } },
+          { accessPolicy: "date_range", endDate: null },
+        ],
+      },
+      {
+        OR: [
+          { startDate: { lte: now } },
+          { startDate: null },
+        ],
+      },
+    ],
+  };
+
+  const programWhereFilter = {
+    isActive: true,
+    AND: [
+      {
+        OR: [
+          { accessPolicy: "unlimited" },
+          { accessPolicy: "subscription_tied" },
+          { accessPolicy: "date_range", endDate: { gte: now } },
+          { accessPolicy: "date_range", endDate: null },
+        ],
+      },
+      {
+        OR: [
+          { startDate: { lte: now } },
+        ],
+      },
+    ],
+  };
+
   const client = await prisma.client.findUnique({
     where: { id: session.user.clientProfileId },
     include: {
-      tenant: { select: { name: true, brandColor: true, logo: true } },
+      tenant: { select: { name: true, brandColor: true, logo: true, coachPhoto: true } },
       progressPhotos: { orderBy: { takenAt: "desc" } },
       measurements: { orderBy: { date: "desc" }, take: 20 },
       assignedPlans: {
-        where: { isActive: true },
+        where: planWhereFilter,
         include: {
           workoutPlan: {
             include: { exercises: { orderBy: { orderIndex: "asc" } } },
@@ -46,7 +88,7 @@ export async function GET() {
         },
       },
       assignedPrograms: {
-        where: { isActive: true },
+        where: programWhereFilter,
         include: {
           program: {
             include: {
@@ -70,7 +112,7 @@ export async function GET() {
         },
       },
       assignedNutritionPrograms: {
-        where: { isActive: true },
+        where: programWhereFilter,
         include: {
           program: {
             include: {
@@ -97,38 +139,29 @@ export async function GET() {
 
   const photos = await resolvePhotoUrls(client.progressPhotos);
 
-  // Filter out expired plans based on access policy
+  // Post-filter paused plans: only keep if endDate hadn't passed when paused
+  // (Prisma can't compare two columns, so this must be done in JS)
   const activePlans = (client.assignedPlans || []).filter((plan) => {
-    if (plan.accessPolicy === "unlimited") return true;
-    if (plan.accessPolicy === "date_range" && plan.endDate) {
-      // Paused plans don't expire (time is frozen)
-      if (plan.pausedAt) return true;
-      return new Date(plan.endDate) >= now;
-    }
     if (plan.accessPolicy === "subscription_tied") {
       return client.status === "active";
+    }
+    // Paused date_range plans: only visible if they weren't already expired when paused
+    if (plan.accessPolicy === "date_range" && plan.pausedAt && plan.endDate) {
+      return new Date(plan.endDate) >= new Date(plan.pausedAt);
     }
     return true;
   });
 
-  // Filter expired programs
+  // Programs: subscription_tied post-filter
   const activePrograms = (client.assignedPrograms || []).filter((prog) => {
-    if (prog.accessPolicy === "unlimited") return true;
-    if (prog.accessPolicy === "date_range" && prog.endDate) {
-      return new Date(prog.endDate) >= now;
-    }
     if (prog.accessPolicy === "subscription_tied") {
       return client.status === "active";
     }
     return true;
   });
 
-  // Filter expired nutrition programs
+  // Nutrition programs: subscription_tied post-filter
   const activeNutritionPrograms = (client.assignedNutritionPrograms || []).filter((prog) => {
-    if (prog.accessPolicy === "unlimited") return true;
-    if (prog.accessPolicy === "date_range" && prog.endDate) {
-      return new Date(prog.endDate) >= now;
-    }
     if (prog.accessPolicy === "subscription_tied") {
       return client.status === "active";
     }

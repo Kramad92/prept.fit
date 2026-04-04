@@ -64,6 +64,9 @@ export function WorkoutPlanCard({
   const daysLeft = plan.endDate
     ? Math.ceil((new Date(plan.endDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
     : null;
+  const isExpired = daysLeft !== null && daysLeft < 0;
+  const notYetStarted = plan.startDate ? new Date(plan.startDate) > new Date() : false;
+  const hiddenFromClient = isExpired || !plan.isActive || notYetStarted;
   const exercises =
     plan.clientExercises.length > 0
       ? plan.clientExercises
@@ -107,6 +110,11 @@ export function WorkoutPlanCard({
                 }`}>
                   <Clock className="h-3 w-3" />
                   {daysLeft > 0 ? `${daysLeft}d` : t.workouts.expired}
+                </span>
+              )}
+              {hiddenFromClient && (
+                <span className="rounded bg-red-50 px-1.5 py-0.5 text-red-400">
+                  {"Hidden from client"}
                 </span>
               )}
               {!plan.allowDownload && (

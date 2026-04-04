@@ -51,6 +51,13 @@ export async function PUT(
 
   const body = await req.json();
 
+  // Validate pause request before entering transaction
+  if (body.paused === true && !assignment.pausedAt) {
+    if (assignment.endDate && new Date(assignment.endDate) < new Date()) {
+      return NextResponse.json({ error: "Cannot pause an expired plan" }, { status: 400 });
+    }
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     // Update the underlying workout plan exercises (delete old, create new)
     if (body.exercises) {
@@ -113,13 +120,20 @@ export async function PUT(
     if (body.paused === true && !assignment.pausedAt) {
       updateData.pausedAt = new Date();
     } else if (body.paused === false && assignment.pausedAt) {
-      // Extend endDate by the number of days paused
-      const pausedMs = Date.now() - new Date(assignment.pausedAt).getTime();
-      const pausedDays = Math.ceil(pausedMs / (24 * 60 * 60 * 1000));
+      // Extend endDate by the number of days paused, but only if the plan
+      // hadn't already expired before it was paused
       if (assignment.endDate) {
-        const newEnd = new Date(assignment.endDate);
-        newEnd.setDate(newEnd.getDate() + pausedDays);
-        updateData.endDate = newEnd;
+        const endDate = new Date(assignment.endDate);
+        const pausedAt = new Date(assignment.pausedAt);
+        if (endDate >= pausedAt) {
+          // Plan was still active when paused — extend by pause duration
+          const pausedMs = Date.now() - pausedAt.getTime();
+          const pausedDays = Math.ceil(pausedMs / (24 * 60 * 60 * 1000));
+          const newEnd = new Date(endDate);
+          newEnd.setDate(newEnd.getDate() + pausedDays);
+          updateData.endDate = newEnd;
+        }
+        // If endDate < pausedAt, the plan was already expired — don't extend
       }
       updateData.pausedAt = null;
     }

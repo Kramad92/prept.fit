@@ -358,7 +358,10 @@ export const workoutAssignSchema = z.object({
   accessPolicy: z.enum(["unlimited", "date_range", "subscription_tied"]).optional(),
   startDate: z.string().nullable().optional(),
   endDate: z.string().nullable().optional(),
-});
+}).refine(
+  (data) => data.accessPolicy !== "date_range" || (data.endDate != null && data.endDate !== ""),
+  { message: "endDate is required when accessPolicy is date_range", path: ["endDate"] },
+);
 
 const programDaySchema = z.object({
   weekNumber: z.number().min(1),

@@ -273,6 +273,7 @@ model ClientWorkoutPlan {
   @@index([clientId])
   @@index([workoutPlanId])
   @@index([clientWorkoutProgramId])
+  @@index([clientId, isActive, accessPolicy, endDate])
   @@map("client_workout_plans")
 }
 
@@ -1035,6 +1036,7 @@ model ClientWorkoutProgram {
 
   @@index([clientId])
   @@index([programId])
+  @@index([clientId, isActive, accessPolicy, endDate])
   @@map("client_workout_programs")
 }
 
@@ -1102,6 +1104,7 @@ model ClientNutritionProgram {
 
   @@index([clientId])
   @@index([programId])
+  @@index([clientId, isActive, accessPolicy, endDate])
   @@map("client_nutrition_programs")
 }
 

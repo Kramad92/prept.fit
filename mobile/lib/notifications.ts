@@ -111,3 +111,14 @@ export function addNotificationResponseListener(
   if (!Notifications) return { remove: () => {} };
   return Notifications.addNotificationResponseReceivedListener(handler);
 }
+
+/**
+ * Add foreground notification listener (fires when a notification arrives while the app is open).
+ * Returns a subscription that should be cleaned up on unmount.
+ */
+export function addNotificationReceivedListener(
+  handler: (notification: any) => void
+) {
+  if (!Notifications) return { remove: () => {} };
+  return Notifications.addNotificationReceivedListener(handler);
+}

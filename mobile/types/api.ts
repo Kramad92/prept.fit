@@ -210,6 +210,7 @@ export interface ClientProfile {
     name: string;
     brandColor: string;
     logo: string | null;
+    coachPhoto: string | null;
   };
   progressPhotos: ProgressPhoto[];
   measurements: Measurement[];

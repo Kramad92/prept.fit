@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const rl = await rateLimit("auth", getClientIp(req));
+    if (rl) return rl;
+
     const { name, businessName, email, provider } = await req.json();
 
     if (!name || !businessName || !email || !provider) {

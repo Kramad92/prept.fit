@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { SignJWT } from "jose";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 function getJwtSecret() {
   const secret = process.env.NEXTAUTH_SECRET;
@@ -17,6 +18,9 @@ function hashToken(token: string): string {
 
 export async function POST(req: Request) {
   try {
+    const rl = await rateLimit("auth", getClientIp(req));
+    if (rl) return rl;
+
     let body;
     try { body = await req.json(); } catch {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });

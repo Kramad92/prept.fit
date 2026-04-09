@@ -33,6 +33,11 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.amazonaws.com https://*.r2.cloudflarestorage.com https://pub-*.r2.dev https://lh3.googleusercontent.com; font-src 'self'; connect-src 'self' https://*.pusher.com wss://*.pusher.com https://*.upstash.io; frame-ancestors 'none';",
+          },
         ],
       },
     ];

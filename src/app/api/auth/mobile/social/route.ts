@@ -4,10 +4,13 @@ import { SignJWT } from "jose";
 import { OAuth2Client } from "google-auth-library";
 import { jwtVerify, createRemoteJWKSet } from "jose";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret"
-);
+function getJwtSecret() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("NEXTAUTH_SECRET environment variable is required");
+  return new TextEncoder().encode(secret);
+}
 
 const ACCESS_TOKEN_EXPIRY = 15 * 60; // 15 minutes
 const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60; // 30 days
@@ -44,7 +47,7 @@ async function generateAccessToken(user: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${ACCESS_TOKEN_EXPIRY}s`)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 async function verifyGoogleToken(idToken: string) {
@@ -85,6 +88,9 @@ async function verifyAppleToken(idToken: string) {
 
 export async function POST(req: Request) {
   try {
+    const rl = await rateLimit("auth", getClientIp(req));
+    if (rl) return rl;
+
     const body = await req.json();
     const { provider, idToken } = body;
 

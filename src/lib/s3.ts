@@ -89,7 +89,7 @@ export function generateKey(
   filename: string
 ): string {
   const timestamp = Date.now();
-  const ext = filename.split(".").pop();
+  const ext = (filename.split(".").pop() || "bin").replace(/[^a-zA-Z0-9]/g, "");
   return `${tenantId}/${folder}/${timestamp}-${Math.random().toString(36).slice(2)}.${ext}`;
 }
 

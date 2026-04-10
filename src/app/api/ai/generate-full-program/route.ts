@@ -121,6 +121,153 @@ export async function POST(req: NextRequest) {
 }
 
 // ===========================================
+// Split strategy selection
+// ===========================================
+
+interface SplitRecommendation {
+  name: string;
+  planNames: string[];
+  note: string;
+}
+
+/**
+ * Pick a sensible training split based on weekly frequency and user intent.
+ * "Full body program" at high frequency means "train the whole body across
+ * the week via splits" — not "five identical full-body sessions".
+ * The coach can override by saying "full body every day" explicitly.
+ */
+function getSplitRecommendation(daysPerWeek: number, prompt: string): SplitRecommendation {
+  const lower = prompt.toLowerCase();
+
+  // Escape hatch: user explicitly wants full body every session
+  const userWantsLiteralFullBody =
+    /every\s+(day|session)\s+[^.]*full\s*body/.test(lower) ||
+    /full\s*body\s+every\s+(day|session)/.test(lower) ||
+    /identical\s+full\s*body/.test(lower) ||
+    /same\s+full\s*body/.test(lower);
+
+  if (userWantsLiteralFullBody) {
+    return {
+      name: "Full body every session (user explicitly requested)",
+      planNames: Array.from({ length: daysPerWeek }, (_, i) =>
+        `Full Body Session ${String.fromCharCode(65 + i)}`.replace(/\s[A-Z]$/, (m) => ` — Variant ${m.trim()}`)
+      ),
+      note: "User explicitly asked for full-body every day — honor it.",
+    };
+  }
+
+  const wantsHypertrophy = /hypertroph|muscle|mass|bodybuild|bulk|size/.test(lower);
+  const wantsCardio = /cardio|treadmill|run|bike|cycling|row|elliptical|hiit|interval|conditioning|aerobic|endurance|walk|sprint/.test(lower);
+  const cardioSuffix = wantsCardio ? " + Cardio Finisher" : "";
+
+  switch (daysPerWeek) {
+    case 1:
+      return {
+        name: "Full Body",
+        planNames: [`Full Body Strength${cardioSuffix}`],
+        note: "Single session per week — full body is optimal.",
+      };
+    case 2:
+      return {
+        name: "Upper / Lower",
+        planNames: [
+          `Upper Body Strength${cardioSuffix}`,
+          `Lower Body Strength${cardioSuffix}`,
+        ],
+        note: "Classic 2-day split.",
+      };
+    case 3:
+      return wantsHypertrophy
+        ? {
+            name: "Push / Pull / Legs",
+            planNames: [
+              `Push Day — Chest/Shoulders/Triceps${cardioSuffix}`,
+              `Pull Day — Back/Biceps${cardioSuffix}`,
+              `Leg Day — Quads/Hamstrings/Glutes${cardioSuffix}`,
+            ],
+            note: "PPL is ideal for 3-day hypertrophy frequency.",
+          }
+        : {
+            name: "Full Body A / B / C",
+            planNames: [
+              `Full Body — Squat Focus${cardioSuffix}`,
+              `Full Body — Hinge Focus${cardioSuffix}`,
+              `Full Body — Push/Pull Focus${cardioSuffix}`,
+            ],
+            note: "Three full-body sessions with rotating primary movement focus.",
+          };
+    case 4:
+      return {
+        name: "Upper / Lower × 2",
+        planNames: [
+          `Upper Body — Strength Focus${cardioSuffix}`,
+          `Lower Body — Strength Focus${cardioSuffix}`,
+          `Upper Body — Hypertrophy Focus${cardioSuffix}`,
+          `Lower Body — Hypertrophy Focus${cardioSuffix}`,
+        ],
+        note: "4-day upper/lower with strength + hypertrophy alternation.",
+      };
+    case 5:
+      return wantsHypertrophy
+        ? {
+            name: "Chest / Back / Legs / Shoulders / Arms (bro split)",
+            planNames: [
+              `Chest Day — Dumbbell & Barbell${cardioSuffix}`,
+              `Back Day — Width & Thickness${cardioSuffix}`,
+              `Leg Day — Quads/Hamstrings/Glutes${cardioSuffix}`,
+              `Shoulder Day — Delts & Traps${cardioSuffix}`,
+              `Arms Day — Biceps & Triceps${cardioSuffix}`,
+            ],
+            note: "5-day bro split — each day isolates a muscle group for maximum hypertrophy volume.",
+          }
+        : {
+            name: "Push / Pull / Legs / Upper / Lower",
+            planNames: [
+              `Push Day — Chest/Shoulders/Triceps${cardioSuffix}`,
+              `Pull Day — Back/Biceps${cardioSuffix}`,
+              `Leg Day — Quads/Glutes${cardioSuffix}`,
+              `Upper Body Accessories${cardioSuffix}`,
+              `Lower Body Accessories${cardioSuffix}`,
+            ],
+            note: "Hybrid PPL + upper/lower for 5-day frequency.",
+          };
+    case 6:
+      return {
+        name: "Push / Pull / Legs × 2",
+        planNames: [
+          `Push Day A — Chest Focus${cardioSuffix}`,
+          `Pull Day A — Back Width${cardioSuffix}`,
+          `Leg Day A — Quad Focus${cardioSuffix}`,
+          `Push Day B — Shoulder Focus${cardioSuffix}`,
+          `Pull Day B — Back Thickness${cardioSuffix}`,
+          `Leg Day B — Posterior Chain${cardioSuffix}`,
+        ],
+        note: "6-day PPL × 2 — high-volume hypertrophy split.",
+      };
+    case 7:
+      return {
+        name: "PPL / Upper / Lower / Full Body / Conditioning",
+        planNames: [
+          `Push Day${cardioSuffix}`,
+          `Pull Day${cardioSuffix}`,
+          `Leg Day${cardioSuffix}`,
+          `Upper Body Accessories${cardioSuffix}`,
+          `Lower Body Accessories${cardioSuffix}`,
+          `Full Body Conditioning`,
+          `Active Recovery / Mobility`,
+        ],
+        note: "7-day high-frequency split with a recovery day.",
+      };
+    default:
+      return {
+        name: "Full body mix",
+        planNames: Array.from({ length: daysPerWeek }, (_, i) => `Full Body Session ${i + 1}${cardioSuffix}`),
+        note: "Unusual frequency — default to full body.",
+      };
+  }
+}
+
+// ===========================================
 // Unified program builder
 // ===========================================
 
@@ -149,6 +296,27 @@ async function handleProgram(
   const dayDesc = type === "workout"
     ? `exactly ${daysPerWeek} training session(s) per week — rest days are NOT part of the schedule`
     : `7 days per week, ${mealsPerDay} meal(s) per day`;
+
+  // Pre-compute the recommended split so the blueprint AI doesn't have to
+  // decide it from scratch — Flash-Lite is too weak to interpret abstract
+  // "full body = split across the week" guidance reliably.
+  const splitRec = type === "workout" ? getSplitRecommendation(daysPerWeek, prompt) : null;
+  const splitGuidance = splitRec
+    ? `
+
+MANDATORY TRAINING SPLIT FOR THIS PROGRAM: ${splitRec.name}
+(${splitRec.note})
+
+REQUIRED PLAN STRUCTURE — use THESE exact training focuses, one plan per focus:
+${splitRec.planNames.map((n, i) => `  ${i + 1}. "${n}"`).join("\n")}
+
+CRITICAL rules for plan creation:
+- You MUST create one "generate" plan for EACH of the ${splitRec.planNames.length} focuses above. Each plan trains a DIFFERENT part of the body — do NOT create multiple plans with the same muscle focus.
+- Each plan name must start with its specific training focus from the list above. You MAY adapt the suffix (add equipment focus, vary the cardio modality, etc.) but the core focus MUST remain distinct across plans.
+- If the user wants cardio inside every session, VARY the cardio modality across days (e.g. Day 1 = treadmill, Day 2 = rowing, Day 3 = bike). Do NOT put the same cardio on every day.
+- Under NO circumstances should you create multiple plans named "Full Body" (or minor variations) that only differ by cardio modality. That is explicitly forbidden for this program.
+- If the user's request explicitly says "full body every single day" or "same full body workout every session", then and only then may you ignore the split above.`
+    : "";
 
   // ---- Fetch existing plans ----
 
@@ -187,6 +355,7 @@ ${existingList}
 
 PROGRAM: ${durationWeeks} weeks, ${dayDesc}.
 ${mealsPerDay ? `Each meal plan MUST contain exactly ${mealsPerDay} meal(s). This is critical — the user specified ${mealsPerDay} meal(s) per day.` : ""}
+${splitGuidance}
 
 YOUR TASK:
 1. Determine what unique ${planType} plans this program needs (max ${maxUniquePlans} distinct plans).

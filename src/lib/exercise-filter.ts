@@ -106,6 +106,7 @@ ${taxonomyText}
 
 Rules:
 - Only include filter dimensions that are relevant to the request. Omit dimensions that should not be filtered.
+- MULTI-MODAL REQUESTS: If the request asks for more than one training style (e.g. "strength AND cardio", "hypertrophy with treadmill intervals", "weightlifting + conditioning"), you MUST include categories for EVERY requested modality. Never drop a modality just because another is more prominent. Example: "full body weight loss with treadmill cardio" → include both strength categories (Chest, Back, Legs, etc.) AND cardio/conditioning categories (Cardio, Conditioning, etc.).
 - For "excludeTags": infer contraindications from context clues. Examples:
   - "postpartum" → exclude high impact, prone exercises, heavy loading
   - "knee injury" → exclude deep squats, jumping, high impact
@@ -113,6 +114,7 @@ Rules:
   Match excludeTags against movementPattern and classification values from the taxonomy.
 - Use the EXACT values from the taxonomy above — do not invent new ones.
 - Be inclusive enough to return 15-40 exercises. Don't over-filter.
+- When in doubt, be MORE inclusive rather than less. A larger filtered pool is better than silently dropping relevant exercises.
 
 Return ONLY a JSON object like:
 {
@@ -205,6 +207,34 @@ export async function filterWithFallback(
 
 // ─── Full pipeline: classify + filter ───────────────────────
 
+const CARDIO_KEYWORDS = [
+  "cardio", "treadmill", "running", "jog", "bike", "cycling", "cycle",
+  "rower", "rowing", "elliptical", "stairmaster", "hiit", "interval",
+  "conditioning", "aerobic", "endurance", "steady-state", "steady state",
+  "walk", "sprint",
+];
+
+function promptMentionsCardio(text: string): boolean {
+  const lower = text.toLowerCase();
+  return CARDIO_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+async function fetchCardioExercises(tenantId: string): Promise<FilteredExercise[]> {
+  return prisma.exerciseLibrary.findMany({
+    where: {
+      tenantId,
+      OR: [
+        { category: { contains: "cardio", mode: "insensitive" } },
+        { category: { contains: "conditioning", mode: "insensitive" } },
+        { muscleGroup: { contains: "cardio", mode: "insensitive" } },
+        { bodyRegion: { contains: "cardio", mode: "insensitive" } },
+      ],
+    },
+    select: EXERCISE_SELECT,
+    take: 30,
+  }) as Promise<FilteredExercise[]>;
+}
+
 export async function getFilteredExercises(
   tenantId: string,
   prompt: string,
@@ -236,6 +266,29 @@ export async function getFilteredExercises(
       select: EXERCISE_SELECT,
       take: 200,
     }) as FilteredExercise[];
+  }
+
+  // Safety net: if the prompt mentions cardio/conditioning but none of the
+  // filtered exercises are cardio, merge cardio exercises from the library in.
+  // This prevents the classifier from silently dropping a requested modality.
+  if (promptMentionsCardio(`${prompt} ${preferences || ""}`)) {
+    const existingIds = new Set(exercises.map((e) => e.id));
+    const hasCardio = exercises.some((e) =>
+      (e.category || "").toLowerCase().includes("cardio") ||
+      (e.category || "").toLowerCase().includes("conditioning") ||
+      (e.muscleGroup || "").toLowerCase().includes("cardio")
+    );
+    if (!hasCardio) {
+      const cardioExercises = await fetchCardioExercises(tenantId);
+      const merged = [
+        ...exercises,
+        ...cardioExercises.filter((e) => !existingIds.has(e.id)),
+      ];
+      if (merged.length > exercises.length) {
+        console.log(`Exercise filter: added ${merged.length - exercises.length} cardio exercises (classifier dropped them but prompt requested cardio)`);
+        exercises = merged;
+      }
+    }
   }
 
   const exerciseNames = new Set(exercises.map((e) => e.name.toLowerCase()));

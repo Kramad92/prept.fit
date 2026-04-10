@@ -198,6 +198,7 @@ YOUR TASK:
 4. For each plan the program needs, set source to "existing" if a matching plan exists (use its EXACT name), or "generate" if it needs to be created.
 5. "missingPlans" should list the NAMES of plans that need to be generated (human-readable, for display to the user).
 6. The "prompt" field: for "existing" plans, leave empty "". For "generate" plans, write a detailed description of what that plan should contain.${mealsPerDay ? ` Every generate prompt MUST specify: "This plan must have exactly ${mealsPerDay} meal(s)."` : ""}
+7. Each generate prompt MUST preserve EVERY specific requirement from the user's original request: exercise counts, cardio integration, equipment choices, rep ranges, techniques, finishers, etc. If the user asked for "5-7 exercises per day with treadmill cardio", each generate prompt must explicitly include both the exercise count AND the cardio component. Never silently drop requirements.
 
 Rules:
 - ${maxUniquePlans} or fewer unique plans total.
@@ -207,17 +208,18 @@ Rules:
 - Label each entry with the weekday it represents in the user's language (e.g. "Monday", "Wednesday"). For ${slotsPerWeek}-day workout weeks, pick ${slotsPerWeek} weekdays that make sense — not necessarily Mon-${slotsPerWeek === 5 ? "Fri" : slotsPerWeek === 6 ? "Sat" : "last"}.
 - Reference plans via planIndex (0-based index into the plans array).
 - ${type === "workout" ? "Arrange logically — avoid same muscle group on consecutive days." : "Vary plans across days for dietary balance."}
-- For "generate" plans: use specific, descriptive names (e.g. "Upper Body Push — Chest & Shoulders" instead of just "Chest Day").
+- For "generate" plans: names MUST describe the actual focus and content. FORBIDDEN: generic letter suffixes like "A", "B", "C", "D", or numbered suffixes like "Plan 1", "Plan 2". REQUIRED: specific descriptive names that reflect the muscle focus, training style, or included elements (e.g. "Upper Body Push + Treadmill Intervals", "Lower Body Strength + HIIT Finisher", "Pull Day — Back & Biceps with Steady-State Cardio"). If the user requested cardio integration, the plan name should reflect that.
 - For "existing" plans: use the EXACT name from the list above.
 - Be strict about matching — don't force-fit a "Full Body Kettlebell" plan when the user asked for an isolated "Shoulder Day". Only mark as "existing" if the plan genuinely fits.
 - ${langInstruction}
 ${type === "workout" && durationWeeks > 1 ? `
 WEEK-TO-WEEK VARIETY (CRITICAL):
 - Do NOT repeat the exact same schedule every week. Each week should feel different.
-- Create VARIANT plans that target the same muscle groups but with different exercises or emphasis.
-  Example: "Upper Push A — Barbell Focus" (Week 1) and "Upper Push B — Dumbbell Focus" (Week 2).
+- Create VARIANT plans that target the same muscle groups but with different exercises or emphasis. Each variant still needs a DESCRIPTIVE name — no bare letter suffixes.
+  Good example: "Upper Push — Barbell Focus" (Week 1) and "Upper Push — Dumbbell Focus" (Week 2).
+  Bad example: "Upper Push A" / "Upper Push B".
 - Rotate which variants appear on which days across weeks so no two weeks are identical.
-- Aim for at least ${Math.min(daysPerWeek, 3)} variant pairs (A/B versions) to keep the program fresh.
+- Aim for at least ${Math.min(daysPerWeek, 3)} variant pairs to keep the program fresh.
 - This is a periodized program — progressive variation across weeks is essential, not optional.` : ""}
 
 Return JSON:
@@ -351,10 +353,10 @@ Return JSON:
     }
 
     if (type === "workout") {
-      const data = await generateWorkout(planDef, locale, langInstruction, libraryContext, libraryLookup, exerciseNames, filtered);
+      const data = await generateWorkout(planDef, locale, langInstruction, libraryContext, libraryLookup, exerciseNames, filtered, prompt);
       resolved.push({ generated: data });
     } else {
-      const data = await generateMealPlan(planDef, locale, langInstruction, mealsPerDay);
+      const data = await generateMealPlan(planDef, locale, langInstruction, mealsPerDay, prompt);
       resolved.push({ generated: data });
     }
   }
@@ -502,6 +504,7 @@ async function generateWorkout(
   libraryLookup: Map<string, string>,
   exerciseNames: Set<string>,
   filteredExercises: FilteredExercise[],
+  userPrompt: string,
 ) {
   const exerciseNameInstruction = getAIExerciseNameInstruction(locale);
 
@@ -515,11 +518,13 @@ Rules:
 - Each exercise must have: name, nameEn (English name for reference), sets (number), reps (string like "8-12" or "10"), weight (string like "bodyweight", "moderate", or leave empty ""), restSeconds (number), notes (string with detailed form cues)
 - CRITICAL: The "name" and "nameEn" fields must ONLY contain the standard exercise name. NEVER include substitution context or phrases like "X is replaced with Y".
 - Avoid duplicate or overly similar exercises (e.g. do not include both Barbell Bench Press and Barbell Close Grip Bench Press unless specifically requested).
-- Include 5-10 exercises per workout
-- Order exercises logically (compound first, isolation after)
-- Use appropriate set/rep schemes for the goal (strength: 3-5x3-5, hypertrophy: 3-4x8-12, endurance: 2-3x15-20)
-- Include rest periods appropriate for the training style
-- The "notes" field MUST contain helpful form cues (2-3 sentences)
+- Include 5-10 exercises per workout unless the user's request overrides this count.
+- Order exercises logically (compound first, isolation after).
+- If the user's request mentions cardio, conditioning, treadmill, HIIT, or any aerobic element, you MUST include matching cardio exercises from the library as part of this plan (typically 1-2 cardio items, placed at the end as a finisher or at the start as a warm-up). Do NOT ignore cardio requirements.
+- Honor any specific counts, techniques, or equipment the user requested — do not silently simplify.
+- Use appropriate set/rep schemes for the goal (strength: 3-5x3-5, hypertrophy: 3-4x8-12, endurance: 2-3x15-20).
+- Include rest periods appropriate for the training style.
+- The "notes" field MUST contain helpful form cues (2-3 sentences).
 - ${exerciseNameInstruction}
 - ${langInstruction}
 
@@ -542,7 +547,12 @@ Return a JSON object with this exact structure:
       },
       {
         role: "user",
-        content: `Create a workout plan: ${planDef.name}. ${planDef.prompt}`,
+        content: `Original program request (full context — honor every requirement): "${userPrompt}"
+
+Plan to create: ${planDef.name}
+Plan focus: ${planDef.prompt}
+
+Build a single workout plan that fits within the original program request above. Preserve any explicit counts, cardio, equipment, or technique requirements from the original request.`,
       },
     ],
     maxTokens: 3000,
@@ -594,7 +604,8 @@ async function generateMealPlan(
   planDef: UnifiedBlueprintPlan,
   locale: string,
   langInstruction: string,
-  numMeals?: number,
+  numMeals: number | undefined,
+  userPrompt: string,
 ) {
   const mealCountInstruction = numMeals
     ? `Create exactly ${numMeals} meal(s). This is a strict requirement — do NOT add extra meals.`
@@ -645,7 +656,12 @@ Return JSON:
       },
       {
         role: "user",
-        content: `Create a meal plan: ${planDef.name}. ${planDef.prompt}`,
+        content: `Original program request (full context — honor every requirement): "${userPrompt}"
+
+Plan to create: ${planDef.name}
+Plan focus: ${planDef.prompt}
+
+Build a single meal plan that fits within the original program request above. Preserve any explicit dietary preferences, allergies, macro targets, or food restrictions.`,
       },
     ],
     maxTokens: 4000,

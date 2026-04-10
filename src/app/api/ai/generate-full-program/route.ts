@@ -145,8 +145,9 @@ async function handleProgram(
     : Math.min(5, 4);
 
   const planType = type === "workout" ? "workout" : "meal";
+  const slotsPerWeek = type === "workout" ? daysPerWeek : 7;
   const dayDesc = type === "workout"
-    ? `${daysPerWeek} training days per week`
+    ? `exactly ${daysPerWeek} training session(s) per week — rest days are NOT part of the schedule`
     : `7 days per week, ${mealsPerDay} meal(s) per day`;
 
   // ---- Fetch existing plans ----
@@ -200,8 +201,11 @@ YOUR TASK:
 
 Rules:
 - ${maxUniquePlans} or fewer unique plans total.
-- Schedule ALL ${totalSlots} day slots by referencing planIndex (0-based index into the plans array).
-- Label days with weekday names in the user's language.
+- The "schedule" array MUST contain EXACTLY ${totalSlots} entries — no more, no less.
+- Each week MUST contain EXACTLY ${slotsPerWeek} entries${type === "workout" ? " (one per training session — DO NOT add rest days, DO NOT pad to 7)" : ""}.
+- Use dayNumber values 1..${slotsPerWeek} sequentially within each week (1 = first session of the week).
+- Label each entry with the weekday it represents in the user's language (e.g. "Monday", "Wednesday"). For ${slotsPerWeek}-day workout weeks, pick ${slotsPerWeek} weekdays that make sense — not necessarily Mon-${slotsPerWeek === 5 ? "Fri" : slotsPerWeek === 6 ? "Sat" : "last"}.
+- Reference plans via planIndex (0-based index into the plans array).
 - ${type === "workout" ? "Arrange logically — avoid same muscle group on consecutive days." : "Vary plans across days for dietary balance."}
 - For "generate" plans: use specific, descriptive names (e.g. "Upper Body Push — Chest & Shoulders" instead of just "Chest Day").
 - For "existing" plans: use the EXACT name from the list above.
@@ -241,6 +245,45 @@ Return JSON:
   }
 
   logAiUsage({ tenantId, endpoint: "generate-full-program-blueprint", tokensIn: bpUsage.tokensIn, tokensOut: bpUsage.tokensOut, provider: bpUsage.provider });
+
+  // Enforce slotsPerWeek on the AI-generated schedule.
+  // The AI sometimes inflates to 7 days/week even when asked for fewer; clamp and
+  // renumber dayNumber sequentially so the display matches the requested daysPerWeek.
+  const scheduleByWeek = new Map<number, UnifiedBlueprintDay[]>();
+  for (const entry of blueprint.schedule || []) {
+    const week = entry.weekNumber;
+    if (!Number.isInteger(week) || week < 1 || week > durationWeeks) continue;
+    if (!scheduleByWeek.has(week)) scheduleByWeek.set(week, []);
+    scheduleByWeek.get(week)!.push(entry);
+  }
+
+  const normalizedSchedule: UnifiedBlueprintDay[] = [];
+  for (let week = 1; week <= durationWeeks; week++) {
+    const weekEntries = (scheduleByWeek.get(week) || [])
+      .sort((a, b) => (a.dayNumber ?? 99) - (b.dayNumber ?? 99))
+      .slice(0, slotsPerWeek);
+    if (weekEntries.length < slotsPerWeek) {
+      console.warn(`AI under-delivered week ${week}: ${weekEntries.length}/${slotsPerWeek} slots — program will be short`);
+    }
+    weekEntries.forEach((entry, idx) => {
+      normalizedSchedule.push({
+        weekNumber: week,
+        dayNumber: idx + 1,
+        label: entry.label || "",
+        planIndex: entry.planIndex,
+      });
+    });
+  }
+
+  if (normalizedSchedule.length < Math.max(1, Math.floor(totalSlots * 0.5))) {
+    throw new Error(`AI schedule too short: ${normalizedSchedule.length}/${totalSlots}`);
+  }
+
+  if (blueprint.schedule.length !== normalizedSchedule.length) {
+    console.log(`Schedule normalized: AI returned ${blueprint.schedule.length} entries, clamped to ${normalizedSchedule.length} (expected ${totalSlots})`);
+  }
+
+  blueprint.schedule = normalizedSchedule;
 
   // ---- Step 2: Check if generation is needed but not allowed ----
 

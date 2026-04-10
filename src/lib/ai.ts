@@ -20,6 +20,8 @@ export interface AIUsage {
   tokensIn: number;
   tokensOut: number;
   provider: string;
+  /** Tokens served from prompt cache (implicit or explicit). Gemini only for now. */
+  cachedTokens?: number;
 }
 
 export interface AIResult {
@@ -131,12 +133,19 @@ function createGeminiProvider(apiKey: string): AIProvider {
         || parts.find((p: Record<string, unknown>) => p.text);
       const text = textPart?.text;
       if (!text) throw new Error("Empty response from Gemini");
+      const cachedTokens = data?.usageMetadata?.cachedContentTokenCount || 0;
+      const promptTokens = data?.usageMetadata?.promptTokenCount || 0;
+      if (cachedTokens > 0) {
+        const pct = Math.round((cachedTokens / promptTokens) * 100);
+        console.log(`Gemini cache hit: ${cachedTokens}/${promptTokens} tokens cached (${pct}%)`);
+      }
       return {
         text,
         usage: {
-          tokensIn: data?.usageMetadata?.promptTokenCount || 0,
+          tokensIn: promptTokens,
           tokensOut: data?.usageMetadata?.candidatesTokenCount || 0,
           provider: "gemini",
+          cachedTokens,
         },
       };
     },

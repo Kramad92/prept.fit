@@ -1,5 +1,5 @@
 // AI provider abstraction layer
-// Supports: Groq (free), Gemini (free), OpenRouter (free+paid), Claude (paid). Set AI_PROVIDER env var.
+// Supports: Gemini (paid, default), Groq (fallback), OpenRouter (free+paid), Claude (paid). Set AI_PROVIDER env var.
 
 export interface AIMessage {
   role: "system" | "user";
@@ -106,7 +106,7 @@ function createGeminiProvider(apiKey: string): AIProvider {
         };
       }
 
-      const model = process.env.AI_GEMINI_MODEL || "gemini-2.0-flash";
+      const model = process.env.AI_GEMINI_MODEL || "gemini-2.5-flash-lite";
       const res = await fetch(
         `${BASE}/models/${model}:generateContent`,
         {

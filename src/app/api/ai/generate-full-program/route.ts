@@ -199,7 +199,18 @@ YOUR TASK:
 5. "missingPlans" should list the NAMES of plans that need to be generated (human-readable, for display to the user).
 6. The "prompt" field: for "existing" plans, leave empty "". For "generate" plans, write a detailed description of what that plan should contain.${mealsPerDay ? ` Every generate prompt MUST specify: "This plan must have exactly ${mealsPerDay} meal(s)."` : ""}
 7. Each generate prompt MUST preserve EVERY specific requirement from the user's original request: exercise counts, cardio integration, equipment choices, rep ranges, techniques, finishers, etc. If the user asked for "5-7 exercises per day with treadmill cardio", each generate prompt must explicitly include both the exercise count AND the cardio component. Never silently drop requirements.
+${type === "workout" ? `
+SPLIT STRATEGY (CRITICAL — interpret "full body" intelligently):
+When the user asks for a "full body" program, they mean the program should train the entire body across the week — NOT that every single day must be a full-body workout. Choose the split that fits the frequency, unless the user explicitly asks for "full body EVERY day":
+- 1-2 days/week → Full Body A / Full Body B (actual full-body workouts are appropriate)
+- 3 days/week → Push / Pull / Legs  OR  Full Body A / Full Body B / Full Body C
+- 4 days/week → Upper / Lower / Upper / Lower  OR  Push / Pull / Legs / Full Body
+- 5 days/week → Push / Pull / Legs / Upper / Lower  OR  Chest / Back / Legs / Shoulders / Arms  OR  Upper Push / Upper Pull / Lower / Full Body / Conditioning
+- 6 days/week → Push / Pull / Legs × 2  OR  Bro split (Chest / Back / Legs / Shoulders / Arms / Conditioning)
+Each DAY within the week must have a DISTINCT focus — do NOT create 5 identical "Full Body" plans and just rotate cardio modality. That is wrong.
 
+CARDIO INTEGRATION: If the user wants cardio inside every session, add the cardio as a finisher to each split day (e.g. "Push Day + Treadmill Intervals", "Leg Day + Bike Intervals"). Vary the cardio modality across days for variety.
+` : ""}
 Rules:
 - ${maxUniquePlans} or fewer unique plans total.
 - The "schedule" array MUST contain EXACTLY ${totalSlots} entries — no more, no less.
@@ -208,16 +219,26 @@ Rules:
 - Label each entry with the weekday it represents in the user's language (e.g. "Monday", "Wednesday"). For ${slotsPerWeek}-day workout weeks, pick ${slotsPerWeek} weekdays that make sense — not necessarily Mon-${slotsPerWeek === 5 ? "Fri" : slotsPerWeek === 6 ? "Sat" : "last"}.
 - Reference plans via planIndex (0-based index into the plans array).
 - ${type === "workout" ? "Arrange logically — avoid same muscle group on consecutive days." : "Vary plans across days for dietary balance."}
-- For "generate" plans: names MUST describe the actual focus and content. FORBIDDEN: generic letter suffixes like "A", "B", "C", "D", or numbered suffixes like "Plan 1", "Plan 2". REQUIRED: specific descriptive names that reflect the muscle focus, training style, or included elements (e.g. "Upper Body Push + Treadmill Intervals", "Lower Body Strength + HIIT Finisher", "Pull Day — Back & Biceps with Steady-State Cardio"). If the user requested cardio integration, the plan name should reflect that.
+- NAMING RULES for "generate" plans (STRICTLY ENFORCED):
+  * Each name MUST start with the specific training focus: the muscle group(s), movement pattern, or split category that makes this day DIFFERENT from the others.
+  * If cardio is included, append the modality after a "+" or "—": e.g. "Push Day — Chest/Shoulders/Triceps + Treadmill Intervals".
+  * FORBIDDEN patterns (do NOT produce any of these):
+    – Trailing single letter: "Full Body A", "Full Body Hypertrophy + Cardio Finisher A", "Upper Push B", "Workout C"
+    – Trailing number or "Plan N": "Workout 1", "Plan 2", "Day 3"
+    – Trailing roman numerals: "Workout I", "Leg Day II"
+    – Generic names that don't identify the day's focus: "Full Body Workout", "Full Body Hypertrophy", "Hypertrophy Day" (too vague when multiple days share this base)
+  * REQUIRED: each of the ${Math.min(daysPerWeek, maxUniquePlans)} plan names must be distinguishable from the others by reading the name alone.
+  * GOOD examples: "Push Day — Chest/Shoulders/Triceps + Treadmill HIIT", "Pull Day — Back/Biceps + Rowing Intervals", "Leg Day — Quads/Glutes + Bike Intervals", "Upper Body Strength — Dumbbell Focus", "Lower Body Hypertrophy — Cable Focus".
+  * BAD examples (these will be rejected): "Full Body Hypertrophy + Cardio Finisher A", "Full Body Hypertrophy + Cardio Finisher B", "Full Body Workout", "Upper Body A", "Workout Day 1".
 - For "existing" plans: use the EXACT name from the list above.
 - Be strict about matching — don't force-fit a "Full Body Kettlebell" plan when the user asked for an isolated "Shoulder Day". Only mark as "existing" if the plan genuinely fits.
 - ${langInstruction}
 ${type === "workout" && durationWeeks > 1 ? `
 WEEK-TO-WEEK VARIETY (CRITICAL):
 - Do NOT repeat the exact same schedule every week. Each week should feel different.
-- Create VARIANT plans that target the same muscle groups but with different exercises or emphasis. Each variant still needs a DESCRIPTIVE name — no bare letter suffixes.
-  Good example: "Upper Push — Barbell Focus" (Week 1) and "Upper Push — Dumbbell Focus" (Week 2).
-  Bad example: "Upper Push A" / "Upper Push B".
+- Prefer rotating the split ORDER across weeks AND/OR creating variant plans that target the same muscle groups with different equipment or emphasis.
+  Good variant example: "Push Day — Barbell Focus" (Week 1) and "Push Day — Dumbbell Focus" (Week 2) — different exercises, same muscle focus, still each name identifies the unique focus.
+  Bad example: "Push Day A" / "Push Day B" — the letter suffix tells the reader nothing.
 - Rotate which variants appear on which days across weeks so no two weeks are identical.
 - Aim for at least ${Math.min(daysPerWeek, 3)} variant pairs to keep the program fresh.
 - This is a periodized program — progressive variation across weeks is essential, not optional.` : ""}
@@ -286,6 +307,19 @@ Return JSON:
   }
 
   blueprint.schedule = normalizedSchedule;
+
+  // Warn when the blueprint still slips through a forbidden naming pattern.
+  // Pattern: trailing " A"/" B"/single letter, " I"/" II" roman numerals,
+  // or " 1"/" 2"/" Plan N"/" Day N" numeric suffixes.
+  if (type === "workout") {
+    const forbiddenNamePattern = /\s+(?:[A-E]|I{1,3}|IV|V|plan\s*\d+|day\s*\d+|\d+)$/i;
+    const offenders = blueprint.plans
+      .filter((p) => p.source === "generate" && forbiddenNamePattern.test(p.name))
+      .map((p) => p.name);
+    if (offenders.length > 0) {
+      console.warn(`Blueprint used forbidden name suffixes despite prompt rules: ${offenders.join(", ")}`);
+    }
+  }
 
   // ---- Step 2: Check if generation is needed but not allowed ----
 
@@ -592,7 +626,9 @@ Build a single workout plan that fits within the original program request above.
 
   return {
     workoutData: {
-      name: result.name || planDef.name,
+      // Always use the blueprint's plan name — it already enforced naming
+      // rules and distinguishes this plan from siblings in the program.
+      name: planDef.name,
       description: result.description || null,
       exercises,
     },
@@ -707,7 +743,7 @@ Build a single meal plan that fits within the original program request above. Pr
 
   return {
     mealData: {
-      name: result.name || planDef.name,
+      name: planDef.name,
       description: result.description || null,
       targetCalories: totalCalories,
       targetProtein: totalProtein,

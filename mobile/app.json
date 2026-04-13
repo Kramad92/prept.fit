@@ -84,7 +84,10 @@
       },
       "router": {
         "origin": false
-      }
+      },
+      "analyticsEnabled": false,
+      "posthogKey": "",
+      "posthogHost": "https://us.i.posthog.com"
     },
     "owner": "prept",
     "runtimeVersion": {

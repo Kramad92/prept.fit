@@ -3,14 +3,15 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@analytics-core": ["../src/lib/analytics/core/index"],
+      "@analytics-core/*": ["../src/lib/analytics/core/*"]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "nativewind-env.d.ts"
+    "nativewind-env.d.ts",
+    "../src/lib/analytics/core/**/*"
   ]
 }

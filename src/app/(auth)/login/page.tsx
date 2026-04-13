@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Dumbbell, Users, BarChart3, Calendar, MessageSquare, Sparkles } from "lucide-react";
+import { useAnalytics } from "@/lib/analytics";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,6 +18,7 @@ function LoginForm() {
   const [emailInput, setEmailInput] = useState("");
   const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
   const t = useT();
+  const analytics = useAnalytics();
 
   const registered = searchParams.get("registered") === "true";
   const oauthError = searchParams.get("error");
@@ -51,6 +53,11 @@ function LoginForm() {
       }
     } else {
       const session = await getSession();
+      if (session?.user?.id) {
+        analytics.alias(session.user.id);
+        analytics.identify(session.user.id, { email: session.user.email ?? undefined });
+        analytics.track("user_logged_in", { method: "email" });
+      }
       if (session?.user?.role === "ADMIN") {
         router.push("/admin");
       } else if (session?.user?.role === "CLIENT") {

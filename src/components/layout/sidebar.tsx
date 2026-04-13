@@ -20,13 +20,14 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useT } from "@/lib/i18n";
+import { useTrackedSignOut } from "@/lib/analytics";
 
 export function Sidebar() {
   const pathname = usePathname();
   const t = useT();
+  const signOut = useTrackedSignOut();
   const openSearch = () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "/" }));
   };

@@ -12,8 +12,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTrackedSignOut } from "@/lib/analytics";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -26,6 +26,7 @@ const navItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const signOut = useTrackedSignOut();
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">

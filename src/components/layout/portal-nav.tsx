@@ -20,10 +20,10 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TenantSwitcher } from "@/components/portal/tenant-switcher";
 import { useT, useLocale, type Locale } from "@/lib/i18n";
+import { useTrackedSignOut } from "@/lib/analytics";
 
 const LOCALE_LABELS: Record<Locale, string> = { bs: "BHS", sr: "SRP", hr: "HRV", en: "ENG" };
 
@@ -31,6 +31,7 @@ export function PortalMobileNav() {
   const pathname = usePathname();
   const t = useT();
   const { locale, setLocale } = useLocale();
+  const signOut = useTrackedSignOut();
 
   const navItems = [
     { href: "/portal", icon: Home, label: t.nav.home },
@@ -192,6 +193,7 @@ export function PortalDesktopNav() {
   const pathname = usePathname();
   const t = useT();
   const { locale, setLocale } = useLocale();
+  const signOut = useTrackedSignOut();
 
   const navItems = [
     { href: "/portal", icon: Home, label: t.nav.home },

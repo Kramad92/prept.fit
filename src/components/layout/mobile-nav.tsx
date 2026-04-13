@@ -22,12 +22,13 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
 import { useT } from "@/lib/i18n";
+import { useTrackedSignOut } from "@/lib/analytics";
 
 export function MobileNav() {
   const pathname = usePathname();
   const t = useT();
+  const signOut = useTrackedSignOut();
 
   const primaryNav = [
     { href: "/dashboard", icon: LayoutDashboard, label: t.nav.home },

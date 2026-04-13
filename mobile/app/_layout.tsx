@@ -14,8 +14,15 @@ import { queryClient } from "@/lib/query-client";
 import { ThemeProvider } from "@/lib/theme-context";
 import { I18nProvider } from "@/lib/i18n";
 import { useSecurityCheck } from "@/hooks/use-security-check";
+import { AnalyticsProvider, useScreenTracking, useAppStateTracking } from "@/lib/analytics";
 
 SplashScreen.preventAutoHideAsync();
+
+function AnalyticsTrackers() {
+  useScreenTracking();
+  useAppStateTracking();
+  return null;
+}
 
 function NotificationHandler() {
   const { user, isLoading } = useAuth();
@@ -102,8 +109,11 @@ export default function RootLayout() {
                 <QueryClientProvider client={queryClient}>
                   <BottomSheetModalProvider>
                     <AuthProvider>
-                      <NotificationHandler />
-                      <Slot />
+                      <AnalyticsProvider>
+                        <AnalyticsTrackers />
+                        <NotificationHandler />
+                        <Slot />
+                      </AnalyticsProvider>
                     </AuthProvider>
                   </BottomSheetModalProvider>
                 </QueryClientProvider>

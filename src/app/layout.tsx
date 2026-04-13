@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { AnalyticsProvider, PageTrackingMount } from "@/lib/analytics";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceGrotesk = Space_Grotesk({
@@ -43,7 +45,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} ${inter.className}`}>
-        <Providers>{children}</Providers>
+        <AnalyticsProvider>
+          <Suspense fallback={null}>
+            <PageTrackingMount />
+          </Suspense>
+          <Providers>{children}</Providers>
+        </AnalyticsProvider>
         <SpeedInsights />
       </body>
     </html>

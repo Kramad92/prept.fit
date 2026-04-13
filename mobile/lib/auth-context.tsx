@@ -4,6 +4,7 @@ import { api, setOnTokensCleared } from "./api-client";
 import { getAccessToken, clearTokens, setTokens, getStoredUser, setStoredUser } from "./token-store";
 import { registerForPushNotifications, unregisterPushToken } from "./notifications";
 import { queryClient } from "./query-client";
+import { analyticsInstance } from "./analytics/instance";
 
 interface User {
   id: string;
@@ -129,6 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setStoredUser(res.user);
 
     setUser(res.user);
+    analyticsInstance.alias(res.user.id);
+    analyticsInstance.identify(res.user.id, { email: res.user.email });
+    analyticsInstance.track("user_logged_in", { method: "email" });
     // Register for push notifications after login
     registerForPushNotifications().catch(() => {});
 
@@ -150,6 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setStoredUser(res.user);
 
     setUser(res.user);
+    analyticsInstance.alias(res.user.id);
+    analyticsInstance.identify(res.user.id, { email: res.user.email });
+    analyticsInstance.track("user_logged_in", { method: provider });
     registerForPushNotifications().catch(() => {});
 
     if (res.user.role === "COACH") {
@@ -164,6 +171,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Unregister push token before clearing auth
       await unregisterPushToken();
     } finally {
+      analyticsInstance.track("user_logged_out", {});
+      analyticsInstance.reset();
       await clearTokens();
       queryClient.clear();
       setUser(null);

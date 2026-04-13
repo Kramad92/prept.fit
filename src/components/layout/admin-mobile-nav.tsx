@@ -12,8 +12,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTrackedSignOut } from "@/lib/analytics";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Home" },
@@ -25,6 +25,7 @@ const navItems = [
 
 export function AdminMobileNav() {
   const pathname = usePathname();
+  const signOut = useTrackedSignOut();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white pb-safe md:hidden">
